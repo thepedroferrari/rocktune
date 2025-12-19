@@ -305,7 +305,11 @@ function Install-Software {
         @{Id = "Valve.Steam"; Name = "Steam" },
         @{Id = "Discord.Discord"; Name = "Discord" },
         @{Id = "VideoLAN.VLC"; Name = "VLC Media Player" },
-        @{Id = "Brave.Brave"; Name = "Brave Browser" }
+        @{Id = "Brave.Brave"; Name = "Brave Browser" },
+        @{Id = "Spotify.Spotify"; Name = "Spotify" },
+        @{Id = "qBittorrent.qBittorrent"; Name = "qBittorrent" },
+        @{Id = "Python.Python.3.13"; Name = "Python 3.13" },
+        @{Id = "zed-industries.zed"; Name = "Zed Editor" }
     )
     
     $installed = 0
@@ -343,6 +347,23 @@ function Install-Software {
     }
     
     Write-Log "Software installation complete: $installed installed, $failed failed/skipped" "SUCCESS"
+
+    # Post-installation reminders
+    Write-Log ""
+    Write-Log "=== IMPORTANT POST-INSTALLATION STEPS ===" "WARNING"
+    Write-Log ""
+    Write-Log "SPOTIFY CONFIGURATION:" "WARNING"
+    Write-Log "  1. Open Spotify → Settings (Ctrl+,)" "WARNING"
+    Write-Log "  2. Scroll to 'Startup and window behaviour'" "WARNING"
+    Write-Log "  3. DISABLE 'Open Spotify automatically after you log into the computer'" "WARNING"
+    Write-Log "  4. Scroll to 'Audio Quality'" "WARNING"
+    Write-Log "  5. Set 'Streaming quality' to 'Very High'" "WARNING"
+    Write-Log "  6. Enable 'Download' → 'Very High'" "WARNING"
+    Write-Log ""
+    Write-Log "QBITTORRENT SEARCH (OPTIONAL):" "WARNING"
+    Write-Log "  - Python 3.13 has been installed for qBittorrent search plugins" "WARNING"
+    Write-Log "  - In qBittorrent: View → Search Engine → Install plugins" "WARNING"
+    Write-Log ""
 }
 #endregion
 

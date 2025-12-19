@@ -849,38 +849,52 @@ ADDITIONAL OPTIMIZATION CHECKLIST:
    • Pause updates for 1-2 weeks before major gaming sessions
    • (Script has disabled automatic restart)
 
-5. Game Launch Options (Steam):
+5. Spotify Configuration (IMPORTANT):
+   • Open Spotify → Settings (Ctrl+,)
+   • Startup and window behaviour:
+     ☑ DISABLE "Open Spotify automatically after you log into the computer"
+   • Audio Quality:
+     ✓ Streaming quality → Very High
+     ✓ Download → Very High
+   (Prevents Spotify from using CPU/memory at startup)
+
+6. qBittorrent Search Setup (Optional):
+   • Python 3.13 has been installed for search plugins
+   • In qBittorrent: View → Search Engine → Install plugins
+   • Search tab will appear after plugin installation
+
+7. Game Launch Options (Steam):
 
    CS2: -high -threads 8 -novid -tickrate 128 +fps_max 0
    Dota 2: -high -threads 8 -novid -console
 
    (Replace "8" with your CPU thread count)
 
-6. In-Game Settings:
+8. In-Game Settings:
    • Use EXCLUSIVE FULLSCREEN (not borderless windowed)
    • Disable V-Sync (unless using G-Sync with Fast V-Sync)
    • Set graphics to balance FPS with quality
    • Disable motion blur, chromatic aberration, film grain
 
-7. Background Apps to Close Before Gaming:
+9. Background Apps to Close Before Gaming:
    • RGB software (iCUE, Razer Synapse, etc.) - major DPC latency source
    • Discord overlay (or disable overlay)
    • Browser with many tabs
    • Cloud sync services
    • Monitoring software (except FPS counters)
 
-8. Monitor DPC Latency (Optional):
-   • Download LatencyMon from resplendence.com
-   • Run while gaming to identify problematic drivers
-   • Audio drivers are #1 source - update if high latency
+10. Monitor DPC Latency (Optional):
+    • Download LatencyMon from resplendence.com
+    • Run while gaming to identify problematic drivers
+    • Audio drivers are #1 source - update if high latency
 
-9. Game Directories in Defender Exclusions:
-   (Script asks about this - verify it's done if you use Defender)
-   • C:\Program Files (x86)\Steam
-   • C:\Program Files\Epic Games
-   • Add other game install locations
+11. Game Directories in Defender Exclusions:
+    (Script asks about this - verify it's done if you use Defender)
+    • C:\Program Files (x86)\Steam
+    • C:\Program Files\Epic Games
+    • Add other game install locations
 
-10. Network (if using WiFi):
+12. Network (if using WiFi):
     • Prefer Ethernet for gaming
     • If WiFi: 5GHz band, channel 36-48 (less congestion)
 "@

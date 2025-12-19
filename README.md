@@ -100,7 +100,6 @@ See [DRIVER-LINKS.md](DRIVER-LINKS.md) for driver downloads and BIOS settings.
 - **[DRIVER-LINKS.md](DRIVER-LINKS.md)** - Official driver downloads & BIOS settings
 - **[CHANGES-ENHANCED.md](CHANGES-ENHANCED.md)** - Technical changelog
 - **[README-ENHANCED.md](README-ENHANCED.md)** - Detailed user guide
-- **[SOFTWARE-UPDATE.md](SOFTWARE-UPDATE.md)** - Software list changes
 
 ## ⚙️ Installation
 
@@ -199,8 +198,14 @@ Via winget (automatic):
 - Discord
 - VLC Media Player
 - Brave Browser
+- Spotify
+- qBittorrent
+- Python 3.13 (for qBittorrent search plugins)
+- Zed Editor
 
-See [SOFTWARE-UPDATE.md](SOFTWARE-UPDATE.md) for manual installation of other software.
+**Post-install reminders:**
+- Spotify: Disable auto-start, set audio quality to "Very High"
+- qBittorrent: Install search plugins via View → Search Engine
 
 ## 🤝 Contributing
 

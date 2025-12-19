@@ -78,6 +78,10 @@ Restart-Computer
 - Discord
 - VLC Media Player
 - Brave Browser
+- Spotify
+- qBittorrent
+- Python 3.13 (for qBittorrent search plugins)
+- Zed Editor
 
 **If winget is not available** (common on X-Lite without Microsoft Store):
 - Software installation is skipped automatically
