@@ -863,38 +863,45 @@ ADDITIONAL OPTIMIZATION CHECKLIST:
    • In qBittorrent: View → Search Engine → Install plugins
    • Search tab will appear after plugin installation
 
-7. Game Launch Options (Steam):
+7. Philips Hue Sync (Optional):
+   • Great for syncing your lights with games!
+   • Can cause DPC latency issues if left running
+   • Close before gaming if you experience stutters
+   • Or use game-mode.ps1 which closes it automatically
+
+8. Game Launch Options (Steam):
 
    CS2: -high -threads 8 -novid -tickrate 128 +fps_max 0
    Dota 2: -high -threads 8 -novid -console
 
    (Replace "8" with your CPU thread count)
 
-8. In-Game Settings:
+9. In-Game Settings:
    • Use EXCLUSIVE FULLSCREEN (not borderless windowed)
    • Disable V-Sync (unless using G-Sync with Fast V-Sync)
    • Set graphics to balance FPS with quality
    • Disable motion blur, chromatic aberration, film grain
 
-9. Background Apps to Close Before Gaming:
-   • RGB software (iCUE, Razer Synapse, etc.) - major DPC latency source
-   • Discord overlay (or disable overlay)
-   • Browser with many tabs
-   • Cloud sync services
-   • Monitoring software (except FPS counters)
+10. Background Apps to Close Before Gaming:
+    • RGB software (iCUE, Razer Synapse, etc.) - major DPC latency source
+    • Philips Hue Sync (if not using for ambient lighting)
+    • Discord overlay (or disable overlay)
+    • Browser with many tabs
+    • Cloud sync services
+    • Monitoring software (except FPS counters)
 
-10. Monitor DPC Latency (Optional):
+11. Monitor DPC Latency (Optional):
     • Download LatencyMon from resplendence.com
     • Run while gaming to identify problematic drivers
     • Audio drivers are #1 source - update if high latency
 
-11. Game Directories in Defender Exclusions:
+12. Game Directories in Defender Exclusions:
     (Script asks about this - verify it's done if you use Defender)
     • C:\Program Files (x86)\Steam
     • C:\Program Files\Epic Games
     • Add other game install locations
 
-12. Network (if using WiFi):
+13. Network (if using WiFi):
     • Prefer Ethernet for gaming
     • If WiFi: 5GHz band, channel 36-48 (less congestion)
 "@

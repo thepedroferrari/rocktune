@@ -131,6 +131,8 @@ $ProcessesToKill = @(
     "LightingService",
     "AURAService",
     "AsusAppService",
+    "HueSync",            # Philips Hue Sync
+    "HueSyncService",     # Philips Hue Sync Service
 
     # Monitoring/Overlays (optional - comment out if you use them)
     # "MSIAfterburner",   # MSI Afterburner (uncomment to kill)

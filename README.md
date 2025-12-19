@@ -202,10 +202,12 @@ Via winget (automatic):
 - qBittorrent
 - Python 3.13 (for qBittorrent search plugins)
 - Zed Editor
+- Philips Hue Sync
 
 **Post-install reminders:**
 - Spotify: Disable auto-start, set audio quality to "Very High"
 - qBittorrent: Install search plugins via View → Search Engine
+- Philips Hue Sync: Great for ambient lighting, but close before gaming if you experience stutters (use game-mode.ps1)
 
 ## 🤝 Contributing
 

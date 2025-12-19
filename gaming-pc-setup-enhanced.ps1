@@ -319,7 +319,8 @@ function Install-Software {
         @{Id = "Spotify.Spotify"; Name = "Spotify" },
         @{Id = "qBittorrent.qBittorrent"; Name = "qBittorrent" },
         @{Id = "Python.Python.3.13"; Name = "Python 3.13" },
-        @{Id = "zed-industries.zed"; Name = "Zed Editor" }
+        @{Id = "zed-industries.zed"; Name = "Zed Editor" },
+        @{Id = "Signify.PhilipsHue"; Name = "Philips Hue Sync" }
     )
 
     $installed = 0
@@ -373,6 +374,11 @@ function Install-Software {
     Write-Log "QBITTORRENT SEARCH (OPTIONAL):" "WARNING"
     Write-Log "  - Python 3.13 has been installed for qBittorrent search plugins" "WARNING"
     Write-Log "  - In qBittorrent: View → Search Engine → Install plugins" "WARNING"
+    Write-Log ""
+    Write-Log "PHILIPS HUE SYNC:" "WARNING"
+    Write-Log "  - Great for ambient gaming lighting!" "WARNING"
+    Write-Log "  - Can cause DPC latency - close if you experience stutters" "WARNING"
+    Write-Log "  - Or use game-mode.ps1 which closes it automatically" "WARNING"
     Write-Log ""
 }
 #endregion
