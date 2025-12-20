@@ -22,10 +22,15 @@ desktop.ini
 # Test files
 test-*.ps1
 temp-*.ps1
+fix-*.ps1
+*-test.ps1
+*-temp.psm1
+*-backup.psm1
+*-broken.psm1
 
-# User-specific files
-user-config.ps1
-local-settings.ps1
+# Research
+*.PRD.toml
+POST-SETUP-CHECKLIST.txt
 
 # Backup files
 *.bak
