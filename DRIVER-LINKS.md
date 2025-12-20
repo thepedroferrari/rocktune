@@ -138,7 +138,6 @@ For a fresh Windows install, install in this order:
 7. **Run gaming-pc-setup.ps1**
 8. **Reboot**
 9. **Install monitoring tools** (HWiNFO64, MSI Afterburner)
-10. **Run setup-wizard.ps1** for guided configuration
 
 ## ⚠️ Important Notes
 

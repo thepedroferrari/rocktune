@@ -8,18 +8,6 @@ Comprehensive PowerShell scripts to eliminate micro-stutters, improve 1% lows, a
 
 ## 🎯 Quick Start
 
-### For Beginners (Recommended)
-```powershell
-# 1. Launch the interactive GUI wizard
-.\setup-wizard.ps1
-
-# 2. Follow the 10-step guide
-# 3. Reboot when prompted
-# 4. Before gaming: run timer tool
-.\timer-tool.ps1 -GameProcess "cs2"
-```
-
-### For Advanced Users
 ```powershell
 # 1. Run main setup script
 .\gaming-pc-setup.ps1
@@ -41,7 +29,6 @@ Restart-Computer
 - **Privacy Hardening** - Block 14+ telemetry/tracking sources
 - **AMD X3D Optimization** - Auto-detect and optimize for Ryzen 7900X3D/7950X3D
 - **Network Optimization** - Low-latency settings for competitive gaming
-- **Interactive GUI Wizard** - Step-by-step setup with manual configuration guides
 
 ## 📊 Expected Results
 
@@ -57,9 +44,7 @@ Restart-Computer
 
 ### Core Scripts
 - **gaming-pc-setup.ps1** - Main optimization script ⭐
-- **setup-wizard.ps1** - Interactive GUI guide (beginners)
 - **timer-tool.ps1** - Runtime timer resolution tool (CRITICAL)
-- **diagnose-stutters.ps1** - Diagnostic tool
 - **extreme-privacy.ps1** - Optional privacy hardening
 
 ### Key Optimizations
@@ -96,10 +81,7 @@ See [DRIVER-LINKS.md](DRIVER-LINKS.md) for driver downloads and BIOS settings.
 
 ## 📖 Documentation
 
-- **[WIZARD-GUIDE.md](WIZARD-GUIDE.md)** - How to use the setup wizard
 - **[DRIVER-LINKS.md](DRIVER-LINKS.md)** - Official driver downloads & BIOS settings
-- **[CHANGES-ENHANCED.md](CHANGES-ENHANCED.md)** - Technical changelog
-- **[README-ENHANCED.md](README-ENHANCED.md)** - Detailed user guide
 
 ## ⚙️ Installation
 
@@ -109,20 +91,12 @@ git clone https://github.com/yourusername/windows-gaming-optimizer.git
 cd windows-gaming-optimizer
 
 # Run as Administrator
-.\setup-wizard.ps1
+.\gaming-pc-setup.ps1
 ```
-
-Or download individual scripts and run manually.
 
 ## 🎮 Usage
 
-### Interactive Wizard (Easiest)
-```powershell
-.\setup-wizard.ps1
-```
-Follow the 10 steps - guides you through everything including NVIDIA, audio, and timer tool setup.
-
-### Manual Setup
+### Basic Setup
 ```powershell
 # Basic
 .\gaming-pc-setup.ps1
@@ -143,11 +117,6 @@ Follow the 10 steps - guides you through everything including NVIDIA, audio, and
 .\timer-tool.ps1 -GameProcess "cs2"
 
 # Keep running during gameplay!
-```
-
-### Diagnostics
-```powershell
-.\diagnose-stutters.ps1
 ```
 
 ## 🛡️ Safety Features
@@ -178,12 +147,11 @@ Follow the 10 steps - guides you through everything including NVIDIA, audio, and
 ## 🔍 Troubleshooting
 
 ### Still Getting Stutters?
-1. Run `.\diagnose-stutters.ps1`
-2. Download [LatencyMon](https://www.resplendence.com/latencymon) to identify problematic drivers
-3. Update audio drivers (#1 DPC latency source)
-4. Toggle GPU Scheduling (both on/off)
-5. Close RGB software (iCUE, Razer Synapse)
-6. Verify timer tool is running
+1. Download [LatencyMon](https://www.resplendence.com/latencymon) to identify problematic drivers
+2. Update audio drivers (#1 DPC latency source)
+3. Toggle GPU Scheduling (both on/off)
+4. Close RGB software (iCUE, Razer Synapse)
+5. Verify timer tool is running
 
 ### Common Issues
 - **Timer tool not working?** Must run as Administrator
@@ -207,7 +175,7 @@ Via winget (automatic):
 **Post-install reminders:**
 - Spotify: Disable auto-start, set audio quality to "Very High"
 - qBittorrent: Install search plugins via View → Search Engine
-- Philips Hue Sync: Great for ambient lighting, but close before gaming if you experience stutters (use game-mode.ps1)
+- Philips Hue Sync: Great for ambient lighting, but close before gaming if you experience stutters
 
 ## 🤝 Contributing
 
@@ -239,10 +207,9 @@ Special optimizations for:
 
 ## 📞 Support
 
-1. Check documentation in `/docs` folder
-2. Run `.\diagnose-stutters.ps1`
-3. Review log files (`gaming-pc-setup.log`)
-4. Open an issue on GitHub
+1. Review log files (`gaming-pc-setup.log`)
+2. Check [DRIVER-LINKS.md](DRIVER-LINKS.md) for driver updates
+3. Open an issue on GitHub
 
 ---
 
