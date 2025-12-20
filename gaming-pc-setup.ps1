@@ -24,8 +24,8 @@
     Skip winget installation attempt if not available (software installation will be skipped)
 
 .PARAMETER EnableAggressiveOptimizations
-    Enable aggressive optimizations (disable Spectre/Meltdown mitigations, etc.)
-    WARNING: May have security implications
+    Disables Spectre/Meltdown CPU mitigations for ~1-3% performance gain in CPU-intensive games (CS2, Valorant)
+    WARNING: SECURITY RISK - Only use on dedicated gaming PCs. Most games won't benefit (GPU-bound).
 #>
 
 param(
@@ -1059,7 +1059,7 @@ function Fix-Stutters {
             try { bcdedit /set tscsyncpolicy Enhanced 2>&1 | Out-Null } catch { }
             try { bcdedit /set x2apicpolicy Enable 2>&1 | Out-Null } catch { }
 
-            Write-Log "Spectre/Meltdown mitigations disabled (5-15% FPS boost, SECURITY RISK)" "SUCCESS"
+            Write-Log "Spectre/Meltdown mitigations disabled (~1-3% gain in CPU-heavy games like CS2, SECURITY RISK)" "SUCCESS"
         }
 
         # ENHANCED: Disable Fast Startup (causes issues with games)
@@ -1589,7 +1589,7 @@ try {
 
     if ($EnableAggressiveOptimizations) {
         Write-Host "WARNING: Aggressive optimizations enabled (disables Spectre/Meltdown mitigations)" -ForegroundColor Red
-        Write-Host "This provides 5-15% FPS boost but has SECURITY implications!`n" -ForegroundColor Red
+        Write-Host "~1-3% FPS gain in CPU-intensive games (CS2, Valorant) - SECURITY RISK!`n" -ForegroundColor Red
     }
 
     if (-not $SkipConfirmations) {
@@ -1831,11 +1831,12 @@ Script: gaming-pc-setup.ps1
 
   Aggressive optimizations were enabled:
   • Spectre/Meltdown mitigations DISABLED
-  • 5-15% FPS boost at the cost of security
+  • ~1-3% FPS gain in CPU-intensive games (CS2, Valorant)
+  • SECURITY RISK for minimal benefit
 
   [ ] Be cautious with untrusted software
   [ ] Don't use this PC for sensitive banking/work
-  [ ] Consider re-enabling if you need better security
+  [ ] Most games won't see improvement (GPU-bound)
 
 
 "@
@@ -1921,7 +1922,7 @@ Happy gaming! Your setup is now optimized for maximum performance. 🚀
 
     if ($EnableAggressiveOptimizations) {
         Write-Host "  ⚠️  WARNING: Spectre/Meltdown mitigations disabled" -ForegroundColor Red
-        Write-Host "     5-15% FPS boost, but reduced security" -ForegroundColor Red
+        Write-Host "     ~1-3% FPS gain in CPU-heavy games (CS2, Valorant), SECURITY RISK" -ForegroundColor Red
         Write-Host ""
     }
 

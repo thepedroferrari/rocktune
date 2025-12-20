@@ -103,7 +103,7 @@ cd windows-gaming-optimizer
 # Basic
 .\gaming-pc-setup.ps1
 
-# With aggressive optimizations (5-15% FPS boost, security risk)
+# With aggressive optimizations (~1-3% FPS in CPU-intensive games like CS2, security risk)
 .\gaming-pc-setup.ps1 -EnableAggressiveOptimizations
 
 # Skip confirmations
@@ -147,8 +147,9 @@ cd windows-gaming-optimizer
 
 ### Aggressive Optimizations:
 - `-EnableAggressiveOptimizations` disables Spectre/Meltdown mitigations
-- 5-15% FPS boost but **security risk**
-- Only use on dedicated gaming PCs
+- ~1-3% FPS gain in **CPU-intensive** games (CS2, Valorant at high FPS)
+- **Security risk** - Only use on dedicated gaming PCs
+- Most games won't benefit (GPU-bound)
 
 ## 🔍 Troubleshooting
 
