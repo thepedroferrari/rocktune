@@ -1,0 +1,127 @@
+{
+  "version": "1.0",
+  "description": "Gaming PC Software Catalog - Centralized package definitions",
+  "packages": {
+    "steam": {
+      "winget_id": "Valve.Steam",
+      "name": "Steam",
+      "category": "essential",
+      "description": "Valve's digital distribution platform for games"
+    },
+    "discord": {
+      "winget_id": "Discord.Discord",
+      "name": "Discord",
+      "category": "recommended",
+      "description": "Voice, video, and text communication for gamers"
+    },
+    "vlc": {
+      "winget_id": "VideoLAN.VLC",
+      "name": "VLC Media Player",
+      "category": "recommended",
+      "description": "Universal media player"
+    },
+    "brave": {
+      "winget_id": "Brave.Brave",
+      "name": "Brave Browser",
+      "category": "recommended",
+      "description": "Privacy-focused web browser"
+    },
+    "spotify": {
+      "winget_id": "Spotify.Spotify",
+      "name": "Spotify",
+      "category": "optional",
+      "description": "Music streaming service"
+    },
+    "qbittorrent": {
+      "winget_id": "qBittorrent.qBittorrent",
+      "name": "qBittorrent",
+      "category": "keep",
+      "description": "BitTorrent client (user preference: keep for now, future: optional)",
+      "future_web": "optional"
+    },
+    "python": {
+      "winget_id": "Python.Python.3.14",
+      "name": "Python 3.14",
+      "category": "keep",
+      "description": "Python programming language (user preference: keep for now, future: optional)",
+      "future_web": "optional"
+    },
+    "zed": {
+      "winget_id": "zed-industries.zed",
+      "name": "Zed Editor",
+      "category": "keep",
+      "description": "Code editor (user preference: keep for now, future: optional)",
+      "future_web": "optional"
+    },
+    "philips_hue_sync": {
+      "winget_id": "Philips.HueSync",
+      "name": "Philips Hue Sync",
+      "category": "optional",
+      "description": "Philips Hue ambient lighting sync"
+    },
+    "logitech_ghub": {
+      "winget_id": "Logitech.GHUB",
+      "name": "Logitech G HUB",
+      "category": "peripheral",
+      "description": "Logitech gaming peripheral software",
+      "hardware_detection": {
+        "vendor_ids": ["046D"]
+      },
+      "install_condition": "Only install if Logitech hardware detected"
+    },
+    "razer_synapse": {
+      "winget_id": "Razer.Synapse3",
+      "name": "Razer Synapse 3",
+      "category": "peripheral",
+      "description": "Razer gaming peripheral software",
+      "hardware_detection": {
+        "vendor_ids": ["1532"]
+      },
+      "install_condition": "Only install if Razer hardware detected"
+    },
+    "corsair_icue": {
+      "winget_id": "Corsair.iCUE.5",
+      "name": "Corsair iCUE",
+      "category": "peripheral",
+      "description": "Corsair gaming peripheral software",
+      "hardware_detection": {
+        "vendor_ids": ["1B1C"]
+      },
+      "install_condition": "Only install if Corsair hardware detected"
+    },
+    "ffmpeg": {
+      "winget_id": "Gyan.FFmpeg",
+      "name": "FFmpeg",
+      "category": "optional",
+      "description": "Multimedia framework for video/audio processing"
+    }
+  },
+  "categories": {
+    "essential": {
+      "description": "Must-have software for gaming",
+      "default_install": true
+    },
+    "recommended": {
+      "description": "Recommended software for most users",
+      "default_install": true
+    },
+    "keep": {
+      "description": "User preference: keep for now (future: optional via web)",
+      "default_install": true
+    },
+    "optional": {
+      "description": "Optional software, user choice",
+      "default_install": false
+    },
+    "peripheral": {
+      "description": "Hardware-conditional peripheral software",
+      "default_install": false,
+      "install_logic": "Detect hardware, install only if present"
+    }
+  },
+  "hardware_vendor_ids": {
+    "046D": "Logitech",
+    "1532": "Razer",
+    "1B1C": "Corsair"
+  }
+}

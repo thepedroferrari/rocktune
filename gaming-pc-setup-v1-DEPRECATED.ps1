@@ -1,5 +1,23 @@
 ﻿#Requires -RunAsAdministrator
 
+################################################################################
+#                           ⚠️  DEPRECATED - DO NOT USE  ⚠️
+################################################################################
+#
+#  This is the OLD v1.0 script - kept for reference only.
+#
+#  ❌ CRITICAL ISSUES IN THIS VERSION:
+#     - BREAKS AMD X3D: Disables CPPC (should be enabled)
+#     - Incorrect core parking settings
+#     - Missing AMD Chipset driver detection
+#     - Monolithic architecture (hard to maintain)
+#
+#  ✅ USE INSTEAD: gaming-pc-setup-v2.ps1
+#
+#  See README.md for v2.0 breaking changes and migration guide.
+#
+################################################################################
+
 <#
 .SYNOPSIS
     Gaming PC Setup Script - Optimizes Windows for gaming performance
