@@ -252,7 +252,7 @@ $btnCheck.Add_Click({
 
     # Check for scripts
     $requiredScripts = @(
-        "gaming-pc-setup-enhanced.ps1",
+        "gaming-pc-setup.ps1",
         "timer-tool.ps1",
         "diagnose-stutters.ps1"
     )
@@ -341,11 +341,11 @@ $btnRunScript.Text = "Run Setup Script"
 $btnRunScript.Location = New-Object System.Drawing.Point(20, $y)
 $btnRunScript.Size = New-Object System.Drawing.Size(150, 35)
 $btnRunScript.Add_Click({
-    $scriptPath = Join-Path $script:ScriptPath "gaming-pc-setup-enhanced.ps1"
+    $scriptPath = Join-Path $script:ScriptPath "gaming-pc-setup.ps1"
 
     if (-not (Test-Path $scriptPath)) {
         [System.Windows.Forms.MessageBox]::Show(
-            "gaming-pc-setup-enhanced.ps1 not found in: $script:ScriptPath",
+            "gaming-pc-setup.ps1 not found in: $script:ScriptPath",
             "Script Not Found",
             [System.Windows.Forms.MessageBoxButtons]::OK,
             [System.Windows.Forms.MessageBoxIcon]::Error
@@ -389,7 +389,7 @@ Continue?",
 
             if ($process.ExitCode -eq 0) {
                 $scriptOutput.Text = "✓ Setup script completed successfully!`r`n`r`n"
-                $scriptOutput.Text += "Check gaming-pc-setup-enhanced.log for details.`r`n`r`n"
+                $scriptOutput.Text += "Check gaming-pc-setup.log for details.`r`n`r`n"
                 $scriptOutput.Text += "IMPORTANT: You MUST reboot before continuing to the next steps!"
                 $scriptOutput.ForeColor = [System.Drawing.Color]::Green
                 $script:CompletedSteps += "MainScript"
@@ -1044,7 +1044,7 @@ EXPECTED IMPROVEMENTS:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 SUPPORT:
-• Check logs: gaming-pc-setup-enhanced.log
+• Check logs: gaming-pc-setup.log
 • Registry backups: %TEMP%\RegistryBackup-*
 • Documentation: README-ENHANCED.md & CHANGES-ENHANCED.md
 

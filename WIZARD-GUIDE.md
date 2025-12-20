@@ -42,7 +42,7 @@ The wizard has **10 steps** that guide you through everything:
 - Shows current optimization status
 
 #### Step 3: Run Main Script
-- Executes `gaming-pc-setup-enhanced.ps1`
+- Executes `gaming-pc-setup.ps1`
 - Optional: Enable aggressive optimizations
 - Watch progress in real-time
 
@@ -88,7 +88,7 @@ The wizard has **10 steps** that guide you through everything:
 ### Automated Tasks:
 - ✅ System information gathering
 - ✅ Pre-optimization checks
-- ✅ Runs gaming-pc-setup-enhanced.ps1
+- ✅ Runs gaming-pc-setup.ps1
 - ✅ Post-setup diagnostics
 
 ### Guided Manual Tasks:
@@ -173,7 +173,7 @@ The wizard needs these files in the same folder:
 
 ```
 setup-wizard.ps1                 ← The wizard (this file)
-gaming-pc-setup-enhanced.ps1     ← Main optimization script
+gaming-pc-setup.ps1     ← Main optimization script
 timer-tool.ps1                   ← Timer resolution tool
 diagnose-stutters.ps1            ← Diagnostic tool
 game-launcher.ps1                ← Optional: Game launcher

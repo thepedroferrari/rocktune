@@ -21,8 +21,8 @@ Comprehensive PowerShell scripts to eliminate micro-stutters, improve 1% lows, a
 
 ### For Advanced Users
 ```powershell
-# 1. Run enhanced setup script
-.\gaming-pc-setup-enhanced.ps1
+# 1. Run main setup script
+.\gaming-pc-setup.ps1
 
 # 2. Reboot
 Restart-Computer
@@ -56,11 +56,11 @@ Restart-Computer
 ## 🚀 What's Included
 
 ### Core Scripts
-- **gaming-pc-setup-enhanced.ps1** - Main optimization script ⭐
+- **gaming-pc-setup.ps1** - Main optimization script ⭐
 - **setup-wizard.ps1** - Interactive GUI guide (beginners)
 - **timer-tool.ps1** - Runtime timer resolution tool (CRITICAL)
 - **diagnose-stutters.ps1** - Diagnostic tool
-- **extreme-privacy.ps1** - Nuclear privacy option
+- **extreme-privacy.ps1** - Optional privacy hardening
 
 ### Key Optimizations
 ✅ Timer resolution to 0.5ms (Windows defaults to 15.6ms)
@@ -125,13 +125,13 @@ Follow the 10 steps - guides you through everything including NVIDIA, audio, and
 ### Manual Setup
 ```powershell
 # Basic
-.\gaming-pc-setup-enhanced.ps1
+.\gaming-pc-setup.ps1
 
 # With aggressive optimizations (5-15% FPS boost, security risk)
-.\gaming-pc-setup-enhanced.ps1 -EnableAggressiveOptimizations
+.\gaming-pc-setup.ps1 -EnableAggressiveOptimizations
 
 # Skip confirmations
-.\gaming-pc-setup-enhanced.ps1 -SkipConfirmations
+.\gaming-pc-setup.ps1 -SkipConfirmations
 
 # Maximum privacy (after main script)
 .\extreme-privacy.ps1
@@ -241,7 +241,7 @@ Special optimizations for:
 
 1. Check documentation in `/docs` folder
 2. Run `.\diagnose-stutters.ps1`
-3. Review log files (`gaming-pc-setup-enhanced.log`)
+3. Review log files (`gaming-pc-setup.log`)
 4. Open an issue on GitHub
 
 ---

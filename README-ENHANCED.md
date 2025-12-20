@@ -27,17 +27,17 @@ This enhanced version fixes **6 critical footguns**, adds **8 performance enhanc
 
 ### Basic Usage (Recommended):
 ```powershell
-.\gaming-pc-setup-enhanced.ps1
+.\gaming-pc-setup.ps1
 ```
 
 ### Skip Confirmations (Auto-accept all):
 ```powershell
-.\gaming-pc-setup-enhanced.ps1 -SkipConfirmations
+.\gaming-pc-setup.ps1 -SkipConfirmations
 ```
 
 ### Enable Aggressive Optimizations (⚠️ Security implications):
 ```powershell
-.\gaming-pc-setup-enhanced.ps1 -EnableAggressiveOptimizations
+.\gaming-pc-setup.ps1 -EnableAggressiveOptimizations
 ```
 
 **Note**: Aggressive mode disables Spectre/Meltdown mitigations for 5-15% FPS boost but reduces security. Only use on dedicated gaming PCs.
@@ -203,7 +203,7 @@ Script creates optimized autoexec.cfg with:
 ## 📁 File Structure
 
 ```
-gaming-pc-setup-enhanced.ps1  ← Main enhanced script
+gaming-pc-setup.ps1  ← Main enhanced script
 extreme-privacy.ps1            ← Supplement for maximum privacy
 timer-tool.ps1                 ← Runtime tool (CRITICAL for micro-stutters)
 game-launcher.ps1              ← Launch games with optimizations
