@@ -15,7 +15,15 @@
         selectedSoftware: new Set(),
         categoryCounts: {},
         mouseX: 0,
-        mouseY: 0
+        mouseY: 0,
+        preview: {
+            previous: '',
+            current: ''
+        }
+    };
+    const viewers = {
+        audit: null,
+        preview: null
     };
 
     // Simple Icons CDN base
@@ -56,6 +64,103 @@
             software: ['steam', '7zip']
         }
     };
+
+    // =========================================================================
+    // CODE VIEWER (shared by audit + preview)
+    // =========================================================================
+
+    function renderDiffHtml(previous = '', current = '') {
+        if (typeof Diff === 'undefined') {
+            return '<div class="cv-line diff-unchanged"><span class="cv-ln old">–</span><span class="cv-ln new">–</span><span class="cv-code">Diff library not loaded</span></div>';
+        }
+
+        const diffParts = Diff.diffLines(previous, current);
+        let oldLine = 1;
+        let newLine = 1;
+        const rows = [];
+
+        diffParts.forEach(part => {
+            const lines = part.value.split('\n');
+            // Drop trailing empty line caused by split on final newline
+            if (lines[lines.length - 1] === '') lines.pop();
+
+            lines.forEach(line => {
+                const isAdded = part.added;
+                const isRemoved = part.removed;
+                const cls = isAdded ? 'diff-added' : isRemoved ? 'diff-removed' : 'diff-unchanged';
+                const displayOld = isAdded ? '' : oldLine++;
+                const displayNew = isRemoved ? '' : newLine++;
+                const escaped = line.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+
+                rows.push(
+                    `<div class="cv-line ${cls}"><span class="cv-ln old">${displayOld || '•'}</span><span class="cv-ln new">${displayNew || '•'}</span><span class="cv-code">${escaped || ' '}</span></div>`
+                );
+            });
+        });
+
+        return rows.join('');
+    }
+
+    function createCodeViewer(root) {
+        if (!root) return null;
+        const tabs = Array.from(root.querySelectorAll('.cv-tab'));
+        const panes = {
+            current: root.querySelector('[data-pane="current"]'),
+            diff: root.querySelector('[data-pane="diff"]'),
+            edit: root.querySelector('[data-pane="edit"]')
+        };
+
+        let mode = 'current';
+        let previousValue = '';
+        let currentValue = '';
+
+        function setMode(next) {
+            if (!panes[next]) return;
+            mode = next;
+            tabs.forEach(t => t.classList.toggle('active', t.dataset.mode === next));
+            Object.entries(panes).forEach(([key, pane]) => {
+                if (!pane) return;
+                pane.classList.toggle('active', key === next);
+            });
+            if (next === 'edit' && panes.edit && currentValue) {
+                panes.edit.value = currentValue;
+            }
+        }
+
+        function setContent({ current = '', previous = '' }) {
+            currentValue = current;
+            previousValue = previous || '';
+            if (panes.current) panes.current.textContent = currentValue;
+            if (panes.edit) panes.edit.value = currentValue;
+            if (panes.diff) panes.diff.innerHTML = renderDiffHtml(previousValue, currentValue);
+        }
+
+        function getContent() {
+            if (mode === 'edit' && panes.edit) return panes.edit.value;
+            return currentValue;
+        }
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                setMode(tab.dataset.mode);
+            });
+        });
+
+        // Default to current view
+        setMode('current');
+
+        return {
+            setMode,
+            setContent,
+            getContent
+        };
+    }
+
+    function computeStats(text = '') {
+        const lines = text.split('\n').length;
+        const sizeKb = (new Blob([text]).size / 1024).toFixed(1);
+        return { lines, sizeKb };
+    }
 
     // =========================================================================
     // CURSOR GLOW
@@ -159,6 +264,7 @@
         countCategories();
         updateSoftwareCounter();
         updateSummary();
+        document.dispatchEvent(new CustomEvent('script-change-request'));
     }
 
     function createCard(key, pkg, delay) {
@@ -422,6 +528,7 @@
 
                 updateSoftwareCounter();
                 updateSummary();
+                document.dispatchEvent(new CustomEvent('script-change-request'));
             });
         });
     }
@@ -766,6 +873,15 @@
     // =========================================================================
     // SCRIPT GENERATION
     // =========================================================================
+
+    function getTrackedScript() {
+        const script = generateScript();
+        if (state.preview.current && state.preview.current !== script) {
+            state.preview.previous = state.preview.current;
+        }
+        state.preview.current = script;
+        return script;
+    }
 
     function generateScript() {
         const hw = getHardwareProfile();
@@ -1146,11 +1262,21 @@ Write-Host "  [WARN] Test before/after with benchmarks - results vary by system"
 
     function setupDownload() {
         const modal = document.getElementById('preview-modal');
-        let currentScript = '';
+        const previewLines = document.getElementById('preview-lines');
+        const previewSize = document.getElementById('preview-size');
+        viewers.preview = createCodeViewer(document.getElementById('preview-viewer'));
+
+        function updatePreview(script) {
+            const previous = state.preview.previous;
+            viewers.preview?.setContent({ current: script, previous });
+            const stats = computeStats(script);
+            if (previewLines) previewLines.textContent = `${stats.lines} lines`;
+            if (previewSize) previewSize.textContent = `${stats.sizeKb} KB`;
+        }
 
         // Download button
         document.getElementById('download-btn')?.addEventListener('click', () => {
-            const script = generateScript();
+            const script = getTrackedScript();
 
             // Validate script before download
             const validation = validateScript(script);
@@ -1170,8 +1296,8 @@ Write-Host "  [WARN] Test before/after with benchmarks - results vary by system"
 
         // Preview button
         document.getElementById('preview-btn')?.addEventListener('click', () => {
-            currentScript = generateScript();
-            document.getElementById('preview-code').innerHTML = highlightPowerShell(currentScript);
+            const script = getTrackedScript();
+            updatePreview(script);
             modal?.showModal();
         });
 
@@ -1187,8 +1313,9 @@ Write-Host "  [WARN] Test before/after with benchmarks - results vary by system"
 
         // Copy to clipboard
         document.getElementById('copy-script')?.addEventListener('click', async () => {
+            const script = viewers.preview?.getContent() || state.preview.current || '';
             try {
-                await navigator.clipboard.writeText(currentScript);
+                await navigator.clipboard.writeText(script);
                 const btn = document.getElementById('copy-script');
                 const originalText = btn.textContent;
                 btn.textContent = '✓ Copied!';
@@ -1198,10 +1325,11 @@ Write-Host "  [WARN] Test before/after with benchmarks - results vary by system"
             }
         });
 
-        // Download from modal
+        // Download from modal (uses edited content if present)
         document.getElementById('download-from-modal')?.addEventListener('click', () => {
+            const script = viewers.preview?.getContent() || state.preview.current || getTrackedScript();
             const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-            downloadFile(currentScript, `rocktune-setup-${date}.ps1`);
+            downloadFile(script, `rocktune-setup-${date}.ps1`);
             modal?.close();
         });
     }
@@ -1503,35 +1631,47 @@ Write-Host "  [WARN] Test before/after with benchmarks - results vary by system"
     function setupAuditPanel() {
         const panel = document.getElementById('audit-panel');
         const toggle = document.getElementById('audit-toggle');
-        const codeEl = document.getElementById('audit-code');
         const linesEl = document.getElementById('audit-lines');
         const sizeEl = document.getElementById('audit-size');
+        viewers.audit = createCodeViewer(document.getElementById('audit-viewer'));
 
         // Toggle panel
         toggle?.addEventListener('click', () => {
             panel?.classList.toggle('open');
         });
 
-        // Update on any form change
         const updateAudit = () => {
-            if (!codeEl) return;
+            const script = getTrackedScript();
+            const previous = state.preview.previous;
+            viewers.audit?.setContent({ current: script, previous });
 
-            const script = generateScript();
-            codeEl.textContent = script;
-
-            // Update stats
-            const lines = script.split('\n').length;
-            const size = (new Blob([script]).size / 1024).toFixed(1);
-            if (linesEl) linesEl.textContent = `${lines} lines`;
-            if (sizeEl) sizeEl.textContent = `${size} KB`;
+            const stats = computeStats(script);
+            if (linesEl) linesEl.textContent = `${stats.lines} lines`;
+            if (sizeEl) sizeEl.textContent = `${stats.sizeKb} KB`;
         };
 
         // Listen to all form changes
         document.querySelectorAll('input[name="cpu"], input[name="gpu"], input[name="peripheral"], input[name="opt"]')
             .forEach(el => el.addEventListener('change', updateAudit));
 
+        document.addEventListener('script-change-request', updateAudit);
+
         // Initial update
         updateAudit();
+
+        // Copy from audit viewer
+        document.getElementById('audit-copy')?.addEventListener('click', async () => {
+            const script = viewers.audit?.getContent() || state.preview.current || '';
+            try {
+                await navigator.clipboard.writeText(script);
+                const btn = document.getElementById('audit-copy');
+                const original = btn.textContent;
+                btn.textContent = '✓ Copied';
+                setTimeout(() => btn.textContent = original, 1800);
+            } catch (err) {
+                alert('Failed to copy: ' + err.message);
+            }
+        });
     }
 
     async function init() {

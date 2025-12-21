@@ -11,6 +11,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/diff@5.1.0/dist/diff.min.js"></script>
 </head>
 <body>
     <!-- Skip link for keyboard navigation -->
@@ -427,10 +428,28 @@
                     <h3>Script Preview</h3>
                     <button type="button" id="close-modal" class="modal-close" aria-label="Close">&times;</button>
                 </div>
-                <pre id="preview-code" class="preview-code"></pre>
-                <div class="modal-footer">
-                    <button type="button" id="copy-script" class="btn-secondary">Copy to Clipboard</button>
-                    <button type="button" id="download-from-modal" class="download-btn">Download</button>
+                <div id="preview-viewer" class="code-viewer modal">
+                    <div class="cv-toolbar">
+                        <button type="button" class="cv-tab active" data-mode="current">Current</button>
+                        <button type="button" class="cv-tab" data-mode="diff">Diff</button>
+                        <button type="button" class="cv-tab" data-mode="edit">Edit</button>
+                        <div class="cv-pill">Preview</div>
+                    </div>
+                    <div class="cv-body">
+                        <pre class="cv-pane" data-pane="current"></pre>
+                        <div class="cv-pane cv-diff" data-pane="diff"></div>
+                        <textarea class="cv-pane cv-edit" data-pane="edit" spellcheck="false"></textarea>
+                    </div>
+                    <div class="cv-footer">
+                        <div class="cv-stats">
+                            <span id="preview-lines">0 lines</span>
+                            <span id="preview-size">0 KB</span>
+                        </div>
+                        <div class="cv-actions">
+                            <button type="button" id="copy-script" class="btn-secondary">Copy</button>
+                            <button type="button" id="download-from-modal" class="download-btn">Download</button>
+                        </div>
+                    </div>
                 </div>
             </dialog>
 
@@ -448,12 +467,29 @@
         <div class="audit-content">
             <div class="audit-header">
                 <h3>Live Code Preview</h3>
-                <span class="audit-hint">Updates as you select options</span>
+                <span class="audit-hint">Diffs, lines, and inline edit</span>
             </div>
-            <pre id="audit-code" class="audit-code"></pre>
-            <div class="audit-stats">
-                <span id="audit-lines">0 lines</span>
-                <span id="audit-size">0 KB</span>
+            <div id="audit-viewer" class="code-viewer">
+                <div class="cv-toolbar">
+                    <button type="button" class="cv-tab active" data-mode="current">Current</button>
+                    <button type="button" class="cv-tab" data-mode="diff">Diff</button>
+                    <button type="button" class="cv-tab" data-mode="edit">Edit</button>
+                    <div class="cv-pill">Live</div>
+                </div>
+                <div class="cv-body">
+                    <pre class="cv-pane" data-pane="current"></pre>
+                    <div class="cv-pane cv-diff" data-pane="diff"></div>
+                    <textarea class="cv-pane cv-edit" data-pane="edit" spellcheck="false"></textarea>
+                </div>
+                <div class="cv-footer">
+                    <div class="cv-stats">
+                        <span id="audit-lines">0 lines</span>
+                        <span id="audit-size">0 KB</span>
+                    </div>
+                    <div class="cv-actions">
+                        <button type="button" id="audit-copy" class="btn-secondary small">Copy</button>
+                    </div>
+                </div>
             </div>
         </div>
     </aside>
