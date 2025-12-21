@@ -1,34 +1,25 @@
 import { store } from '../state'
-import type { SoftwarePackage } from '../types'
-import { SIMPLE_ICONS_CDN } from '../types'
-import { $id } from '../utils/dom'
+import type { Category, PackageKey, SoftwarePackage } from '../types'
+import { CATEGORY_SVG_ICONS, SIMPLE_ICONS_CDN } from '../types'
+import { $id, sanitize } from '../utils/dom'
 import { createRipple } from '../utils/effects'
 
-// SVG fallback icons by category (Lucide-style)
-const CATEGORY_SVG_ICONS: Record<string, string> = {
-  launcher:
-    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3"/></svg>',
-  gaming:
-    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4m-2-2v4m8 0h.01m2-2h.01"/></svg>',
-  streaming:
-    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6"/><path d="M2 12a9 9 0 0 1 8 8"/><path d="M2 16a5 5 0 0 1 4 4"/><circle cx="2" cy="20" r="1"/></svg>',
-  monitoring:
-    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',
-  browser:
-    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
-  media:
-    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>',
-  utility:
-    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>',
-  rgb: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48 2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48 2.83-2.83"/></svg>',
-  dev: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>',
-  runtime:
-    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3m6-3v3M9 20v3m6-3v3M20 9h3m-3 6h3M1 9h3m-3 6h3"/></svg>',
-  benchmark:
-    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20v-6m6 6v-4m-12 4V10m12-6 2 2-2 2m-4-2h4M6 6H2m4 0 2 2M6 6l2-2"/></svg>',
-  default:
-    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>',
-}
+// =============================================================================
+// CONSTANTS
+// =============================================================================
+
+const ANIMATION_DELAY_MS = 30 as const
+const DESCRIPTION_MAX_LENGTH = 60 as const
+const MAGNETIC_FACTOR = 0.05 as const
+
+const ARIA_LABELS = {
+  selectedAction: 'remove from',
+  unselectedAction: 'add to',
+} as const
+
+// =============================================================================
+// CARD RENDERING
+// =============================================================================
 
 export function renderSoftwareGrid(): void {
   const grid = $id('software-grid')
@@ -38,79 +29,178 @@ export function renderSoftwareGrid(): void {
   let delay = 0
 
   for (const [key, pkg] of Object.entries(store.software)) {
-    const card = createCard(key, pkg, delay)
+    const card = createCard(key as PackageKey, pkg, delay)
     grid.appendChild(card)
-    delay += 30
+    delay += ANIMATION_DELAY_MS
   }
 
   updateSoftwareCounter()
 }
 
-export function createCard(key: string, pkg: SoftwarePackage, delay: number): HTMLElement {
-  const card = document.createElement('div')
-  card.className = 'software-card entering'
-  card.dataset.key = key
-  card.dataset.category = pkg.category
-  card.style.animationDelay = `${delay}ms`
+// =============================================================================
+// CARD CREATION
+// =============================================================================
 
-  // Accessibility
+interface CardConfig {
+  readonly key: PackageKey
+  readonly pkg: Readonly<SoftwarePackage>
+  readonly delay: number
+  readonly isSelected: boolean
+}
+
+function buildCardConfig(
+  key: PackageKey,
+  pkg: Readonly<SoftwarePackage>,
+  delay: number,
+): CardConfig {
+  return {
+    key,
+    pkg,
+    delay,
+    isSelected: store.isSelected(key),
+  } as const
+}
+
+export function createCard(
+  key: PackageKey,
+  pkg: Readonly<SoftwarePackage>,
+  delay: number,
+): HTMLDivElement {
+  const config = buildCardConfig(key, pkg, delay)
+  const card = document.createElement('div')
+
+  setupCardElement(card, config)
+  setupCardAccessibility(card, config)
+  card.innerHTML = buildCardHTML(config)
+  attachCardEventListeners(card, key)
+
+  return card
+}
+
+function setupCardElement(card: HTMLDivElement, config: CardConfig): void {
+  card.className = config.isSelected ? 'software-card entering selected' : 'software-card entering'
+  card.dataset.key = config.key
+  card.dataset.category = config.pkg.category
+  card.style.animationDelay = `${config.delay}ms`
+}
+
+function setupCardAccessibility(card: HTMLDivElement, config: CardConfig): void {
+  const { pkg, isSelected } = config
+  const action = isSelected ? ARIA_LABELS.selectedAction : ARIA_LABELS.unselectedAction
+
   card.setAttribute('tabindex', '0')
   card.setAttribute('role', 'switch')
-  const isSelected = store.selectedSoftware.has(key)
-  card.setAttribute('aria-checked', isSelected ? 'true' : 'false')
+  card.setAttribute('aria-checked', String(isSelected))
   card.setAttribute(
     'aria-label',
-    `${pkg.name}: ${pkg.desc || pkg.category}. Press Enter or Space to ${isSelected ? 'remove from' : 'add to'} selection.`,
+    `${pkg.name}: ${pkg.desc ?? pkg.category}. Press Enter or Space to ${action} selection.`,
   )
+}
 
-  if (isSelected) {
-    card.classList.add('selected')
-  }
+// =============================================================================
+// LOGO BUILDING - Handles different icon types
+// =============================================================================
 
-  // Build logo HTML
-  let logoHtml: string
-  const fallbackIcon = CATEGORY_SVG_ICONS[pkg.category] || CATEGORY_SVG_ICONS.default
+type LogoType = 'sprite' | 'cdn' | 'emoji' | 'fallback'
 
+interface LogoConfig {
+  readonly type: LogoType
+  readonly html: string
+}
+
+function determineLogoType(pkg: Readonly<SoftwarePackage>): LogoType {
   if (pkg.icon) {
-    if (pkg.icon.endsWith('.svg') || pkg.icon.startsWith('icons/')) {
-      const iconId = pkg.icon.replace('icons/', '').replace('.svg', '')
-      logoHtml = `<svg class="sprite-icon" role="img" aria-label="${pkg.name} icon"><use href="icons/sprite.svg#${iconId}"></use></svg>`
-    } else {
-      logoHtml = `<img src="${SIMPLE_ICONS_CDN}/${pkg.icon}/white" alt="${pkg.name} logo" loading="lazy" data-category="${pkg.category}" data-fallback="${pkg.emoji || ''}">`
-    }
-  } else if (pkg.emoji) {
-    logoHtml = `<span class="emoji-icon" role="img" aria-label="${pkg.name} icon">${pkg.emoji}</span>`
-  } else {
-    logoHtml = fallbackIcon
+    return pkg.icon.endsWith('.svg') || pkg.icon.startsWith('icons/') ? 'sprite' : 'cdn'
   }
+  return pkg.emoji ? 'emoji' : 'fallback'
+}
 
-  const descText = pkg.desc || 'No description available.'
-  const shortDesc = descText.length > 60 ? `${descText.slice(0, 57)}...` : descText
+function buildLogoHTML(pkg: Readonly<SoftwarePackage>): LogoConfig {
+  const safeName = sanitize(pkg.name)
+  const type = determineLogoType(pkg)
 
-  card.innerHTML = `
+  switch (type) {
+    case 'sprite': {
+      const iconId = sanitize(pkg.icon?.replace('icons/', '').replace('.svg', ''))
+      return {
+        type,
+        html: `<svg class="sprite-icon" role="img" aria-label="${safeName} icon"><use href="icons/sprite.svg#${iconId}"></use></svg>`,
+      }
+    }
+    case 'cdn': {
+      const safeIcon = sanitize(pkg.icon!)
+      const safeCategory = sanitize(pkg.category)
+      const safeEmoji = sanitize(pkg.emoji)
+      return {
+        type,
+        html: `<img src="${SIMPLE_ICONS_CDN}/${safeIcon}/white" alt="${safeName} logo" loading="lazy" data-category="${safeCategory}" data-fallback="${safeEmoji}">`,
+      }
+    }
+    case 'emoji': {
+      const safeEmoji = sanitize(pkg.emoji!)
+      return {
+        type,
+        html: `<span class="emoji-icon" role="img" aria-label="${safeName} icon">${safeEmoji}</span>`,
+      }
+    }
+    default: {
+      const fallbackIcon = getCategoryIcon(pkg.category)
+      return { type, html: fallbackIcon }
+    }
+  }
+}
+
+function getCategoryIcon(category: Category): string {
+  return CATEGORY_SVG_ICONS[category] ?? CATEGORY_SVG_ICONS.default
+}
+
+// =============================================================================
+// CARD HTML BUILDING
+// =============================================================================
+
+function buildCardHTML(config: CardConfig): string {
+  const { pkg, isSelected } = config
+  const logo = buildLogoHTML(pkg)
+
+  const safeName = sanitize(pkg.name)
+  const safeCategory = sanitize(pkg.category)
+  const descText = pkg.desc ?? 'No description available.'
+  const safeDesc = sanitize(descText)
+  const shortDesc =
+    descText.length > DESCRIPTION_MAX_LENGTH
+      ? sanitize(`${descText.slice(0, DESCRIPTION_MAX_LENGTH - 3)}...`)
+      : safeDesc
+
+  const actionText = isSelected ? '✓ Selected' : 'Click to add'
+
+  return `
     <div class="software-card-inner">
       <div class="software-card-front">
-        <div class="logo">${logoHtml}</div>
-        <span class="name">${pkg.name}</span>
+        <div class="logo">${logo.html}</div>
+        <span class="name">${safeName}</span>
         <span class="list-desc">${shortDesc}</span>
-        <span class="list-category">${pkg.category}</span>
+        <span class="list-category">${safeCategory}</span>
       </div>
       <div class="software-card-back">
-        <span class="back-name">${pkg.name}</span>
-        <span class="back-desc">${descText}</span>
-        <span class="back-category">${pkg.category}</span>
-        <span class="back-action">${isSelected ? '✓ Selected' : 'Click to add'}</span>
+        <span class="back-name">${safeName}</span>
+        <span class="back-desc">${safeDesc}</span>
+        <span class="back-category">${safeCategory}</span>
+        <span class="back-action">${actionText}</span>
       </div>
     </div>
   `
+}
 
-  // Click handler
+// =============================================================================
+// EVENT HANDLING
+// =============================================================================
+
+function attachCardEventListeners(card: HTMLDivElement, key: PackageKey): void {
   card.addEventListener('click', (e) => {
     toggleSoftware(key, card)
     createRipple(e, card)
   })
 
-  // Keyboard handler
   card.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault()
@@ -118,12 +208,11 @@ export function createCard(key: string, pkg: SoftwarePackage, delay: number): HT
     }
   })
 
-  // Magnetic hover
   card.addEventListener('mousemove', (e) => {
     const rect = card.getBoundingClientRect()
-    const x = e.clientX - rect.left - rect.width / 2
-    const y = e.clientY - rect.top - rect.height / 2
-    card.style.transform = `translate(${x * 0.05}px, ${y * 0.05}px)`
+    const x = (e.clientX - rect.left - rect.width / 2) * MAGNETIC_FACTOR
+    const y = (e.clientY - rect.top - rect.height / 2) * MAGNETIC_FACTOR
+    card.style.transform = `translate(${x}px, ${y}px)`
   })
 
   card.addEventListener('mouseleave', () => {
@@ -133,45 +222,46 @@ export function createCard(key: string, pkg: SoftwarePackage, delay: number): HT
   card.addEventListener('animationend', () => {
     card.classList.remove('entering')
   })
-
-  return card
 }
 
-export function toggleSoftware(key: string, card: HTMLElement): void {
-  const _wasSelected = store.selectedSoftware.has(key)
+// =============================================================================
+// TOGGLE FUNCTIONALITY
+// =============================================================================
+
+export function toggleSoftware(key: PackageKey, card: HTMLElement): void {
   const isNowSelected = store.toggleSoftware(key)
-
-  const actionBtn = card.querySelector('.back-action')
-  const pkg = store.getPackage(key)
-  const pkgName = pkg?.name || key
-  const pkgDesc = pkg?.desc || pkg?.category || ''
-
-  if (isNowSelected) {
-    card.classList.add('selected')
-    card.setAttribute('aria-checked', 'true')
-    card.setAttribute(
-      'aria-label',
-      `${pkgName}: ${pkgDesc}. Press Enter or Space to remove from selection.`,
-    )
-    if (actionBtn) actionBtn.textContent = '✓ Selected'
-  } else {
-    card.classList.remove('selected')
-    card.setAttribute('aria-checked', 'false')
-    card.setAttribute(
-      'aria-label',
-      `${pkgName}: ${pkgDesc}. Press Enter or Space to add to selection.`,
-    )
-    if (actionBtn) actionBtn.textContent = 'Click to add'
-  }
-
+  updateCardState(card, key, isNowSelected)
   updateSoftwareCounter()
   document.dispatchEvent(new CustomEvent('script-change-request'))
 }
 
+function updateCardState(card: HTMLElement, key: PackageKey, isSelected: boolean): void {
+  const pkg = store.getPackage(key)
+  const pkgName = pkg?.name ?? key
+  const pkgDesc = pkg?.desc ?? pkg?.category ?? ''
+  const action = isSelected ? ARIA_LABELS.selectedAction : ARIA_LABELS.unselectedAction
+
+  card.classList.toggle('selected', isSelected)
+  card.setAttribute('aria-checked', String(isSelected))
+  card.setAttribute(
+    'aria-label',
+    `${pkgName}: ${pkgDesc}. Press Enter or Space to ${action} selection.`,
+  )
+
+  const actionBtn = card.querySelector('.back-action')
+  if (actionBtn) {
+    actionBtn.textContent = isSelected ? '✓ Selected' : 'Click to add'
+  }
+}
+
+// =============================================================================
+// COUNTER & BADGES
+// =============================================================================
+
 export function updateSoftwareCounter(): void {
   const counter = $id('software-counter')
   if (counter) {
-    counter.textContent = `${store.selectedSoftware.size} selected`
+    counter.textContent = `${store.selectedCount} selected`
   }
 }
 

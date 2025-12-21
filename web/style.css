@@ -2063,6 +2063,88 @@ fieldset label:hover input[type="checkbox"]:not(:checked) {
     background: var(--bg-tertiary);
 }
 
+/* Error Banner */
+.error-banner {
+    position: fixed;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-md) var(--space-lg);
+    background: linear-gradient(135deg, rgba(251, 113, 133, 0.15) 0%, rgba(251, 113, 133, 0.08) 100%);
+    border: 1px solid rgba(251, 113, 133, 0.3);
+    border-top: none;
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 4px 24px rgba(251, 113, 133, 0.15);
+    animation: slideDown 0.3s var(--ease-out-expo);
+}
+
+.error-banner[hidden] {
+    display: none;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+.error-icon {
+    width: 20px;
+    height: 20px;
+    color: var(--risky);
+    flex-shrink: 0;
+}
+
+#error-message {
+    font-size: 0.9rem;
+    color: var(--text-primary);
+}
+
+.error-retry {
+    padding: var(--space-xs) var(--space-md);
+    background: var(--risky);
+    color: var(--bg-primary);
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.error-retry:hover {
+    background: var(--risky-dim);
+    transform: scale(1.05);
+}
+
+.error-dismiss {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.error-dismiss:hover {
+    color: var(--risky);
+}
+
 /* Hide audit panel on mobile */
 @media (max-width: 1200px) {
     .audit-panel {

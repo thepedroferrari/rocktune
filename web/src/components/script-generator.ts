@@ -1,5 +1,12 @@
 import { store } from '../state'
-import type { HardwareProfile } from '../types'
+import type { HardwareProfile, PeripheralType } from '../types'
+import {
+  CPU_TYPES,
+  GPU_TYPES,
+  OPTIMIZATION_KEYS,
+  PERIPHERAL_TYPES,
+  SCRIPT_FILENAME,
+} from '../types'
 import { getHardwareProfile, getSelectedOptimizations } from './summary'
 
 // Preview state for diff tracking
@@ -8,12 +15,12 @@ const preview = {
   current: '',
 }
 
-// Peripheral package mapping
-const PERIPHERAL_PACKAGES: Record<string, string> = {
-  logitech: 'Logitech.GHUB',
-  razer: 'Razer.Synapse3',
-  corsair: 'Corsair.iCUE.5',
-  steelseries: 'SteelSeries.GG',
+// Peripheral package mapping - typed with PeripheralType
+const PERIPHERAL_PACKAGES: Record<PeripheralType, string> = {
+  [PERIPHERAL_TYPES.LOGITECH]: 'Logitech.GHUB',
+  [PERIPHERAL_TYPES.RAZER]: 'Razer.Synapse3',
+  [PERIPHERAL_TYPES.CORSAIR]: 'Corsair.iCUE.5',
+  [PERIPHERAL_TYPES.STEELSERIES]: 'SteelSeries.GG',
 }
 
 export function getTrackedScript(): string {
@@ -184,7 +191,7 @@ Set-Reg "HKCU:\\Software\\Microsoft\\GameBar" "AllowAutoGameMode" 1
 Set-Reg "HKCU:\\Software\\Microsoft\\GameBar" "AutoGameModeEnabled" 1
 Write-OK "Windows Game Mode enabled"`)
 
-  const minState = hw.cpu === 'amd_x3d' ? 5 : 10
+  const minState = hw.cpu === CPU_TYPES.AMD_X3D ? 5 : 10
   code.push(`
 # Min processor state (thermal headroom for higher boost clocks)
 powercfg /setacvalueindex SCHEME_CURRENT 54533251-82be-4824-96c1-47b60b740d00 bc5038f7-23e0-4960-96da-33abaf5935ed ${minState}
@@ -198,50 +205,50 @@ Set-Reg "HKLM:\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\Sys
 Write-OK "Timer resolution hints configured"`)
 
   // OPTIONAL: Checkbox-based optimizations
-  if (opts.includes('pagefile'))
+  if (opts.includes(OPTIMIZATION_KEYS.PAGEFILE))
     code.push(`
 $ramGB = [math]::Round((gcim Win32_PhysicalMemory | Measure -Property Capacity -Sum).Sum / 1GB)
 $sz = if ($ramGB -ge 32) { 4096 } else { 8192 }
 try { $cs = gcim Win32_ComputerSystem; $cs | scim -Property @{AutomaticManagedPagefile=$false}; Write-OK "PageFile \${sz}MB" } catch { Write-Fail "PageFile" }`)
 
-  if (opts.includes('fastboot'))
+  if (opts.includes(OPTIMIZATION_KEYS.FASTBOOT))
     code.push(`
 Set-Reg "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Power" "HiberbootEnabled" 0
 powercfg /hibernate off 2>&1 | Out-Null
 Write-OK "Fast Startup & Hibernation disabled"`)
 
-  if (opts.includes('power_plan'))
+  if (opts.includes(OPTIMIZATION_KEYS.POWER_PLAN))
     code.push(`
 powercfg /setactive 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c 2>$null; Write-OK "High Performance plan"`)
 
-  if (opts.includes('usb_power'))
+  if (opts.includes(OPTIMIZATION_KEYS.USB_POWER))
     code.push(`
 powercfg /setacvalueindex SCHEME_CURRENT 2a737441-1930-4402-8d77-b2bebba308a3 48e6b7a6-50f5-4782-a5d4-53bb8f07e226 0; Write-OK "USB Suspend disabled"`)
 
-  if (opts.includes('pcie_power'))
+  if (opts.includes(OPTIMIZATION_KEYS.PCIE_POWER))
     code.push(`
 powercfg /setacvalueindex SCHEME_CURRENT 501a4d13-42af-4429-9fd1-a8218c268e20 ee12f906-d277-404b-b6da-e5fa1a576df5 0; Write-OK "PCIe ASPM disabled"`)
 
-  if (opts.includes('dns'))
+  if (opts.includes(OPTIMIZATION_KEYS.DNS))
     code.push(`
 Get-NetAdapter | ? {$_.Status -eq "Up"} | % { Set-DnsClientServerAddress -InterfaceIndex $_.ifIndex -ServerAddresses ("1.1.1.1","1.0.0.1") }; Write-OK "DNS 1.1.1.1"`)
 
-  if (opts.includes('nagle'))
+  if (opts.includes(OPTIMIZATION_KEYS.NAGLE))
     code.push(`
 # TCP Nagle disable (NOTE: Only affects TCP games - most modern games use UDP)
 gci "HKLM:\\SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters\\Interfaces" | % { Set-Reg $_.PSPath "TcpAckFrequency" 1; Set-Reg $_.PSPath "TCPNoDelay" 1 }
 Write-OK "Nagle disabled (TCP only)"
 Write-Host "  [INFO] Most games use UDP - this mainly helps older TCP-based games" -ForegroundColor Gray`)
 
-  if (opts.includes('msi_mode'))
+  if (opts.includes(OPTIMIZATION_KEYS.MSI_MODE))
     code.push(`
 Get-PnpDevice -Class Display | ? {$_.Status -eq "OK"} | % { $p = "HKLM:\\SYSTEM\\CurrentControlSet\\Enum\\$($_.InstanceId -replace '\\\\','\\\\')\\Device Parameters\\Interrupt Management\\MessageSignaledInterruptProperties"; if (Test-Path $p) { Set-Reg $p "MSISupported" 1 } }; Write-OK "MSI Mode (reboot needed)"`)
 
-  if (opts.includes('game_bar'))
+  if (opts.includes(OPTIMIZATION_KEYS.GAME_BAR))
     code.push(`
 Set-Reg "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\GameDVR" "AppCaptureEnabled" 0; Set-Reg "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\GameDVR" "GameDVR_Enabled" 0; Write-OK "Game Bar overlays disabled"`)
 
-  if (hw.cpu === 'amd_x3d')
+  if (hw.cpu === CPU_TYPES.AMD_X3D)
     code.push(`
 # AMD X3D Optimization (CPPC + scheduler hints)
 Set-Reg "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Power" "CppcEnable" 1
@@ -253,21 +260,21 @@ Write-OK "AMD X3D: CPPC enabled, HeteroPolicy removed, Game Bar overlays off"
 Write-Host "  [INFO] Install AMD Chipset Drivers for 3D V-Cache optimizer" -ForegroundColor Yellow
 Write-Host "  Download: https://www.amd.com/en/support" -ForegroundColor Cyan`)
 
-  if (hw.gpu === 'nvidia')
+  if (hw.gpu === GPU_TYPES.NVIDIA)
     code.push(`
 # NVIDIA telemetry tasks disable
 $nvTasks = Get-ScheduledTask | Where-Object { $_.TaskName -like "NvTmRep*" -or $_.TaskName -like "NvDriverUpdateCheck*" } -EA SilentlyContinue
 if ($nvTasks) { $nvTasks | Disable-ScheduledTask -EA SilentlyContinue | Out-Null; Write-OK "NVIDIA telemetry tasks disabled" }
 else { Write-Host "  [INFO] No NVIDIA telemetry tasks found" -ForegroundColor Gray }`)
 
-  if (opts.includes('hags'))
+  if (opts.includes(OPTIMIZATION_KEYS.HAGS))
     code.push(`
 # HAGS (Hardware Accelerated GPU Scheduling)
 Set-Reg "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\GraphicsDrivers" "HwSchMode" 2
 Write-OK "HAGS enabled (reboot required)"
 Write-Host "  [INFO] Test game performance - HAGS benefits vary by game/GPU" -ForegroundColor Yellow`)
 
-  if (opts.includes('privacy_tier1'))
+  if (opts.includes(OPTIMIZATION_KEYS.PRIVACY_TIER1))
     code.push(`
 # Privacy Tier 1: Safe settings (ads, activity history, spotlight)
 Set-Reg "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\AdvertisingInfo" "Enabled" 0
@@ -279,7 +286,7 @@ Set-Reg "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryMan
 Set-Reg "HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\DataCollection" "AllowTelemetry" 1
 Write-OK "Privacy Tier 1 (ads, activity, spotlight disabled)"`)
 
-  if (opts.includes('privacy_tier2'))
+  if (opts.includes(OPTIMIZATION_KEYS.PRIVACY_TIER2))
     code.push(`
 # Privacy Tier 2: Disable tracking services
 Set-Reg "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection" "AllowTelemetry" 1
@@ -290,14 +297,14 @@ Set-Reg "HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\DeliveryOptimizati
 Write-OK "Privacy Tier 2 (tracking services disabled)"
 Write-Host "  [WARN] May affect Windows diagnostics" -ForegroundColor Yellow`)
 
-  if (opts.includes('privacy_tier3'))
+  if (opts.includes(OPTIMIZATION_KEYS.PRIVACY_TIER3))
     code.push(`
 Write-Host "  [WARN] Privacy Tier 3 - May break Store/Xbox" -ForegroundColor Yellow
 Set-Reg "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection" "AllowTelemetry" 0
 Stop-Service DiagTrack -Force -EA SilentlyContinue; Set-Service DiagTrack -StartupType Disabled -EA SilentlyContinue
 Write-OK "Privacy Tier 3"`)
 
-  if (opts.includes('bloatware'))
+  if (opts.includes(OPTIMIZATION_KEYS.BLOATWARE))
     code.push(`
 # Remove UWP bloatware
 $bloat = @("Microsoft.GetHelp","Microsoft.Getstarted","Microsoft.Microsoft3DViewer","Microsoft.MicrosoftSolitaireCollection","Microsoft.People","Microsoft.SkypeApp","Microsoft.YourPhone","Microsoft.ZuneMusic","Microsoft.ZuneVideo","Microsoft.MixedReality.Portal","Microsoft.BingWeather","Microsoft.BingNews")
@@ -305,7 +312,7 @@ foreach ($app in $bloat) { Get-AppxPackage -Name $app -EA SilentlyContinue | Rem
 Write-OK "UWP bloatware removed"
 Write-Host "  [INFO] Removed: People, Your Phone, Solitaire, 3D Viewer, etc." -ForegroundColor Gray`)
 
-  if (opts.includes('timer'))
+  if (opts.includes(OPTIMIZATION_KEYS.TIMER))
     code.push(`
 # Timer Resolution (0.5ms for smooth frame pacing - CRITICAL for micro-stutters)
 Add-Type @"
@@ -316,14 +323,14 @@ $cur = [uint32]0; [TimerRes]::NtSetTimerResolution(5000, $true, [ref]$cur) | Out
 Write-OK "Timer resolution set to 0.5ms"
 Write-Host "  [INFO] Keep this window open during gameplay for best results" -ForegroundColor Yellow`)
 
-  if (opts.includes('audio_enhancements'))
+  if (opts.includes(OPTIMIZATION_KEYS.AUDIO_ENHANCEMENTS))
     code.push(`
 # Disable audio enhancements and system sounds
 Set-ItemProperty -Path "HKCU:\\AppEvents\\Schemes" -Name "(Default)" -Value ".None" -EA SilentlyContinue
 Set-Reg "HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Audio" "DisableSysSounds" 1
 Write-OK "Audio enhancements disabled, system sounds off"`)
 
-  if (opts.includes('hpet'))
+  if (opts.includes(OPTIMIZATION_KEYS.HPET))
     code.push(`
 # Disable HPET (results vary - benchmark before/after)
 bcdedit /set useplatformclock false 2>&1 | Out-Null
@@ -335,9 +342,9 @@ Write-Host "  [WARN] Test before/after with benchmarks - results vary by system"
 }
 
 function generatePostSetupHTML(hw: HardwareProfile, _opts: string[], _packages: string[]): string {
-  const isNvidia = hw.gpu === 'nvidia'
-  const isAMD = hw.gpu === 'amd'
-  const isX3D = hw.cpu === 'amd_x3d'
+  const isNvidia = hw.gpu === GPU_TYPES.NVIDIA
+  const isAMD = hw.gpu === GPU_TYPES.AMD
+  const isX3D = hw.cpu === CPU_TYPES.AMD_X3D
   const timestamp = new Date().toLocaleString()
 
   return `<!DOCTYPE html>
@@ -552,6 +559,6 @@ export function setupDownload(): void {
 
   btn.addEventListener('click', () => {
     const script = getTrackedScript()
-    downloadFile(script, 'rocktune-loadout.ps1')
+    downloadFile(script, SCRIPT_FILENAME)
   })
 }

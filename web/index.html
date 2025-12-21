@@ -22,6 +22,18 @@
     <!-- Screen reader announcements -->
     <div aria-live="polite" aria-atomic="true" class="sr-only" id="sr-announce"></div>
 
+    <!-- Error banner for load failures -->
+    <div id="error-banner" class="error-banner" role="alert" hidden>
+        <svg class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <span id="error-message">Failed to load software catalog</span>
+        <button type="button" id="error-retry" class="error-retry">Retry</button>
+        <button type="button" id="error-dismiss" class="error-dismiss" aria-label="Dismiss">&times;</button>
+    </div>
+
     <header>
         <h1>RockTune</h1>
         <p class="tagline">Choose your battle. Forge your build.</p>

@@ -1,28 +1,48 @@
-import type { AppState, SoftwareCatalog, SoftwarePackage } from './types'
+import type {
+  FilterValue,
+  MutableAppState,
+  PackageKey,
+  SoftwareCatalog,
+  SoftwarePackage,
+  ViewMode,
+} from './types'
+import { FILTER_ALL, isFilterAll, VIEW_MODES } from './types'
+
+// =============================================================================
+// LISTENER TYPES
+// =============================================================================
 
 type Listener = () => void
+type Unsubscribe = () => void
+
+// =============================================================================
+// STORE CLASS - Immutable external API, mutable internal state
+// =============================================================================
 
 class Store {
-  private state: AppState = {
-    software: {},
-    selectedSoftware: new Set(),
-    currentFilter: 'all',
+  private state = {
+    software: {} as Record<string, SoftwarePackage>,
+    selectedSoftware: new Set<string>(),
+    currentFilter: FILTER_ALL as FilterValue,
     searchTerm: '',
-    currentView: 'grid',
-  }
+    currentView: VIEW_MODES.GRID,
+  } satisfies MutableAppState
 
-  private listeners: Set<Listener> = new Set()
+  private readonly listeners = new Set<Listener>()
 
-  // Getters
+  // ===========================================================================
+  // GETTERS - Return immutable views of state
+  // ===========================================================================
+
   get software(): SoftwareCatalog {
-    return this.state.software
+    return Object.freeze({ ...this.state.software }) as SoftwareCatalog
   }
 
-  get selectedSoftware(): Set<string> {
-    return this.state.selectedSoftware
+  get selectedSoftware(): ReadonlySet<PackageKey> {
+    return new Set(this.state.selectedSoftware) as ReadonlySet<PackageKey>
   }
 
-  get currentFilter(): string {
+  get currentFilter(): FilterValue {
     return this.state.currentFilter
   }
 
@@ -30,18 +50,62 @@ class Store {
     return this.state.searchTerm
   }
 
-  get currentView(): 'grid' | 'list' {
+  get currentView(): ViewMode {
     return this.state.currentView
   }
 
-  // Get package by key
-  getPackage(key: string): SoftwarePackage | undefined {
-    return this.state.software[key]
+  // ===========================================================================
+  // PACKAGE ACCESS - With overloads for better inference
+  // ===========================================================================
+
+  getPackage(key: PackageKey): Readonly<SoftwarePackage>
+  getPackage(key: string): Readonly<SoftwarePackage> | undefined
+  getPackage(key: string): Readonly<SoftwarePackage> | undefined {
+    const pkg = this.state.software[key]
+    return pkg ? Object.freeze({ ...pkg }) : undefined
   }
 
-  // Setters
+  hasPackage(key: string): key is PackageKey {
+    return key in this.state.software
+  }
+
+  // ===========================================================================
+  // SELECTION MANAGEMENT
+  // ===========================================================================
+
+  isSelected(key: PackageKey): boolean
+  isSelected(key: string): boolean {
+    return this.state.selectedSoftware.has(key)
+  }
+
+  toggleSoftware(key: PackageKey): boolean
+  toggleSoftware(key: string): boolean {
+    const isCurrentlySelected = this.state.selectedSoftware.has(key)
+    if (isCurrentlySelected) {
+      this.state.selectedSoftware.delete(key)
+    } else {
+      this.state.selectedSoftware.add(key)
+    }
+    this.notify()
+    return !isCurrentlySelected
+  }
+
+  clearSelection(): void {
+    this.state.selectedSoftware.clear()
+    this.notify()
+  }
+
+  setSelection(keys: readonly string[]): void {
+    this.state.selectedSoftware = new Set(keys)
+    this.notify()
+  }
+
+  // ===========================================================================
+  // CATALOG MANAGEMENT
+  // ===========================================================================
+
   setSoftware(catalog: SoftwareCatalog): void {
-    this.state.software = catalog
+    this.state.software = { ...catalog }
     // Initialize selected from catalog defaults
     for (const [key, pkg] of Object.entries(catalog)) {
       if (pkg.selected) {
@@ -51,18 +115,11 @@ class Store {
     this.notify()
   }
 
-  toggleSoftware(key: string): boolean {
-    const isSelected = this.state.selectedSoftware.has(key)
-    if (isSelected) {
-      this.state.selectedSoftware.delete(key)
-    } else {
-      this.state.selectedSoftware.add(key)
-    }
-    this.notify()
-    return !isSelected
-  }
+  // ===========================================================================
+  // FILTER & SEARCH
+  // ===========================================================================
 
-  setFilter(filter: string): void {
+  setFilter(filter: FilterValue): void {
     this.state.currentFilter = filter
     this.notify()
   }
@@ -72,52 +129,59 @@ class Store {
     this.notify()
   }
 
-  setView(view: 'grid' | 'list'): void {
+  setView(view: ViewMode): void {
     this.state.currentView = view
     this.notify()
   }
 
-  clearSelection(): void {
-    this.state.selectedSoftware.clear()
-    this.notify()
-  }
+  // ===========================================================================
+  // DERIVED STATE - Computed from current state
+  // ===========================================================================
 
-  setSelection(keys: string[]): void {
-    this.state.selectedSoftware = new Set(keys)
-    this.notify()
-  }
-
-  // Get filtered software list
-  getFilteredSoftware(): [string, SoftwarePackage][] {
+  getFilteredSoftware(): readonly [PackageKey, Readonly<SoftwarePackage>][] {
     const { software, currentFilter, searchTerm } = this.state
     const searchLower = searchTerm.toLowerCase()
 
-    return Object.entries(software).filter(([_, pkg]) => {
-      const matchesFilter = currentFilter === 'all' || pkg.category === currentFilter
-      const matchesSearch =
-        !searchTerm ||
-        pkg.name.toLowerCase().includes(searchLower) ||
-        pkg.desc?.toLowerCase().includes(searchLower) ||
-        pkg.category.toLowerCase().includes(searchLower)
+    return Object.entries(software)
+      .filter(([_, pkg]) => {
+        const matchesFilter = isFilterAll(currentFilter) || pkg.category === currentFilter
+        const matchesSearch =
+          !searchTerm ||
+          pkg.name.toLowerCase().includes(searchLower) ||
+          pkg.desc?.toLowerCase().includes(searchLower) ||
+          pkg.category.toLowerCase().includes(searchLower)
 
-      return matchesFilter && matchesSearch
-    })
+        return matchesFilter && matchesSearch
+      })
+      .map(([key, pkg]) => [key as PackageKey, Object.freeze({ ...pkg })] as const)
   }
 
-  // Get category counts
-  getCategoryCounts(): Record<string, number> {
+  getCategoryCounts(): Readonly<Record<string, number>> {
     const counts: Record<string, number> = { all: 0 }
     for (const pkg of Object.values(this.state.software)) {
       counts.all++
-      counts[pkg.category] = (counts[pkg.category] || 0) + 1
+      counts[pkg.category] = (counts[pkg.category] ?? 0) + 1
     }
-    return counts
+    return Object.freeze(counts)
   }
 
-  // Subscribe to state changes
-  subscribe(listener: Listener): () => void {
+  get selectedCount(): number {
+    return this.state.selectedSoftware.size
+  }
+
+  get totalCount(): number {
+    return Object.keys(this.state.software).length
+  }
+
+  // ===========================================================================
+  // SUBSCRIPTION SYSTEM
+  // ===========================================================================
+
+  subscribe(listener: Listener): Unsubscribe {
     this.listeners.add(listener)
-    return () => this.listeners.delete(listener)
+    return () => {
+      this.listeners.delete(listener)
+    }
   }
 
   private notify(): void {
@@ -127,5 +191,11 @@ class Store {
   }
 }
 
-// Singleton store instance
+// =============================================================================
+// SINGLETON EXPORT
+// =============================================================================
+
 export const store = new Store()
+
+// Re-export store type for testing
+export type { Store }

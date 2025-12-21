@@ -6,7 +6,8 @@
     "preview": "deno run -A npm:vite preview",
     "lint": "deno run -A npm:@biomejs/biome check ./src ./scripts",
     "format": "deno run -A npm:@biomejs/biome format --write ./src ./scripts",
-    "build:sprite": "deno run --allow-read --allow-write ./scripts/build-sprite.ts"
+    "build:sprite": "deno run --allow-read --allow-write ./scripts/build-sprite.ts",
+    "test": "deno test --allow-read ./src"
   },
   "compilerOptions": {
     "lib": [
@@ -17,6 +18,7 @@
     "strict": true
   },
   "imports": {
-    "diff": "npm:diff@^5.1.0"
+    "diff": "npm:diff@^5.1.0",
+    "zod": "npm:zod@^3.23.0"
   }
 }
