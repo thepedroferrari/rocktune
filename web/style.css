@@ -905,6 +905,30 @@ fieldset label input[type="radio"] {
     height: 100%;
     color: var(--text-secondary);
     opacity: 0.8;
+    transition: color 0.3s ease, opacity 0.3s ease;
+}
+
+/* Emoji fallback styling */
+.software-card .logo .emoji-icon {
+    font-size: 32px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.9;
+}
+
+/* Local SVG icons */
+.software-card .logo .local-icon {
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+/* Icon hover effects */
+.software-card:hover .logo svg,
+.software-card:hover .logo img {
+    color: var(--text-primary);
+    opacity: 1;
+    transform: scale(1.05);
 }
 
 .software-card .name {
