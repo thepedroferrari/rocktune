@@ -48,3 +48,4 @@ ${symbols}</svg>
 
 fs.writeFileSync(OUTPUT_FILE, sprite);
 console.log(`\n✅ Created ${OUTPUT_FILE} with ${svgFiles.length} icons`);
+

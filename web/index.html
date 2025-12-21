@@ -143,6 +143,38 @@
             <h2><span class="step-num">2</span> Upgrades</h2>
             <p class="step-desc">Safe options enabled by default — hover for details</p>
 
+            <div class="wizard-toggle">
+                <label class="toggle-switch">
+                    <input type="checkbox" id="wizard-mode">
+                    <span class="toggle-slider"></span>
+                </label>
+                <span class="toggle-label">
+                    <strong>Wizard Mode</strong>
+                    <span class="toggle-hint">Review each change before enabling</span>
+                </span>
+            </div>
+
+            <!-- Wizard Explanation Modal -->
+            <dialog id="wizard-modal" class="wizard-modal">
+                <div class="wizard-content">
+                    <h3 id="wizard-title">Optimization Name</h3>
+                    <div class="wizard-risk">
+                        <span id="wizard-risk-badge" class="tier tier-safe">Safe</span>
+                    </div>
+                    <div id="wizard-description" class="wizard-description">
+                        <p>Description of what this optimization does...</p>
+                    </div>
+                    <div class="wizard-details">
+                        <h4>What it modifies:</h4>
+                        <ul id="wizard-changes"></ul>
+                    </div>
+                    <div class="wizard-actions">
+                        <button type="button" id="wizard-cancel" class="btn-secondary">Cancel</button>
+                        <button type="button" id="wizard-confirm" class="download-btn">Enable This</button>
+                    </div>
+                </div>
+            </dialog>
+
             <fieldset class="tier-safe-field">
                 <legend><span class="tier tier-safe">Safe</span> System</legend>
                 <label>
@@ -316,6 +348,56 @@
                 </div>
             </div>
 
+            <!-- Pre-Flight Check -->
+            <div id="preflight" class="preflight-section">
+                <h3 class="preflight-title">
+                    <svg class="preflight-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    Pre-Flight Check
+                </h3>
+                <div id="preflight-items" class="preflight-items">
+                    <!-- AMD X3D Prerequisites -->
+                    <div class="preflight-card" data-prereq="amd_x3d" style="display:none">
+                        <span class="prereq-badge required">Required</span>
+                        <h4>AMD Chipset Drivers</h4>
+                        <p>Required for 3D V-Cache optimizer to work properly</p>
+                        <a href="https://www.amd.com/en/support" target="_blank" class="prereq-link">
+                            Download from AMD
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                        </a>
+                    </div>
+                    <!-- NVIDIA Prerequisites -->
+                    <div class="preflight-card" data-prereq="nvidia" style="display:none">
+                        <span class="prereq-badge recommended">Recommended</span>
+                        <h4>NVIDIA Drivers</h4>
+                        <p>Update to latest Game Ready or Studio drivers</p>
+                        <a href="https://www.nvidia.com/Download/index.aspx" target="_blank" class="prereq-link">
+                            Download from NVIDIA
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                        </a>
+                    </div>
+                    <!-- AMD GPU Prerequisites -->
+                    <div class="preflight-card" data-prereq="amd_gpu" style="display:none">
+                        <span class="prereq-badge recommended">Recommended</span>
+                        <h4>AMD Radeon Drivers</h4>
+                        <p>Update to latest Adrenalin drivers</p>
+                        <a href="https://www.amd.com/en/support" target="_blank" class="prereq-link">
+                            Download from AMD
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                        </a>
+                    </div>
+                    <!-- Restore Point -->
+                    <div class="preflight-card" data-prereq="always">
+                        <span class="prereq-badge recommended">Recommended</span>
+                        <h4>Create Restore Point</h4>
+                        <p>Before running any script, create a Windows restore point</p>
+                        <button type="button" class="prereq-link" onclick="navigator.clipboard.writeText('Checkpoint-Computer -Description &quot;Before RigTune&quot;')">
+                            Copy PowerShell Command
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <div class="profile-actions">
                 <button type="button" id="save-profile-btn" class="btn-secondary" title="Save your current configuration to a JSON file">
                     <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
@@ -357,6 +439,24 @@
             </p>
         </section>
     </main>
+
+    <!-- Live Code Audit Panel -->
+    <aside id="audit-panel" class="audit-panel">
+        <button type="button" id="audit-toggle" class="audit-toggle" title="Toggle code audit panel">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        </button>
+        <div class="audit-content">
+            <div class="audit-header">
+                <h3>Live Code Preview</h3>
+                <span class="audit-hint">Updates as you select options</span>
+            </div>
+            <pre id="audit-code" class="audit-code"></pre>
+            <div class="audit-stats">
+                <span id="audit-lines">0 lines</span>
+                <span id="audit-size">0 KB</span>
+            </div>
+        </div>
+    </aside>
 
     <footer>
         <p>

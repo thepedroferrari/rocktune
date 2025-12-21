@@ -456,6 +456,311 @@
         if (hwEl) hwEl.textContent = `${cpuLabel} + ${gpuLabel}`;
         if (optsEl) optsEl.textContent = opts.length;
         if (softEl) softEl.textContent = state.selectedSoftware.size;
+
+        // Update pre-flight check visibility
+        updatePreflightCheck(hw);
+    }
+
+    function updatePreflightCheck(hw) {
+        // Show/hide prerequisite cards based on hardware selection
+        const prereqs = document.querySelectorAll('.preflight-card[data-prereq]');
+        prereqs.forEach(card => {
+            const prereq = card.dataset.prereq;
+            let show = false;
+
+            switch (prereq) {
+                case 'amd_x3d':
+                    show = hw.cpu === 'amd_x3d';
+                    break;
+                case 'nvidia':
+                    show = hw.gpu === 'nvidia';
+                    break;
+                case 'amd_gpu':
+                    show = hw.gpu === 'amd';
+                    break;
+                case 'always':
+                    show = true;
+                    break;
+            }
+
+            card.style.display = show ? 'block' : 'none';
+        });
+    }
+
+    // =========================================================================
+    // POST-SETUP HTML GUIDE GENERATION
+    // =========================================================================
+
+    function generatePostSetupHTML(hw, opts, packages) {
+        const isNvidia = hw.gpu === 'nvidia';
+        const isAMD = hw.gpu === 'amd';
+        const isX3D = hw.cpu === 'amd_x3d';
+        const timestamp = new Date().toLocaleString();
+
+        return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RigTune Post-Setup Guide</title>
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --card: rgba(255,255,255,0.03);
+            --border: rgba(255,255,255,0.08);
+            --accent: #8b5cf6;
+            --text: #f0f0f8;
+            --text-dim: #888;
+            --success: #2dd4bf;
+            --warning: #fbbf24;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 2rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        h1 { color: var(--accent); margin-bottom: 0.5rem; }
+        h2 { color: var(--text); margin: 2rem 0 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+        h3 { color: var(--accent); margin: 1.5rem 0 0.5rem; }
+        .meta { color: var(--text-dim); font-size: 0.9rem; margin-bottom: 2rem; }
+        .card {
+            background: var(--card);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+        .critical { border-left: 4px solid #ef4444; }
+        .warning { border-left: 4px solid var(--warning); }
+        .success { border-left: 4px solid var(--success); }
+        code {
+            background: rgba(139,92,246,0.2);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-family: 'Cascadia Code', 'Fira Code', monospace;
+            font-size: 0.9em;
+        }
+        pre {
+            background: #111;
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 0.85rem;
+        }
+        ul, ol { margin-left: 1.5rem; }
+        li { margin: 0.5rem 0; }
+        a { color: var(--accent); }
+        .checkbox { display: flex; align-items: flex-start; gap: 0.5rem; margin: 0.5rem 0; }
+        .checkbox input { margin-top: 0.3rem; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
+        .hidden { display: none; }
+        @media print { body { background: #fff; color: #000; } .card { border: 1px solid #ccc; } }
+    </style>
+</head>
+<body>
+    <h1>RigTune Post-Setup Guide</h1>
+    <p class="meta">Generated: ${timestamp} | Hardware: ${hw.cpu.toUpperCase()} + ${hw.gpu.toUpperCase()}</p>
+
+    <div class="card critical">
+        <h3>CRITICAL: Reboot Required</h3>
+        <p>Many optimizations require a restart to take effect:</p>
+        <ul>
+            <li>HPET and timer changes</li>
+            <li>MSI Mode GPU settings</li>
+            <li>Power plan modifications</li>
+            <li>Page file changes</li>
+        </ul>
+        <p style="margin-top:1rem"><strong>Reboot your PC now before continuing.</strong></p>
+    </div>
+
+    <h2>Before Gaming: Timer Resolution</h2>
+    <div class="card">
+        <p>For the smoothest gameplay, keep a timer resolution tool running:</p>
+        <pre>
+# Option 1: Run the timer tool (download from repo)
+.\\timer-tool.ps1
+
+# Option 2: Auto-exit when game closes
+.\\timer-tool.ps1 -GameProcess "cs2"
+.\\timer-tool.ps1 -GameProcess "dota2"</pre>
+        <p style="margin-top:1rem;color:var(--text-dim)">This sets Windows timer to 0.5ms (from 15.6ms default), eliminating micro-stutters.</p>
+    </div>
+
+    <h2>GPU Driver Settings (Manual Configuration)</h2>
+    <div class="grid">
+        ${isNvidia ? `
+        <div class="card">
+            <h3>NVIDIA Control Panel</h3>
+            <ol>
+                <li>Open NVIDIA Control Panel</li>
+                <li>Manage 3D Settings → Global Settings</li>
+            </ol>
+            <div class="checkbox"><input type="checkbox"> Power management: <strong>Prefer maximum performance</strong></div>
+            <div class="checkbox"><input type="checkbox"> Low latency mode: <strong>Ultra</strong> (or On)</div>
+            <div class="checkbox"><input type="checkbox"> Vertical sync: <strong>Off</strong> (or Fast with G-Sync)</div>
+            <div class="checkbox"><input type="checkbox"> Texture filtering: <strong>High performance</strong></div>
+            <div class="checkbox"><input type="checkbox"> Shader Cache: <strong>On</strong></div>
+        </div>
+        ` : ''}
+        ${isAMD ? `
+        <div class="card">
+            <h3>AMD Radeon Software</h3>
+            <ol>
+                <li>Open AMD Radeon Software</li>
+                <li>Gaming → Global Graphics</li>
+            </ol>
+            <div class="checkbox"><input type="checkbox"> Radeon Anti-Lag: <strong>On</strong></div>
+            <div class="checkbox"><input type="checkbox"> Radeon Boost: <strong>On</strong> (if supported)</div>
+            <div class="checkbox"><input type="checkbox"> Wait for Vertical Refresh: <strong>Off</strong></div>
+            <div class="checkbox"><input type="checkbox"> Texture Filtering Quality: <strong>Performance</strong></div>
+        </div>
+        ` : ''}
+        ${!isNvidia && !isAMD ? `
+        <div class="card">
+            <h3>Intel Arc Control</h3>
+            <p>Open Intel Arc Control and adjust performance settings for your games.</p>
+        </div>
+        ` : ''}
+    </div>
+
+    <h2>Game Launch Options</h2>
+    <div class="card">
+        <p><strong>Steam:</strong> Right-click game → Properties → General → Launch Options</p>
+        <h3 style="margin-top:1rem">Recommended Launch Options</h3>
+        <pre>
+# Dota 2
+-dx11 -high -nojoy -console +fps_max 0
+
+# CS2 (Counter-Strike 2)
+-high -freq 240 -nojoy +fps_max 0
+
+# General (works for most games)
+-high -nojoy</pre>
+        <p style="margin-top:1rem;color:var(--text-dim)">
+            <code>-high</code> = High CPU priority |
+            <code>-nojoy</code> = Disable joystick (reduces input latency) |
+            <code>-freq 240</code> = Match your monitor refresh rate
+        </p>
+    </div>
+
+    ${isX3D ? `
+    <h2>AMD Ryzen X3D Specific</h2>
+    <div class="card warning">
+        <h3>BIOS Settings (Critical)</h3>
+        <div class="checkbox"><input type="checkbox"> CPPC: <strong>Enabled</strong> or AUTO (NOT disabled!)</div>
+        <div class="checkbox"><input type="checkbox"> CPPC Preferred Cores: <strong>AUTO</strong></div>
+        <div class="checkbox"><input type="checkbox"> AGESA: Update to <strong>1.0.0.7+</strong> or latest</div>
+        <div class="checkbox"><input type="checkbox"> EXPO/XMP: <strong>Enabled</strong></div>
+
+        <h3 style="margin-top:1.5rem">AMD Chipset Drivers</h3>
+        <p>Install the latest AMD Chipset Drivers for the 3D V-Cache optimizer:</p>
+        <p><a href="https://www.amd.com/en/support" target="_blank">Download AMD Chipset Drivers</a></p>
+
+        <h3 style="margin-top:1.5rem">Verify Installation</h3>
+        <p>After reboot, check Device Manager → System Devices for:</p>
+        <ul>
+            <li>AMD 3D V-Cache Performance Optimizer</li>
+            <li>AMD PPM Provisioning File Driver</li>
+        </ul>
+    </div>
+    ` : ''}
+
+    <h2>Software Post-Configuration</h2>
+    <div class="grid">
+        <div class="card">
+            <h3>Discord</h3>
+            <div class="checkbox"><input type="checkbox"> Disable Hardware Acceleration if stuttering (Settings → Advanced)</div>
+            <div class="checkbox"><input type="checkbox"> Video Codec: H.264 (Settings → Voice & Video)</div>
+        </div>
+        <div class="card">
+            <h3>RGB Software (iCUE, Synapse, G HUB)</h3>
+            <div class="checkbox"><input type="checkbox"> Configure devices, then close before gaming</div>
+            <div class="checkbox"><input type="checkbox"> Settings are saved to device memory</div>
+            <p style="color:var(--warning);margin-top:0.5rem">⚠️ Common source of DPC latency</p>
+        </div>
+        <div class="card">
+            <h3>Spotify</h3>
+            <div class="checkbox"><input type="checkbox"> Disable auto-start on boot</div>
+            <div class="checkbox"><input type="checkbox"> Set audio quality to Very High</div>
+        </div>
+    </div>
+
+    <h2>Troubleshooting</h2>
+    <div class="card">
+        <h3>Still getting micro-stutters?</h3>
+        <ol>
+            <li>Download <a href="https://www.resplendence.com/latencymon" target="_blank">LatencyMon</a> - identifies drivers causing DPC latency</li>
+            <li>Update audio drivers (most common DPC latency source)</li>
+            <li>Close RGB software (iCUE, Razer Synapse, G HUB)</li>
+            <li>Toggle Hardware-accelerated GPU scheduling in Windows Settings</li>
+            <li>Verify timer tool is running during gameplay</li>
+        </ol>
+
+        <h3 style="margin-top:1.5rem">Network still laggy?</h3>
+        <ol>
+            <li>Update network adapter drivers</li>
+            <li>Use Ethernet instead of WiFi</li>
+            <li>Check router QoS settings</li>
+        </ol>
+    </div>
+
+    <h2>Benchmarking & Validation</h2>
+    <div class="card success">
+        <h3>Before/After Testing</h3>
+        <p>Run benchmarks before and after optimizations. Focus on <strong>1% Low FPS</strong> (more important than average).</p>
+        <div class="grid" style="margin-top:1rem">
+            <div>
+                <h4>Recommended Tools</h4>
+                <ul>
+                    <li><a href="https://www.hwinfo.com/" target="_blank">HWiNFO64</a> - Hardware monitoring</li>
+                    <li><a href="https://www.msi.com/Landing/afterburner" target="_blank">MSI Afterburner</a> - GPU OC + OSD</li>
+                    <li><a href="https://www.capframex.com/" target="_blank">CapFrameX</a> - Frame time analysis</li>
+                </ul>
+            </div>
+            <div>
+                <h4>Benchmarks</h4>
+                <ul>
+                    <li>3DMark Time Spy</li>
+                    <li>In-game benchmarks</li>
+                    <li>Cinebench R23 (CPU)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <h2>Resources</h2>
+    <div class="card">
+        <div class="grid">
+            <div>
+                <h4>Drivers</h4>
+                <ul>
+                    <li><a href="https://www.amd.com/en/support" target="_blank">AMD Drivers</a></li>
+                    <li><a href="https://www.nvidia.com/Download/index.aspx" target="_blank">NVIDIA Drivers</a></li>
+                    <li><a href="https://www.intel.com/content/www/us/en/support.html" target="_blank">Intel Drivers</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4>Support</h4>
+                <ul>
+                    <li><a href="https://github.com/thepedroferrari/windows-gaming-settings" target="_blank">GitHub Repository</a></li>
+                    <li><a href="https://github.com/thepedroferrari/windows-gaming-settings/issues" target="_blank">Report Issues</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div style="text-align:center;margin-top:3rem;padding:2rem;color:var(--text-dim)">
+        <p>Happy gaming! 🎮</p>
+        <p style="font-size:0.8rem;margin-top:1rem">Remember: Reboot → Timer Tool → Game</p>
+    </div>
+</body>
+</html>`;
     }
 
     // =========================================================================
@@ -536,12 +841,18 @@ Write-Host "  LOADOUT FORGED! " -ForegroundColor Green -NoNewline
 Write-Host "Reboot recommended." -ForegroundColor White
 Write-Host "  ========================================" -ForegroundColor Green
 Write-Host ""
-Write-Host "  POST-SETUP CHECKLIST:" -ForegroundColor Cyan
-Write-Host "  [1] Reboot your PC to apply all changes" -ForegroundColor White
-Write-Host "  [2] Keep timer script running during gaming" -ForegroundColor White
-Write-Host "  [3] Update GPU drivers (clean install)" -ForegroundColor White
-Write-Host "  [4] Verify: LatencyMon for DPC latency" -ForegroundColor White
-Write-Host "  [5] Optional: BIOS - disable C-states for Intel" -ForegroundColor Gray
+Write-Host "  Opening POST-SETUP GUIDE in your browser..." -ForegroundColor Cyan
+
+# Generate comprehensive HTML guide
+\$htmlGuide = @'
+${generatePostSetupHTML(hw, opts, packages)}
+'@
+
+\$guidePath = Join-Path \$env:TEMP "rocktune-guide.html"
+Set-Content -Path \$guidePath -Value \$htmlGuide -Encoding UTF8
+Start-Process \$guidePath
+
+Write-Host "  Guide saved to: \$guidePath" -ForegroundColor Gray
 Write-Host ""
 Write-Host "  Need help? github.com/thepedroferrari/windows-gaming-settings" -ForegroundColor Gray
 Write-Host ""
@@ -737,6 +1048,59 @@ Write-Host "  [WARN] Test before/after with benchmarks - results vary by system"
     }
 
     // =========================================================================
+    // SYNTAX HIGHLIGHTING
+    // =========================================================================
+
+    function highlightPowerShell(code) {
+        // Escape HTML first
+        const escape = (str) => str
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+
+        // Process each line
+        const lines = code.split('\n').map(line => {
+            let escaped = escape(line);
+
+            // PowerShell block comment markers
+            escaped = escaped.replace(/(&lt;#)/g, '<span class="comment">$1</span>');
+            escaped = escaped.replace(/(#&gt;)/g, '<span class="comment">$1</span>');
+
+            // Single line comments (# but not #Requires)
+            escaped = escaped.replace(/(#(?!Requires|&gt;)[^\n]*)/g, '<span class="comment">$1</span>');
+
+            // Strings (double quotes) - careful not to match inside comments
+            escaped = escaped.replace(/("(?:[^"\\]|\\.)*")/g, '<span class="string">$1</span>');
+
+            // Variables ($variable)
+            escaped = escaped.replace(/(\$[\w]+)/g, '<span class="variable">$1</span>');
+
+            // PowerShell keywords
+            const keywords = ['if', 'else', 'elseif', 'foreach', 'for', 'while', 'switch', 'try', 'catch', 'finally', 'function', 'param', 'return', 'break', 'continue'];
+            keywords.forEach(kw => {
+                const regex = new RegExp(`\\b(${kw})\\b`, 'gi');
+                escaped = escaped.replace(regex, '<span class="keyword">$1</span>');
+            });
+
+            // Common cmdlets
+            const cmdlets = ['Write-Host', 'Write-OK', 'Write-Fail', 'Write-Step', 'Set-Reg', 'Get-CimInstance', 'Set-ItemProperty', 'New-Item', 'Test-Path', 'Set-Service', 'Stop-Service', 'Get-AppxPackage', 'Remove-AppxPackage', 'Set-DnsClientServerAddress', 'Get-NetAdapter'];
+            cmdlets.forEach(cmd => {
+                const regex = new RegExp(`\\b(${cmd})\\b`, 'g');
+                escaped = escaped.replace(regex, '<span class="cmdlet">$1</span>');
+            });
+
+            // Section headers (=== ... ===)
+            if (escaped.includes('===')) {
+                escaped = `<span class="section">${escaped}</span>`;
+            }
+
+            return `<span class="line">${escaped}</span>`;
+        });
+
+        return lines.join('\n');
+    }
+
+    // =========================================================================
     // SCRIPT VALIDATION
     // =========================================================================
 
@@ -807,7 +1171,7 @@ Write-Host "  [WARN] Test before/after with benchmarks - results vary by system"
         // Preview button
         document.getElementById('preview-btn')?.addEventListener('click', () => {
             currentScript = generateScript();
-            document.getElementById('preview-code').textContent = currentScript;
+            document.getElementById('preview-code').innerHTML = highlightPowerShell(currentScript);
             modal?.showModal();
         });
 
@@ -948,6 +1312,177 @@ Write-Host "  [WARN] Test before/after with benchmarks - results vary by system"
     }
 
     // =========================================================================
+    // WIZARD MODE
+    // =========================================================================
+
+    const OPTIMIZATION_INFO = {
+        pagefile: {
+            name: 'Page File Optimization',
+            risk: 'safe',
+            description: 'Configures Windows virtual memory. Sets a fixed page file size (4GB for 32GB+ RAM, 8GB for 16GB) instead of letting Windows manage it dynamically.',
+            changes: ['Disables automatic page file management', 'Sets fixed page file size', 'Requires reboot to apply']
+        },
+        fastboot: {
+            name: 'Disable Fast Startup',
+            risk: 'safe',
+            description: 'Disables Windows Fast Startup (hybrid shutdown) and hibernation. Ensures a clean boot every time, which can fix driver issues.',
+            changes: ['Registry: HiberbootEnabled = 0', 'Runs: powercfg /hibernate off', 'Frees disk space from hiberfil.sys']
+        },
+        power_plan: {
+            name: 'High Performance Power Plan',
+            risk: 'safe',
+            description: 'Activates the Windows High Performance power plan for maximum CPU/GPU performance.',
+            changes: ['Activates High Performance power scheme', 'CPU stays at higher frequencies', 'May increase power consumption']
+        },
+        usb_power: {
+            name: 'USB Suspend Disabled',
+            risk: 'safe',
+            description: 'Prevents Windows from suspending USB devices to save power. Fixes issues with peripherals disconnecting.',
+            changes: ['Power setting: USB selective suspend disabled', 'Prevents USB device sleep', 'Slightly higher power usage']
+        },
+        pcie_power: {
+            name: 'PCIe ASPM Disabled',
+            risk: 'safe',
+            description: 'Disables PCIe Active State Power Management. Keeps GPU and NVMe at full power for maximum performance.',
+            changes: ['Power setting: PCIe link state = off', 'GPU stays at full power', 'May reduce laptop battery life']
+        },
+        dns: {
+            name: 'Cloudflare DNS',
+            risk: 'safe',
+            description: 'Changes DNS servers to Cloudflare (1.1.1.1, 1.0.0.1) for faster and more private DNS lookups.',
+            changes: ['Sets primary DNS: 1.1.1.1', 'Sets secondary DNS: 1.0.0.1', 'Applies to all active network adapters']
+        },
+        timer: {
+            name: 'Timer Resolution 0.5ms',
+            risk: 'safe',
+            description: 'Sets Windows timer resolution to 0.5ms (from default 15.6ms). Critical for eliminating micro-stutters in games.',
+            changes: ['Calls NtSetTimerResolution API', 'Script window must stay open', 'Effect lasts while script runs']
+        },
+        audio_enhancements: {
+            name: 'Disable Audio Enhancements',
+            risk: 'safe',
+            description: 'Disables Windows audio enhancements and system sounds. Reduces audio latency and DPC issues.',
+            changes: ['Sets sound scheme to "No Sounds"', 'Disables system sound effects', 'Lower audio processing overhead']
+        },
+        msi_mode: {
+            name: 'MSI Mode for GPU',
+            risk: 'caution',
+            description: 'Enables Message Signaled Interrupts for GPU. Can reduce DPC latency but requires testing on your system.',
+            changes: ['Registry: MSISupported = 1', 'Changes GPU interrupt handling', 'Requires reboot', 'May cause issues on some systems']
+        },
+        hpet: {
+            name: 'Disable HPET',
+            risk: 'caution',
+            description: 'Disables High Precision Event Timer via bcdedit. Results vary by system - benchmark before and after.',
+            changes: ['bcdedit: useplatformclock = false', 'bcdedit: disabledynamictick = yes', 'Requires reboot', 'May hurt performance on some systems']
+        },
+        game_bar: {
+            name: 'Disable Game Bar Overlays',
+            risk: 'safe',
+            description: 'Disables Game Bar overlays while keeping Game Bar detection enabled (required for X3D CPUs).',
+            changes: ['Disables AppCapture', 'Disables GameDVR', 'Keeps Xbox Game Bar service for X3D']
+        },
+        hags: {
+            name: 'Hardware Accelerated GPU Scheduling',
+            risk: 'caution',
+            description: 'Enables HAGS which lets GPU manage its own video memory scheduling. Benefits vary by game.',
+            changes: ['Registry: HwSchMode = 2', 'Requires reboot', 'Test performance in your games']
+        },
+        privacy_tier1: {
+            name: 'Privacy Tier 1 (Safe)',
+            risk: 'safe',
+            description: 'Disables advertising ID, activity history, spotlight, and reduces telemetry. No impact on functionality.',
+            changes: ['Disables AdvertisingInfo', 'Disables Activity History sync', 'Disables Windows Spotlight', 'Reduces telemetry level']
+        },
+        privacy_tier2: {
+            name: 'Privacy Tier 2 (Moderate)',
+            risk: 'caution',
+            description: 'Disables tracking services like DiagTrack and dmwappushservice. May affect Windows diagnostics.',
+            changes: ['Stops DiagTrack service', 'Stops dmwappushservice', 'Disables Windows Error Reporting', 'Disables P2P delivery optimization']
+        },
+        privacy_tier3: {
+            name: 'Privacy Tier 3 (Aggressive)',
+            risk: 'risky',
+            description: 'Aggressive privacy hardening. May break Microsoft Store, Xbox app, and some Windows features.',
+            changes: ['Sets telemetry to 0', 'Disables multiple services', 'May break Store/Xbox', 'Not recommended for most users']
+        },
+        bloatware: {
+            name: 'Remove UWP Bloatware',
+            risk: 'caution',
+            description: 'Removes pre-installed Microsoft apps like People, Your Phone, Solitaire, etc.',
+            changes: ['Removes ~10 pre-installed apps', 'Frees disk space', 'Apps can be reinstalled from Store']
+        },
+        nagle: {
+            name: 'Disable Nagle Algorithm',
+            risk: 'safe',
+            description: 'Disables TCP packet batching. Note: Most modern games use UDP, so this has minimal effect.',
+            changes: ['Registry: TcpAckFrequency = 1', 'Registry: TCPNoDelay = 1', 'Only affects TCP traffic']
+        }
+    };
+
+    function setupWizardMode() {
+        const wizardToggle = document.getElementById('wizard-mode');
+        const wizardModal = document.getElementById('wizard-modal');
+        const wizardTitle = document.getElementById('wizard-title');
+        const wizardRisk = document.getElementById('wizard-risk-badge');
+        const wizardDesc = document.getElementById('wizard-description');
+        const wizardChanges = document.getElementById('wizard-changes');
+        const wizardCancel = document.getElementById('wizard-cancel');
+        const wizardConfirm = document.getElementById('wizard-confirm');
+
+        let pendingCheckbox = null;
+
+        // Intercept optimization checkbox clicks when wizard mode is on
+        document.querySelectorAll('input[name="opt"]').forEach(checkbox => {
+            checkbox.addEventListener('click', (e) => {
+                if (!wizardToggle?.checked || checkbox.checked) return; // Only intercept enabling, not disabling
+
+                const optValue = checkbox.value;
+                const info = OPTIMIZATION_INFO[optValue];
+
+                if (!info) return; // No info available, let it through
+
+                // Prevent the default check
+                e.preventDefault();
+                pendingCheckbox = checkbox;
+
+                // Populate modal
+                wizardTitle.textContent = info.name;
+                wizardRisk.textContent = info.risk.charAt(0).toUpperCase() + info.risk.slice(1);
+                wizardRisk.className = `tier tier-${info.risk}`;
+                wizardDesc.innerHTML = `<p>${info.description}</p>`;
+                wizardChanges.innerHTML = info.changes.map(c => `<li><code>${c}</code></li>`).join('');
+
+                wizardModal?.showModal();
+            });
+        });
+
+        // Cancel
+        wizardCancel?.addEventListener('click', () => {
+            pendingCheckbox = null;
+            wizardModal?.close();
+        });
+
+        // Confirm
+        wizardConfirm?.addEventListener('click', () => {
+            if (pendingCheckbox) {
+                pendingCheckbox.checked = true;
+                pendingCheckbox.dispatchEvent(new Event('change'));
+            }
+            pendingCheckbox = null;
+            wizardModal?.close();
+        });
+
+        // Close on backdrop click
+        wizardModal?.addEventListener('click', (e) => {
+            if (e.target === wizardModal) {
+                pendingCheckbox = null;
+                wizardModal.close();
+            }
+        });
+    }
+
+    // =========================================================================
     // INIT
     // =========================================================================
 
@@ -959,6 +1494,44 @@ Write-Host "  [WARN] Test before/after with benchmarks - results vary by system"
                 e.target.parentElement.innerHTML = fallbackIcon;
             }
         }, true);
+    }
+
+    // =========================================================================
+    // LIVE CODE AUDIT PANEL
+    // =========================================================================
+
+    function setupAuditPanel() {
+        const panel = document.getElementById('audit-panel');
+        const toggle = document.getElementById('audit-toggle');
+        const codeEl = document.getElementById('audit-code');
+        const linesEl = document.getElementById('audit-lines');
+        const sizeEl = document.getElementById('audit-size');
+
+        // Toggle panel
+        toggle?.addEventListener('click', () => {
+            panel?.classList.toggle('open');
+        });
+
+        // Update on any form change
+        const updateAudit = () => {
+            if (!codeEl) return;
+
+            const script = generateScript();
+            codeEl.textContent = script;
+
+            // Update stats
+            const lines = script.split('\n').length;
+            const size = (new Blob([script]).size / 1024).toFixed(1);
+            if (linesEl) linesEl.textContent = `${lines} lines`;
+            if (sizeEl) sizeEl.textContent = `${size} KB`;
+        };
+
+        // Listen to all form changes
+        document.querySelectorAll('input[name="cpu"], input[name="gpu"], input[name="peripheral"], input[name="opt"]')
+            .forEach(el => el.addEventListener('change', updateAudit));
+
+        // Initial update
+        updateAudit();
     }
 
     async function init() {
@@ -974,6 +1547,8 @@ Write-Host "  [WARN] Test before/after with benchmarks - results vary by system"
         setupFormListeners();
         setupDownload();
         setupProfileActions();
+        setupWizardMode();
+        setupAuditPanel();
         updateSummary();
     }
 
