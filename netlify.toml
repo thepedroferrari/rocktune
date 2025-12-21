@@ -1,9 +1,13 @@
-# Netlify configuration for RigTune
-# Deploy only the /web directory
+# Netlify configuration for RockTune
+# Deploy the Vite build output from /web/dist
 
 [build]
-  publish = "web"
-  # No build command - static site
+  base = "web"
+  command = "curl -fsSL https://deno.land/install.sh | sh && ~/.deno/bin/deno task build"
+  publish = "dist"
+
+[build.environment]
+  DENO_DIR = "/opt/buildhome/.deno"
 
 # Cache static assets aggressively
 [[headers]]

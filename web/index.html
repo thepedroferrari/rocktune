@@ -11,7 +11,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <script defer src="https://cdn.jsdelivr.net/npm/diff@5.1.0/dist/diff.min.js"></script>
 </head>
 <body>
     <!-- Skip link for keyboard navigation -->
@@ -30,7 +29,7 @@
 
     <main>
         <!-- Step 1: Core -->
-        <section id="hardware" class="step">
+        <section id="hardware" class="step animate-in">
             <h2><span class="step-num">1</span> Core</h2>
             <p class="step-desc">Select your hardware to enable the right upgrades</p>
 
@@ -140,7 +139,7 @@
         </section>
 
         <!-- Step 2: Upgrades -->
-        <section id="optimizations" class="step">
+        <section id="optimizations" class="step animate-in">
             <h2><span class="step-num">2</span> Upgrades</h2>
             <p class="step-desc">Safe options enabled by default — hover for details</p>
 
@@ -287,7 +286,7 @@
         </section>
 
         <!-- Step 3: Arsenal -->
-        <section id="software" class="step">
+        <section id="software" class="step animate-in">
             <h2>
                 <span class="step-num">3</span> Arsenal
                 <span id="software-counter" class="selection-counter">4 selected</span>
@@ -330,7 +329,7 @@
         </section>
 
         <!-- Step 4: Forge Script -->
-        <section id="generate" class="step">
+        <section id="generate" class="step animate-in">
             <h2><span class="step-num">4</span> Forge Script</h2>
             <p class="step-desc">Your personalized loadout is ready</p>
 
@@ -361,7 +360,7 @@
                         <span class="prereq-badge required">Required</span>
                         <h4>AMD Chipset Drivers</h4>
                         <p>Required for 3D V-Cache optimizer to work properly</p>
-                        <a href="https://www.amd.com/en/support" target="_blank" class="prereq-link">
+                        <a href="https://www.amd.com/en/support" target="_blank" rel="noopener noreferrer" class="prereq-link">
                             Download from AMD
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                         </a>
@@ -371,7 +370,7 @@
                         <span class="prereq-badge recommended">Recommended</span>
                         <h4>NVIDIA Drivers</h4>
                         <p>Update to latest Game Ready or Studio drivers</p>
-                        <a href="https://www.nvidia.com/Download/index.aspx" target="_blank" class="prereq-link">
+                        <a href="https://www.nvidia.com/Download/index.aspx" target="_blank" rel="noopener noreferrer" class="prereq-link">
                             Download from NVIDIA
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                         </a>
@@ -381,7 +380,7 @@
                         <span class="prereq-badge recommended">Recommended</span>
                         <h4>AMD Radeon Drivers</h4>
                         <p>Update to latest Adrenalin drivers</p>
-                        <a href="https://www.amd.com/en/support" target="_blank" class="prereq-link">
+                        <a href="https://www.amd.com/en/support" target="_blank" rel="noopener noreferrer" class="prereq-link">
                             Download from AMD
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                         </a>
@@ -391,7 +390,7 @@
                         <span class="prereq-badge recommended">Recommended</span>
                         <h4>Create Restore Point</h4>
                         <p>Before running any script, create a Windows restore point</p>
-                        <button type="button" class="prereq-link" onclick="navigator.clipboard.writeText('Checkpoint-Computer -Description &quot;Before RigTune&quot;')">
+                        <button type="button" class="prereq-link" onclick="navigator.clipboard.writeText('Checkpoint-Computer -Description &quot;Before RockTune&quot;')">
                             Copy PowerShell Command
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                         </button>
@@ -496,12 +495,12 @@
 
     <footer>
         <p>
-            <a href="https://github.com/thepedroferrari/windows-gaming-settings" target="_blank">GitHub</a>
-            · <a href="https://twitter.com/thepedroferrari" target="_blank">@thepedroferrari</a>
+            <a href="https://github.com/thepedroferrari/windows-gaming-settings" target="_blank" rel="noopener noreferrer">GitHub</a>
+            · <a href="https://twitter.com/thepedroferrari" target="_blank" rel="noopener noreferrer">@thepedroferrari</a>
             · No data collected
         </p>
     </footer>
 
-    <script src="app.js"></script>
+    <script type="module" src="/src/main.ts"></script>
 </body>
 </html>

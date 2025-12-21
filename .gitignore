@@ -42,3 +42,10 @@ POST-SETUP-CHECKLIST.txt
 *~
 *.swp
 *.swo
+
+# Deno/Vite build artifacts
+web/dist/
+web/node_modules/
+web/.vite/
+web/deno.lock
+
