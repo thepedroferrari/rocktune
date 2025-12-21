@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RigTune — Windows Gaming Optimizer</title>
+    <meta name="description" content="One script. Zero bloat. All performance. Generate a personalized Windows optimization script for your gaming rig.">
+    <meta name="author" content="Pedro Ferrari">
+    <meta name="theme-color" content="#050507">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Cursor glow effect -->
+    <div class="cursor-glow" aria-hidden="true"></div>
+
+    <header>
+        <h1>RigTune</h1>
+        <p class="tagline">One script. Zero bloat. All performance.</p>
+    </header>
+
+    <main>
+        <!-- Step 1: Hardware Profile -->
+        <section id="hardware" class="step">
+            <h2><span class="step-num">1</span> Hardware Profile</h2>
+            <p class="step-desc">Select your hardware to enable the right optimizations</p>
+
+            <div class="presets">
+                <button type="button" class="preset-btn" data-preset="competitive">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                    Competitive
+                </button>
+                <button type="button" class="preset-btn" data-preset="streaming">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6"/><path d="M2 12a9 9 0 0 1 8 8"/><path d="M2 16a5 5 0 0 1 4 4"/><circle cx="2" cy="20" r="1"/></svg>
+                    Streaming
+                </button>
+                <button type="button" class="preset-btn" data-preset="balanced">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>
+                    Balanced
+                </button>
+                <button type="button" class="preset-btn" data-preset="minimal">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+                    Minimal
+                </button>
+            </div>
+
+            <fieldset>
+                <legend>
+                    <svg class="legend-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M15 2v2"/><path d="M15 20v2"/><path d="M2 15h2"/><path d="M2 9h2"/><path d="M20 15h2"/><path d="M20 9h2"/><path d="M9 2v2"/><path d="M9 20v2"/></svg>
+                    CPU
+                    <button type="button" class="info-btn" popovertarget="cpu-help" aria-label="How to find your CPU">?</button>
+                </legend>
+                <div id="cpu-help" popover class="help-popover">
+                    <h4>How to find your CPU</h4>
+                    <p>Press <kbd>Win</kbd> + <kbd>Pause</kbd> or search <strong>"System Information"</strong> in Start</p>
+                    <p>Look for <strong>Processor</strong> — e.g., "AMD Ryzen 7 7800X3D" or "Intel Core i7-13700K"</p>
+                    <p class="tip">X3D chips have extra cache for gaming — if yours ends in "X3D", select the first option!</p>
+                </div>
+                <label>
+                    <input type="radio" name="cpu" value="amd_x3d" checked>
+                    <span class="label-text">AMD Ryzen X3D</span>
+                    <span class="label-hint">7800X3D, 7900X3D, 7950X3D, 9800X3D — CPPC optimization included</span>
+                </label>
+                <label>
+                    <input type="radio" name="cpu" value="amd">
+                    <span class="label-text">AMD Ryzen (non-X3D)</span>
+                    <span class="label-hint">5600X, 7700X, 9700X and similar</span>
+                </label>
+                <label>
+                    <input type="radio" name="cpu" value="intel">
+                    <span class="label-text">Intel Core</span>
+                    <span class="label-hint">12th, 13th, 14th gen, Core Ultra</span>
+                </label>
+            </fieldset>
+
+            <fieldset>
+                <legend>
+                    <svg class="legend-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h.01"/><path d="M10 12h.01"/><path d="M14 12h.01"/><path d="M18 12h.01"/><path d="M6 8v8"/><path d="M22 10v4"/></svg>
+                    GPU
+                    <button type="button" class="info-btn" popovertarget="gpu-help" aria-label="How to find your GPU">?</button>
+                </legend>
+                <div id="gpu-help" popover class="help-popover">
+                    <h4>How to find your GPU</h4>
+                    <p>Press <kbd>Win</kbd> + <kbd>X</kbd> → <strong>Device Manager</strong> → <strong>Display adapters</strong></p>
+                    <p>Or right-click Desktop → <strong>Display settings</strong> → scroll to <strong>Advanced display</strong></p>
+                    <p class="tip">GeForce = NVIDIA, Radeon = AMD, Arc = Intel</p>
+                </div>
+                <label>
+                    <input type="radio" name="gpu" value="nvidia" checked>
+                    <span class="label-text">NVIDIA GeForce</span>
+                    <span class="label-hint">RTX 30/40/50 series</span>
+                </label>
+                <label>
+                    <input type="radio" name="gpu" value="amd">
+                    <span class="label-text">AMD Radeon</span>
+                    <span class="label-hint">RX 6000/7000/9000 series</span>
+                </label>
+                <label>
+                    <input type="radio" name="gpu" value="intel">
+                    <span class="label-text">Intel Arc</span>
+                    <span class="label-hint">A770, A750, B580</span>
+                </label>
+            </fieldset>
+
+            <fieldset>
+                <legend>
+                    <svg class="legend-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="13" height="12" rx="2"/><path d="m22 12-4-4v8l4-4Z"/><circle cx="8" cy="12" r="2"/></svg>
+                    Peripherals
+                </legend>
+                <label>
+                    <input type="checkbox" name="peripheral" value="logitech">
+                    <span class="label-text">Logitech</span>
+                    <span class="label-hint">Installs G HUB</span>
+                </label>
+                <label>
+                    <input type="checkbox" name="peripheral" value="razer">
+                    <span class="label-text">Razer</span>
+                    <span class="label-hint">Installs Synapse 3</span>
+                </label>
+                <label>
+                    <input type="checkbox" name="peripheral" value="corsair">
+                    <span class="label-text">Corsair</span>
+                    <span class="label-hint">Installs iCUE</span>
+                </label>
+                <label>
+                    <input type="checkbox" name="peripheral" value="steelseries">
+                    <span class="label-text">SteelSeries</span>
+                    <span class="label-hint">Installs GG</span>
+                </label>
+            </fieldset>
+        </section>
+
+        <!-- Step 2: Optimizations -->
+        <section id="optimizations" class="step">
+            <h2><span class="step-num">2</span> Optimizations</h2>
+            <p class="step-desc">Safe options enabled by default — hover for details</p>
+
+            <fieldset class="tier-safe-field">
+                <legend><span class="tier tier-safe">Safe</span> System</legend>
+                <label>
+                    <input type="checkbox" name="opt" value="pagefile" checked>
+                    <span class="label-text">Fixed Page File</span>
+                    <span class="label-hint">4GB for 32GB+ RAM — prevents fragmentation</span>
+                </label>
+                <label>
+                    <input type="checkbox" name="opt" value="fastboot" checked>
+                    <span class="label-text">Disable Fast Startup</span>
+                    <span class="label-hint">Clean boots, prevents driver issues</span>
+                </label>
+                <label>
+                    <input type="checkbox" name="opt" value="timer" checked>
+                    <span class="label-text">Timer Resolution Tool</span>
+                    <span class="label-hint">0.5ms timer for games</span>
+                </label>
+            </fieldset>
+
+            <fieldset class="tier-safe-field">
+                <legend><span class="tier tier-safe">Safe</span> Power</legend>
+                <label>
+                    <input type="checkbox" name="opt" value="power_plan" checked>
+                    <span class="label-text">High Performance Plan</span>
+                    <span class="label-hint">Maximum CPU performance</span>
+                </label>
+                <label>
+                    <input type="checkbox" name="opt" value="usb_power" checked>
+                    <span class="label-text">USB Selective Suspend Off</span>
+                    <span class="label-hint">Prevents USB disconnects</span>
+                </label>
+                <label>
+                    <input type="checkbox" name="opt" value="pcie_power" checked>
+                    <span class="label-text">PCIe ASPM Off</span>
+                    <span class="label-hint">Maximum GPU power</span>
+                </label>
+            </fieldset>
+
+            <fieldset class="tier-safe-field">
+                <legend><span class="tier tier-safe">Safe</span> Network</legend>
+                <label>
+                    <input type="checkbox" name="opt" value="dns" checked>
+                    <span class="label-text">Cloudflare DNS</span>
+                    <span class="label-hint">1.1.1.1 — faster lookups</span>
+                </label>
+                <label>
+                    <input type="checkbox" name="opt" value="nagle" checked>
+                    <span class="label-text">Disable Nagle</span>
+                    <span class="label-hint">Lower network latency</span>
+                </label>
+            </fieldset>
+
+            <fieldset class="tier-safe-field">
+                <legend><span class="tier tier-safe">Safe</span> Audio</legend>
+                <label>
+                    <input type="checkbox" name="opt" value="audio_enhancements" checked>
+                    <span class="label-text">Disable Enhancements</span>
+                    <span class="label-hint">Lower audio latency</span>
+                </label>
+            </fieldset>
+
+            <fieldset class="tier-caution-field">
+                <legend><span class="tier tier-caution">Caution</span> Advanced</legend>
+                <label>
+                    <input type="checkbox" name="opt" value="msi_mode">
+                    <span class="label-text">MSI Mode GPU</span>
+                    <span class="label-hint">Lower interrupt latency</span>
+                </label>
+                <label>
+                    <input type="checkbox" name="opt" value="hpet">
+                    <span class="label-text">Disable HPET</span>
+                    <span class="label-hint">Test before/after</span>
+                </label>
+                <label>
+                    <input type="checkbox" name="opt" value="game_bar">
+                    <span class="label-text">Disable Game Bar</span>
+                    <span class="label-hint">Keeps detection for X3D</span>
+                </label>
+            </fieldset>
+
+            <fieldset class="tier-risky-field">
+                <legend><span class="tier tier-risky">Risky</span> Privacy</legend>
+                <label>
+                    <input type="checkbox" name="opt" value="privacy_tier1">
+                    <span class="label-text">Privacy Tier 1</span>
+                    <span class="label-hint">Ads, Activity History</span>
+                </label>
+                <label>
+                    <input type="checkbox" name="opt" value="privacy_tier2">
+                    <span class="label-text">Privacy Tier 2</span>
+                    <span class="label-hint">Telemetry, Cortana</span>
+                </label>
+                <label class="warning">
+                    <input type="checkbox" name="opt" value="privacy_tier3">
+                    <span class="label-text">Privacy Tier 3</span>
+                    <span class="label-hint"><svg class="warning-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> May break Store/Xbox</span>
+                </label>
+            </fieldset>
+        </section>
+
+        <!-- Step 3: Software -->
+        <section id="software" class="step">
+            <h2>
+                <span class="step-num">3</span> Software
+                <span id="software-counter" class="selection-counter">4 selected</span>
+            </h2>
+            <p class="step-desc">All packages installed via <abbr title="Windows Package Manager">winget</abbr></p>
+
+            <div class="software-toolbar">
+                <div class="search-wrap">
+                    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                    <input type="search" id="software-search" class="search-input" placeholder="Search packages..." autocomplete="off">
+                </div>
+                <div class="view-toggle" role="group" aria-label="View mode">
+                    <button type="button" class="view-btn active" data-view="grid" aria-label="Grid view" title="Grid view">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                    </button>
+                    <button type="button" class="view-btn" data-view="list" aria-label="List view" title="List view">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="4" width="18" height="4" rx="1"/><rect x="3" y="10" width="18" height="4" rx="1"/><rect x="3" y="16" width="18" height="4" rx="1"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="filter-bar">
+                <button type="button" class="filter active" data-filter="*">All <span class="count" id="count-all">0</span></button>
+                <button type="button" class="filter" data-filter="launcher">Launchers <span class="count" id="count-launcher">0</span></button>
+                <button type="button" class="filter" data-filter="gaming">Gaming <span class="count" id="count-gaming">0</span></button>
+                <button type="button" class="filter" data-filter="streaming">Streaming <span class="count" id="count-streaming">0</span></button>
+                <button type="button" class="filter" data-filter="monitoring">Monitoring <span class="count" id="count-monitoring">0</span></button>
+                <button type="button" class="filter" data-filter="browser">Browser <span class="count" id="count-browser">0</span></button>
+                <button type="button" class="filter" data-filter="media">Media <span class="count" id="count-media">0</span></button>
+                <button type="button" class="filter" data-filter="utility">Utility <span class="count" id="count-utility">0</span></button>
+                <button type="button" class="filter" data-filter="rgb">RGB <span class="count" id="count-rgb">0</span></button>
+                <button type="button" class="filter" data-filter="dev">Dev <span class="count" id="count-dev">0</span></button>
+                <button type="button" class="filter" data-filter="runtime">Runtime <span class="count" id="count-runtime">0</span></button>
+                <button type="button" class="filter" data-filter="benchmark">Benchmark <span class="count" id="count-benchmark">0</span></button>
+            </div>
+
+            <div class="software-scroll">
+                <div id="software-grid" class="software-grid"></div>
+            </div>
+        </section>
+
+        <!-- Step 4: Generate -->
+        <section id="generate" class="step">
+            <h2><span class="step-num">4</span> Generate &amp; Download</h2>
+            <p class="step-desc">Your personalized script is ready</p>
+
+            <div id="summary" class="summary">
+                <div class="summary-item">
+                    <div id="summary-hardware" class="summary-value">X3D + NVIDIA</div>
+                    <div class="summary-label">Hardware</div>
+                </div>
+                <div class="summary-item">
+                    <div id="summary-opts" class="summary-value">12</div>
+                    <div class="summary-label">Optimizations</div>
+                </div>
+                <div class="summary-item">
+                    <div id="summary-software" class="summary-value">4</div>
+                    <div class="summary-label">Packages</div>
+                </div>
+            </div>
+
+            <button type="button" id="download-btn" class="download-btn">
+                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Download <code>rigtune-setup.ps1</code>
+            </button>
+
+            <p class="instructions">
+                <strong>To run:</strong> Right-click → <code>Run with PowerShell</code> → <code>Yes</code>
+            </p>
+        </section>
+    </main>
+
+    <footer>
+        <p>
+            <a href="https://github.com/thepedroferrari/windows-gaming-settings" target="_blank">GitHub</a>
+            · <a href="https://twitter.com/thepedroferrari" target="_blank">@thepedroferrari</a>
+            · No data collected
+        </p>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
