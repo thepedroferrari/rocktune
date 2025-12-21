@@ -24,15 +24,15 @@ let symbols = '';
 svgFiles.forEach(file => {
     const id = path.basename(file, '.svg');
     const content = fs.readFileSync(path.join(ICONS_DIR, file), 'utf8');
-    
+
     // Extract viewBox from original SVG
     const viewBoxMatch = content.match(/viewBox="([^"]+)"/);
     const viewBox = viewBoxMatch ? viewBoxMatch[1] : '0 0 48 48';
-    
+
     // Extract inner content (everything between <svg> and </svg>)
     const innerMatch = content.match(/<svg[^>]*>([\s\S]*)<\/svg>/i);
     const inner = innerMatch ? innerMatch[1].trim() : '';
-    
+
     if (inner) {
         symbols += `  <symbol id="${id}" viewBox="${viewBox}">\n    ${inner}\n  </symbol>\n`;
         console.log(`  ✓ ${id}`);

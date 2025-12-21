@@ -34,19 +34,19 @@
             <p class="step-desc">Select your hardware to enable the right upgrades</p>
 
             <div class="presets">
-                <button type="button" class="preset-btn" data-preset="competitive">
+                <button type="button" class="preset-btn" data-preset="competitive" title="Maximum FPS: All performance opts, timer resolution, privacy tier 2, minimal software. For esports & ranked.">
                     <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
                     Competitive
                 </button>
-                <button type="button" class="preset-btn" data-preset="streaming">
+                <button type="button" class="preset-btn" data-preset="streaming" title="Balanced for gaming + OBS: Performance opts without aggressive tweaks, streaming software, Discord, monitoring tools.">
                     <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6"/><path d="M2 12a9 9 0 0 1 8 8"/><path d="M2 16a5 5 0 0 1 4 4"/><circle cx="2" cy="20" r="1"/></svg>
                     Streaming
                 </button>
-                <button type="button" class="preset-btn" data-preset="balanced">
+                <button type="button" class="preset-btn" data-preset="balanced" title="Safe defaults: Core optimizations, privacy tier 1, common software. Good starting point for most users.">
                     <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>
                     Balanced
                 </button>
-                <button type="button" class="preset-btn" data-preset="minimal">
+                <button type="button" class="preset-btn" data-preset="minimal" title="Essential only: Power plan, fast startup, DNS. No experimental options. Lowest risk.">
                     <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
                     Minimal
                 </button>
@@ -245,6 +245,11 @@
                     <span class="label-text">Privacy Tier 3</span>
                     <span class="label-hint"><svg class="warning-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> May break Store/Xbox</span>
                 </label>
+                <label title="Removes pre-installed Microsoft apps like People, Your Phone, Solitaire, etc.">
+                    <input type="checkbox" name="opt" value="bloatware">
+                    <span class="label-text">Remove Bloatware</span>
+                    <span class="label-hint">Built-in UWP apps</span>
+                </label>
             </fieldset>
         </section>
 
@@ -323,10 +328,29 @@
                 </label>
             </div>
 
-            <button type="button" id="download-btn" class="download-btn">
-                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                Forge <code>rocktune-setup.ps1</code>
-            </button>
+            <div class="download-actions">
+                <button type="button" id="preview-btn" class="btn-secondary" title="Preview the generated PowerShell script">
+                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                    Preview
+                </button>
+                <button type="button" id="download-btn" class="download-btn">
+                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Forge <code>rocktune-setup.ps1</code>
+                </button>
+            </div>
+
+            <!-- Script Preview Modal -->
+            <dialog id="preview-modal" class="preview-modal">
+                <div class="modal-header">
+                    <h3>Script Preview</h3>
+                    <button type="button" id="close-modal" class="modal-close" aria-label="Close">&times;</button>
+                </div>
+                <pre id="preview-code" class="preview-code"></pre>
+                <div class="modal-footer">
+                    <button type="button" id="copy-script" class="btn-secondary">Copy to Clipboard</button>
+                    <button type="button" id="download-from-modal" class="download-btn">Download</button>
+                </div>
+            </dialog>
 
             <p class="instructions">
                 <strong>To run:</strong> Right-click → <code>Run with PowerShell</code> → <code>Yes</code>

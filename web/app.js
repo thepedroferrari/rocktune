@@ -530,7 +530,21 @@ foreach ($p in $pkgs) {
     if ($?) { Write-OK "" } else { Write-Fail "" }
 }
 
-Write-Host ""; Write-Host "  LOADOUT FORGED! Reboot recommended." -ForegroundColor Green; Write-Host ""
+Write-Host ""
+Write-Host "  ========================================" -ForegroundColor Green
+Write-Host "  LOADOUT FORGED! " -ForegroundColor Green -NoNewline
+Write-Host "Reboot recommended." -ForegroundColor White
+Write-Host "  ========================================" -ForegroundColor Green
+Write-Host ""
+Write-Host "  POST-SETUP CHECKLIST:" -ForegroundColor Cyan
+Write-Host "  [1] Reboot your PC to apply all changes" -ForegroundColor White
+Write-Host "  [2] Keep timer script running during gaming" -ForegroundColor White
+Write-Host "  [3] Update GPU drivers (clean install)" -ForegroundColor White
+Write-Host "  [4] Verify: LatencyMon for DPC latency" -ForegroundColor White
+Write-Host "  [5] Optional: BIOS - disable C-states for Intel" -ForegroundColor Gray
+Write-Host ""
+Write-Host "  Need help? github.com/thepedroferrari/windows-gaming-settings" -ForegroundColor Gray
+Write-Host ""
 pause
 `;
     }
@@ -675,6 +689,14 @@ Set-Reg "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection" "AllowTe
 Stop-Service DiagTrack -Force -EA SilentlyContinue; Set-Service DiagTrack -StartupType Disabled -EA SilentlyContinue
 Write-OK "Privacy Tier 3"`);
 
+        // Bloatware removal
+        if (opts.includes('bloatware')) code.push(`
+# Remove UWP bloatware
+\$bloat = @("Microsoft.GetHelp","Microsoft.Getstarted","Microsoft.Microsoft3DViewer","Microsoft.MicrosoftSolitaireCollection","Microsoft.People","Microsoft.SkypeApp","Microsoft.YourPhone","Microsoft.ZuneMusic","Microsoft.ZuneVideo","Microsoft.MixedReality.Portal","Microsoft.BingWeather","Microsoft.BingNews")
+foreach (\$app in \$bloat) { Get-AppxPackage -Name \$app -EA SilentlyContinue | Remove-AppxPackage -EA SilentlyContinue }
+Write-OK "UWP bloatware removed"
+Write-Host "  [INFO] Removed: People, Your Phone, Solitaire, 3D Viewer, etc." -ForegroundColor Gray`);
+
         // Timer Resolution (P0 critical fix)
         if (opts.includes('timer')) code.push(`
 # Timer Resolution (0.5ms for smooth frame pacing - CRITICAL for micro-stutters)
@@ -759,6 +781,10 @@ Write-Host "  [WARN] Test before/after with benchmarks - results vary by system"
     }
 
     function setupDownload() {
+        const modal = document.getElementById('preview-modal');
+        let currentScript = '';
+
+        // Download button
         document.getElementById('download-btn')?.addEventListener('click', () => {
             const script = generateScript();
 
@@ -776,6 +802,43 @@ Write-Host "  [WARN] Test before/after with benchmarks - results vary by system"
 
             const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
             downloadFile(script, `rocktune-setup-${date}.ps1`);
+        });
+
+        // Preview button
+        document.getElementById('preview-btn')?.addEventListener('click', () => {
+            currentScript = generateScript();
+            document.getElementById('preview-code').textContent = currentScript;
+            modal?.showModal();
+        });
+
+        // Close modal
+        document.getElementById('close-modal')?.addEventListener('click', () => {
+            modal?.close();
+        });
+
+        // Click outside to close
+        modal?.addEventListener('click', (e) => {
+            if (e.target === modal) modal.close();
+        });
+
+        // Copy to clipboard
+        document.getElementById('copy-script')?.addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText(currentScript);
+                const btn = document.getElementById('copy-script');
+                const originalText = btn.textContent;
+                btn.textContent = '✓ Copied!';
+                setTimeout(() => btn.textContent = originalText, 2000);
+            } catch (err) {
+                alert('Failed to copy: ' + err.message);
+            }
+        });
+
+        // Download from modal
+        document.getElementById('download-from-modal')?.addEventListener('click', () => {
+            const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+            downloadFile(currentScript, `rocktune-setup-${date}.ps1`);
+            modal?.close();
         });
     }
 
