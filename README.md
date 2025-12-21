@@ -1,10 +1,24 @@
-# Windows 11 Gaming Optimizer
+# RockTune
 
-Comprehensive PowerShell scripts to eliminate micro-stutters, improve 1% lows, and maximize gaming performance on Windows 11.
+**A loadout builder for Windows gaming.**
+
+Windows ships as a general-purpose OS: services, telemetry, power policies, overlays, background noise. RockTune treats that as the battlefield. You choose the fight (competitive / streaming / balanced / minimal), then forge a script that strips distractions and tunes the machine toward one goal: **games first**.
+
+Security and convenience are acknowledged, but never hidden — risky upgrades are explicit, optional, and labeled like they should be.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Windows 11](https://img.shields.io/badge/Windows-11-blue.svg)](https://www.microsoft.com/windows/windows-11)
 [![PowerShell](https://img.shields.io/badge/PowerShell-5.1+-green.svg)](https://github.com/PowerShell/PowerShell)
+
+---
+
+## The Concept
+
+> *Windows is the arena. RockTune is the upgrade bay.*
+>
+> Pick your hardware, pick your battle profile, install the tools you actually use, and generate a script that turns a noisy OS into a focused machine.
+
+---
 
 ## ✅ Overview
 
@@ -19,6 +33,8 @@ Comprehensive PowerShell scripts to eliminate micro-stutters, improve 1% lows, a
 
 ### Why these defaults?
 Aligned with AMD documentation and Windows 11 behavior; prioritize stability and measurable gains.
+
+---
 
 ## 🎯 Quick Start
 
@@ -35,13 +51,17 @@ Restart-Computer
 # Optional: .\timer-tool.ps1 -GameProcess "dota2" to auto-exit when game closes
 ```
 
+---
+
 ## ✨ Features
 
 - **Micro-Stutter Elimination** - 90%+ reduction via timer resolution fixes
 - **1% Low FPS Boost** - 15-30% improvement through DPC latency reduction
 - **Privacy Hardening** - Block 14+ telemetry/tracking sources
-- **AMD X3D Optimization** - Auto-detect and optimize for Ryzen 7900X3D/7950X3D
+- **AMD X3D Optimization** - Auto-detect and optimize for Ryzen 7800X3D/7900X3D/7950X3D/9800X3D
 - **Network Optimization** - Low-latency settings for competitive gaming
+
+---
 
 ## 📊 Expected Results
 
@@ -53,6 +73,8 @@ Restart-Computer
 | Frame consistency | Much smoother |
 | Network latency | -5-15ms |
 
+---
+
 ## 🚀 What's Included
 
 ### Core Scripts
@@ -60,7 +82,7 @@ Restart-Computer
 - **timer-tool.ps1** - Sets 0.5ms timer resolution (eliminates micro-stutters)
 - **extreme-privacy.ps1** - Optional privacy hardening
 
-### Key Optimizations
+### Key Upgrades
 ✅ Timer resolution to 0.5ms (Windows defaults to 15.6ms)
 ✅ HPET opt-in disable (validate first)
 ✅ MSI Mode for GPU/network (reduces DPC latency)
@@ -70,6 +92,8 @@ Restart-Computer
 ✅ NVIDIA/AMD GPU optimizations
 ✅ 14+ telemetry/tracking blocks
 ✅ AMD Ryzen X3D specific tweaks (auto-detected)
+
+---
 
 ## 🔧 AMD Ryzen X3D Notes
 
@@ -90,6 +114,8 @@ Restart-Computer
 
 See [DRIVER-LINKS.md](DRIVER-LINKS.md) for driver downloads and BIOS settings.
 
+---
+
 ## 📋 Requirements
 
 - Windows 11 (or Windows 10)
@@ -97,20 +123,20 @@ See [DRIVER-LINKS.md](DRIVER-LINKS.md) for driver downloads and BIOS settings.
 - PowerShell 5.1+
 - 16GB+ RAM recommended
 
-## 📖 Documentation
-
-- **[DRIVER-LINKS.md](DRIVER-LINKS.md)** - Official driver downloads & BIOS settings
+---
 
 ## ⚙️ Installation
 
 ```powershell
 # Clone repository
-git clone https://github.com/yourusername/windows-gaming-optimizer.git
-cd windows-gaming-optimizer
+git clone https://github.com/thepedroferrari/windows-gaming-settings.git
+cd windows-gaming-settings
 
 # Run as Administrator
 .\gaming-pc-setup.ps1
 ```
+
+---
 
 ## 🎮 Usage
 
@@ -135,6 +161,8 @@ cd windows-gaming-optimizer
 **What it does:** Sets Windows timer to 0.5ms (from 15.6ms default) for smooth frame pacing.
 **Learn more:** Run `Get-Help .\timer-tool.ps1 -Full` for detailed explanation.
 
+---
+
 ## 🛡️ Safety Features
 
 - ✅ Automatic registry backups (timestamped)
@@ -142,6 +170,8 @@ cd windows-gaming-optimizer
 - ✅ Error handling (continues on failures)
 - ✅ Detailed logging
 - ✅ System restore point recommended
+
+---
 
 ## ⚠️ Important Notes
 
@@ -156,11 +186,13 @@ cd windows-gaming-optimizer
 - Script will warn if AMD Chipset Drivers are missing
 - See [DRIVER-LINKS.md](DRIVER-LINKS.md) for BIOS settings
 
-### Aggressive Optimizations:
+### Experimental Upgrades (know what you're trading):
 - `-EnableAggressiveOptimizations` disables Spectre/Meltdown mitigations
 - ~1-3% FPS gain in **CPU-intensive** games (CS2, Valorant at high FPS)
 - **Security risk** - Only use on dedicated gaming PCs
 - Most games won't benefit (GPU-bound)
+
+---
 
 ## 🔍 Troubleshooting
 
@@ -177,23 +209,13 @@ cd windows-gaming-optimizer
 - **X3D performance inconsistent?** Check if AMD Chipset Drivers are installed (script will warn if missing)
 - **Network still laggy?** Check [DRIVER-LINKS.md](DRIVER-LINKS.md) for latest drivers
 
-## 📦 Software Installed
+---
 
-Via winget (automatic):
-- Steam
-- Discord
-- VLC Media Player
-- Brave Browser
-- Spotify
-- qBittorrent
-- Python 3.13 (for qBittorrent search plugins)
-- Zed Editor
-- Philips Hue Sync
+## 📖 Documentation
 
-**Post-install reminders:**
-- Spotify: Disable auto-start, set audio quality to "Very High"
-- qBittorrent: Install search plugins via View → Search Engine
-- Philips Hue Sync: Great for ambient lighting, but close before gaming if you experience stutters
+- **[DRIVER-LINKS.md](DRIVER-LINKS.md)** - Official driver downloads & BIOS settings
+
+---
 
 ## 🤝 Contributing
 
@@ -203,18 +225,24 @@ Contributions welcome! Please:
 3. Test thoroughly on Windows 11
 4. Submit a pull request
 
+---
+
 ## 📜 License
 
 MIT License - See LICENSE file for details.
+
+---
 
 ## ⚡ Credits
 
 Created with deep analysis of Windows gaming performance, DPC latency research, and community feedback.
 
 Special optimizations for:
-- AMD Ryzen 7900X3D/7950X3D (auto-detected)
+- AMD Ryzen 7800X3D/7900X3D/7950X3D/9800X3D (auto-detected)
 - Windows 11 22H2+
 - Windows X-Lite builds
+
+---
 
 ## 🔗 Resources
 
@@ -222,6 +250,8 @@ Special optimizations for:
 - [NVIDIA Drivers](https://www.nvidia.com/Download/index.aspx)
 - [LatencyMon](https://www.resplendence.com/latencymon) - DPC latency analysis
 - [HWiNFO64](https://www.hwinfo.com/) - Hardware monitoring
+
+---
 
 ## 📞 Support
 
