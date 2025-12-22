@@ -194,7 +194,7 @@
                     </div>
                     <div class="peripheral-column">
                         <p class="peripheral-title">More brands (manual download)</p>
-                        <p class="peripheral-note">Keyboards, mice, controllers, headsets</p>
+                        <p class="peripheral-note">Keyboards, mice, joysticks, headsets</p>
                         <div class="peripheral-scroll">
                             <div class="peripheral-links">
                                 <a class="peripheral-link" href="https://hyperxgaming.com/ngenuitydl" target="_blank" rel="noopener noreferrer">
@@ -451,7 +451,10 @@
                     </div>
                     <div class="wizard-actions">
                         <button type="button" id="wizard-cancel" class="btn-secondary">Cancel</button>
-                        <button type="button" id="wizard-confirm" class="download-btn">Enable This</button>
+                        <button type="button" id="wizard-confirm" class="download-btn">
+                            <span class="text">Enable This</span>
+                            <span class="shimmer"></span>
+                        </button>
                     </div>
                 </div>
             </dialog>
@@ -811,9 +814,13 @@
                     <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
                     Preview
                 </button>
-                <button type="button" id="download-btn" class="download-btn">
+                <button type="button" id="download-btn" class="download-btn" title="Download the generated PowerShell script">
+                    <div class="download-btn-content">
+                      <div>
                     <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                    Forge <code>rocktune-setup.ps1</code>
+                    <span class="text">Forge</span></div> <code>rocktune-setup.ps1</code>
+                    </div>
+                    <span class="shimmer"></span>
                 </button>
             </div>
 
@@ -851,7 +858,10 @@
                         </div>
                         <div class="cv-actions">
                             <button type="button" id="copy-script" class="btn-secondary">Copy</button>
-                            <button type="button" id="download-from-modal" class="download-btn">Download</button>
+                            <button type="button" id="download-from-modal" class="download-btn">
+                            <span class="text">Download</span>
+                            <span class="shimmer"></span>
+                        </button>
                         </div>
                     </div>
                 </div>

@@ -2,6 +2,25 @@
 /* Full interactive experience */
 
 :root {
+    /* Shimmer Effect - Dark Intense Green Gradient */
+    --shimmer-hue-1: 165deg;
+    --shimmer-sat-1: 100%;
+    --shimmer-lit-1: 25%;
+    --shimmer-hue-2: 145deg;
+    --shimmer-sat-2: 95%;
+    --shimmer-lit-2: 32%;
+    --shimmer-hue-3: 125deg;
+    --shimmer-sat-3: 90%;
+    --shimmer-lit-3: 38%;
+    --spring-duration: 0.5s;
+    --spring-easing: linear(
+        0, 0.002, 0.01 0.9%, 0.038 1.8%, 0.156, 0.312 5.8%, 0.789 11.1%, 1.015 14.2%,
+        1.096, 1.157, 1.199, 1.224 20.3%, 1.231, 1.231, 1.226, 1.214 24.6%,
+        1.176 26.9%, 1.057 32.6%, 1.007 35.5%, 0.984, 0.968, 0.956, 0.949 42%,
+        0.946 44.1%, 0.95 46.5%, 0.998 57.2%, 1.007, 1.011 63.3%, 1.012 68.3%,
+        0.998 84%, 1
+    );
+
     /* Colors */
     --bg-primary: #050507;
     --bg-secondary: #0a0a0f;
@@ -966,7 +985,7 @@ footer a:hover {
 }
 
 .peripheral-scroll {
-    max-height: 290px;
+    max-height: 385px;
     overflow-y: auto;
     padding-right: var(--space-sm);
     margin-right: calc(var(--space-sm) * -1);
@@ -3034,7 +3053,23 @@ fieldset label:hover input[type="checkbox"]:not(:checked) {
     flex-shrink: 0;
 }
 
-/* Download button */
+/* Download button with shimmer effect */
+@property --shimmer-mask {
+    syntax: "<angle>";
+    inherits: false;
+    initial-value: 33deg;
+}
+
+@keyframes shimmerWipe {
+    0% { mask-position: 200% center; }
+    100% { mask-position: 0% center; }
+}
+
+@keyframes shimmerTextWipe {
+    0% { background-position: center 200%; }
+    40%, 100% { background-position: center 0%; }
+}
+
 .download-btn {
     display: flex;
     align-items: center;
@@ -3042,87 +3077,146 @@ fieldset label:hover input[type="checkbox"]:not(:checked) {
     gap: var(--space-md);
     width: 100%;
     padding: var(--space-lg) var(--space-xl);
-    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dim) 100%);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: var(--radius);
-    color: white;
+    background-image: linear-gradient(
+        315deg,
+        hsl(var(--shimmer-hue-1), var(--shimmer-sat-1), var(--shimmer-lit-1)) 0%,
+        hsl(var(--shimmer-hue-2), var(--shimmer-sat-2), var(--shimmer-lit-2)) 47%,
+        hsl(var(--shimmer-hue-3), var(--shimmer-sat-3), var(--shimmer-lit-3)) 100%
+    );
+    border: none;
+    border-radius: 0.66em;
+    color: #fff;
     font-family: var(--font-display);
     font-size: 1.125rem;
     font-weight: 700;
     letter-spacing: 0.04em;
     text-transform: uppercase;
     cursor: pointer;
-    transition: all 0.3s var(--ease-out-expo);
     position: relative;
+    isolation: isolate;
     overflow: hidden;
     box-shadow:
-        0 0 20px var(--accent-glow),
-        0 4px 16px rgba(0, 0, 0, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2);
-    text-shadow:
-        0 0 8px rgba(255, 255, 255, 0.5),
-        0 0 16px rgba(139, 92, 246, 0.6),
-        0 0 24px rgba(139, 92, 246, 0.3);
+        0 2px 3px 1px hsl(150deg 80% 10% / 60%),
+        0 0 20px hsl(145deg 100% 30% / 30%);
+    scale: 1;
+    transition: all var(--spring-duration) var(--spring-easing);
+}
+.download-btn .download-btn-content {
+  display: grid;
 }
 
-.download-btn::before {
-    content: '';
+.download-btn .shimmer {
     position: absolute;
-    inset: 0;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-    transform: translateX(-100%);
-    transition: transform 0.6s;
+    inset: -38px;
+    border-radius: inherit;
+    mix-blend-mode: plus-lighter;
+    pointer-events: none;
 }
 
-/* Subtle pulse animation for Forge button */
-@keyframes forgePulse {
-    0%, 100% {
-        box-shadow:
-            0 0 20px var(--accent-glow),
-            0 4px 16px rgba(0, 0, 0, 0.3),
-            inset 0 1px 0 rgba(255, 255, 255, 0.2);
-    }
-    50% {
-        box-shadow:
-            0 0 30px var(--accent-glow-strong),
-            0 4px 16px rgba(0, 0, 0, 0.3),
-            inset 0 1px 0 rgba(255, 255, 255, 0.2);
-    }
+.download-btn .shimmer::before,
+.download-btn .shimmer::after {
+    transition: all 0.5s ease;
+    opacity: 0;
+    content: "";
+    border-radius: inherit;
+    position: absolute;
+    inset: 40px;
 }
 
-.download-btn {
-    animation: forgePulse 2.5s ease-in-out infinite;
+.download-btn .shimmer::before {
+    box-shadow:
+        0 0 4px 2px hsl(var(--shimmer-hue-3) 100% 50%),
+        0 0 10px 5px hsl(var(--shimmer-hue-2) 100% 45%),
+        0 0 20px 10px hsl(var(--shimmer-hue-1) 90% 35%),
+        0 0 35px 12px hsl(var(--shimmer-hue-2) 80% 25%);
+    z-index: -1;
 }
 
-.download-btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 12px 40px var(--accent-glow-strong);
-    text-shadow:
-        0 0 10px rgba(255, 255, 255, 0.7),
-        0 0 20px rgba(139, 92, 246, 0.8),
-        0 0 40px rgba(139, 92, 246, 0.5),
-        0 0 60px rgba(139, 92, 246, 0.3);
+.download-btn .shimmer::after {
+    box-shadow:
+        inset 0 0 0 1px hsl(var(--shimmer-hue-3) 100% 60%),
+        inset 0 0 4px 2px hsl(var(--shimmer-hue-2) 100% 50%),
+        inset 0 0 12px 2px hsl(var(--shimmer-hue-1) 90% 40%);
+    z-index: 2;
 }
 
-.download-btn:hover::before {
-    transform: translateX(100%);
+.download-btn:hover:not(:active):not([disabled]) {
+    scale: 1.05;
+    transition-duration: calc(var(--spring-duration) * 0.5);
 }
 
-.download-btn:active {
-    transform: translateY(-1px);
+.download-btn:active:not([disabled]) {
+    scale: 1.02;
+    transition-duration: calc(var(--spring-duration) * 0.5);
+}
+
+.download-btn:focus .shimmer,
+.download-btn:active .shimmer {
+    animation-play-state: paused !important;
+    mask-image: none !important;
+}
+
+.download-btn:hover:not([disabled]),
+.download-btn:hover:not([disabled]) .shimmer::before,
+.download-btn:hover:not([disabled]) .shimmer::after {
+    opacity: 1;
+}
+
+.download-btn .text {
+    color: transparent;
+    background-clip: text;
+    -webkit-background-clip: text;
+    background-color: #fff;
+    background-image: linear-gradient(
+        120deg,
+        transparent,
+        hsla(var(--shimmer-hue-3), 100%, 75%, 0.9) 40%,
+        hsla(120deg, 100%, 90%, 1) 50%,
+        transparent 52%
+    );
+    background-repeat: no-repeat;
+    background-size: 300% 300%;
+    background-position: center 200%;
+}
+
+.download-btn:not([disabled]):hover .text {
+    animation: shimmerTextWipe 0.66s ease-in-out 1;
+}
+
+.download-btn:not([disabled]) .shimmer::before,
+.download-btn:not([disabled]) .shimmer::after {
+    opacity: 1;
+}
+
+.download-btn:not([disabled]) .shimmer {
+    mask-image: linear-gradient(
+        90deg,
+        transparent 15%,
+        black 45%,
+        black 55%,
+        transparent 85%
+    );
+    mask-size: 200% 200%;
+    mask-position: center;
+    animation: shimmerWipe 3s linear infinite both -0.5s;
 }
 
 .download-btn .btn-icon {
     width: 20px;
     height: 20px;
     flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+    color: rgba(255, 255, 255, 0.95);
 }
 
 .download-btn code {
     font-family: var(--font-mono);
-    font-size: 0.9rem;
+    font-size: 0.7rem;
     font-weight: 500;
-    opacity: 0.9;
+    position: relative;
+    z-index: 1;
+    color: rgba(255, 255, 255, 0.9);
 }
 
 .instructions {
