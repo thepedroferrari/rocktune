@@ -336,11 +336,45 @@
                         <span class="preset-badge" hidden></span>
                         <span class="label-hint">Clean boots, prevents driver issues</span>
                     </label>
-                    <label data-opt="timer" data-tooltip="Installs a timer resolution tool that sets Windows timer to 0.5ms when gaming. Improves input responsiveness and frame pacing in many games.">
+                    <label data-opt="timer" data-tooltip="Installs a timer resolution tool that sets Windows timer to 0.5ms when gaming. Improves input responsiveness and frame pacing in many games. The default timer resolution is 15.6ms, which is not suitable for gaming (that's why valve defaults tick rate to 64 in public matches, 15.6ms * 64ticks ~= 1 second )">
                         <input type="checkbox" name="opt" value="timer" checked>
                         <span class="label-text">Timer Resolution Tool</span>
                         <span class="preset-badge" hidden></span>
                         <span class="label-hint">0.5ms timer for games</span>
+                    </label>
+                    <label data-opt="explorer_speed" data-tooltip="Stops Explorer from auto-detecting folder types (Documents, Pictures, etc). Speeds up folder browsing by skipping metadata scans.">
+                        <input type="checkbox" name="opt" value="explorer_speed">
+                        <span class="label-text">Explorer Speed</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint">Faster folder browsing</span>
+                    </label>
+                    <label data-opt="temp_purge" data-tooltip="Deletes temporary files from user and system TEMP folders. Frees space and avoids cache bloat.">
+                        <input type="checkbox" name="opt" value="temp_purge">
+                        <span class="label-text">Purge Temp Files</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint">Free disk space</span>
+                    </label>
+                </fieldset>
+
+                <fieldset class="tier-safe-field">
+                    <legend><span class="tier tier-safe">Safe</span> Performance</legend>
+                    <label data-opt="gamedvr" data-tooltip="Disables Xbox GameDVR and background recording. Removes capture overhead and Xbox DVR hooks for maximum FPS. Score: 8/10 impact.">
+                        <input type="checkbox" name="opt" value="gamedvr" checked>
+                        <span class="label-text">Disable GameDVR</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint">High impact — removes capture overhead</span>
+                    </label>
+                    <label data-opt="background_apps" data-tooltip="Stops Microsoft Store apps from running in the background. Prevents unwanted CPU/memory usage and network activity.">
+                        <input type="checkbox" name="opt" value="background_apps" checked>
+                        <span class="label-text">Block Background Apps</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint">Stop Store apps waking</span>
+                    </label>
+                    <label data-opt="razer_block" data-tooltip="Blocks Razer and OEM WPBT auto-install payloads. Prevents bloatware from being reinstalled after clean Windows installs.">
+                        <input type="checkbox" name="opt" value="razer_block">
+                        <span class="label-text">Block OEM Auto-Install</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint">Razer/WPBT bloat prevention</span>
                     </label>
                 </fieldset>
 
@@ -383,6 +417,22 @@
                 </fieldset>
 
                 <fieldset class="tier-safe-field">
+                    <legend><span class="tier tier-safe">Safe</span> Privacy</legend>
+                    <label data-opt="edge_debloat" data-tooltip="Applies Edge browser policies to disable rewards, popups, and extra telemetry. Reduces background browser tasks.">
+                        <input type="checkbox" name="opt" value="edge_debloat" checked>
+                        <span class="label-text">Edge Debloat</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint">No rewards/popups/telemetry</span>
+                    </label>
+                    <label data-opt="copilot_disable" data-tooltip="Disables Microsoft Copilot completely. Removes Copilot surface and background hooks. Windows 11 only.">
+                        <input type="checkbox" name="opt" value="copilot_disable" checked>
+                        <span class="label-text">Disable Copilot</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint">Remove AI assistant hooks</span>
+                    </label>
+                </fieldset>
+
+                <fieldset class="tier-safe-field">
                     <legend><span class="tier tier-safe">Safe</span> Audio</legend>
                     <label data-opt="audio_enhancements" data-tooltip="Disables Windows audio enhancements (spatial sound, equalizer, etc.). Reduces audio processing latency for more responsive sound in games.">
                         <input type="checkbox" name="opt" value="audio_enhancements" checked>
@@ -394,6 +444,16 @@
             </div>
 
             <div class="upgrades-grid upgrades-grid--danger">
+                <fieldset class="tier-caution-field">
+                    <legend><span class="tier tier-caution">Caution</span> Power</legend>
+                    <label data-opt="ultimate_perf" data-tooltip="Adds and activates the Ultimate Performance power plan. Biases scheduler and power to maximum performance. ⚠️ High idle power/thermals — avoid on laptops.">
+                        <input type="checkbox" name="opt" value="ultimate_perf">
+                        <span class="label-text">Ultimate Performance</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint">Max power plan (high idle power)</span>
+                    </label>
+                </fieldset>
+
                 <fieldset class="tier-caution-field">
                     <legend><span class="tier tier-caution">Caution</span> Experimental</legend>
                     <label data-opt="msi_mode" data-tooltip="Enables Message Signaled Interrupts for your GPU. Can reduce interrupt latency but may cause issues on some systems. Benchmark before/after.">
@@ -419,6 +479,40 @@
                         <span class="label-text">Enable HAGS</span>
                         <span class="preset-badge" hidden></span>
                         <span class="label-hint">GPU scheduling (test first)</span>
+                    </label>
+                    <label data-opt="fso_disable" data-tooltip="Disables Fullscreen Optimizations globally. Helps legacy titles but may affect HDR and color management in exclusive fullscreen modes.">
+                        <input type="checkbox" name="opt" value="fso_disable">
+                        <span class="label-text">Disable FSO</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint">May impact HDR/color</span>
+                    </label>
+                    <label data-opt="services_trim" data-tooltip="Sets non-critical Windows services to manual start. Trims idle wakeups and reduces background resource usage. Safe curated list only.">
+                        <input type="checkbox" name="opt" value="services_trim">
+                        <span class="label-text">Trim Services</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint">Non-critical to manual</span>
+                    </label>
+                    <label data-opt="disk_cleanup" data-tooltip="Runs Disk Cleanup with ResetBase to reclaim space from Windows Update cache. Useful pre-update. Small performance gain from freeing disk.">
+                        <input type="checkbox" name="opt" value="disk_cleanup">
+                        <span class="label-text">Disk Cleanup</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint">ResetBase + cleanup</span>
+                    </label>
+                </fieldset>
+
+                <fieldset class="tier-risky-field">
+                    <legend><span class="tier tier-risky">Risky</span> Network</legend>
+                    <label data-opt="ipv4_prefer" data-tooltip="⚠️ Prefers IPv4 over IPv6. Can reduce latency on misconfigured LANs but may break IPv6-only paths, Xbox, or Store features.">
+                        <input type="checkbox" name="opt" value="ipv4_prefer">
+                        <span class="label-text">Prefer IPv4</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint"><svg class="warning-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> May break Xbox/Store</span>
+                    </label>
+                    <label data-opt="teredo_disable" data-tooltip="⚠️ Disables Teredo IPv6 tunneling. Can reduce latency/jitter but may break Xbox Live connectivity in some cases.">
+                        <input type="checkbox" name="opt" value="teredo_disable">
+                        <span class="label-text">Disable Teredo</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint"><svg class="warning-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> May affect Xbox Live</span>
                     </label>
                 </fieldset>
 

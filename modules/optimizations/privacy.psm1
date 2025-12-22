@@ -1,4 +1,4 @@
-﻿#Requires -RunAsAdministrator
+#Requires -RunAsAdministrator
 
 <#
 .SYNOPSIS
@@ -370,6 +370,77 @@ function Remove-XboxApps {
 
 #endregion
 
+#region Additional Privacy Toggles
+
+<#
+.SYNOPSIS
+    Disable background Store apps
+.DESCRIPTION
+    Blocks Store apps from running in the background to reduce wakeups.
+#>
+function Set-BackgroundAppsOff {
+    try {
+        $path = "HKCU:\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications"
+        Backup-RegistryKey -Path $path
+        Set-RegistryValue -Path $path -Name "GlobalUserDisabled" -Value 1 -Type "DWORD"
+
+        $searchPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Search"
+        Backup-RegistryKey -Path $searchPath
+        Set-RegistryValue -Path $searchPath -Name "BackgroundAppGlobalToggle" -Value 0 -Type "DWORD"
+
+        Write-Log "Background Store apps disabled" "SUCCESS"
+    } catch {
+        Write-Log "Error disabling background apps: $_" "ERROR"
+        throw
+    }
+}
+
+<#
+.SYNOPSIS
+    Apply Edge debloat policies
+.DESCRIPTION
+    Removes first run, rewards, widget, shopping assistant noise.
+#>
+function Apply-EdgeDebloat {
+    try {
+        $edge = "HKLM:\SOFTWARE\Policies\Microsoft\Edge"
+        Backup-RegistryKey -Path $edge
+        Set-RegistryValue -Path $edge -Name "HideFirstRunExperience" -Value 1 -Type "DWORD"
+        Set-RegistryValue -Path $edge -Name "EdgeShoppingAssistantEnabled" -Value 0 -Type "DWORD"
+        Set-RegistryValue -Path $edge -Name "WebWidgetAllowed" -Value 0 -Type "DWORD"
+        Set-RegistryValue -Path $edge -Name "NewTabPageCompanyLogoVisible" -Value 0 -Type "DWORD"
+        Write-Log "Applied Edge debloat policies" "SUCCESS"
+    } catch {
+        Write-Log "Error applying Edge debloat: $_" "ERROR"
+        throw
+    }
+}
+
+<#
+.SYNOPSIS
+    Disable Microsoft Copilot surface/background hooks
+.DESCRIPTION
+    Win11 guard; no-op on Win10.
+#>
+function Disable-Copilot {
+    try {
+        $userCopilot = "HKCU:\SOFTWARE\Microsoft\Windows\Shell\CopilotAI"
+        Backup-RegistryKey -Path $userCopilot
+        Set-RegistryValue -Path $userCopilot -Name "IsCopilotAllowed" -Value 0 -Type "DWORD"
+
+        $policyCopilot = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsCopilot"
+        Backup-RegistryKey -Path $policyCopilot
+        Set-RegistryValue -Path $policyCopilot -Name "TurnOffWindowsCopilot" -Value 1 -Type "DWORD"
+
+        Write-Log "Disabled Copilot (Win11 guard, harmless on Win10)" "SUCCESS"
+    } catch {
+        Write-Log "Error disabling Copilot: $_" "ERROR"
+        throw
+    }
+}
+
+#endregion
+
 #region Main Functions
 
 <#
@@ -394,7 +465,10 @@ function Invoke-PrivacyOptimizations {
         [bool]$Tier2Moderate = $false,
         [bool]$Tier3Aggressive = $false,
         [bool]$RemoveBloatware = $true,
-        [bool]$RemoveXboxApps = $false
+        [bool]$RemoveXboxApps = $false,
+        [bool]$BackgroundAppsOff = $true,
+        [bool]$EdgeDebloat = $true,
+        [bool]$DisableCopilot = $true
     )
 
     Write-Log "Applying privacy optimizations..." "INFO"
@@ -423,6 +497,18 @@ function Invoke-PrivacyOptimizations {
         # Xbox apps removal (opt-in, BREAKS Game Pass)
         if ($RemoveXboxApps) {
             Remove-XboxApps
+        }
+
+        if ($BackgroundAppsOff) {
+            Set-BackgroundAppsOff
+        }
+
+        if ($EdgeDebloat) {
+            Apply-EdgeDebloat
+        }
+
+        if ($DisableCopilot) {
+            Disable-Copilot
         }
 
         Write-Log "Privacy optimizations complete" "SUCCESS"
@@ -470,7 +556,12 @@ function Undo-PrivacyOptimizations {
             "HKCU:\Software\Microsoft\Clipboard",
             "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\DataCollection",
             "HKLM:\SOFTWARE\Microsoft\Windows\Windows Error Reporting",
-            "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\DeliveryOptimization\Config"
+            "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\DeliveryOptimization\Config",
+            "HKCU:\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications",
+            "HKCU:\Software\Microsoft\Windows\CurrentVersion\Search",
+            "HKLM:\SOFTWARE\Policies\Microsoft\Edge",
+            "HKCU:\SOFTWARE\Microsoft\Windows\Shell\CopilotAI",
+            "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsCopilot"
         )
 
         foreach ($path in $paths) {
@@ -496,6 +587,9 @@ Export-ModuleMember -Function @(
     'Apply-PrivacyTier3Aggressive',
     'Remove-Bloatware',
     'Remove-XboxApps',
+    'Set-BackgroundAppsOff',
+    'Apply-EdgeDebloat',
+    'Disable-Copilot',
     'Test-PrivacyOptimizations',
     'Invoke-PrivacyOptimizations',
     'Undo-PrivacyOptimizations'

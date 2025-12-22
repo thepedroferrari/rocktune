@@ -72,4 +72,12 @@ export function setupFormListeners(): void {
       })
     },
   )
+
+  // Selectors that influence script output
+  ;['#dns-provider', '#telemetry-level'].forEach((selector) => {
+    const el = document.querySelector<HTMLSelectElement>(selector)
+    el?.addEventListener('change', () => {
+      document.dispatchEvent(new CustomEvent('script-change-request'))
+    })
+  })
 }

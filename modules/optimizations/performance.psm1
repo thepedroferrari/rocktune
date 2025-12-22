@@ -1,4 +1,4 @@
-﻿#Requires -RunAsAdministrator
+#Requires -RunAsAdministrator
 
 <#
 .SYNOPSIS
@@ -393,6 +393,72 @@ function Enable-GameMode {
     }
 }
 
+<#
+.SYNOPSIS
+    Disable GameDVR capture
+.DESCRIPTION
+    Removes background capture overhead and DVR hooks.
+.PARAMETER Enable
+    When $true (default), applies disablement. If $false, skip.
+#>
+function Set-GameDVR {
+    param(
+        [bool]$Enable = $true
+    )
+
+    if (-not $Enable) {
+        Write-Log "GameDVR disable skipped by config" "INFO"
+        return
+    }
+
+    try {
+        $dvrPath = "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\GameDVR"
+        Backup-RegistryKey -Path $dvrPath
+        Set-RegistryValue -Path $dvrPath -Name "AppCaptureEnabled" -Value 0 -Type "DWORD"
+        Set-RegistryValue -Path $dvrPath -Name "GameDVR_Enabled" -Value 0 -Type "DWORD"
+
+        $configStore = "HKCU:\System\GameConfigStore"
+        Backup-RegistryKey -Path $configStore
+        Set-RegistryValue -Path $configStore -Name "GameDVR_FSEBehaviorMode" -Value 2 -Type "DWORD"
+        Set-RegistryValue -Path $configStore -Name "GameDVR_HonorUserFSEBehaviorMode" -Value 1 -Type "DWORD"
+
+        Write-Log "GameDVR disabled (capture + FSE behavior)" "SUCCESS"
+    } catch {
+        Write-Log "Error disabling GameDVR: $_" "ERROR"
+        throw
+    }
+}
+
+<#
+.SYNOPSIS
+    Disable Fullscreen Optimizations
+.DESCRIPTION
+    Helps legacy titles; may impact HDR/color-managed modes.
+.PARAMETER Enable
+    When $true (default), applies FSO disablement.
+#>
+function Set-FullscreenOptimizations {
+    param(
+        [bool]$Enable = $true
+    )
+
+    if (-not $Enable) {
+        Write-Log "FSO disable skipped by config" "INFO"
+        return
+    }
+
+    try {
+        $configStore = "HKCU:\System\GameConfigStore"
+        Backup-RegistryKey -Path $configStore
+        Set-RegistryValue -Path $configStore -Name "GameDVR_FSEBehaviorMode" -Value 2 -Type "DWORD"
+        Set-RegistryValue -Path $configStore -Name "GameDVR_HonorUserFSEBehaviorMode" -Value 1 -Type "DWORD"
+        Write-Log "Fullscreen Optimizations disabled (watch HDR/color-managed titles)" "SUCCESS"
+    } catch {
+        Write-Log "Error disabling Fullscreen Optimizations: $_" "ERROR"
+        throw
+    }
+}
+
 #endregion
 
 #region Main Functions
@@ -410,12 +476,18 @@ function Enable-GameMode {
 function Invoke-PerformanceOptimizations {
     param(
         [bool]$DisableHPET = $false,
-        [bool]$DisableCoreParking = $false
+        [bool]$DisableCoreParking = $false,
+        [bool]$DisableGameDVR = $true,
+        [bool]$DisableFSO = $true
     )
 
     Write-Log "Applying performance optimizations..." "INFO"
 
     try {
+        # GameDVR + FSO
+        Set-GameDVR -Enable $DisableGameDVR
+        Set-FullscreenOptimizations -Enable $DisableFSO
+
         # HPET (opt-in only, default: keep enabled)
         Disable-HPET -Enable $DisableHPET
 
@@ -468,7 +540,9 @@ function Undo-PerformanceOptimizations {
             "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile",
             "HKLM:\SYSTEM\CurrentControlSet\Control\Power",
             "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games",
-            "HKLM:\SOFTWARE\Microsoft\PolicyManager\default\ApplicationManagement\AllowGameMode"
+            "HKLM:\SOFTWARE\Microsoft\PolicyManager\default\ApplicationManagement\AllowGameMode",
+            "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\GameDVR",
+            "HKCU:\System\GameConfigStore"
         )
 
         foreach ($path in $paths) {
@@ -496,6 +570,8 @@ Export-ModuleMember -Function @(
     'Set-TimerResolution',
     'Set-MMCSSGamingTweaks',
     'Enable-GameMode',
+    'Set-GameDVR',
+    'Set-FullscreenOptimizations',
     'Test-PerformanceOptimizations',
     'Invoke-PerformanceOptimizations',
     'Undo-PerformanceOptimizations'

@@ -1,4 +1,4 @@
-﻿#Requires -RunAsAdministrator
+#Requires -RunAsAdministrator
 
 <#
 .SYNOPSIS
@@ -62,6 +62,58 @@ function Test-PowerOptimizations {
 #endregion
 
 #region Apply Functions
+
+<#
+.SYNOPSIS
+    Add and activate Ultimate Performance power plan
+.DESCRIPTION
+    Adds the hidden Ultimate Performance power plan and activates it.
+    Biases scheduler and power to maximum performance.
+    Score: 7/10 impact in PRD rubric.
+
+    WEB_CONFIG: power.ultimate_performance_plan (boolean, default: false)
+    Description: "Add and activate Ultimate Performance power plan"
+    Risk Level: TIER_1_LOW
+    Risk Note: High idle power/thermals; avoid on laptops
+    Source: winutil tweaks: WPFAddUltPerf
+#>
+function Set-UltimatePerformancePlan {
+    try {
+        Write-Log "Adding Ultimate Performance power plan..." "INFO"
+
+        # Ultimate Performance GUID (hidden by default on non-workstation editions)
+        $ultPerfGuid = "e9a42b02-d5df-448d-aa00-03f14749eb61"
+
+        # Try to duplicate the hidden scheme
+        $result = powercfg /duplicatescheme $ultPerfGuid 2>&1
+        if ($LASTEXITCODE -eq 0) {
+            # Extract the new GUID from output
+            $newGuid = $result -replace '.*GUID:\s*', '' -replace '\s*\(.*', ''
+            if ($newGuid) {
+                powercfg /setactive $newGuid.Trim() 2>&1 | Out-Null
+                Write-Log "Ultimate Performance plan created and activated" "SUCCESS"
+                Write-Log "Warning: High idle power/thermals - avoid on laptops" "INFO"
+                return
+            }
+        }
+
+        # Fallback: activate existing Ultimate Performance if already present
+        $existingUlt = powercfg /list | Select-String "Ultimate Performance" | ForEach-Object { ($_ -split '\s+')[3] }
+        if ($existingUlt) {
+            powercfg /setactive $existingUlt 2>&1 | Out-Null
+            Write-Log "Activated existing Ultimate Performance plan" "SUCCESS"
+            return
+        }
+
+        # Final fallback: use High Performance
+        Write-Log "Ultimate Performance not available, using High Performance" "INFO"
+        Set-PowerPlan
+
+    } catch {
+        Write-Log "Error setting Ultimate Performance: $_" "ERROR"
+        throw
+    }
+}
 
 <#
 .SYNOPSIS
@@ -307,6 +359,7 @@ function Undo-PowerOptimizations {
 # Export functions
 Export-ModuleMember -Function @(
     'Set-PowerPlan',
+    'Set-UltimatePerformancePlan',
     'Disable-PCIeLinkState',
     'Disable-USBSelectiveSuspend',
     'Set-ProcessorIdlePolicy',

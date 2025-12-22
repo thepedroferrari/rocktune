@@ -10,9 +10,13 @@ export interface Preset {
 
 type PresetName = 'competitive' | 'streaming' | 'balanced' | 'minimal'
 
+// PRD: Extreme Gamers profile definitions
+// Principles: FPS first, offline-friendly, power-hungry allowed, clear reversibility
 export const presets: Record<PresetName, Preset> = {
   competitive: {
+    // Max FPS / lowest latency; accepts UX/power cost
     opts: [
+      // Safe tier (all enabled)
       'pagefile',
       'fastboot',
       'timer',
@@ -22,25 +26,60 @@ export const presets: Record<PresetName, Preset> = {
       'dns',
       'nagle',
       'audio_enhancements',
+      'gamedvr', // Score 8: Critical for FPS
+      'background_apps', // Score 6: Stop background wakeups
+      'edge_debloat',
+      'copilot_disable',
+      'explorer_speed',
+      'temp_purge',
+      'razer_block',
+      // Caution tier (aggressive)
       'msi_mode',
       'game_bar',
+      'fso_disable', // May affect HDR
+      'ultimate_perf', // High power plan
+      'services_trim',
+      'disk_cleanup',
+      // Risky tier (network)
+      'privacy_tier2', // Aggressive telemetry
+      'ipv4_prefer',
+      'teredo_disable',
     ],
     software: ['steam', 'discord'],
   },
   streaming: {
+    // Low-latency but stable for capture/encoders
     opts: [
+      // Safe tier
       'pagefile',
       'fastboot',
+      'timer',
       'power_plan',
       'usb_power',
       'pcie_power',
       'dns',
       'audio_enhancements',
+      'gamedvr', // Still disable DVR (use OBS instead)
+      'background_apps',
+      'edge_debloat',
+      'copilot_disable',
+      'explorer_speed',
+      'temp_purge',
+      'razer_block',
+      // Caution tier (more conservative)
+      'fso_disable',
+      'ultimate_perf',
+      'services_trim',
+      'disk_cleanup',
+      // Privacy: safe level only
+      'privacy_tier1',
     ],
     software: ['steam', 'discord', 'obs', 'vlc', '7zip'],
   },
   balanced: {
+    // Sensible gains without risky toggles
     opts: [
+      // Safe tier
       'pagefile',
       'fastboot',
       'timer',
@@ -50,11 +89,32 @@ export const presets: Record<PresetName, Preset> = {
       'dns',
       'nagle',
       'audio_enhancements',
+      'gamedvr',
+      'background_apps',
+      'edge_debloat',
+      'copilot_disable',
+      'explorer_speed',
+      'temp_purge',
+      'razer_block',
+      // Caution tier (conservative)
+      'disk_cleanup',
+      // Privacy: safe level
+      'privacy_tier1',
     ],
     software: ['steam', 'discord', 'vlc', '7zip'],
   },
   minimal: {
-    opts: ['fastboot', 'power_plan', 'dns'],
+    // Bare minimum for FPS; almost no risk
+    opts: [
+      // Only the safest, most impactful
+      'dns',
+      'gamedvr', // Even minimal should disable DVR
+      'background_apps',
+      'edge_debloat',
+      'copilot_disable',
+      'temp_purge',
+      'razer_block',
+    ],
     software: ['steam', '7zip'],
   },
 }

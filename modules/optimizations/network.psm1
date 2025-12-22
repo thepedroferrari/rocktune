@@ -1,4 +1,4 @@
-﻿#Requires -RunAsAdministrator
+#Requires -RunAsAdministrator
 
 <#
 .SYNOPSIS
@@ -171,7 +171,7 @@ function Set-NetworkAdapterOptimizations {
 #>
 function Set-DNSProvider {
     param(
-        [ValidateSet("cloudflare", "google", "quad9", "isp")]
+        [ValidateSet("cloudflare", "google", "quad9", "adguard", "opendns", "isp")]
         [string]$Provider = "cloudflare"
     )
 
@@ -197,6 +197,16 @@ function Set-DNSProvider {
                 $primaryDNS = "9.9.9.9"
                 $secondaryDNS = "149.112.112.112"
                 Write-Log "Setting Quad9 DNS (high privacy, blocks malware)" "INFO"
+            }
+            "adguard" {
+                $primaryDNS = "94.140.14.14"
+                $secondaryDNS = "94.140.15.15"
+                Write-Log "Setting AdGuard DNS (privacy + blocking)" "INFO"
+            }
+            "opendns" {
+                $primaryDNS = "208.67.222.222"
+                $secondaryDNS = "208.67.220.220"
+                Write-Log "Setting OpenDNS (reliable, filtering options)" "INFO"
             }
             "isp" {
                 Set-DnsClientServerAddress -InterfaceIndex $adapter.InterfaceIndex -ResetServerAddresses
@@ -229,6 +239,60 @@ function Set-DNSProvider {
     } catch {
         Write-Log "Error configuring DNS: $_" "ERROR"
         throw
+    }
+}
+
+<#
+.SYNOPSIS
+    Prefer IPv4 over IPv6
+.DESCRIPTION
+    Sets DisabledComponents to prefer IPv4. Requires reboot.
+.PARAMETER Enable
+    Apply change when $true.
+#>
+function Set-IPv4Preference {
+    param(
+        [bool]$Enable = $false
+    )
+
+    if (-not $Enable) {
+        Write-Log "IPv4 preference skipped" "INFO"
+        return
+    }
+
+    try {
+        $path = "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip6\Parameters"
+        Backup-RegistryKey -Path $path
+        Set-RegistryValue -Path $path -Name "DisabledComponents" -Value 32 -Type "DWORD"
+        Write-Log "Set IPv4 preference over IPv6 (reboot required)" "SUCCESS"
+    } catch {
+        Write-Log "Error setting IPv4 preference: $_" "ERROR"
+    }
+}
+
+<#
+.SYNOPSIS
+    Disable Teredo tunneling
+.DESCRIPTION
+    Removes Teredo to reduce jitter; may affect Xbox Live/Store connectivity.
+.PARAMETER Enable
+    Apply change when $true.
+#>
+function Disable-Teredo {
+    param(
+        [bool]$Enable = $false
+    )
+
+    if (-not $Enable) {
+        Write-Log "Teredo disable skipped" "INFO"
+        return
+    }
+
+    try {
+        netsh interface teredo set state disabled 2>&1 | Out-Null
+        Write-Log "Teredo disabled (reboot recommended)" "SUCCESS"
+    } catch {
+        Write-Log "Error disabling Teredo: $_" "ERROR"
     }
 }
 
@@ -276,6 +340,89 @@ function Set-QoSConfiguration {
 
 #endregion
 
+#region PRD New Network Functions
+
+<#
+.SYNOPSIS
+    Prefer IPv4 over IPv6
+.DESCRIPTION
+    Configures Windows to prefer IPv4 over IPv6 connections.
+    Can reduce latency on misconfigured LANs but may break IPv6-only paths.
+    Score: 5/10 impact in PRD rubric.
+
+    WEB_CONFIG: network.ipv4_prefer (boolean, default: false)
+    Description: "Prefer IPv4 over IPv6 (risk: IPv6/Xbox features)"
+    Risk Level: TIER_2_MED
+    Risk Note: May break IPv6-only paths or some Xbox/Store flows
+    Source: winutil tweaks: WPFTweaksIPv46
+#>
+function Set-IPv4Preference {
+    try {
+        Write-Log "Setting IPv4 preference..." "INFO"
+
+        $ipv6Path = "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip6\Parameters"
+        Backup-RegistryKey -Path $ipv6Path
+
+        # Value 32 = Prefer IPv4 over IPv6 (see Microsoft KB 929852)
+        Set-RegistryValue -Path $ipv6Path -Name "DisabledComponents" -Value 32 -Type "DWORD"
+
+        Write-Log "IPv4 preferred over IPv6" "SUCCESS"
+        Write-Log "Warning: May break IPv6-only paths or Xbox/Store features" "INFO"
+        Write-Log "Requires reboot to take effect" "INFO"
+
+    } catch {
+        Write-Log "Error setting IPv4 preference: $_" "ERROR"
+        throw
+    }
+}
+
+<#
+.SYNOPSIS
+    Disable Teredo IPv6 tunneling
+.DESCRIPTION
+    Disables Teredo IPv6 tunneling which can add latency/jitter.
+    Score: 5/10 impact in PRD rubric.
+
+    WEB_CONFIG: network.teredo_disable (boolean, default: false)
+    Description: "Disable Teredo IPv6 tunneling (may affect Xbox Live)"
+    Risk Level: TIER_2_MED
+    Risk Note: May break Xbox Live connectivity in some cases
+    Source: winutil tweaks: WPFTweaksTeredo
+#>
+function Disable-Teredo {
+    try {
+        Write-Log "Disabling Teredo IPv6 tunneling..." "INFO"
+
+        # Disable via netsh
+        $result = netsh interface teredo set state disabled 2>&1
+        if ($LASTEXITCODE -eq 0) {
+            Write-Log "Teredo disabled via netsh" "SUCCESS"
+        }
+
+        # Also set registry
+        $ipv6Path = "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip6\Parameters"
+        Backup-RegistryKey -Path $ipv6Path
+
+        # Get current value and add Teredo disable flag if not present
+        $currentValue = Get-RegistryValue -Path $ipv6Path -Name "DisabledComponents"
+        if ($null -eq $currentValue) { $currentValue = 0 }
+
+        # Value 1 = Disable Teredo
+        $newValue = $currentValue -bor 1
+        Set-RegistryValue -Path $ipv6Path -Name "DisabledComponents" -Value $newValue -Type "DWORD"
+
+        Write-Log "Teredo IPv6 tunneling disabled" "SUCCESS"
+        Write-Log "Warning: May break Xbox Live connectivity" "INFO"
+        Write-Log "Requires reboot to take effect" "INFO"
+
+    } catch {
+        Write-Log "Error disabling Teredo: $_" "ERROR"
+        throw
+    }
+}
+
+#endregion
+
 #region Main Functions
 
 <#
@@ -291,17 +438,29 @@ function Set-QoSConfiguration {
     Enable QoS policies (requires Pro/Enterprise)
 .PARAMETER GameExecutables
     Game executables for QoS policies
+.PARAMETER PreferIPv4
+    Prefer IPv4 over IPv6 (opt-in, may break Xbox/Store)
+.PARAMETER DisableTeredo
+    Disable Teredo tunneling (opt-in, may break Xbox Live)
 #>
 function Invoke-NetworkOptimizations {
     param(
-        [ValidateSet("cloudflare", "google", "quad9", "isp")]
+        [ValidateSet("cloudflare", "google", "quad9", "adguard", "opendns", "isp")]
         [string]$DNSProvider = "cloudflare",
 
         [bool]$DisableRSC = $false,
 
+        [bool]$PreferIPv4 = $false,
+
+        [bool]$DisableTeredo = $false,
+
         [bool]$EnableQoS = $false,
 
-        [string[]]$GameExecutables = @("cs2.exe", "dota2.exe", "helldivers2.exe", "SpaceMarine2.exe")
+        [string[]]$GameExecutables = @("cs2.exe", "dota2.exe", "helldivers2.exe", "SpaceMarine2.exe"),
+
+        # PRD new parameters
+        [bool]$PreferIPv4 = $false,
+        [bool]$DisableTeredo = $false
     )
 
     Write-Log "Applying network optimizations..." "INFO"
@@ -313,9 +472,25 @@ function Invoke-NetworkOptimizations {
         # DNS provider
         Set-DNSProvider -Provider $DNSProvider
 
+        # IPv4 preference
+        Set-IPv4Preference -Enable $PreferIPv4
+
+        # Teredo tunneling
+        Disable-Teredo -Enable $DisableTeredo
+
         # QoS (opt-in)
         if ($EnableQoS) {
             Set-QoSConfiguration -GameExecutables $GameExecutables
+        }
+
+        # PRD: IPv4 preference (opt-in, risky)
+        if ($PreferIPv4) {
+            Set-IPv4Preference
+        }
+
+        # PRD: Teredo disable (opt-in, risky)
+        if ($DisableTeredo) {
+            Disable-Teredo
         }
 
         Write-Log "Network optimizations complete" "SUCCESS"
@@ -342,6 +517,15 @@ function Undo-NetworkOptimizations {
             Set-DnsClientServerAddress -InterfaceIndex $adapter.InterfaceIndex -ResetServerAddresses
             Write-Log "Restored ISP default DNS" "SUCCESS"
         }
+
+        # Restore IPv6 defaults
+        try {
+            Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip6\Parameters" -Name "DisabledComponents" -Value 0 -ErrorAction SilentlyContinue
+            Write-Log "Restored IPv6 component defaults" "SUCCESS"
+        } catch {}
+
+        # Restore Teredo
+        try { netsh interface teredo set state default 2>&1 | Out-Null } catch {}
 
         # Remove QoS policies
         $qosPolicies = Get-NetQosPolicy | Where-Object { $_.Name -like "Game-*" }
@@ -371,7 +555,11 @@ Export-ModuleMember -Function @(
     'Get-ActiveNetworkAdapter',
     'Set-NetworkAdapterOptimizations',
     'Set-DNSProvider',
+    'Set-IPv4Preference',
+    'Disable-Teredo',
     'Set-QoSConfiguration',
+    'Set-IPv4Preference',
+    'Disable-Teredo',
     'Test-NetworkOptimizations',
     'Invoke-NetworkOptimizations',
     'Undo-NetworkOptimizations'

@@ -1,4 +1,4 @@
-﻿#Requires -RunAsAdministrator
+#Requires -RunAsAdministrator
 
 <#
 .SYNOPSIS
@@ -250,6 +250,121 @@ function Disable-FastStartup {
     }
 }
 
+<#
+.SYNOPSIS
+    Disable Explorer auto folder-type detection
+.DESCRIPTION
+    Prevents Explorer from rescanning folder types; improves responsiveness.
+#>
+function Disable-ExplorerAutoType {
+    try {
+        $shellPath = "HKCU:\Software\Classes\Local Settings\Software\Microsoft\Windows\Shell\Bags\AllFolders\Shell"
+        Backup-RegistryKey -Path $shellPath
+        Set-RegistryValue -Path $shellPath -Name "FolderType" -Value "NotSpecified" -Type "String"
+        Write-Log "Disabled Explorer auto folder-type detection" "SUCCESS"
+    } catch {
+        Write-Log "Error disabling Explorer auto-type: $_" "ERROR"
+        throw
+    }
+}
+
+<#
+.SYNOPSIS
+    Run Disk Cleanup (ResetBase)
+.DESCRIPTION
+    Frees component store space before updates.
+#>
+function Invoke-DiskCleanup {
+    try {
+        Dism.exe /Online /Cleanup-Image /StartComponentCleanup /ResetBase 2>&1 | Out-Null
+        Write-Log "Disk cleanup complete" "SUCCESS"
+    } catch {
+        Write-Log "Error running Disk Cleanup: $_" "ERROR"
+        throw
+    }
+}
+
+<#
+.SYNOPSIS
+    Purge TEMP folders
+.DESCRIPTION
+    Clears user and system temp to avoid cache bloat.
+#>
+function Invoke-TempPurge {
+    try {
+        $tempPaths = @("$env:TEMP","$env:WINDIR\Temp")
+        foreach ($p in $tempPaths) {
+            if (Test-Path $p) {
+                Get-ChildItem -Path $p -Recurse -Force -ErrorAction SilentlyContinue | Remove-Item -Force -Recurse -ErrorAction SilentlyContinue
+            }
+        }
+        Write-Log "Temp folders cleared" "SUCCESS"
+    } catch {
+        Write-Log "Error purging temp folders: $_" "ERROR"
+        throw
+    }
+}
+
+<#
+.SYNOPSIS
+    Trim non-critical services to Manual
+.DESCRIPTION
+    Sets curated list of services to Manual and stops them.
+#>
+function Set-ServiceTrimSafe {
+    param(
+        [bool]$Enable = $true
+    )
+
+    if (-not $Enable) {
+        Write-Log "Service trim skipped" "INFO"
+        return
+    }
+
+    $services = @("DiagTrack","dmwappushservice","lfsvc","RetailDemo","Fax","SharedAccess","XblGameSave","XblAuthManager","XboxNetApiSvc")
+
+    foreach ($svc in $services) {
+        try {
+            Set-Service -Name $svc -StartupType Manual -EA SilentlyContinue
+            Stop-Service -Name $svc -Force -EA SilentlyContinue
+            Write-Log "Trimmed service to Manual: $svc" "SUCCESS"
+        } catch {
+            Write-Log "Could not trim service $svc : $_" "ERROR"
+        }
+    }
+}
+
+<#
+.SYNOPSIS
+    Block Razer/OEM auto-installs
+.DESCRIPTION
+    Disables Razer-related services/tasks if present to avoid WPBT-style installs.
+#>
+function Disable-RazerAutoInstall {
+    param(
+        [bool]$Enable = $true
+    )
+
+    if (-not $Enable) {
+        Write-Log "Razer/OEM block skipped" "INFO"
+        return
+    }
+
+    try {
+        $razerServices = Get-Service | Where-Object { $_.Name -like "Razer*" }
+        foreach ($svc in $razerServices) {
+            try { Stop-Service $svc -Force -EA SilentlyContinue; Set-Service $svc -StartupType Disabled -EA SilentlyContinue } catch {}
+        }
+
+        $razerTasks = Get-ScheduledTask | Where-Object { $_.TaskName -like "*Razer*" }
+        if ($razerTasks) { $razerTasks | Disable-ScheduledTask -EA SilentlyContinue | Out-Null }
+
+        Write-Log "Razer/OEM auto-install payloads blocked (services/tasks disabled)" "SUCCESS"
+    } catch {
+        Write-Log "Error blocking Razer/OEM auto-installs: $_" "ERROR"
+    }
+}
+
 #endregion
 
 #region Main Functions
@@ -265,7 +380,12 @@ function Disable-FastStartup {
 #>
 function Invoke-SystemOptimizations {
     param(
-        [bool]$DisableMemoryCompression = $false
+        [bool]$DisableMemoryCompression = $false,
+        [bool]$DisableExplorerAutoType = $true,
+        [bool]$RunDiskCleanup = $true,
+        [bool]$RunTempPurge = $true,
+        [bool]$ServiceTrimSafe = $true,
+        [bool]$BlockRazer = $true
     )
 
     Write-Log "Applying system optimizations..." "INFO"
@@ -279,6 +399,22 @@ function Invoke-SystemOptimizations {
 
         # Memory compression (opt-in disable for 32GB+ RAM)
         Set-MemoryCompression -Disable $DisableMemoryCompression
+
+        if ($DisableExplorerAutoType) {
+            Disable-ExplorerAutoType
+        }
+
+        if ($RunDiskCleanup) {
+            Invoke-DiskCleanup
+        }
+
+        if ($RunTempPurge) {
+            Invoke-TempPurge
+        }
+
+        Set-ServiceTrimSafe -Enable $ServiceTrimSafe
+
+        Disable-RazerAutoInstall -Enable $BlockRazer
 
         Write-Log "System optimizations complete" "SUCCESS"
 
@@ -326,6 +462,10 @@ function Undo-SystemOptimizations {
             Write-Log "Re-enabled Fast Startup" "SUCCESS"
         }
 
+        # Restore Explorer auto-type
+        $shellPath = "HKCU:\Software\Classes\Local Settings\Software\Microsoft\Windows\Shell\Bags\AllFolders\Shell"
+        Restore-RegistryKey -Path $shellPath | Out-Null
+
         # Re-enable memory compression
         Enable-MMAgent -MemoryCompression -ErrorAction SilentlyContinue
         Write-Log "Re-enabled memory compression" "SUCCESS"
@@ -346,6 +486,11 @@ Export-ModuleMember -Function @(
     'Set-PageFile',
     'Set-MemoryCompression',
     'Disable-FastStartup',
+    'Disable-ExplorerAutoType',
+    'Invoke-DiskCleanup',
+    'Invoke-TempPurge',
+    'Set-ServiceTrimSafe',
+    'Disable-RazerAutoInstall',
     'Test-SystemOptimizations',
     'Invoke-SystemOptimizations',
     'Undo-SystemOptimizations'

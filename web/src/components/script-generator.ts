@@ -338,6 +338,162 @@ bcdedit /set disabledynamictick yes 2>&1 | Out-Null
 Write-OK "HPET disabled (reboot required)"
 Write-Host "  [WARN] Test before/after with benchmarks - results vary by system" -ForegroundColor Yellow`)
 
+  // PRD: New high-impact optimizations (Score 8+)
+  if (opts.includes(OPTIMIZATION_KEYS.GAMEDVR))
+    code.push(`
+# Disable GameDVR (Score 8: Removes capture overhead and Xbox DVR hooks)
+Set-Reg "HKCU:\\System\\GameConfigStore" "GameDVR_Enabled" 0
+Set-Reg "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\GameDVR" "AppCaptureEnabled" 0
+Set-Reg "HKLM:\\SOFTWARE\\Microsoft\\PolicyManager\\default\\ApplicationManagement\\AllowGameDVR" "value" 0
+Set-Reg "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\GameDVR" "AllowGameDVR" 0
+Write-OK "GameDVR disabled (capture overhead removed)"`)
+
+  if (opts.includes(OPTIMIZATION_KEYS.BACKGROUND_APPS))
+    code.push(`
+# Block background Store apps (Score 6: Stop apps waking/consuming cycles)
+Set-Reg "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\BackgroundAccessApplications" "GlobalUserDisabled" 1
+Set-Reg "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Search" "BackgroundAppGlobalToggle" 0
+Write-OK "Background apps blocked"`)
+
+  if (opts.includes(OPTIMIZATION_KEYS.EDGE_DEBLOAT))
+    code.push(`
+# Edge debloat (Score 5: Reduce browser background tasks/telemetry)
+$edgePolicies = "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Edge"
+if (!(Test-Path $edgePolicies)) { New-Item -Path $edgePolicies -Force | Out-Null }
+Set-Reg $edgePolicies "StartupBoostEnabled" 0
+Set-Reg $edgePolicies "HubsSidebarEnabled" 0
+Set-Reg $edgePolicies "EdgeShoppingAssistantEnabled" 0
+Set-Reg $edgePolicies "PersonalizationReportingEnabled" 0
+Set-Reg $edgePolicies "MetricsReportingEnabled" 0
+Set-Reg $edgePolicies "EdgeCollectionsEnabled" 0
+Set-Reg $edgePolicies "ShowMicrosoftRewards" 0
+Set-Reg $edgePolicies "SpotlightExperiencesAndRecommendationsEnabled" 0
+Write-OK "Edge debloated (rewards/popups/telemetry off)"`)
+
+  if (opts.includes(OPTIMIZATION_KEYS.COPILOT_DISABLE))
+    code.push(`
+# Disable Copilot (Score 6: Remove Copilot surface/background hooks)
+Set-Reg "HKCU:\\Software\\Policies\\Microsoft\\Windows\\WindowsCopilot" "TurnOffWindowsCopilot" 1
+Set-Reg "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsCopilot" "TurnOffWindowsCopilot" 1
+Set-Reg "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced" "ShowCopilotButton" 0
+Write-OK "Microsoft Copilot disabled"`)
+
+  if (opts.includes(OPTIMIZATION_KEYS.EXPLORER_SPEED))
+    code.push(`
+# Explorer speed (Score 5: Disable folder type auto-discovery)
+Set-Reg "HKCU:\\Software\\Classes\\Local Settings\\Software\\Microsoft\\Windows\\Shell\\Bags\\AllFolders\\Shell" "FolderType" "NotSpecified" "String"
+Set-Reg "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced" "LaunchTo" 1
+Write-OK "Explorer folder type detection disabled (faster browsing)"
+Write-Host "  [INFO] May need to log off for full effect" -ForegroundColor Gray`)
+
+  if (opts.includes(OPTIMIZATION_KEYS.TEMP_PURGE))
+    code.push(`
+# Purge temp files (Score 5: Free space, avoid cache bloat)
+$tempPaths = @($env:TEMP, "$env:LOCALAPPDATA\\Temp", "$env:WINDIR\\Temp")
+$freed = 0
+foreach ($path in $tempPaths) {
+    if (Test-Path $path) {
+        $size = (Get-ChildItem $path -Recurse -Force -EA SilentlyContinue | Measure-Object -Property Length -Sum).Sum
+        Remove-Item "$path\\*" -Recurse -Force -EA SilentlyContinue
+        $freed += $size
+    }
+}
+$freedMB = [math]::Round($freed / 1MB, 1)
+Write-OK "Temp files purged (\${freedMB}MB freed)"`)
+
+  if (opts.includes(OPTIMIZATION_KEYS.RAZER_BLOCK))
+    code.push(`
+# Block Razer/OEM WPBT auto-install (Score 5: Prevent bloat reinstalls)
+Set-Reg "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Session Manager" "DisableWpbt" 1
+$razerPath = "$env:LOCALAPPDATA\\Razer"
+if (Test-Path $razerPath) {
+    $acl = Get-Acl $razerPath
+    $acl.SetAccessRuleProtection($true, $false)
+    $rule = New-Object System.Security.AccessControl.FileSystemAccessRule("Everyone","FullControl","Deny")
+    $acl.AddAccessRule($rule)
+    Set-Acl $razerPath $acl -EA SilentlyContinue
+}
+Write-OK "OEM/Razer WPBT auto-install blocked"`)
+
+  // PRD: Caution tier optimizations
+  if (opts.includes(OPTIMIZATION_KEYS.ULTIMATE_PERF))
+    code.push(`
+# Ultimate Performance power plan (Score 7: Max scheduler/power bias)
+$ultPerfGuid = "e9a42b02-d5df-448d-aa00-03f14749eb61"
+powercfg -duplicatescheme $ultPerfGuid 2>$null
+powercfg /setactive $ultPerfGuid 2>$null
+if ($LASTEXITCODE -eq 0) {
+    Write-OK "Ultimate Performance plan activated"
+} else {
+    # Fallback to High Performance
+    powercfg /setactive 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c 2>$null
+    Write-OK "High Performance plan activated (Ultimate not available)"
+}
+Write-Host "  [WARN] High idle power/thermals - avoid on laptops" -ForegroundColor Yellow`)
+
+  if (opts.includes(OPTIMIZATION_KEYS.FSO_DISABLE))
+    code.push(`
+# Disable Fullscreen Optimizations (Score 6: Helps legacy titles)
+Set-Reg "HKCU:\\System\\GameConfigStore" "GameDVR_FSEBehaviorMode" 2
+Set-Reg "HKCU:\\System\\GameConfigStore" "GameDVR_HonorUserFSEBehaviorMode" 1
+Set-Reg "HKCU:\\System\\GameConfigStore" "GameDVR_FSEBehavior" 2
+Set-Reg "HKCU:\\System\\GameConfigStore" "GameDVR_DXGIHonorFSEWindowsCompatible" 1
+Write-OK "Fullscreen Optimizations disabled globally"
+Write-Host "  [WARN] May affect HDR/color management in exclusive fullscreen" -ForegroundColor Yellow`)
+
+  if (opts.includes(OPTIMIZATION_KEYS.SERVICES_TRIM))
+    code.push(`
+# Trim non-critical services to manual (Score 5: Reduce idle wakeups)
+$safeServices = @(
+    "DiagTrack",           # Connected User Experiences and Telemetry
+    "dmwappushservice",    # WAP Push Message Routing
+    "MapsBroker",          # Downloaded Maps Manager
+    "lfsvc",               # Geolocation Service
+    "SharedAccess",        # Internet Connection Sharing
+    "RemoteRegistry",      # Remote Registry
+    "WMPNetworkSvc",       # Windows Media Player Network
+    "WSearch"              # Windows Search (if not using)
+)
+foreach ($svc in $safeServices) {
+    $service = Get-Service -Name $svc -EA SilentlyContinue
+    if ($service -and $service.StartType -ne "Disabled") {
+        Set-Service -Name $svc -StartupType Manual -EA SilentlyContinue
+    }
+}
+Write-OK "Non-critical services set to manual"`)
+
+  if (opts.includes(OPTIMIZATION_KEYS.DISK_CLEANUP))
+    code.push(`
+# Disk Cleanup with ResetBase (Score 5: Free space, pre-update cleanup)
+Write-Host "  Running Disk Cleanup..." -NoNewline
+# Set cleanup flags
+$cleanupKey = "HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\VolumeCaches"
+Get-ChildItem $cleanupKey -EA SilentlyContinue | ForEach-Object {
+    Set-ItemProperty -Path $_.PSPath -Name "StateFlags0100" -Value 2 -EA SilentlyContinue
+}
+Start-Process "cleanmgr.exe" -ArgumentList "/sagerun:100" -Wait -WindowStyle Hidden
+# ResetBase to remove old component store files
+Dism.exe /online /Cleanup-Image /StartComponentCleanup /ResetBase 2>&1 | Out-Null
+Write-OK "Disk cleaned"`)
+
+  // PRD: Risky network optimizations
+  if (opts.includes(OPTIMIZATION_KEYS.IPV4_PREFER))
+    code.push(`
+# Prefer IPv4 over IPv6 (Score 5: Reduce IPv6 latency on misconfigured LANs)
+Set-Reg "HKLM:\\SYSTEM\\CurrentControlSet\\Services\\Tcpip6\\Parameters" "DisabledComponents" 32
+Write-OK "IPv4 preferred over IPv6"
+Write-Host "  [WARN] May break IPv6-only paths or Xbox/Store features" -ForegroundColor Yellow
+Write-Host "  [INFO] Requires reboot to take effect" -ForegroundColor Gray`)
+
+  if (opts.includes(OPTIMIZATION_KEYS.TEREDO_DISABLE))
+    code.push(`
+# Disable Teredo tunneling (Score 5: Reduce latency/jitter)
+netsh interface teredo set state disabled 2>&1 | Out-Null
+Set-Reg "HKLM:\\SYSTEM\\CurrentControlSet\\Services\\Tcpip6\\Parameters" "DisabledComponents" 1
+Write-OK "Teredo IPv6 tunneling disabled"
+Write-Host "  [WARN] May break Xbox Live connectivity" -ForegroundColor Yellow
+Write-Host "  [INFO] Requires reboot to take effect" -ForegroundColor Gray`)
+
   return code.join('\n')
 }
 

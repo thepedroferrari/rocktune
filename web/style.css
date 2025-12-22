@@ -695,6 +695,32 @@ fieldset label:hover input[type="checkbox"]:not(:checked) {
     gap: 4px;
 }
 
+.select-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin: 0.5rem 0 0.25rem;
+}
+
+.select-label {
+    font-weight: 600;
+    color: var(--text);
+}
+
+.select-row select {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.8rem 1rem;
+    color: var(--text);
+}
+
+.select-hint {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
 /* Preset badges on optimization options */
 .preset-badge {
     font-size: 0.6rem;
