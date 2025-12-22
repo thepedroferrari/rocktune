@@ -148,6 +148,95 @@
                     <span class="label-hint">Installs GG</span>
                 </label>
             </fieldset>
+
+            <!-- Driver Downloads -->
+            <div class="driver-links">
+                <h3 class="driver-links-title">
+                    <svg class="driver-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Driver Downloads
+                </h3>
+                <p class="driver-links-desc">Get the latest drivers for your hardware before running the script</p>
+
+                <div class="driver-grid">
+                    <!-- CPU Drivers -->
+                    <div class="driver-card" data-driver="amd-chipset">
+                        <div class="driver-card-header">
+                            <span class="driver-badge cpu">CPU</span>
+                            <h4>AMD Chipset Drivers</h4>
+                        </div>
+                        <p>Required for Ryzen optimization and X3D V-Cache support</p>
+                        <a href="https://www.amd.com/en/support/download/drivers.html" target="_blank" rel="noopener noreferrer" class="driver-link">
+                            Download from AMD
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                        </a>
+                    </div>
+
+                    <div class="driver-card" data-driver="intel-chipset">
+                        <div class="driver-card-header">
+                            <span class="driver-badge cpu">CPU</span>
+                            <h4>Intel Chipset Drivers</h4>
+                        </div>
+                        <p>Intel Chipset INF Utility and Management Engine</p>
+                        <a href="https://www.intel.com/content/www/us/en/download-center/home.html" target="_blank" rel="noopener noreferrer" class="driver-link">
+                            Download from Intel
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                        </a>
+                    </div>
+
+                    <!-- GPU Drivers -->
+                    <div class="driver-card" data-driver="nvidia">
+                        <div class="driver-card-header">
+                            <span class="driver-badge gpu">GPU</span>
+                            <h4>NVIDIA GeForce Drivers</h4>
+                        </div>
+                        <p>Game Ready or Studio drivers for RTX/GTX cards</p>
+                        <a href="https://www.nvidia.com/Download/index.aspx" target="_blank" rel="noopener noreferrer" class="driver-link">
+                            Download from NVIDIA
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                        </a>
+                    </div>
+
+                    <div class="driver-card" data-driver="amd-gpu">
+                        <div class="driver-card-header">
+                            <span class="driver-badge gpu">GPU</span>
+                            <h4>AMD Radeon Drivers</h4>
+                        </div>
+                        <p>Adrenalin Edition for RX series graphics cards</p>
+                        <a href="https://www.amd.com/en/support/download/drivers.html" target="_blank" rel="noopener noreferrer" class="driver-link">
+                            Download from AMD
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                        </a>
+                    </div>
+
+                    <div class="driver-card" data-driver="intel-gpu">
+                        <div class="driver-card-header">
+                            <span class="driver-badge gpu">GPU</span>
+                            <h4>Intel Arc Drivers</h4>
+                        </div>
+                        <p>Intel Arc Graphics drivers for A-series and B-series</p>
+                        <a href="https://www.intel.com/content/www/us/en/download/785597/intel-arc-iris-xe-graphics-windows.html" target="_blank" rel="noopener noreferrer" class="driver-link">
+                            Download from Intel
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                        </a>
+                    </div>
+
+                    <!-- Motherboard Drivers -->
+                    <div class="driver-card driver-card--mobo" data-driver="motherboard">
+                        <div class="driver-card-header">
+                            <span class="driver-badge mobo">MOBO</span>
+                            <h4>Motherboard Drivers</h4>
+                        </div>
+                        <p>BIOS, audio, LAN, and chipset drivers from your board manufacturer</p>
+                        <div class="mobo-links">
+                            <a href="https://www.asus.com/support/download-center/" target="_blank" rel="noopener noreferrer">ASUS</a>
+                            <a href="https://www.msi.com/support/download" target="_blank" rel="noopener noreferrer">MSI</a>
+                            <a href="https://www.gigabyte.com/Support" target="_blank" rel="noopener noreferrer">Gigabyte</a>
+                            <a href="https://www.asrock.com/support/index.asp" target="_blank" rel="noopener noreferrer">ASRock</a>
+                            <a href="https://www.biostar.com.tw/app/en/support/download.php" target="_blank" rel="noopener noreferrer">Biostar</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </section>
 
         <!-- Step 2: Upgrades -->

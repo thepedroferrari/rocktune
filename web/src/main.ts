@@ -5,6 +5,7 @@
 
 import { setupAuditPanel } from './components/audit'
 import { renderSoftwareGrid, updateCategoryBadges } from './components/cards'
+import { setupDriverLinks } from './components/drivers'
 import { setupFilters, setupSearch, setupViewToggle } from './components/filters'
 import { setupPresets } from './components/presets'
 import { setupProfileActions } from './components/profiles'
@@ -142,6 +143,7 @@ function setupInteractions(): void {
   setupDownload()
   setupProfileActions()
   setupAuditPanel()
+  setupDriverLinks()
 }
 
 // =============================================================================

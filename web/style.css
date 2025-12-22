@@ -611,6 +611,173 @@ fieldset label:hover input[type="checkbox"]:not(:checked) {
     flex-shrink: 0;
 }
 
+/* Driver Links Section */
+.driver-links {
+    margin-top: var(--space-lg);
+    padding: var(--space-lg);
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.05) 0%, rgba(59, 130, 246, 0.03) 100%);
+    border: 1px solid rgba(139, 92, 246, 0.15);
+    border-radius: var(--radius-lg);
+}
+
+.driver-links-title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 var(--space-xs);
+}
+
+.driver-icon {
+    width: 18px;
+    height: 18px;
+    color: var(--accent);
+}
+
+.driver-links-desc {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    margin: 0 0 var(--space-lg);
+}
+
+.driver-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-md);
+}
+
+@media (max-width: 768px) {
+    .driver-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.driver-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: var(--space-md);
+    transition: all 0.2s ease;
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.driver-card.active {
+    opacity: 1;
+    pointer-events: auto;
+    border-color: var(--border-light);
+}
+
+.driver-card.active:hover {
+    border-color: var(--accent);
+    background: var(--bg-card-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.driver-card--mobo {
+    grid-column: span 2;
+    opacity: 1;
+    pointer-events: auto;
+}
+
+@media (max-width: 768px) {
+    .driver-card--mobo {
+        grid-column: span 1;
+    }
+}
+
+.driver-card-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-xs);
+}
+
+.driver-card-header h4 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.driver-badge {
+    font-size: 0.55rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+}
+
+.driver-badge.cpu {
+    background: rgba(251, 146, 60, 0.2);
+    color: #fb923c;
+}
+
+.driver-badge.gpu {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+}
+
+.driver-badge.mobo {
+    background: rgba(99, 102, 241, 0.2);
+    color: #818cf8;
+}
+
+.driver-card p {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin: 0 0 var(--space-sm);
+    line-height: 1.4;
+}
+
+.driver-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--accent);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.driver-link:hover {
+    color: var(--accent-hover);
+}
+
+.driver-link svg {
+    width: 14px;
+    height: 14px;
+}
+
+.mobo-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+}
+
+.mobo-links a {
+    padding: 0.35rem 0.75rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.mobo-links a:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+}
+
 /* Presets */
 .presets {
     display: flex;
