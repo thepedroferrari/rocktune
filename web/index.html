@@ -64,7 +64,8 @@
                 </button>
             </div>
 
-            <fieldset>
+            <div class="core-grid">
+                <fieldset>
                 <legend>
                     <svg class="legend-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M15 2v2"/><path d="M15 20v2"/><path d="M2 15h2"/><path d="M2 9h2"/><path d="M20 15h2"/><path d="M20 9h2"/><path d="M9 2v2"/><path d="M9 20v2"/></svg>
                     CPU
@@ -91,9 +92,9 @@
                     <span class="label-text">Intel Core</span>
                     <span class="label-hint">12th, 13th, 14th gen, Core Ultra</span>
                 </label>
-            </fieldset>
+                </fieldset>
 
-            <fieldset>
+                <fieldset>
                 <legend>
                     <svg class="legend-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h.01"/><path d="M10 12h.01"/><path d="M14 12h.01"/><path d="M18 12h.01"/><path d="M6 8v8"/><path d="M22 10v4"/></svg>
                     GPU
@@ -120,33 +121,77 @@
                     <span class="label-text">Intel Arc</span>
                     <span class="label-hint">A770, A750, B580</span>
                 </label>
-            </fieldset>
+                </fieldset>
+            </div>
 
-            <fieldset>
+            <fieldset class="peripherals-fieldset">
                 <legend>
                     <svg class="legend-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="13" height="12" rx="2"/><path d="m22 12-4-4v8l4-4Z"/><circle cx="8" cy="12" r="2"/></svg>
                     Peripherals
                 </legend>
-                <label>
-                    <input type="checkbox" name="peripheral" value="logitech">
-                    <span class="label-text">Logitech</span>
-                    <span class="label-hint">Installs G HUB</span>
-                </label>
-                <label>
-                    <input type="checkbox" name="peripheral" value="razer">
-                    <span class="label-text">Razer</span>
-                    <span class="label-hint">Installs Synapse 3</span>
-                </label>
-                <label>
-                    <input type="checkbox" name="peripheral" value="corsair">
-                    <span class="label-text">Corsair</span>
-                    <span class="label-hint">Installs iCUE</span>
-                </label>
-                <label>
-                    <input type="checkbox" name="peripheral" value="steelseries">
-                    <span class="label-text">SteelSeries</span>
-                    <span class="label-hint">Installs GG</span>
-                </label>
+                <div class="peripheral-columns">
+                    <div class="peripheral-column">
+                        <p class="peripheral-title">Big names (auto-install)</p>
+                        <label>
+                            <input type="checkbox" name="peripheral" value="logitech">
+                            <span class="label-text">Logitech</span>
+                            <span class="label-hint">Installs G HUB</span>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="peripheral" value="razer">
+                            <span class="label-text">Razer</span>
+                            <span class="label-hint">Installs Synapse 3</span>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="peripheral" value="corsair">
+                            <span class="label-text">Corsair</span>
+                            <span class="label-hint">Installs iCUE</span>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="peripheral" value="steelseries">
+                            <span class="label-text">SteelSeries</span>
+                            <span class="label-hint">Installs GG</span>
+                        </label>
+                    </div>
+                    <div class="peripheral-column">
+                        <p class="peripheral-title">More brands (manual download)</p>
+                        <p class="peripheral-note">Controller, headset, and monitor utilities</p>
+                        <div class="peripheral-links">
+                            <a class="peripheral-link" href="https://support.8bitdo.com/" target="_blank" rel="noopener noreferrer">
+                                <span class="peripheral-link-title">8BitDo Ultimate Software</span>
+                                <span class="peripheral-link-hint">Controllers and joysticks</span>
+                                <span class="peripheral-link-action">
+                                    Open
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                                </span>
+                            </a>
+                            <a class="peripheral-link" href="https://www.asus.com/support/download-center/" target="_blank" rel="noopener noreferrer">
+                                <span class="peripheral-link-title">ASUS Armoury Crate</span>
+                                <span class="peripheral-link-hint">Keyboards, mice, headsets</span>
+                                <span class="peripheral-link-action">
+                                    Open
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                                </span>
+                            </a>
+                            <a class="peripheral-link" href="https://www.lg.com/us/support/software-firmware-drivers" target="_blank" rel="noopener noreferrer">
+                                <span class="peripheral-link-title">LG OnScreen Control</span>
+                                <span class="peripheral-link-hint">Monitor firmware and profiles</span>
+                                <span class="peripheral-link-action">
+                                    Open
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                                </span>
+                            </a>
+                            <a class="peripheral-link" href="https://www.samsung.com/us/support/" target="_blank" rel="noopener noreferrer">
+                                <span class="peripheral-link-title">Samsung Support</span>
+                                <span class="peripheral-link-hint">Monitor utilities and firmware</span>
+                                <span class="peripheral-link-action">
+                                    Open
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                                </span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
             </fieldset>
 
             <!-- Driver Downloads -->
@@ -226,7 +271,7 @@
                             <span class="driver-badge mobo">MOBO</span>
                             <h4>Motherboard Drivers</h4>
                         </div>
-                        <p>BIOS, audio, LAN, and chipset drivers from your board manufacturer</p>
+                        <p>BIOS, audio, LAN, and chipset drivers from your board manufacturer (opens in new tab)</p>
                         <div class="mobo-links">
                             <a href="https://www.asus.com/support/download-center/" target="_blank" rel="noopener noreferrer">ASUS</a>
                             <a href="https://www.msi.com/support/download" target="_blank" rel="noopener noreferrer">MSI</a>
@@ -279,19 +324,19 @@
             <div class="upgrades-grid">
                 <fieldset class="tier-safe-field">
                     <legend><span class="tier tier-safe">Safe</span> System</legend>
-                    <label data-opt="pagefile">
+                    <label data-opt="pagefile" data-tooltip="Sets a fixed 4GB page file on your system drive. Prevents Windows from dynamically resizing it, which can cause fragmentation and stutters during gaming.">
                         <input type="checkbox" name="opt" value="pagefile" checked>
                         <span class="label-text">Fixed Page File</span>
                         <span class="preset-badge" hidden></span>
                         <span class="label-hint">4GB for 32GB+ RAM — prevents fragmentation</span>
                     </label>
-                    <label data-opt="fastboot">
+                    <label data-opt="fastboot" data-tooltip="Disables Windows Fast Startup (hybrid shutdown). Ensures clean boots and prevents driver/peripheral issues that can occur with hibernation-based startup.">
                         <input type="checkbox" name="opt" value="fastboot" checked>
                         <span class="label-text">Disable Fast Startup</span>
                         <span class="preset-badge" hidden></span>
                         <span class="label-hint">Clean boots, prevents driver issues</span>
                     </label>
-                    <label data-opt="timer">
+                    <label data-opt="timer" data-tooltip="Installs a timer resolution tool that sets Windows timer to 0.5ms when gaming. Improves input responsiveness and frame pacing in many games.">
                         <input type="checkbox" name="opt" value="timer" checked>
                         <span class="label-text">Timer Resolution Tool</span>
                         <span class="preset-badge" hidden></span>
@@ -301,19 +346,19 @@
 
                 <fieldset class="tier-safe-field">
                     <legend><span class="tier tier-safe">Safe</span> Power</legend>
-                    <label data-opt="power_plan">
+                    <label data-opt="power_plan" data-tooltip="Activates the High Performance power plan, which keeps CPU at maximum frequency. Prevents power-saving throttling during gaming sessions.">
                         <input type="checkbox" name="opt" value="power_plan" checked>
                         <span class="label-text">High Performance Plan</span>
                         <span class="preset-badge" hidden></span>
                         <span class="label-hint">Maximum CPU performance</span>
                     </label>
-                    <label data-opt="usb_power">
+                    <label data-opt="usb_power" data-tooltip="Prevents Windows from suspending USB devices to save power. Eliminates random disconnects of mice, keyboards, and controllers during gameplay.">
                         <input type="checkbox" name="opt" value="usb_power" checked>
                         <span class="label-text">USB Selective Suspend Off</span>
                         <span class="preset-badge" hidden></span>
                         <span class="label-hint">Prevents USB disconnects</span>
                     </label>
-                    <label data-opt="pcie_power">
+                    <label data-opt="pcie_power" data-tooltip="Disables PCIe Active State Power Management. Ensures your GPU always runs at full power and doesn't enter low-power states during gaming.">
                         <input type="checkbox" name="opt" value="pcie_power" checked>
                         <span class="label-text">PCIe ASPM Off</span>
                         <span class="preset-badge" hidden></span>
@@ -323,13 +368,13 @@
 
                 <fieldset class="tier-safe-field">
                     <legend><span class="tier tier-safe">Safe</span> Network</legend>
-                    <label data-opt="dns">
+                    <label data-opt="dns" data-tooltip="Changes your DNS to Cloudflare (1.1.1.1). One of the fastest public DNS servers, can reduce latency when connecting to game servers.">
                         <input type="checkbox" name="opt" value="dns" checked>
                         <span class="label-text">Cloudflare DNS</span>
                         <span class="preset-badge" hidden></span>
                         <span class="label-hint">1.1.1.1 — faster lookups</span>
                     </label>
-                    <label data-opt="nagle" title="TCP-only setting. Most modern games use UDP, so this has minimal effect.">
+                    <label data-opt="nagle" data-tooltip="Disables Nagle's algorithm which batches small TCP packets. Only affects TCP-based games — most modern games use UDP, so impact is minimal.">
                         <input type="checkbox" name="opt" value="nagle">
                         <span class="label-text">Disable Nagle</span>
                         <span class="preset-badge" hidden></span>
@@ -339,7 +384,7 @@
 
                 <fieldset class="tier-safe-field">
                     <legend><span class="tier tier-safe">Safe</span> Audio</legend>
-                    <label data-opt="audio_enhancements">
+                    <label data-opt="audio_enhancements" data-tooltip="Disables Windows audio enhancements (spatial sound, equalizer, etc.). Reduces audio processing latency for more responsive sound in games.">
                         <input type="checkbox" name="opt" value="audio_enhancements" checked>
                         <span class="label-text">Disable Enhancements</span>
                         <span class="preset-badge" hidden></span>
@@ -351,25 +396,25 @@
             <div class="upgrades-grid upgrades-grid--danger">
                 <fieldset class="tier-caution-field">
                     <legend><span class="tier tier-caution">Caution</span> Experimental</legend>
-                    <label data-opt="msi_mode">
+                    <label data-opt="msi_mode" data-tooltip="Enables Message Signaled Interrupts for your GPU. Can reduce interrupt latency but may cause issues on some systems. Benchmark before/after.">
                         <input type="checkbox" name="opt" value="msi_mode">
                         <span class="label-text">MSI Mode GPU</span>
                         <span class="preset-badge" hidden></span>
                         <span class="label-hint">Lower interrupt latency</span>
                     </label>
-                    <label data-opt="hpet">
+                    <label data-opt="hpet" data-tooltip="Disables High Precision Event Timer in Windows. Results vary by system — can improve or worsen performance. Always benchmark before keeping this change.">
                         <input type="checkbox" name="opt" value="hpet">
                         <span class="label-text">Disable HPET</span>
                         <span class="preset-badge" hidden></span>
                         <span class="label-hint">Test before/after</span>
                     </label>
-                    <label data-opt="game_bar">
+                    <label data-opt="game_bar" data-tooltip="Disables Xbox Game Bar overlay but keeps Game Mode detection for Ryzen X3D processors. Removes overlay overhead without breaking V-Cache optimization.">
                         <input type="checkbox" name="opt" value="game_bar">
                         <span class="label-text">Disable Game Bar</span>
                         <span class="preset-badge" hidden></span>
                         <span class="label-hint">Keeps detection for X3D</span>
                     </label>
-                    <label data-opt="hags" title="Hardware Accelerated GPU Scheduling - may improve or hurt performance depending on game">
+                    <label data-opt="hags" data-tooltip="Enables Hardware Accelerated GPU Scheduling (Windows 10 2004+). Reduces CPU overhead for GPU tasks. May improve or hurt performance — test with your specific games.">
                         <input type="checkbox" name="opt" value="hags">
                         <span class="label-text">Enable HAGS</span>
                         <span class="preset-badge" hidden></span>
@@ -379,25 +424,25 @@
 
                 <fieldset class="tier-risky-field">
                     <legend><span class="tier tier-risky">Risky</span> Privacy</legend>
-                    <label data-opt="privacy_tier1">
+                    <label data-opt="privacy_tier1" data-tooltip="Disables advertising ID, activity history, and tailored experiences. Safe to enable — only affects personalized ads and usage tracking.">
                         <input type="checkbox" name="opt" value="privacy_tier1">
                         <span class="label-text">Privacy Tier 1</span>
                         <span class="preset-badge" hidden></span>
                         <span class="label-hint">Ads, Activity History</span>
                     </label>
-                    <label data-opt="privacy_tier2">
+                    <label data-opt="privacy_tier2" data-tooltip="Disables telemetry, Cortana, and diagnostic data collection. Reduces background network activity. Safe for gaming but removes some Windows features.">
                         <input type="checkbox" name="opt" value="privacy_tier2">
                         <span class="label-text">Privacy Tier 2</span>
                         <span class="preset-badge" hidden></span>
                         <span class="label-hint">Telemetry, Cortana</span>
                     </label>
-                    <label data-opt="privacy_tier3" class="warning">
+                    <label data-opt="privacy_tier3" class="warning" data-tooltip="⚠️ Aggressive privacy settings that may break Microsoft Store, Xbox app, and cloud sync features. Only enable if you don't use these services.">
                         <input type="checkbox" name="opt" value="privacy_tier3">
                         <span class="label-text">Privacy Tier 3</span>
                         <span class="preset-badge" hidden></span>
                         <span class="label-hint"><svg class="warning-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> May break Store/Xbox</span>
                     </label>
-                    <label data-opt="bloatware" title="Removes pre-installed Microsoft apps like People, Your Phone, Solitaire, etc.">
+                    <label data-opt="bloatware" data-tooltip="Removes pre-installed Microsoft apps: People, Your Phone, Solitaire, Tips, etc. Frees up space and removes background processes. Can be reinstalled from Store if needed.">
                         <input type="checkbox" name="opt" value="bloatware">
                         <span class="label-text">Remove Bloatware</span>
                         <span class="preset-badge" hidden></span>
@@ -554,6 +599,15 @@
                         <button type="button" class="cv-tab active" data-mode="current">Current</button>
                         <button type="button" class="cv-tab" data-mode="diff">Diff</button>
                         <button type="button" class="cv-tab" data-mode="edit">Edit</button>
+                        <div class="cv-nav" hidden>
+                            <button type="button" class="cv-nav-btn" data-dir="prev" title="Previous change (↑)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg>
+                            </button>
+                            <span class="cv-nav-count">0/0</span>
+                            <button type="button" class="cv-nav-btn" data-dir="next" title="Next change (↓)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                            </button>
+                        </div>
                         <div class="cv-pill">Preview</div>
                     </div>
                     <div class="cv-body">
@@ -595,6 +649,15 @@
                     <button type="button" class="cv-tab active" data-mode="current">Current</button>
                     <button type="button" class="cv-tab" data-mode="diff">Diff</button>
                     <button type="button" class="cv-tab" data-mode="edit">Edit</button>
+                    <div class="cv-nav" hidden>
+                        <button type="button" class="cv-nav-btn" data-dir="prev" title="Previous change (↑)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg>
+                        </button>
+                        <span class="cv-nav-count">0/0</span>
+                        <button type="button" class="cv-nav-btn" data-dir="next" title="Next change (↓)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                        </button>
+                    </div>
                     <div class="cv-pill">Live</div>
                 </div>
                 <div class="cv-body">
