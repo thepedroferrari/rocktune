@@ -277,7 +277,7 @@ footer a:hover {
 
 /* Step Sections */
 .step {
-    margin-bottom: var(--space-xl);
+    margin-bottom: var(--space-2xl);
     padding: var(--space-xl);
     background: linear-gradient(
         145deg,
@@ -400,8 +400,119 @@ footer a:hover {
     margin-top: var(--space-lg);
 }
 
+.core-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-md);
+    margin-bottom: var(--space-md);
+}
+
+.peripheral-columns {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-lg);
+}
+
+.peripheral-column {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.peripheral-title {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin: 0 0 var(--space-xs);
+}
+
+.peripheral-note {
+    font-size: 0.75rem;
+    color: var(--text-hint);
+    margin: -0.25rem 0 var(--space-sm);
+}
+
+.peripheral-links {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.peripheral-link {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto auto;
+    column-gap: var(--space-md);
+    row-gap: 0.2rem;
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-sm);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01));
+    border: 1px solid var(--glass-border);
+    color: var(--text-primary);
+    text-decoration: none;
+    backdrop-filter: blur(16px) saturate(1.2);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        0 6px 18px rgba(0, 0, 0, 0.2);
+    transition: border-color 0.2s, background 0.2s, transform 0.2s var(--ease-out-back);
+}
+
+.peripheral-link:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02));
+    transform: translateY(-1px);
+}
+
+.peripheral-link-title {
+    font-size: 0.9rem;
+    font-weight: 500;
+    grid-column: 1;
+}
+
+.peripheral-link-hint {
+    font-size: 0.75rem;
+    color: var(--text-hint);
+    grid-column: 1;
+}
+
+.peripheral-link-action {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: center;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.peripheral-link-action svg {
+    width: 12px;
+    height: 12px;
+}
+
+.peripheral-link:hover .peripheral-link-action {
+    border-color: rgba(255, 255, 255, 0.32);
+    background: rgba(255, 255, 255, 0.12);
+}
+
 @media (max-width: 768px) {
     .upgrades-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .core-grid,
+    .peripheral-columns {
         grid-template-columns: 1fr;
     }
 }
@@ -414,6 +525,7 @@ fieldset {
     margin-bottom: 0;
     background: var(--bg-tertiary);
     transition: border-color 0.2s;
+    overflow: visible;
 }
 
 fieldset:hover {
@@ -497,7 +609,6 @@ fieldset label {
     cursor: pointer;
     transition: background 0.2s, transform 0.2s var(--ease-out-back);
     position: relative;
-    overflow: hidden;
 }
 
 fieldset label:hover {
@@ -506,6 +617,39 @@ fieldset label:hover {
 
 fieldset label:active {
     transform: scale(0.98);
+}
+
+/* Tooltips for optimization options */
+fieldset label[data-tooltip]::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: 0;
+    top: calc(100% + 4px);
+    transform: translateY(-4px);
+    width: 100%;
+    min-width: 280px;
+    padding: var(--space-sm) var(--space-md);
+    background: rgba(15, 15, 25, 0.98);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius);
+    font-size: 0.8rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: var(--text-secondary);
+    text-align: left;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.2s, transform 0.2s, visibility 0.2s;
+    z-index: 100;
+}
+
+fieldset label[data-tooltip]:hover::after,
+fieldset label[data-tooltip]:focus-within::after {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
 }
 
 fieldset label.warning {
@@ -1945,13 +2089,13 @@ fieldset label:hover input[type="checkbox"]:not(:checked) {
         inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
-.download-btn:hover {
-    transform: translateY(-2px);
-    box-shadow:
-        0 0 40px var(--accent-glow-strong),
-        0 8px 32px rgba(0, 0, 0, 0.4),
-        inset 0 1px 0 rgba(255, 255, 255, 0.25);
-    animation: none;
+.download-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.6s;
 }
 
 /* Subtle pulse animation for Forge button */
@@ -1972,15 +2116,6 @@ fieldset label:hover input[type="checkbox"]:not(:checked) {
 
 .download-btn {
     animation: forgePulse 2.5s ease-in-out infinite;
-}
-
-.download-btn::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-    transform: translateX(-100%);
-    transition: transform 0.6s;
 }
 
 .download-btn:hover {
@@ -2177,6 +2312,66 @@ fieldset label:hover input[type="checkbox"]:not(:checked) {
 
 .diff-unchanged {
     border-left: 2px solid transparent;
+}
+
+/* Focus indicator for current change during navigation */
+.cv-line.diff-focus {
+    background: rgba(139, 92, 246, 0.15) !important;
+    box-shadow: inset 0 0 0 1px rgba(139, 92, 246, 0.4);
+    animation: diff-pulse 0.3s ease-out;
+}
+
+@keyframes diff-pulse {
+    0% { box-shadow: inset 0 0 0 2px rgba(139, 92, 246, 0.6); }
+    100% { box-shadow: inset 0 0 0 1px rgba(139, 92, 246, 0.4); }
+}
+
+/* Diff navigation controls */
+.cv-nav {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-left: auto;
+    margin-right: var(--space-xs);
+}
+
+.cv-nav-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.cv-nav-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+.cv-nav-btn:hover:not(:disabled) {
+    background: rgba(139, 92, 246, 0.15);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.cv-nav-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.cv-nav-count {
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    min-width: 32px;
+    text-align: center;
 }
 
 .cv-footer {
@@ -2402,7 +2597,10 @@ fieldset label:hover input[type="checkbox"]:not(:checked) {
 
 /* Responsive */
 @media (max-width: 768px) {
-    .step { padding: var(--space-lg); }
+    .step {
+        margin-bottom: var(--space-xl);
+        padding: var(--space-lg);
+    }
     .step-desc { padding-left: 0; }
     .summary { grid-template-columns: 1fr; }
     .summary-item { border-right: none !important; border-bottom: 1px solid var(--border); }
