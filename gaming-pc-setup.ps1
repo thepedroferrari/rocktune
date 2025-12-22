@@ -136,7 +136,7 @@ $sections = @(
         TestFunction = "Test-SystemOptimizations"
         Condition = $null
         Weight = 10
-        Description = "Page file (4GB/8GB), fast startup disabled"
+        Description = "Page file (4GB/8GB), fast startup disabled, Explorer speedups, disk cleanup, temp purge, safe service trim, Razer block"
     },
     @{
         Name = "Performance Optimizations"
@@ -144,7 +144,7 @@ $sections = @(
         TestFunction = "Test-PerformanceOptimizations"
         Condition = $null
         Weight = 15
-        Description = "MSI mode, scheduler, timer resolution, MMCSS gaming tweaks"
+        Description = "GameDVR/FSO off, MSI mode, scheduler, timer resolution, MMCSS gaming tweaks, Game Mode"
     },
     @{
         Name = "Power Optimizations"
@@ -160,7 +160,7 @@ $sections = @(
         TestFunction = "Test-NetworkOptimizations"
         Condition = $null
         Weight = 10
-        Description = "DNS (Cloudflare), RSS enabled, RSC disabled (opt-in)"
+        Description = "DNS provider, RSS enabled, IPv4 prefer/Teredo toggle, QoS opt-in"
     },
     @{
         Name = "Audio Optimizations"
@@ -184,7 +184,7 @@ $sections = @(
         TestFunction = "Test-PrivacyOptimizations"
         Condition = $null
         Weight = 15
-        Description = "Tier 1 safe (Advertising ID, Activity History, WiFi Sense)"
+        Description = "Tiered telemetry, background apps off, Edge debloat, Copilot disable, optional bloat/Xbox removal"
     },
     @{
         Name = "Software Installation"
