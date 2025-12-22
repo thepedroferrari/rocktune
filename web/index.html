@@ -187,114 +187,135 @@
                 </div>
             </dialog>
 
-            <fieldset class="tier-safe-field">
-                <legend><span class="tier tier-safe">Safe</span> System</legend>
-                <label>
-                    <input type="checkbox" name="opt" value="pagefile" checked>
-                    <span class="label-text">Fixed Page File</span>
-                    <span class="label-hint">4GB for 32GB+ RAM — prevents fragmentation</span>
-                </label>
-                <label>
-                    <input type="checkbox" name="opt" value="fastboot" checked>
-                    <span class="label-text">Disable Fast Startup</span>
-                    <span class="label-hint">Clean boots, prevents driver issues</span>
-                </label>
-                <label>
-                    <input type="checkbox" name="opt" value="timer" checked>
-                    <span class="label-text">Timer Resolution Tool</span>
-                    <span class="label-hint">0.5ms timer for games</span>
-                </label>
-            </fieldset>
+            <div class="upgrades-grid">
+                <fieldset class="tier-safe-field">
+                    <legend><span class="tier tier-safe">Safe</span> System</legend>
+                    <label data-opt="pagefile">
+                        <input type="checkbox" name="opt" value="pagefile" checked>
+                        <span class="label-text">Fixed Page File</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint">4GB for 32GB+ RAM — prevents fragmentation</span>
+                    </label>
+                    <label data-opt="fastboot">
+                        <input type="checkbox" name="opt" value="fastboot" checked>
+                        <span class="label-text">Disable Fast Startup</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint">Clean boots, prevents driver issues</span>
+                    </label>
+                    <label data-opt="timer">
+                        <input type="checkbox" name="opt" value="timer" checked>
+                        <span class="label-text">Timer Resolution Tool</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint">0.5ms timer for games</span>
+                    </label>
+                </fieldset>
 
-            <fieldset class="tier-safe-field">
-                <legend><span class="tier tier-safe">Safe</span> Power</legend>
-                <label>
-                    <input type="checkbox" name="opt" value="power_plan" checked>
-                    <span class="label-text">High Performance Plan</span>
-                    <span class="label-hint">Maximum CPU performance</span>
-                </label>
-                <label>
-                    <input type="checkbox" name="opt" value="usb_power" checked>
-                    <span class="label-text">USB Selective Suspend Off</span>
-                    <span class="label-hint">Prevents USB disconnects</span>
-                </label>
-                <label>
-                    <input type="checkbox" name="opt" value="pcie_power" checked>
-                    <span class="label-text">PCIe ASPM Off</span>
-                    <span class="label-hint">Maximum GPU power</span>
-                </label>
-            </fieldset>
+                <fieldset class="tier-safe-field">
+                    <legend><span class="tier tier-safe">Safe</span> Power</legend>
+                    <label data-opt="power_plan">
+                        <input type="checkbox" name="opt" value="power_plan" checked>
+                        <span class="label-text">High Performance Plan</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint">Maximum CPU performance</span>
+                    </label>
+                    <label data-opt="usb_power">
+                        <input type="checkbox" name="opt" value="usb_power" checked>
+                        <span class="label-text">USB Selective Suspend Off</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint">Prevents USB disconnects</span>
+                    </label>
+                    <label data-opt="pcie_power">
+                        <input type="checkbox" name="opt" value="pcie_power" checked>
+                        <span class="label-text">PCIe ASPM Off</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint">Maximum GPU power</span>
+                    </label>
+                </fieldset>
 
-            <fieldset class="tier-safe-field">
-                <legend><span class="tier tier-safe">Safe</span> Network</legend>
-                <label>
-                    <input type="checkbox" name="opt" value="dns" checked>
-                    <span class="label-text">Cloudflare DNS</span>
-                    <span class="label-hint">1.1.1.1 — faster lookups</span>
-                </label>
-                <label title="TCP-only setting. Most modern games use UDP, so this has minimal effect.">
-                    <input type="checkbox" name="opt" value="nagle">
-                    <span class="label-text">Disable Nagle</span>
-                    <span class="label-hint">TCP games only (legacy)</span>
-                </label>
-            </fieldset>
+                <fieldset class="tier-safe-field">
+                    <legend><span class="tier tier-safe">Safe</span> Network</legend>
+                    <label data-opt="dns">
+                        <input type="checkbox" name="opt" value="dns" checked>
+                        <span class="label-text">Cloudflare DNS</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint">1.1.1.1 — faster lookups</span>
+                    </label>
+                    <label data-opt="nagle" title="TCP-only setting. Most modern games use UDP, so this has minimal effect.">
+                        <input type="checkbox" name="opt" value="nagle">
+                        <span class="label-text">Disable Nagle</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint">TCP games only (legacy)</span>
+                    </label>
+                </fieldset>
 
-            <fieldset class="tier-safe-field">
-                <legend><span class="tier tier-safe">Safe</span> Audio</legend>
-                <label>
-                    <input type="checkbox" name="opt" value="audio_enhancements" checked>
-                    <span class="label-text">Disable Enhancements</span>
-                    <span class="label-hint">Lower audio latency</span>
-                </label>
-            </fieldset>
+                <fieldset class="tier-safe-field">
+                    <legend><span class="tier tier-safe">Safe</span> Audio</legend>
+                    <label data-opt="audio_enhancements">
+                        <input type="checkbox" name="opt" value="audio_enhancements" checked>
+                        <span class="label-text">Disable Enhancements</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint">Lower audio latency</span>
+                    </label>
+                </fieldset>
+            </div>
 
-            <fieldset class="tier-caution-field">
-                <legend><span class="tier tier-caution">Caution</span> Experimental</legend>
-                <label>
-                    <input type="checkbox" name="opt" value="msi_mode">
-                    <span class="label-text">MSI Mode GPU</span>
-                    <span class="label-hint">Lower interrupt latency</span>
-                </label>
-                <label>
-                    <input type="checkbox" name="opt" value="hpet">
-                    <span class="label-text">Disable HPET</span>
-                    <span class="label-hint">Test before/after</span>
-                </label>
-                <label>
-                    <input type="checkbox" name="opt" value="game_bar">
-                    <span class="label-text">Disable Game Bar</span>
-                    <span class="label-hint">Keeps detection for X3D</span>
-                </label>
-                <label title="Hardware Accelerated GPU Scheduling - may improve or hurt performance depending on game">
-                    <input type="checkbox" name="opt" value="hags">
-                    <span class="label-text">Enable HAGS</span>
-                    <span class="label-hint">GPU scheduling (test first)</span>
-                </label>
-            </fieldset>
+            <div class="upgrades-grid upgrades-grid--danger">
+                <fieldset class="tier-caution-field">
+                    <legend><span class="tier tier-caution">Caution</span> Experimental</legend>
+                    <label data-opt="msi_mode">
+                        <input type="checkbox" name="opt" value="msi_mode">
+                        <span class="label-text">MSI Mode GPU</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint">Lower interrupt latency</span>
+                    </label>
+                    <label data-opt="hpet">
+                        <input type="checkbox" name="opt" value="hpet">
+                        <span class="label-text">Disable HPET</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint">Test before/after</span>
+                    </label>
+                    <label data-opt="game_bar">
+                        <input type="checkbox" name="opt" value="game_bar">
+                        <span class="label-text">Disable Game Bar</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint">Keeps detection for X3D</span>
+                    </label>
+                    <label data-opt="hags" title="Hardware Accelerated GPU Scheduling - may improve or hurt performance depending on game">
+                        <input type="checkbox" name="opt" value="hags">
+                        <span class="label-text">Enable HAGS</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint">GPU scheduling (test first)</span>
+                    </label>
+                </fieldset>
 
-            <fieldset class="tier-risky-field">
-                <legend><span class="tier tier-risky">Risky</span> Privacy</legend>
-                <label>
-                    <input type="checkbox" name="opt" value="privacy_tier1">
-                    <span class="label-text">Privacy Tier 1</span>
-                    <span class="label-hint">Ads, Activity History</span>
-                </label>
-                <label>
-                    <input type="checkbox" name="opt" value="privacy_tier2">
-                    <span class="label-text">Privacy Tier 2</span>
-                    <span class="label-hint">Telemetry, Cortana</span>
-                </label>
-                <label class="warning">
-                    <input type="checkbox" name="opt" value="privacy_tier3">
-                    <span class="label-text">Privacy Tier 3</span>
-                    <span class="label-hint"><svg class="warning-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> May break Store/Xbox</span>
-                </label>
-                <label title="Removes pre-installed Microsoft apps like People, Your Phone, Solitaire, etc.">
-                    <input type="checkbox" name="opt" value="bloatware">
-                    <span class="label-text">Remove Bloatware</span>
-                    <span class="label-hint">Built-in UWP apps</span>
-                </label>
-            </fieldset>
+                <fieldset class="tier-risky-field">
+                    <legend><span class="tier tier-risky">Risky</span> Privacy</legend>
+                    <label data-opt="privacy_tier1">
+                        <input type="checkbox" name="opt" value="privacy_tier1">
+                        <span class="label-text">Privacy Tier 1</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint">Ads, Activity History</span>
+                    </label>
+                    <label data-opt="privacy_tier2">
+                        <input type="checkbox" name="opt" value="privacy_tier2">
+                        <span class="label-text">Privacy Tier 2</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint">Telemetry, Cortana</span>
+                    </label>
+                    <label data-opt="privacy_tier3" class="warning">
+                        <input type="checkbox" name="opt" value="privacy_tier3">
+                        <span class="label-text">Privacy Tier 3</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint"><svg class="warning-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> May break Store/Xbox</span>
+                    </label>
+                    <label data-opt="bloatware" title="Removes pre-installed Microsoft apps like People, Your Phone, Solitaire, etc.">
+                        <input type="checkbox" name="opt" value="bloatware">
+                        <span class="label-text">Remove Bloatware</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint">Built-in UWP apps</span>
+                    </label>
+                </fieldset>
+            </div>
         </section>
 
         <!-- Step 3: Arsenal -->

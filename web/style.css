@@ -389,12 +389,29 @@ footer a:hover {
     padding-left: calc(2rem + var(--space-md));
 }
 
+.upgrades-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-md);
+    margin-bottom: var(--space-md);
+}
+
+.upgrades-grid--danger {
+    margin-top: var(--space-lg);
+}
+
+@media (max-width: 768px) {
+    .upgrades-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* Fieldsets */
 fieldset {
     border: 1px solid var(--border);
     border-radius: var(--radius);
     padding: var(--space-md) var(--space-lg);
-    margin-bottom: var(--space-md);
+    margin-bottom: 0;
     background: var(--bg-tertiary);
     transition: border-color 0.2s;
 }
@@ -470,7 +487,7 @@ legend {
 /* Form labels */
 fieldset label {
     display: grid;
-    grid-template-columns: auto 1fr;
+    grid-template-columns: auto 1fr auto;
     grid-template-rows: auto auto;
     column-gap: var(--space-md);
     align-items: center;
@@ -528,10 +545,63 @@ fieldset label:hover input[type="checkbox"]:not(:checked) {
 .label-hint {
     color: var(--text-hint);
     font-size: 0.8rem;
-    grid-column: 2;
+    grid-column: 2 / 4;
     display: inline-flex;
     align-items: center;
     gap: 4px;
+}
+
+/* Preset badges on optimization options */
+.preset-badge {
+    font-size: 0.6rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 0.15rem 0.45rem;
+    border-radius: 100px;
+    background: var(--accent-glow);
+    color: var(--accent);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    white-space: nowrap;
+    opacity: 1;
+    transition: opacity 0.2s ease;
+    grid-row: 1;
+    grid-column: 3;
+    align-self: center;
+}
+
+.preset-badge[hidden] {
+    display: none;
+}
+
+/* Fade badge when user manually toggles */
+.preset-badge.faded {
+    opacity: 0.4;
+}
+
+/* Different badge colors by preset */
+.preset-badge[data-preset="competitive"] {
+    background: rgba(251, 191, 36, 0.15);
+    color: #fbbf24;
+    border-color: rgba(251, 191, 36, 0.3);
+}
+
+.preset-badge[data-preset="streaming"] {
+    background: rgba(99, 102, 241, 0.15);
+    color: #818cf8;
+    border-color: rgba(99, 102, 241, 0.3);
+}
+
+.preset-badge[data-preset="balanced"] {
+    background: rgba(45, 212, 191, 0.15);
+    color: #2dd4bf;
+    border-color: rgba(45, 212, 191, 0.3);
+}
+
+.preset-badge[data-preset="minimal"] {
+    background: rgba(156, 163, 175, 0.15);
+    color: #9ca3af;
+    border-color: rgba(156, 163, 175, 0.3);
 }
 
 .warning-icon {
@@ -1181,8 +1251,19 @@ fieldset label:hover input[type="checkbox"]:not(:checked) {
     pointer-events: none;
 }
 
+/* Opacity-based visibility for smoother animations (GPU composite layer) */
 .software-card.hidden {
-    display: none;
+    opacity: 0;
+    transform: scale(0.95);
+    pointer-events: none;
+    position: absolute;
+    visibility: hidden;
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0s 0.2s;
+}
+
+/* When card becomes visible again */
+.software-card:not(.hidden) {
+    transition: opacity 0.25s ease, transform 0.25s var(--ease-out-back);
 }
 
 /* Selection counter */

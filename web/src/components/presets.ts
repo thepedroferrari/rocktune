@@ -8,7 +8,9 @@ export interface Preset {
   software: string[]
 }
 
-export const presets: Record<string, Preset> = {
+type PresetName = 'competitive' | 'streaming' | 'balanced' | 'minimal'
+
+export const presets: Record<PresetName, Preset> = {
   competitive: {
     opts: [
       'pagefile',
@@ -57,47 +59,118 @@ export const presets: Record<string, Preset> = {
   },
 }
 
+const PRESET_LABELS: Record<PresetName, string> = {
+  competitive: 'Competitive',
+  streaming: 'Streaming',
+  balanced: 'Balanced',
+  minimal: 'Minimal',
+}
+
+// =============================================================================
+// STATE
+// =============================================================================
+
+let currentPreset: PresetName | null = null
+
+// =============================================================================
+// PRESET BADGES
+// =============================================================================
+
+function updatePresetBadges(presetName: PresetName, opts: string[]): void {
+  const optsSet = new Set(opts)
+
+  for (const label of $$<HTMLLabelElement>('label[data-opt]')) {
+    const optValue = label.dataset.opt
+    const badge = label.querySelector<HTMLSpanElement>('.preset-badge')
+    if (!badge || !optValue) continue
+
+    if (optsSet.has(optValue)) {
+      badge.textContent = PRESET_LABELS[presetName]
+      badge.dataset.preset = presetName
+      badge.hidden = false
+      badge.classList.remove('faded')
+    } else {
+      badge.hidden = true
+    }
+  }
+}
+
+function clearAllBadges(): void {
+  for (const badge of $$<HTMLSpanElement>('.preset-badge')) {
+    badge.hidden = true
+  }
+}
+
+function fadePresetBadge(optValue: string): void {
+  const label = document.querySelector<HTMLLabelElement>(`label[data-opt="${optValue}"]`)
+  const badge = label?.querySelector<HTMLSpanElement>('.preset-badge')
+  if (badge && !badge.hidden) {
+    badge.classList.add('faded')
+  }
+}
+
+function setupManualToggleDetection(): void {
+  for (const checkbox of $$<HTMLInputElement>('input[name="opt"]')) {
+    checkbox.addEventListener('change', () => {
+      // If user manually changes an option, fade its badge
+      fadePresetBadge(checkbox.value)
+    })
+  }
+}
+
+function applyPreset(presetName: PresetName): void {
+  const preset = presets[presetName]
+  currentPreset = presetName
+
+  // Apply optimization checkboxes
+  for (const cb of $$<HTMLInputElement>('input[name="opt"]')) {
+    cb.checked = preset.opts.includes(cb.value)
+  }
+
+  // Update preset badges
+  updatePresetBadges(presetName, preset.opts)
+
+  // Apply software selection
+  store.setSelection(preset.software)
+
+  // Update card UI
+  for (const card of $$('.software-card')) {
+    const key = card.dataset.key
+    if (!key) continue
+
+    const selected = preset.software.includes(key)
+    card.classList.toggle('selected', selected)
+    card.setAttribute('aria-checked', selected ? 'true' : 'false')
+
+    const action = card.querySelector('.back-action')
+    if (action) action.textContent = selected ? '✓ Selected' : 'Click to add'
+  }
+
+  updateSoftwareCounter()
+  updateSummary()
+  document.dispatchEvent(new CustomEvent('script-change-request'))
+}
+
 export function setupPresets(): void {
-  const presetButtons = $$('.preset-btn')
+  const presetButtons = $$<HTMLButtonElement>('.preset-btn')
 
   for (const btn of presetButtons) {
     btn.addEventListener('click', () => {
-      const presetName = btn.dataset.preset
-      if (!presetName) return
+      const presetName = btn.dataset.preset as PresetName | undefined
+      if (!presetName || !presets[presetName]) return
 
-      const preset = presets[presetName]
-      if (!preset) return
-
-      // Update active state
+      // Update active state on all buttons
       for (const b of presetButtons) {
-        b.classList.remove('active')
-      }
-      btn.classList.add('active')
-
-      // Apply opts
-      for (const cb of $$<HTMLInputElement>('input[name="opt"]')) {
-        cb.checked = preset.opts.includes(cb.value)
+        b.classList.toggle('active', b === btn)
       }
 
-      // Apply software selection
-      store.setSelection(preset.software)
-
-      // Update UI
-      for (const card of $$('.software-card')) {
-        const key = card.dataset.key
-        if (!key) continue
-
-        const selected = preset.software.includes(key)
-        card.classList.toggle('selected', selected)
-        card.setAttribute('aria-checked', selected ? 'true' : 'false')
-
-        const action = card.querySelector('.back-action')
-        if (action) action.textContent = selected ? '✓ Selected' : 'Click to add'
-      }
-
-      updateSoftwareCounter()
-      updateSummary()
-      document.dispatchEvent(new CustomEvent('script-change-request'))
+      applyPreset(presetName)
     })
   }
+
+  setupManualToggleDetection()
+}
+
+export function getCurrentPreset(): PresetName | null {
+  return currentPreset
 }
