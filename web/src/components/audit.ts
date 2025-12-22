@@ -27,13 +27,6 @@ export function setupAuditPanel(): void {
     if (sizeEl) sizeEl.textContent = `${stats.sizeKb} KB`
   }
 
-  // Listen to all form changes
-  $$('input[name="cpu"], input[name="gpu"], input[name="peripheral"], input[name="opt"]').forEach(
-    (el) => {
-      el.addEventListener('change', updateAudit)
-    },
-  )
-
   document.addEventListener('script-change-request', updateAudit)
 
   // Initial update
