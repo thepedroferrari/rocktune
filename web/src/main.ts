@@ -7,6 +7,7 @@ import { setupAuditPanel } from './components/audit'
 import { renderSoftwareGrid, updateCategoryBadges } from './components/cards'
 import { setupDriverLinks } from './components/drivers'
 import { setupFilters, setupSearch, setupViewToggle } from './components/filters'
+import { setupHeroCube } from './components/hero-cube'
 import { setupPresets } from './components/presets'
 import { setupProfileActions } from './components/profiles'
 import { setupDownload } from './components/script-generator'
@@ -127,6 +128,7 @@ function setupVisualEffects(): void {
   setupCursorGlow()
   setupScrollAnimations()
   setupImageFallbacks(CATEGORY_SVG_ICONS)
+  setupHeroCube()
 }
 
 function setupUI(): void {
