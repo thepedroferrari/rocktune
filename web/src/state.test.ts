@@ -11,7 +11,6 @@ import type {
 } from './types.ts'
 import { asPackageKey, asWingetId, FILTER_ALL, isFilterAll, VIEW_MODES } from './types.ts'
 
-
 type Listener = () => void
 
 class TestStore {
@@ -156,7 +155,6 @@ class TestStore {
   }
 }
 
-
 function createMockPackage(
   id: string,
   name: string,
@@ -197,7 +195,6 @@ function createMockCatalog(): SoftwareCatalog {
     ),
   } as SoftwareCatalog
 }
-
 
 describe('Store', () => {
   let store: TestStore

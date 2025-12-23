@@ -1,5 +1,3 @@
-
-
 export type { CodeViewer, DiffResult } from './code-viewer'
 export {
   computeStats,

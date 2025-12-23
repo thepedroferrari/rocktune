@@ -1,5 +1,3 @@
-
-
 import { setupAuditPanel } from './components/audit'
 import { renderSoftwareGrid, updateCategoryBadges } from './components/cards'
 import { setupDriverLinks } from './components/drivers'
@@ -15,7 +13,6 @@ import { CATEGORY_SVG_ICONS } from './types'
 import { $id, onReady } from './utils/dom'
 import { setupCursorGlow, setupImageFallbacks, setupScrollAnimations } from './utils/effects'
 
-
 interface LoadState {
   error: string | null
   isLoading: boolean
@@ -25,7 +22,6 @@ const loadState: LoadState = {
   error: null,
   isLoading: false,
 }
-
 
 async function loadCatalog(): Promise<ValidatedCatalog> {
   loadState.isLoading = true
@@ -54,7 +50,6 @@ async function loadCatalog(): Promise<ValidatedCatalog> {
     loadState.isLoading = false
   }
 }
-
 
 function showError(message: string): void {
   const banner = $id('error-banner')
@@ -89,7 +84,6 @@ async function handleRetry(): Promise<void> {
     showError(loadState.error)
   }
 }
-
 
 async function init(): Promise<void> {
   setupErrorHandlers()
@@ -132,6 +126,5 @@ function setupInteractions(): void {
   setupAuditPanel()
   setupDriverLinks()
 }
-
 
 onReady(init)

@@ -1,6 +1,5 @@
 #!/usr/bin/env -S deno run --allow-read --allow-write
 
-
 const ICONS_DIR = new URL('../public/icons', import.meta.url).pathname
 const OUTPUT_FILE = `${ICONS_DIR}/sprite.svg`
 

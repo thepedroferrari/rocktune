@@ -1,7 +1,6 @@
 import { z } from 'zod'
 import { CATEGORIES, CPU_TYPES, GPU_TYPES, PERIPHERAL_TYPES, PROFILE_VERSION } from './types.ts'
 
-
 export const CategorySchema = z.enum(CATEGORIES)
 
 export const CpuTypeSchema = z.enum([CPU_TYPES.AMD_X3D, CPU_TYPES.AMD, CPU_TYPES.INTEL])
@@ -15,7 +14,6 @@ export const PeripheralTypeSchema = z.enum([
   PERIPHERAL_TYPES.STEELSERIES,
 ])
 
-
 export const SoftwarePackageSchema = z.object({
   id: z.string().min(1, 'Package ID is required'),
   name: z.string().min(1, 'Package name is required'),
@@ -28,13 +26,11 @@ export const SoftwarePackageSchema = z.object({
 
 export const SoftwareCatalogSchema = z.record(z.string().min(1), SoftwarePackageSchema)
 
-
 export const HardwareProfileSchema = z.object({
   cpu: CpuTypeSchema,
   gpu: GpuTypeSchema,
   peripherals: z.array(PeripheralTypeSchema),
 })
-
 
 export const SavedProfileSchema = z.object({
   version: z.literal(PROFILE_VERSION),
@@ -44,12 +40,10 @@ export const SavedProfileSchema = z.object({
   software: z.array(z.string()),
 })
 
-
 export type ValidatedPackage = z.infer<typeof SoftwarePackageSchema>
 export type ValidatedCatalog = z.infer<typeof SoftwareCatalogSchema>
 export type ValidatedHardware = z.infer<typeof HardwareProfileSchema>
 export type ValidatedProfile = z.infer<typeof SavedProfileSchema>
-
 
 type ParseSuccess<T> = { readonly success: true; readonly data: T }
 type ParseFailure = { readonly success: false; readonly error: z.ZodError }
@@ -63,7 +57,6 @@ export function isParseFailure<T>(result: ParseResult<T>): result is ParseFailur
   return !result.success
 }
 
-
 export function validateCatalog(data: unknown): ValidatedCatalog {
   return SoftwareCatalogSchema.parse(data)
 }
@@ -75,7 +68,6 @@ export function validateProfile(data: unknown): ValidatedProfile {
 export function validatePackage(data: unknown): ValidatedPackage {
   return SoftwarePackageSchema.parse(data)
 }
-
 
 export function safeParseCatalog(data: unknown): ParseResult<ValidatedCatalog> {
   const result = SoftwareCatalogSchema.safeParse(data)
@@ -98,7 +90,6 @@ export function safeParsePackage(data: unknown): ParseResult<ValidatedPackage> {
     : { success: false, error: result.error }
 }
 
-
 export function isCatalogEntry(value: unknown): value is [string, ValidatedPackage] {
   if (!Array.isArray(value) || value.length !== 2) return false
   const [key, pkg] = value
@@ -113,7 +104,6 @@ export function isValidCatalog(value: unknown): value is ValidatedCatalog {
 export function isValidProfile(value: unknown): value is ValidatedProfile {
   return SavedProfileSchema.safeParse(value).success
 }
-
 
 export function formatZodErrors(error: z.ZodError, maxIssues = 3): string {
   return error.issues

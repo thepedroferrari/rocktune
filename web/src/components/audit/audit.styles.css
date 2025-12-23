@@ -1,7 +1,4 @@
-
-
 @layer components {
-  
   .audit-panel {
     position: fixed;
     right: -480px;
@@ -9,7 +6,11 @@
     transform: translateY(-50%);
     width: 520px;
     max-height: 76vh;
-    background: linear-gradient(135deg, color-mix(in oklch, oklch(0.12 0.02 285) 95%, transparent) 0%, color-mix(in oklch, oklch(0.1 0.02 285) 98%, transparent) 100%);
+    background: linear-gradient(
+      135deg,
+      color-mix(in oklch, oklch(0.12 0.02 285) 95%, transparent) 0%,
+      color-mix(in oklch, oklch(0.1 0.02 285) 98%, transparent) 100%
+    );
     backdrop-filter: blur(20px);
     border: 1px solid var(--glass-border);
     border-right: none;
@@ -108,7 +109,6 @@
     background: var(--bg-tertiary);
   }
 
-  
   .error-banner {
     position: fixed;
     top: 0;
@@ -119,7 +119,11 @@
     align-items: center;
     gap: var(--space-md);
     padding: var(--space-md) var(--space-lg);
-    background: linear-gradient(135deg, color-mix(in oklch, var(--risky) 15%, transparent) 0%, color-mix(in oklch, var(--risky) 8%, transparent) 100%);
+    background: linear-gradient(
+      135deg,
+      color-mix(in oklch, var(--risky) 15%, transparent) 0%,
+      color-mix(in oklch, var(--risky) 8%, transparent) 100%
+    );
     border: 1px solid color-mix(in oklch, var(--risky) 30%, transparent);
     border-top: none;
     border-radius: 0 0 var(--radius-lg) var(--radius-lg);

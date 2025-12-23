@@ -1,11 +1,12 @@
-
-
 @layer components {
-  
   .driver-links {
     margin-top: var(--space-lg);
     padding: var(--space-lg);
-    background: linear-gradient(135deg, color-mix(in oklch, var(--accent) 5%, transparent) 0%, color-mix(in oklch, oklch(0.6 0.15 250) 3%, transparent) 100%);
+    background: linear-gradient(
+      135deg,
+      color-mix(in oklch, var(--accent) 5%, transparent) 0%,
+      color-mix(in oklch, oklch(0.6 0.15 250) 3%, transparent) 100%
+    );
     border: 1px solid color-mix(in oklch, var(--accent) 15%, transparent);
     border-radius: var(--radius-lg);
   }
@@ -70,7 +71,6 @@
     }
   }
 
-  
   .driver-card.driver-card--mobo,
   .driver-card.driver-card--monitor {
     opacity: 1;

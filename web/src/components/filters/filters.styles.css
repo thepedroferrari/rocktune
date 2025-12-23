@@ -1,7 +1,4 @@
-
-
 @layer components {
-  
   .filter-bar {
     display: flex;
     flex-wrap: wrap;
@@ -50,7 +47,6 @@
     }
   }
 
-  
   .software-toolbar {
     display: flex;
     align-items: center;
@@ -132,7 +128,6 @@
     }
   }
 
-  
   .software-scroll {
     max-height: 480px;
     overflow-y: auto;

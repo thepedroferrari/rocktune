@@ -12,45 +12,120 @@ interface PresetConfig {
 const PRESETS: Record<PresetType, PresetConfig> = {
   overkill: {
     opts: [
-      'pagefile', 'fastboot', 'timer', 'power_plan', 'usb_power', 'pcie_power',
-      'dns', 'nagle', 'audio_enhancements', 'gamedvr', 'background_apps',
-      'edge_debloat', 'copilot_disable', 'explorer_speed', 'temp_purge', 'razer_block',
-      'msi_mode', 'game_bar', 'fso_disable', 'ultimate_perf', 'services_trim', 'disk_cleanup',
-      'privacy_tier1', 'privacy_tier2', 'privacy_tier3', 'bloatware',
-      'ipv4_prefer', 'teredo_disable',
+      'pagefile',
+      'fastboot',
+      'timer',
+      'power_plan',
+      'usb_power',
+      'pcie_power',
+      'dns',
+      'nagle',
+      'audio_enhancements',
+      'gamedvr',
+      'background_apps',
+      'edge_debloat',
+      'copilot_disable',
+      'explorer_speed',
+      'temp_purge',
+      'razer_block',
+      'msi_mode',
+      'game_bar',
+      'fso_disable',
+      'ultimate_perf',
+      'services_trim',
+      'disk_cleanup',
+      'privacy_tier1',
+      'privacy_tier2',
+      'privacy_tier3',
+      'bloatware',
+      'ipv4_prefer',
+      'teredo_disable',
     ],
     software: ['steam', 'discord', 'processlasso'],
   },
   competitive: {
     opts: [
-      'pagefile', 'fastboot', 'power_plan', 'usb_power', 'pcie_power',
-      'dns', 'nagle', 'audio_enhancements', 'gamedvr', 'background_apps',
-      'edge_debloat', 'copilot_disable', 'explorer_speed', 'temp_purge', 'razer_block',
-      'msi_mode', 'game_bar', 'fso_disable', 'ultimate_perf', 'services_trim', 'disk_cleanup',
+      'pagefile',
+      'fastboot',
+      'power_plan',
+      'usb_power',
+      'pcie_power',
+      'dns',
+      'nagle',
+      'audio_enhancements',
+      'gamedvr',
+      'background_apps',
+      'edge_debloat',
+      'copilot_disable',
+      'explorer_speed',
+      'temp_purge',
+      'razer_block',
+      'msi_mode',
+      'game_bar',
+      'fso_disable',
+      'ultimate_perf',
+      'services_trim',
+      'disk_cleanup',
       'privacy_tier2',
     ],
     software: ['steam', 'discord', 'processlasso'],
   },
   streaming: {
     opts: [
-      'pagefile', 'fastboot', 'power_plan', 'usb_power', 'pcie_power',
-      'dns', 'audio_enhancements', 'gamedvr', 'background_apps', 'edge_debloat',
-      'copilot_disable', 'explorer_speed', 'temp_purge', 'razer_block',
-      'fso_disable', 'ultimate_perf', 'services_trim', 'disk_cleanup', 'privacy_tier1',
+      'pagefile',
+      'fastboot',
+      'power_plan',
+      'usb_power',
+      'pcie_power',
+      'dns',
+      'audio_enhancements',
+      'gamedvr',
+      'background_apps',
+      'edge_debloat',
+      'copilot_disable',
+      'explorer_speed',
+      'temp_purge',
+      'razer_block',
+      'fso_disable',
+      'ultimate_perf',
+      'services_trim',
+      'disk_cleanup',
+      'privacy_tier1',
     ],
     software: ['steam', 'discord', 'obs', 'vlc', '7zip'],
   },
   balanced: {
     opts: [
-      'pagefile', 'fastboot', 'power_plan', 'usb_power', 'pcie_power',
-      'dns', 'nagle', 'audio_enhancements', 'gamedvr', 'background_apps',
-      'edge_debloat', 'copilot_disable', 'explorer_speed', 'temp_purge', 'razer_block',
-      'disk_cleanup', 'privacy_tier1',
+      'pagefile',
+      'fastboot',
+      'power_plan',
+      'usb_power',
+      'pcie_power',
+      'dns',
+      'nagle',
+      'audio_enhancements',
+      'gamedvr',
+      'background_apps',
+      'edge_debloat',
+      'copilot_disable',
+      'explorer_speed',
+      'temp_purge',
+      'razer_block',
+      'disk_cleanup',
+      'privacy_tier1',
     ],
     software: ['steam', 'discord', 'vlc', '7zip'],
   },
   minimal: {
-    opts: ['dns', 'gamedvr', 'background_apps', 'edge_debloat', 'copilot_disable', 'temp_purge', 'razer_block'],
+    opts: [
+      'dns',
+      'gamedvr',
+      'background_apps',
+      'edge_debloat',
+      'copilot_disable',
+      'temp_purge',
+      'razer_block',
+    ],
     software: ['steam', '7zip'],
   },
 }
@@ -101,7 +176,14 @@ const CATEGORY_OPTS: Record<string, { label: string; opts: string[] }> = {
   },
   performance: {
     label: 'Performance',
-    opts: ['gamedvr', 'background_apps', 'razer_block', 'audio_enhancements', 'game_bar', 'fso_disable'],
+    opts: [
+      'gamedvr',
+      'background_apps',
+      'razer_block',
+      'audio_enhancements',
+      'game_bar',
+      'fso_disable',
+    ],
   },
   power: {
     label: 'Power',
@@ -113,7 +195,14 @@ const CATEGORY_OPTS: Record<string, { label: string; opts: string[] }> = {
   },
   privacy: {
     label: 'Privacy',
-    opts: ['edge_debloat', 'copilot_disable', 'privacy_tier1', 'privacy_tier2', 'privacy_tier3', 'bloatware'],
+    opts: [
+      'edge_debloat',
+      'copilot_disable',
+      'privacy_tier1',
+      'privacy_tier2',
+      'privacy_tier3',
+      'bloatware',
+    ],
   },
   experimental: {
     label: 'Experimental',
@@ -139,8 +228,13 @@ const round = (value: number, precision = 3): number => parseFloat(value.toFixed
 
 const clamp = (value: number, min = 0, max = 100): number => Math.min(Math.max(value, min), max)
 
-const adjust = (value: number, fromMin: number, fromMax: number, toMin: number, toMax: number): number =>
-  round(toMin + ((toMax - toMin) * (value - fromMin)) / (fromMax - fromMin))
+const adjust = (
+  value: number,
+  fromMin: number,
+  fromMax: number,
+  toMin: number,
+  toMax: number,
+): number => round(toMin + ((toMax - toMin) * (value - fromMin)) / (fromMax - fromMin))
 
 // ============================================
 // SPRING PHYSICS CLASS
@@ -185,7 +279,8 @@ class Spring {
     for (const key of keys) {
       if (this.target[key] !== undefined && this.current[key] !== undefined) {
         const delta = (this.target[key] as number) - (this.current[key] as number)
-        this.velocity[key] = ((this.velocity[key] as number) + delta * this.stiffness) * (1 - this.damping)
+        this.velocity[key] =
+          ((this.velocity[key] as number) + delta * this.stiffness) * (1 - this.damping)
         ;(this.current[key] as number) += this.velocity[key] as number
       }
     }
@@ -242,7 +337,9 @@ function updatePresetBadges(presetName: PresetType, opts: string[]): void {
 }
 
 function fadePresetBadge(optValue: string): void {
-  const badge = document.querySelector<HTMLSpanElement>(`label[data-opt="${optValue}"] .preset-badge`)
+  const badge = document.querySelector<HTMLSpanElement>(
+    `label[data-opt="${optValue}"] .preset-badge`,
+  )
   if (badge && !badge.hidden) badge.classList.add('faded')
 }
 
@@ -286,7 +383,7 @@ function applyCardStyles(state: CardState): void {
   const pointerFromCenter = clamp(
     Math.sqrt((glareY - 50) * (glareY - 50) + (glareX - 50) * (glareX - 50)) / 50,
     0,
-    1
+    1,
   )
   const pointerFromTop = glareY / 100
   const pointerFromLeft = glareX / 100
@@ -317,7 +414,9 @@ function animateCard(state: CardState): void {
   applyCardStyles(state)
 
   const allSettled =
-    state.springRotate.isSettled() && state.springGlare.isSettled() && state.springBackground.isSettled()
+    state.springRotate.isSettled() &&
+    state.springGlare.isSettled() &&
+    state.springBackground.isSettled()
 
   if (!allSettled || state.interacting) {
     state.animationId = requestAnimationFrame(() => animateCard(state))
@@ -452,7 +551,7 @@ function setupCardHolographicEffect(card: HTMLButtonElement): void {
     (e: PointerEvent) => {
       handlePointerMove(state, e)
     },
-    { passive: true }
+    { passive: true },
   )
 
   rotator.addEventListener(
@@ -460,7 +559,7 @@ function setupCardHolographicEffect(card: HTMLButtonElement): void {
     () => {
       handlePointerEnter(state)
     },
-    { passive: true }
+    { passive: true },
   )
 
   rotator.addEventListener(
@@ -468,7 +567,7 @@ function setupCardHolographicEffect(card: HTMLButtonElement): void {
     () => {
       handlePointerLeave(state)
     },
-    { passive: true }
+    { passive: true },
   )
 }
 

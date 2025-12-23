@@ -1,7 +1,4 @@
-
-
 @layer components {
-  
   .profile-actions {
     display: flex;
     gap: var(--space-md);

@@ -1,13 +1,9 @@
-
-
 import { store } from '../state'
 import type { PackageKey } from '../types'
 import { $id } from '../utils/dom'
 import { createCard } from './software-card'
 
-
 const ANIMATION_DELAY_MS = 30 as const
-
 
 export function renderSoftwareGrid(): void {
   const grid = $id('software-grid')
@@ -32,9 +28,7 @@ export function renderSoftwareGrid(): void {
 
 export { createCard } from './software-card'
 
-
 export { toggleCardSelection as toggleSoftware } from './software-card'
-
 
 export function updateSoftwareCounter(): void {
   const counter = $id('software-counter')

@@ -1,4 +1,3 @@
-
 declare const __brand: unique symbol
 type Brand<T, B> = T & { readonly [__brand]: B }
 
@@ -12,7 +11,6 @@ export function asPackageKey(key: string): PackageKey {
 export function asWingetId(id: string): WingetId {
   return id as WingetId
 }
-
 
 export const CATEGORIES = [
   'launcher',
@@ -34,7 +32,6 @@ export function isCategory(value: unknown): value is Category {
   return typeof value === 'string' && CATEGORIES.includes(value as Category)
 }
 
-
 export interface SoftwarePackage {
   readonly id: WingetId
   readonly name: string
@@ -50,7 +47,6 @@ export type SoftwareCatalog = Readonly<Record<PackageKey, SoftwarePackage>>
 export function isPackageKey(catalog: SoftwareCatalog, key: string): key is PackageKey {
   return key in catalog
 }
-
 
 export const CPU_TYPES = {
   AMD_X3D: 'amd_x3d',
@@ -85,7 +81,8 @@ export const MONITOR_SOFTWARE_TYPES = {
   HP: 'hp',
 } as const satisfies Record<string, string>
 
-export type MonitorSoftwareType = (typeof MONITOR_SOFTWARE_TYPES)[keyof typeof MONITOR_SOFTWARE_TYPES]
+export type MonitorSoftwareType =
+  (typeof MONITOR_SOFTWARE_TYPES)[keyof typeof MONITOR_SOFTWARE_TYPES]
 
 export interface HardwareProfile {
   readonly cpu: CpuType
@@ -115,7 +112,6 @@ export function isMonitorSoftwareType(value: unknown): value is MonitorSoftwareT
   )
 }
 
-
 export const VIEW_MODES = {
   GRID: 'grid',
   LIST: 'list',
@@ -129,7 +125,6 @@ export type FilterValue = Category | typeof FILTER_ALL
 export function isFilterAll(filter: FilterValue): filter is typeof FILTER_ALL {
   return filter === FILTER_ALL
 }
-
 
 export const OPTIMIZATION_TIERS = {
   SAFE: 'safe',
@@ -206,7 +201,6 @@ export function isOptimizationKey(value: unknown): value is OptimizationKey {
   )
 }
 
-
 export interface AppState {
   readonly software: SoftwareCatalog
   readonly selectedSoftware: ReadonlySet<PackageKey>
@@ -222,7 +216,6 @@ export interface MutableAppState {
   searchTerm: string
   currentView: ViewMode
 }
-
 
 export const PRESET_TYPES = {
   OVERKILL: 'overkill',
@@ -241,7 +234,6 @@ export interface Preset {
   readonly software: readonly PackageKey[]
 }
 
-
 export const PROFILE_VERSION = '1.0' as const
 
 export interface SavedProfile {
@@ -252,7 +244,6 @@ export interface SavedProfile {
   readonly software: readonly string[]
 }
 
-
 export const SCRIPT_FILENAME = 'rocktune-setup.ps1' as const
 export const GUIDE_FILENAME = 'POST-SETUP-GUIDE.html' as const
 
@@ -262,7 +253,6 @@ export interface ScriptConfig {
   readonly optimizations: readonly OptimizationKey[]
   readonly packages: readonly WingetId[]
 }
-
 
 export const CATEGORY_ICONS = {
   launcher: '🎮',
@@ -305,7 +295,6 @@ export const CATEGORY_SVG_ICONS = {
 } as const satisfies Record<Category | 'default', string>
 
 export const SIMPLE_ICONS_CDN = 'https://cdn.simpleicons.org' as const
-
 
 export type DeepReadonly<T> = T extends (infer U)[]
   ? readonly DeepReadonly<U>[]

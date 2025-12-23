@@ -1,7 +1,4 @@
-
-
 @layer components {
-  
   .software-card {
     --light-x: 50%;
     --light-y: 50%;
@@ -23,7 +20,9 @@
 
     &:focus-visible {
       outline: none;
-      box-shadow: 0 0 0 3px var(--accent), 0 0 20px var(--accent-glow);
+      box-shadow:
+        0 0 0 3px var(--accent),
+        0 0 20px var(--accent-glow);
     }
 
     &.entering {
@@ -42,18 +41,23 @@
       pointer-events: none;
       position: absolute;
       visibility: hidden;
-      transition: opacity 0.2s ease, transform 0.2s ease, visibility 0s 0.2s;
+      transition:
+        opacity 0.2s ease,
+        transform 0.2s ease,
+        visibility 0s 0.2s;
     }
 
     &:not(.hidden) {
-      transition: opacity 0.25s ease, transform 0.25s var(--ease-out-back);
+      transition:
+        opacity 0.25s ease,
+        transform 0.25s var(--ease-out-back);
     }
 
     &.selected {
       z-index: 1;
 
       &::before {
-        content: '';
+        content: "";
         position: absolute;
         inset: -3px;
         background: linear-gradient(
@@ -85,7 +89,7 @@
       }
 
       & .software-card-front::after {
-        content: '✓';
+        content: "✓";
         position: absolute;
         top: 8px;
         right: 8px;
@@ -113,7 +117,7 @@
     inset: 0;
 
     &::after {
-      content: '';
+      content: "";
       position: absolute;
       inset: 0;
       background: radial-gradient(
@@ -158,14 +162,16 @@
       0 4px 24px color-mix(in oklch, oklch(0 0 0) 20%, transparent);
     text-align: center;
     overflow: hidden;
-    transition: opacity 0.25s var(--ease-out-expo), transform 0.25s var(--ease-out-expo);
+    transition:
+      opacity 0.25s var(--ease-out-expo),
+      transform 0.25s var(--ease-out-expo);
   }
 
   .software-card-front {
     opacity: 1;
 
     &::before {
-      content: '';
+      content: "";
       position: absolute;
       inset: 0;
       background: linear-gradient(
@@ -201,7 +207,7 @@
     gap: var(--space-xs);
 
     &::before {
-      content: '';
+      content: "";
       position: absolute;
       inset: 0;
       background: radial-gradient(circle at center, var(--accent-glow) 0%, transparent 70%);
@@ -239,7 +245,9 @@
       height: 100%;
       color: var(--text-secondary);
       opacity: 0.8;
-      transition: color 0.3s ease, opacity 0.3s ease;
+      transition:
+        color 0.3s ease,
+        opacity 0.3s ease;
     }
 
     & .emoji-icon {
@@ -316,7 +324,9 @@
     font-size: 0.65rem;
     font-weight: 600;
     border-radius: 100px;
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition:
+      transform 0.2s,
+      box-shadow 0.2s;
 
     .software-card:hover &:hover {
       transform: scale(1.05);
@@ -324,7 +334,6 @@
     }
   }
 
-  
   .software-card .ripple {
     position: absolute;
     border-radius: 50%;

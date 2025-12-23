@@ -1,4 +1,3 @@
-
 export function setupCursorGlow(): void {
   const glow = document.querySelector('.cursor-glow') as HTMLElement | null
   if (!glow) return
@@ -99,10 +98,7 @@ function setupProgressNav(): void {
   handleEdgeCases(allSections, updateActiveNav)
 }
 
-function handleEdgeCases(
-  sections: HTMLElement[],
-  updateActiveNav: (id: string) => void,
-): void {
+function handleEdgeCases(sections: HTMLElement[], updateActiveNav: (id: string) => void): void {
   const firstSection = sections[0]
   const lastSection = sections[sections.length - 1]
 

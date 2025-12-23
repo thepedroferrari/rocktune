@@ -1,7 +1,4 @@
-
-
 @layer components {
-  
   .summary {
     position: relative;
     background:
@@ -10,8 +7,7 @@
         color-mix(in oklch, oklch(1 0 0) 6%, transparent) 0%,
         color-mix(in oklch, oklch(1 0 0) 2%, transparent) 50%,
         transparent 100%
-      ),
-      color-mix(in oklch, oklch(0.15 0.02 285) 40%, transparent);
+      ), color-mix(in oklch, oklch(0.15 0.02 285) 40%, transparent);
     backdrop-filter: blur(var(--glass-depth-3)) saturate(1.4);
     -webkit-backdrop-filter: blur(var(--glass-depth-3)) saturate(1.4);
     border: 1px solid color-mix(in oklch, oklch(1 0 0) 12%, transparent);
@@ -30,7 +26,7 @@
     transition: all 0.3s var(--ease-out-expo);
 
     &::before {
-      content: '';
+      content: "";
       position: absolute;
       inset: 0;
       background: radial-gradient(
@@ -67,7 +63,7 @@
     font-weight: 700;
     margin-bottom: var(--space-xs);
     letter-spacing: 0.02em;
-    
+
     background: linear-gradient(
       180deg,
       oklch(0.92 0.01 285) 0%,

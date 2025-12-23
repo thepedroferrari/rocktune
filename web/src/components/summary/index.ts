@@ -1,5 +1,3 @@
-
-
 export {
   getHardwareProfile,
   getSelectedOptimizations,

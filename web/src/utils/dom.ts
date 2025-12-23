@@ -1,4 +1,3 @@
-
 export function $<K extends keyof HTMLElementTagNameMap>(
   selector: K,
 ): HTMLElementTagNameMap[K] | null
@@ -27,7 +26,6 @@ export function $idStrict(id: string): HTMLElement {
   return element
 }
 
-
 export function isHTMLElement(value: unknown): value is HTMLElement {
   return value instanceof HTMLElement
 }
@@ -48,7 +46,6 @@ export function isDialogElement(value: unknown): value is HTMLDialogElement {
   return value instanceof HTMLDialogElement
 }
 
-
 const SR_ANNOUNCE_ID = 'sr-announce' as const
 
 export function announce(message: string): void {
@@ -59,7 +56,6 @@ export function announce(message: string): void {
     announcer.textContent = message
   }
 }
-
 
 const HTML_ESCAPE_MAP = {
   '&': '&amp;',
@@ -85,7 +81,6 @@ export function sanitize(text: string | undefined | null): string {
   if (text == null) return ''
   return escapeHtml(String(text))
 }
-
 
 type AnyFunction = (...args: never[]) => unknown
 
@@ -131,7 +126,6 @@ export function debounce<T extends AnyFunction>(fn: T, delay: number): Debounced
   return debounced
 }
 
-
 export function throttle<T extends AnyFunction>(
   fn: T,
   limit: number,
@@ -146,7 +140,6 @@ export function throttle<T extends AnyFunction>(
     }
   }
 }
-
 
 type EventHandler<E extends Event = Event> = (event: E) => void
 
@@ -175,7 +168,6 @@ export function onInput<E extends HTMLInputElement | HTMLTextAreaElement>(
   element.addEventListener('input', handler)
   return () => element.removeEventListener('input', handler)
 }
-
 
 export function toggleClass(
   element: HTMLElement | null,

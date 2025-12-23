@@ -1,37 +1,58 @@
-
-
 @layer components {
-
   @keyframes hero-brightness {
-    0% { filter: brightness(1) contrast(1); }
-    100% { filter: brightness(0.85) contrast(1.2); }
+    0% {
+      filter: brightness(1) contrast(1);
+    }
+    100% {
+      filter: brightness(0.85) contrast(1.2);
+    }
   }
 
   @keyframes hero-silhouette-blur {
-    0% { filter: blur(0px); }
-    100% { filter: blur(2px); }
+    0% {
+      filter: blur(0px);
+    }
+    100% {
+      filter: blur(2px);
+    }
   }
 
   @keyframes hero-hue-rotate {
-    0%, 100% { filter: hue-rotate(0deg); }
-    50% { filter: hue-rotate(60deg); }
+    0%,
+    100% {
+      filter: hue-rotate(0deg);
+    }
+    50% {
+      filter: hue-rotate(60deg);
+    }
   }
 
   @keyframes hero-left {
-    0% { margin-left: 450px; }
-    100% { margin-left: -60000px; }
+    0% {
+      margin-left: 450px;
+    }
+    100% {
+      margin-left: -60000px;
+    }
   }
 
   @keyframes hero-back {
-    0% { margin-left: -400px; }
-    100% { margin-left: -60850px; }
+    0% {
+      margin-left: -400px;
+    }
+    100% {
+      margin-left: -60850px;
+    }
   }
 
   @keyframes hero-right {
-    0% { margin-left: -1250px; }
-    100% { margin-left: -61700px; }
+    0% {
+      margin-left: -1250px;
+    }
+    100% {
+      margin-left: -61700px;
+    }
   }
-
 
   .hero-cube-wrapper {
     position: relative;
@@ -181,7 +202,6 @@
     animation: hero-right 400s linear infinite;
   }
 
-
   .hero-overlay {
     position: absolute;
     inset: 0;
@@ -220,7 +240,6 @@
         0 2px 8px color-mix(in oklch, oklch(0 0 0) 60%, transparent);
     }
   }
-
 
   .hero-cube-reflect {
     position: absolute;

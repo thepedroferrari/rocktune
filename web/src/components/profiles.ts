@@ -11,7 +11,6 @@ import { $, $$, $id, isInputElement } from '../utils/dom'
 import { renderSoftwareGrid } from './cards'
 import { getHardwareProfile, getSelectedOptimizations, updateSummary } from './summary/'
 
-
 export function saveProfile(): void {
   const profile = buildProfile()
   downloadProfile(profile)
@@ -39,7 +38,6 @@ function downloadProfile(profile: SavedProfile): void {
 
   URL.revokeObjectURL(url)
 }
-
 
 type LoadResult =
   | { readonly success: true; readonly profile: ValidatedProfile }
@@ -82,7 +80,6 @@ function parseProfileFile(event: ProgressEvent<FileReader>): LoadResult {
     return { success: false, error: message }
   }
 }
-
 
 function applyProfile(profile: ValidatedProfile): void {
   applyHardwareSettings(profile)
@@ -130,7 +127,6 @@ function showLoadSuccess(profile: ValidatedProfile): void {
   const optCount = profile.optimizations.length
   alert(`Profile loaded: ${packageCount} packages, ${optCount} optimizations`)
 }
-
 
 export function setupProfileActions(): void {
   $id('save-profile-btn')?.addEventListener('click', saveProfile)

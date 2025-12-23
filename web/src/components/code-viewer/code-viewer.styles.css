@@ -1,12 +1,24 @@
-
-
 @layer components {
-  
   .code-viewer {
     display: flex;
     flex-direction: column;
     gap: var(--space-sm);
-    background: radial-gradient(120% 140% at 20% 20%, color-mix(in oklch, var(--accent) 18%, transparent), transparent 55%), radial-gradient(140% 160% at 80% 0%, color-mix(in oklch, oklch(0.6 0.15 250) 16%, transparent), transparent 60%), linear-gradient(135deg, color-mix(in oklch, oklch(0.1 0.02 285) 96%, transparent), color-mix(in oklch, oklch(0.08 0.02 285) 98%, transparent));
+    background:
+      radial-gradient(
+        120% 140% at 20% 20%,
+        color-mix(in oklch, var(--accent) 18%, transparent),
+        transparent 55%
+      ),
+      radial-gradient(
+        140% 160% at 80% 0%,
+        color-mix(in oklch, oklch(0.6 0.15 250) 16%, transparent),
+        transparent 60%
+      ),
+      linear-gradient(
+        135deg,
+        color-mix(in oklch, oklch(0.1 0.02 285) 96%, transparent),
+        color-mix(in oklch, oklch(0.08 0.02 285) 98%, transparent)
+      );
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-lg);
     padding: var(--space-sm);
@@ -25,7 +37,12 @@
       content: "";
       position: absolute;
       inset: 0;
-      background: linear-gradient(120deg, color-mix(in oklch, oklch(1 0 0) 5%, transparent), transparent 50%, color-mix(in oklch, oklch(1 0 0) 4%, transparent));
+      background: linear-gradient(
+        120deg,
+        color-mix(in oklch, oklch(1 0 0) 5%, transparent),
+        transparent 50%,
+        color-mix(in oklch, oklch(1 0 0) 4%, transparent)
+      );
       pointer-events: none;
       mix-blend-mode: screen;
     }
@@ -57,7 +74,11 @@
     }
 
     &.active {
-      background: linear-gradient(135deg, color-mix(in oklch, var(--accent) 20%, transparent), color-mix(in oklch, oklch(0.6 0.15 250) 20%, transparent));
+      background: linear-gradient(
+        135deg,
+        color-mix(in oklch, var(--accent) 20%, transparent),
+        color-mix(in oklch, oklch(0.6 0.15 250) 20%, transparent)
+      );
       border-color: var(--accent);
       color: #fff;
       box-shadow: 0 8px 24px color-mix(in oklch, var(--accent) 25%, transparent);
@@ -115,7 +136,12 @@
 
   .cv-diff {
     white-space: pre-wrap;
-    background: radial-gradient(140% 120% at 20% 30%, color-mix(in oklch, var(--accent) 8%, transparent), transparent 45%), var(--bg-primary);
+    background:
+      radial-gradient(
+        140% 120% at 20% 30%,
+        color-mix(in oklch, var(--accent) 8%, transparent),
+        transparent 45%
+      ), var(--bg-primary);
   }
 
   .cv-line {

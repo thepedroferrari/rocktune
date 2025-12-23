@@ -6,14 +6,21 @@
     animation: fadeInUp 0.8s var(--ease-out-expo) forwards;
 
     &::after {
-      content: '';
+      content: "";
       position: absolute;
       bottom: 0;
       left: 50%;
       transform: translateX(-50%);
       width: 300px;
       height: 1px;
-      background: linear-gradient(90deg, transparent 0%, color-mix(in oklch, var(--accent) 30%, transparent) 20%, color-mix(in oklch, oklch(1 0 0) 20%, transparent) 50%, color-mix(in oklch, var(--accent) 30%, transparent) 80%, transparent 100%);
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        color-mix(in oklch, var(--accent) 30%, transparent) 20%,
+        color-mix(in oklch, oklch(1 0 0) 20%, transparent) 50%,
+        color-mix(in oklch, var(--accent) 30%, transparent) 80%,
+        transparent 100%
+      );
     }
   }
 
@@ -50,7 +57,9 @@
     margin-bottom: var(--space-md);
   }
 
-  .upgrades-grid--danger { margin-top: var(--space-lg); }
+  .upgrades-grid--danger {
+    margin-top: var(--space-lg);
+  }
 
   .core-grid {
     display: grid;

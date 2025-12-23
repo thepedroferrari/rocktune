@@ -1,11 +1,8 @@
-
-
 import { store } from '../../state'
 import type { Category, PackageKey, SoftwarePackage } from '../../types'
 import { CATEGORY_SVG_ICONS, SIMPLE_ICONS_CDN } from '../../types'
 import { sanitize } from '../../utils/dom'
 import { createRipple } from '../../utils/effects'
-
 
 const DESCRIPTION_MAX_LENGTH = 60 as const
 const MAGNETIC_FACTOR = 0.05 as const
@@ -14,7 +11,6 @@ const ARIA_LABELS = {
   selectedAction: 'remove from',
   unselectedAction: 'add to',
 } as const
-
 
 interface CardConfig {
   readonly key: PackageKey
@@ -29,7 +25,6 @@ interface LogoConfig {
   readonly type: LogoType
   readonly html: string
 }
-
 
 function buildCardConfig(
   key: PackageKey,
@@ -80,7 +75,6 @@ function setupCardAccessibility(card: HTMLDivElement, config: CardConfig): void 
   )
 }
 
-
 function determineLogoType(pkg: Readonly<SoftwarePackage>): LogoType {
   if (pkg.icon) {
     return pkg.icon.endsWith('.svg') || pkg.icon.startsWith('icons/') ? 'sprite' : 'cdn'
@@ -127,7 +121,6 @@ function getCategoryIcon(category: Category): string {
   return CATEGORY_SVG_ICONS[category] ?? CATEGORY_SVG_ICONS.default
 }
 
-
 function buildCardHTML(config: CardConfig): string {
   const { pkg, isSelected } = config
   const logo = buildLogoHTML(pkg)
@@ -160,7 +153,6 @@ function buildCardHTML(config: CardConfig): string {
     </div>
   `
 }
-
 
 function attachCardEventListeners(card: HTMLDivElement, key: PackageKey): void {
   card.addEventListener('click', (e) => {
@@ -197,7 +189,6 @@ function attachCardEventListeners(card: HTMLDivElement, key: PackageKey): void {
     card.classList.remove('entering')
   })
 }
-
 
 export function toggleCardSelection(key: PackageKey, card: HTMLElement): void {
   const isNowSelected = store.toggleSoftware(key)

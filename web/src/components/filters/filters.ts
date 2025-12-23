@@ -3,11 +3,9 @@ import type { FilterValue, ViewMode } from '../../types'
 import { FILTER_ALL, isCategory, VIEW_MODES } from '../../types'
 import { $, $$, $id, announce, debounce, isInputElement } from '../../utils/dom'
 
-
 const FILTER_WILDCARD = '*' as const
 const ANIMATION_DELAY_MS = 20 as const
 const SEARCH_ANNOUNCE_DELAY_MS = 500 as const
-
 
 export function setupFilters(): void {
   const buttons = $$<HTMLButtonElement>('.filter')
@@ -53,7 +51,6 @@ function animateVisibleCards(filter: string): void {
     }
   }
 }
-
 
 export function setupSearch(): void {
   const input = $id('software-search')
@@ -108,7 +105,6 @@ function filterCardsBySearch(query: string, activeFilter: string): number {
 
   return visibleCount
 }
-
 
 export function setupViewToggle(): void {
   const buttons = $$<HTMLButtonElement>('.view-btn')

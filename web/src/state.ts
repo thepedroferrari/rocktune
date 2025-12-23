@@ -8,10 +8,8 @@ import type {
 } from './types'
 import { FILTER_ALL, isFilterAll, VIEW_MODES } from './types'
 
-
 type Listener = () => void
 type Unsubscribe = () => void
-
 
 class Store {
   private state = {
@@ -23,7 +21,6 @@ class Store {
   } satisfies MutableAppState
 
   private readonly listeners = new Set<Listener>()
-
 
   get software(): SoftwareCatalog {
     return Object.freeze({ ...this.state.software }) as SoftwareCatalog
@@ -45,7 +42,6 @@ class Store {
     return this.state.currentView
   }
 
-
   getPackage(key: PackageKey): Readonly<SoftwarePackage>
   getPackage(key: string): Readonly<SoftwarePackage> | undefined
   getPackage(key: string): Readonly<SoftwarePackage> | undefined {
@@ -56,7 +52,6 @@ class Store {
   hasPackage(key: string): key is PackageKey {
     return key in this.state.software
   }
-
 
   isSelected(key: PackageKey): boolean
   isSelected(key: string): boolean {
@@ -85,7 +80,6 @@ class Store {
     this.notify()
   }
 
-
   setSoftware(catalog: SoftwareCatalog): void {
     this.state.software = { ...catalog }
     for (const [key, pkg] of Object.entries(catalog)) {
@@ -95,7 +89,6 @@ class Store {
     }
     this.notify()
   }
-
 
   setFilter(filter: FilterValue): void {
     this.state.currentFilter = filter
@@ -111,7 +104,6 @@ class Store {
     this.state.currentView = view
     this.notify()
   }
-
 
   getFilteredSoftware(): readonly [PackageKey, Readonly<SoftwarePackage>][] {
     const { software, currentFilter, searchTerm } = this.state
@@ -148,7 +140,6 @@ class Store {
     return Object.keys(this.state.software).length
   }
 
-
   subscribe(listener: Listener): Unsubscribe {
     this.listeners.add(listener)
     return () => {
@@ -162,7 +153,6 @@ class Store {
     }
   }
 }
-
 
 export const store = new Store()
 
