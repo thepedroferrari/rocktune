@@ -101,12 +101,7 @@ export function createCodeViewer(root: HTMLElement | null): CodeViewer | null {
     const meaningfulChanges = getMeaningfulChanges(changedLineIds)
     const total = meaningfulChanges.length
 
-    if (total === 0) {
-      navContainer.hidden = true
-      return
-    }
-
-    navContainer.hidden = mode !== 'diff'
+    navContainer.hidden = total === 0
 
     const displayIndex = currentChangeIndex >= 0 ? currentChangeIndex + 1 : 0
     navCount.textContent = `${displayIndex}/${total}`
@@ -138,6 +133,10 @@ export function createCodeViewer(root: HTMLElement | null): CodeViewer | null {
   function navigateDiff(direction: 'prev' | 'next'): void {
     const meaningfulChanges = getMeaningfulChanges(changedLineIds)
     if (meaningfulChanges.length === 0) return
+
+    if (mode !== 'diff') {
+      setMode('diff')
+    }
 
     if (direction === 'next') {
       const nextIndex = currentChangeIndex + 1

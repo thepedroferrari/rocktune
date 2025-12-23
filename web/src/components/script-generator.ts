@@ -8,6 +8,7 @@ import {
   PERIPHERAL_TYPES,
   SCRIPT_FILENAME,
 } from '../types'
+import { computeStats, createCodeViewer, type CodeViewer } from './code-viewer'
 import { getHardwareProfile, getSelectedOptimizations } from './summary/'
 
 const preview = {
@@ -716,11 +717,63 @@ export function downloadFile(content: string, filename: string): void {
 }
 
 export function setupDownload(): void {
-  const btn = document.getElementById('download-btn')
-  if (!btn) return
+  const downloadBtn = document.getElementById('download-btn')
+  const previewBtn = document.getElementById('preview-btn')
+  const previewModal = document.getElementById('preview-modal') as HTMLDialogElement | null
+  const closeModalBtn = document.getElementById('close-modal')
+  const copyBtn = document.getElementById('copy-script')
+  const downloadFromModalBtn = document.getElementById('download-from-modal')
+  const linesEl = document.getElementById('preview-lines')
+  const sizeEl = document.getElementById('preview-size')
 
-  btn.addEventListener('click', () => {
+  let viewer: CodeViewer | null = null
+
+  downloadBtn?.addEventListener('click', () => {
     const script = getTrackedScript()
     downloadFile(script, SCRIPT_FILENAME)
+  })
+
+  previewBtn?.addEventListener('click', () => {
+    if (!previewModal) return
+
+    if (!viewer) {
+      viewer = createCodeViewer(document.getElementById('preview-viewer'))
+    }
+
+    const current = getTrackedScript()
+    const previous = getPreviousScript()
+
+    viewer?.setContent({ current, previous })
+    viewer?.setMode('current')
+
+    const stats = computeStats(current)
+    if (linesEl) linesEl.textContent = `${stats.lines} lines`
+    if (sizeEl) sizeEl.textContent = `${stats.sizeKb} KB`
+
+    previewModal.showModal()
+  })
+
+  closeModalBtn?.addEventListener('click', () => previewModal?.close())
+
+  previewModal?.addEventListener('click', (e) => {
+    if (e.target === previewModal) previewModal.close()
+  })
+
+  copyBtn?.addEventListener('click', async () => {
+    const content = viewer?.getContent() ?? getTrackedScript()
+    await navigator.clipboard.writeText(content)
+    if (copyBtn) {
+      const original = copyBtn.textContent
+      copyBtn.textContent = 'Copied!'
+      setTimeout(() => {
+        copyBtn.textContent = original
+      }, 1500)
+    }
+  })
+
+  downloadFromModalBtn?.addEventListener('click', () => {
+    const content = viewer?.getContent() ?? getTrackedScript()
+    downloadFile(content, SCRIPT_FILENAME)
+    previewModal?.close()
   })
 }
