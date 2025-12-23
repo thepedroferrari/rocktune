@@ -24,6 +24,89 @@ function insertHeroText(): void {
   })
 }
 
+let heroStyleSheet: CSSStyleSheet | null = null
+
+function updateHeroKeyframes(): void {
+  const wrapper = document.querySelector<HTMLDivElement>('.hero-cube-wrapper')
+  if (!wrapper) return
+
+  // Get computed cube width from CSS custom property
+  const styles = getComputedStyle(wrapper)
+  const cubeWidth = parseFloat(styles.getPropertyValue('--cube-width')) || 900
+  const cubeHalf = cubeWidth / 2
+
+  // Perspective ratio: P / cubeWidth = 1/1.8 = 0.556
+  const perspective = cubeWidth / 1.8
+
+  // Back face scale at z = cubeHalf
+  const backScale = perspective / (perspective + cubeHalf)
+  // backScale = (W/1.8) / (W/1.8 + W/2) = (1/1.8) / (1/1.8 + 0.5)
+  //           = 0.556 / (0.556 + 0.5) = 0.556 / 1.056 = 0.526
+
+  // The original 900px cube had 850px offset = 0.944 * cubeWidth
+  // That worked because the visible text width across faces totaled ~850px
+  //
+  // With perspective, text on the back face appears at 0.526 scale
+  // So 1px of margin-left scrolls 1px of text, but it APPEARS as 0.526px on screen
+  //
+  // For seamless flow, the offset should equal the visible screen width
+  // converted back to text coordinates: screenWidth / scale
+  //
+  // Back visible screen width ≈ 0.7 * viewportWidth (empirical)
+  // In text coords: 0.7 * viewport / 0.526 ≈ 1.33 * viewport
+  //
+  // Since cube fills ~80% of viewport at max, and we want consistent behavior:
+  // offset ≈ cubeWidth * 1.5 to 1.7 seems appropriate
+
+  const faceOffset = cubeWidth * 1.72
+
+  // Calculate starting positions
+  const leftStart = cubeHalf
+  const backStart = leftStart - faceOffset
+  const rightStart = backStart - faceOffset
+
+  // Calculate end positions (scroll a very long distance)
+  const scrollDistance = 60000
+  const leftEnd = leftStart - scrollDistance
+  const backEnd = backStart - scrollDistance
+  const rightEnd = rightStart - scrollDistance
+
+  // Create or update dynamic stylesheet
+  if (!heroStyleSheet) {
+    const style = document.createElement('style')
+    style.id = 'hero-dynamic-keyframes'
+    document.head.appendChild(style)
+    heroStyleSheet = style.sheet
+  }
+
+  // Clear existing rules
+  if (heroStyleSheet) {
+    while (heroStyleSheet.cssRules.length > 0) {
+      heroStyleSheet.deleteRule(0)
+    }
+
+    // Insert new keyframes
+    heroStyleSheet.insertRule(`
+      @keyframes hero-left {
+        0% { margin-left: ${leftStart}px; }
+        100% { margin-left: ${leftEnd}px; }
+      }
+    `)
+    heroStyleSheet.insertRule(`
+      @keyframes hero-back {
+        0% { margin-left: ${backStart}px; }
+        100% { margin-left: ${backEnd}px; }
+      }
+    `)
+    heroStyleSheet.insertRule(`
+      @keyframes hero-right {
+        0% { margin-left: ${rightStart}px; }
+        100% { margin-left: ${rightEnd}px; }
+      }
+    `)
+  }
+}
+
 function adjustHeroCubeSize(): void {
   const container = document.querySelector<HTMLDivElement>('.hero-cube-container')
   const reflect = document.querySelector<HTMLDivElement>('.hero-cube-reflect')
@@ -35,6 +118,9 @@ function adjustHeroCubeSize(): void {
     container.style.transform = ''
     if (reflect) reflect.style.transform = 'translateX(-50%)'
   }
+
+  // Update keyframes when viewport changes
+  updateHeroKeyframes()
 }
 
 function rotateHeroText(): void {
@@ -52,6 +138,7 @@ function rotateHeroText(): void {
 export function setupHeroCube(): void {
   shuffledTexts = shuffle(heroTexts)
   insertHeroText()
+  updateHeroKeyframes()
   adjustHeroCubeSize()
   window.addEventListener('resize', adjustHeroCubeSize)
   setInterval(rotateHeroText, 20000)
