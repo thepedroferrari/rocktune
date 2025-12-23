@@ -225,6 +225,7 @@ export interface MutableAppState {
 
 
 export const PRESET_TYPES = {
+  OVERKILL: 'overkill',
   COMPETITIVE: 'competitive',
   STREAMING: 'streaming',
   BALANCED: 'balanced',

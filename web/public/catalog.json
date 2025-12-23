@@ -38,6 +38,7 @@
   "openhardwaremonitor": {"id": "OpenHardwareMonitor.OpenHardwareMonitor", "name": "Open Hardware Monitor", "category": "monitoring", "icon": "icons/openhardwaremonitor.svg", "desc": "Free, open source hardware monitoring tool."},
   "nvcleanstall": {"id": "TechPowerUp.NVCleanstall", "name": "NVCleanstall", "category": "monitoring", "icon": "icons/nvcleanstall.svg", "desc": "Clean NVIDIA driver installer without bloatware."},
   "displaydriveruninstaller": {"id": "Wagnardsoft.DisplayDriverUninstaller", "name": "DDU", "category": "monitoring", "icon": "icons/ddu.svg", "desc": "Completely remove GPU drivers for clean installs."},
+  "processlasso": {"id": "BitSum.ProcessLasso", "name": "Process Lasso", "category": "monitoring", "desc": "CPU optimization and process priority automation for gaming."},
 
   "brave": {"id": "Brave.Brave", "name": "Brave", "category": "browser", "icon": "brave", "desc": "Privacy-focused browser with built-in ad blocking."},
   "firefox": {"id": "Mozilla.Firefox", "name": "Firefox", "category": "browser", "icon": "firefox", "desc": "Independent, privacy-respecting browser from Mozilla."},
