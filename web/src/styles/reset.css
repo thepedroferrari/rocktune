@@ -1,7 +1,4 @@
-/**
- * Modern CSS Reset
- * Minimal, accessible reset with modern defaults
- */
+
 
 @layer reset {
   *,
@@ -80,7 +77,7 @@
     list-style: none;
   }
 
-  /* Remove all animations and transitions for people who prefer reduced motion */
+  
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,

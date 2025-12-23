@@ -1,22 +1,6 @@
 #Requires -RunAsAdministrator
 
-<#
-.SYNOPSIS
-    Extreme Privacy & Anti-Tracking Script for Windows 11
 
-.DESCRIPTION
-    This supplement script applies EXTREME privacy hardening beyond the gaming setup script.
-    Use this if you want to completely eliminate Microsoft tracking and telemetry.
-
-    WARNING: Some features may break Windows functionality (Store, Cortana, Widgets, etc.)
-    Only use this on a gaming-dedicated PC.
-
-.PARAMETER SkipConfirmations
-    Skip confirmation prompts
-
-.PARAMETER EnableFirewallRules
-    Add Windows Firewall rules to block Microsoft telemetry IPs/domains
-#>
 
 param(
     [switch]$SkipConfirmations,
@@ -31,11 +15,9 @@ function Write-Log {
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
     $logMessage = "[$timestamp] [$Level] $Message"
 
-    # Try to write to log file (handle file locks gracefully)
     try {
         Add-Content -Path $script:LogPath -Value $logMessage -ErrorAction Stop
     } catch {
-        # If log file is locked, just skip writing to file (still show on console)
     }
 
     Write-Host $logMessage -ForegroundColor $(if ($Level -eq "ERROR") { "Red" } elseif ($Level -eq "SUCCESS") { "Green" } else { "White" })
@@ -76,20 +58,16 @@ if (-not $SkipConfirmations) {
     }
 }
 
-#region Windows Update - Complete Disable
 Write-Log "=== Disabling Windows Update Completely ==="
 try {
-    # Stop Windows Update service
     Stop-Service wuauserv -Force -ErrorAction SilentlyContinue
     Set-Service wuauserv -StartupType Disabled
 
-    # Disable via registry
     Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" -Name "NoAutoUpdate" -Value 1
     Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" -Name "AUOptions" -Value 2
     Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" -Name "AutoInstallMinorUpdates" -Value 0
     Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" -Name "NoAutoRebootWithLoggedOnUsers" -Value 1
 
-    # Disable Update Orchestrator Service
     Stop-Service UsoSvc -Force -ErrorAction SilentlyContinue
     Set-Service UsoSvc -StartupType Disabled -ErrorAction SilentlyContinue
 
@@ -97,23 +75,22 @@ try {
 } catch {
     Write-Log "Error disabling Windows Update: $_" "ERROR"
 }
-#endregion
 
-#region Telemetry Services - Nuclear Option
+
 Write-Log "=== Disabling All Telemetry Services ==="
 $telemetryServices = @(
-    "DiagTrack",                      # Connected User Experiences and Telemetry
-    "dmwappushservice",               # Device Management Wireless Application Protocol
-    "diagnosticshub.standardcollector.service", # Diagnostics Hub
-    "DPS",                            # Diagnostic Policy Service
-    "WdiSystemHost",                  # Diagnostic System Host
-    "WdiServiceHost",                 # Diagnostic Service Host
-    "PcaSvc",                         # Program Compatibility Assistant
-    "WerSvc",                         # Windows Error Reporting
-    "Wecsvc",                         # Windows Event Collector
-    "BDESVC",                         # BitLocker Drive Encryption (if not using BitLocker)
-    "wercplsupport",                  # Problem Reports Control Panel
-    "RetailDemo"                      # Retail Demo Service
+    "DiagTrack",
+    "dmwappushservice",
+    "diagnosticshub.standardcollector.service",
+    "DPS",
+    "WdiSystemHost",
+    "WdiServiceHost",
+    "PcaSvc",
+    "WerSvc",
+    "Wecsvc",
+    "BDESVC",
+    "wercplsupport",
+    "RetailDemo"
 )
 
 foreach ($svc in $telemetryServices) {
@@ -128,44 +105,32 @@ foreach ($svc in $telemetryServices) {
         Write-Log "Could not disable $svc : $_" "ERROR"
     }
 }
-#endregion
 
-#region Location Tracking
+
 Write-Log "=== Disabling Location Tracking ==="
 Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\LocationAndSensors" -Name "DisableLocation" -Value 1
 Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\LocationAndSensors" -Name "DisableWindowsLocationProvider" -Value 1
 Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\LocationAndSensors" -Name "DisableLocationScripting" -Value 1
 Set-RegistryValue -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\location" -Name "Value" -Value "Deny" -Type "String"
-#endregion
 
-#region Camera Privacy (Microphone kept enabled for gaming voice chat)
+
 Write-Log "=== Hardening Camera Privacy ==="
-# Block camera access (privacy concern, not needed for most gaming)
 Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppPrivacy" -Name "LetAppsAccessCamera" -Value 2
 Set-RegistryValue -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\webcam" -Name "Value" -Value "Deny" -Type "String"
 
-# NOTE: Microphone is NOT blocked because it's essential for gaming voice chat
-# (Discord, in-game voice, etc.). If you want to block microphone for maximum privacy,
-# uncomment the lines below:
-# Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppPrivacy" -Name "LetAppsAccessMicrophone" -Value 2
-# Set-RegistryValue -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\microphone" -Name "Value" -Value "Deny" -Type "String"
 
 Write-Log "Camera blocked | Microphone enabled for gaming voice chat" "SUCCESS"
-#endregion
 
-#region Disable Biometrics
+
 Write-Log "=== Disabling Biometrics ==="
 Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Biometrics" -Name "Enabled" -Value 0
 Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" -Name "AllowDomainPINLogon" -Value 0
-#endregion
 
-#region Disable OneDrive Completely
+
 Write-Log "=== Disabling OneDrive ==="
 try {
-    # Kill OneDrive process
     taskkill /f /im OneDrive.exe 2>&1 | Out-Null
 
-    # Uninstall OneDrive
     if (Test-Path "$env:SystemRoot\System32\OneDriveSetup.exe") {
         & "$env:SystemRoot\System32\OneDriveSetup.exe" /uninstall
     }
@@ -173,24 +138,20 @@ try {
         & "$env:SystemRoot\SysWOW64\OneDriveSetup.exe" /uninstall
     }
 
-    # Remove OneDrive from Explorer
     Set-RegistryValue -Path "HKCR:\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}" -Name "System.IsPinnedToNameSpaceTree" -Value 0
     Set-RegistryValue -Path "HKCR:\Wow6432Node\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}" -Name "System.IsPinnedToNameSpaceTree" -Value 0
 
-    # Disable OneDrive via Group Policy
     Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\OneDrive" -Name "DisableFileSyncNGSC" -Value 1
     Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\OneDrive" -Name "DisableFileSync" -Value 1
 
-    # Remove OneDrive from startup
     Remove-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" -Name "OneDrive" -ErrorAction SilentlyContinue
 
     Write-Log "OneDrive disabled and uninstalled" "SUCCESS"
 } catch {
     Write-Log "Error disabling OneDrive: $_" "ERROR"
 }
-#endregion
 
-#region Disable Sync Settings
+
 Write-Log "=== Disabling Sync Settings ==="
 Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\SettingSync" -Name "DisableSettingSync" -Value 2
 Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\SettingSync" -Name "DisableSettingSyncUserOverride" -Value 1
@@ -201,15 +162,13 @@ Set-RegistryValue -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Setting
 Set-RegistryValue -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\SettingSync\Groups\Language" -Name "Enabled" -Value 0
 Set-RegistryValue -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\SettingSync\Groups\Accessibility" -Name "Enabled" -Value 0
 Set-RegistryValue -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\SettingSync\Groups\Windows" -Name "Enabled" -Value 0
-#endregion
 
-#region Disable Microsoft Account Integration
+
 Write-Log "=== Disabling Microsoft Account Integration ==="
 Set-RegistryValue -Path "HKLM:\SOFTWARE\Microsoft\PolicyManager\current\device\Accounts" -Name "AllowMicrosoftAccountConnection" -Value 0
 Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\MicrosoftAccount" -Name "DisableUserAuth" -Value 1
-#endregion
 
-#region Disable Cloud Content
+
 Write-Log "=== Disabling Cloud Content ==="
 Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" -Name "DisableWindowsConsumerFeatures" -Value 1
 Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" -Name "DisableCloudOptimizedContent" -Value 1
@@ -223,79 +182,65 @@ Set-RegistryValue -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Content
 Set-RegistryValue -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-338389Enabled" -Value 0
 Set-RegistryValue -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-353698Enabled" -Value 0
 Set-RegistryValue -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SystemPaneSuggestionsEnabled" -Value 0
-#endregion
 
-#region Disable App Suggestions
+
 Write-Log "=== Disabling App Suggestions ==="
 Set-RegistryValue -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SoftLandingEnabled" -Value 0
 Set-RegistryValue -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "ShowSyncProviderNotifications" -Value 0
-#endregion
 
-#region Disable Typing Data Collection
+
 Write-Log "=== Disabling Typing Data Collection ==="
 Set-RegistryValue -Path "HKCU:\Software\Microsoft\InputPersonalization" -Name "RestrictImplicitInkCollection" -Value 1
 Set-RegistryValue -Path "HKCU:\Software\Microsoft\InputPersonalization" -Name "RestrictImplicitTextCollection" -Value 1
 Set-RegistryValue -Path "HKCU:\Software\Microsoft\InputPersonalization\TrainedDataStore" -Name "HarvestContacts" -Value 0
 Set-RegistryValue -Path "HKCU:\Software\Microsoft\Personalization\Settings" -Name "AcceptedPrivacyPolicy" -Value 0
-#endregion
 
-#region Disable Handwriting Data Collection
+
 Write-Log "=== Disabling Handwriting Data Collection ==="
 Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\TabletPC" -Name "PreventHandwritingDataSharing" -Value 1
 Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\HandwritingErrorReports" -Name "PreventHandwritingErrorReports" -Value 1
-#endregion
 
-#region Disable Experimentation
+
 Write-Log "=== Disabling Microsoft Experimentation ==="
 Set-RegistryValue -Path "HKLM:\SOFTWARE\Microsoft\PolicyManager\current\device\System" -Name "AllowExperimentation" -Value 0
 Set-RegistryValue -Path "HKLM:\SOFTWARE\Microsoft\PolicyManager\default\System\AllowExperimentation" -Name "value" -Value 0
-#endregion
 
-#region Disable App Access to Account Info
+
 Write-Log "=== Disabling App Access to Account Info ==="
 Set-RegistryValue -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\userAccountInformation" -Name "Value" -Value "Deny" -Type "String"
 Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppPrivacy" -Name "LetAppsAccessAccountInfo" -Value 2
-#endregion
 
-#region Disable App Access to Contacts
+
 Write-Log "=== Disabling App Access to Contacts ==="
 Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppPrivacy" -Name "LetAppsAccessContacts" -Value 2
-#endregion
 
-#region Disable App Access to Calendar
+
 Write-Log "=== Disabling App Access to Calendar ==="
 Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppPrivacy" -Name "LetAppsAccessCalendar" -Value 2
-#endregion
 
-#region Disable App Access to Call History
+
 Write-Log "=== Disabling App Access to Call History ==="
 Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppPrivacy" -Name "LetAppsAccessCallHistory" -Value 2
-#endregion
 
-#region Disable App Access to Email
+
 Write-Log "=== Disabling App Access to Email ==="
 Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppPrivacy" -Name "LetAppsAccessEmail" -Value 2
-#endregion
 
-#region Disable App Access to Notifications
+
 Write-Log "=== Disabling App Access to Notifications ==="
 Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppPrivacy" -Name "LetAppsAccessNotifications" -Value 2
-#endregion
 
-#region Disable Maps Auto-Update
+
 Write-Log "=== Disabling Maps Auto-Update ==="
 Set-RegistryValue -Path "HKLM:\SYSTEM\Maps" -Name "AutoUpdateEnabled" -Value 0
-#endregion
 
-#region Advanced Hosts File Blocking
+
 Write-Log "=== Advanced Hosts File Telemetry Blocking ==="
 try {
     $hostsFile = "$env:SystemRoot\System32\drivers\etc\hosts"
 
-    # Take ownership and force permissions
     Write-Log "Taking ownership of hosts file (required for X-Lite builds)..."
 
-    # Take ownership using takeown.exe
     $takeownResult = takeown.exe /F $hostsFile /A 2>&1
     if ($LASTEXITCODE -eq 0) {
         Write-Log "Successfully took ownership of hosts file" "SUCCESS"
@@ -303,7 +248,6 @@ try {
         Write-Log "Takeown result: $takeownResult" "ERROR"
     }
 
-    # Grant full permissions using icacls
     $icaclsResult = icacls.exe $hostsFile /grant "Administrators:F" 2>&1
     if ($LASTEXITCODE -eq 0) {
         Write-Log "Successfully granted full permissions to Administrators" "SUCCESS"
@@ -311,11 +255,9 @@ try {
         Write-Log "Icacls result: $icaclsResult" "ERROR"
     }
 
-    # Additional permission for current user
     $currentUser = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
     icacls.exe $hostsFile /grant "${currentUser}:F" 2>&1 | Out-Null
 
-    # Stop DNS Client service to unlock hosts file
     Write-Log "Stopping DNS Client service to unlock hosts file..."
     $dnsService = Get-Service -Name "Dnscache" -ErrorAction SilentlyContinue
     $dnsWasRunning = $false
@@ -345,16 +287,13 @@ try {
     }
 
     try {
-        # Backup hosts file (with force to override locks)
         $backupPath = "$hostsFile.backup-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
 
-        # Use [System.IO.File] for more control over locked files
         $hostsBytes = [System.IO.File]::ReadAllBytes($hostsFile)
         [System.IO.File]::WriteAllBytes($backupPath, $hostsBytes)
         Write-Log "Backed up hosts file to: $backupPath" "SUCCESS"
 
         $telemetryDomains = @(
-            # Microsoft Telemetry
             "vortex.data.microsoft.com",
             "vortex-win.data.microsoft.com",
             "telecommand.telemetry.microsoft.com",
@@ -399,10 +338,8 @@ try {
             "feedback.windows.com",
             "feedback.microsoft-hohm.com",
             "feedback.search.microsoft.com",
-            # Windows Update (for complete blocking)
             "fe3.delivery.dsp.mp.microsoft.com.nsatc.net",
             "tlu.dl.delivery.mp.microsoft.com",
-            # Microsoft Advertising
             "ads.msn.com",
             "ads1.msn.com",
             "ads2.msn.com",
@@ -411,7 +348,6 @@ try {
             "flex.msn.com"
         )
 
-        # Read hosts file content using more robust method
         $hostsContentRaw = [System.IO.File]::ReadAllText($hostsFile)
         $hostsContent = $hostsContentRaw -split "`r?`n"
         $newEntries = @()
@@ -424,7 +360,6 @@ try {
         }
 
         if ($newEntries.Count -gt 0) {
-            # Build new content
             $newContent = $hostsContentRaw
             if (-not $hostsContentRaw.EndsWith("`n")) {
                 $newContent += "`r`n"
@@ -433,7 +368,6 @@ try {
             $newContent += ($newEntries -join "`r`n")
             $newContent += "`r`n"
 
-            # Write using [System.IO.File] for better lock handling
             $utf8NoBom = New-Object System.Text.UTF8Encoding $false
             [System.IO.File]::WriteAllText($hostsFile, $newContent, $utf8NoBom)
 
@@ -443,15 +377,12 @@ try {
         }
 
     } finally {
-        # Always restart DNS Client service
         if ($dnsWasRunning) {
             try {
-                # Try sc.exe first (better for X-Lite builds)
                 $startResult = sc.exe start "Dnscache" 2>&1
                 if ($LASTEXITCODE -eq 0) {
                     Write-Log "DNS Client service restarted" "SUCCESS"
                 } else {
-                    # Fallback to PowerShell cmdlet
                     Start-Service -Name "Dnscache" -ErrorAction SilentlyContinue
                     Write-Log "DNS Client service restarted" "SUCCESS"
                 }
@@ -459,7 +390,6 @@ try {
                 Write-Log "DNS Client service could not be restarted (may require manual restart)" "ERROR"
             }
 
-            # Flush DNS cache to apply changes
             try {
                 ipconfig /flushdns | Out-Null
                 Write-Log "DNS cache flushed" "SUCCESS"
@@ -472,13 +402,11 @@ try {
 } catch {
     Write-Log "Error modifying hosts file: $_" "ERROR"
 }
-#endregion
 
-#region Firewall Rules (Optional)
+
 if ($EnableFirewallRules) {
     Write-Log "=== Creating Firewall Rules to Block Telemetry ==="
     try {
-        # Block telemetry IPs
         $telemetryIPs = @(
             "134.170.30.202",
             "137.116.81.24",
@@ -506,7 +434,7 @@ if ($EnableFirewallRules) {
         Write-Log "Error creating firewall rules: $_" "ERROR"
     }
 }
-#endregion
+
 
 Write-Log "=== Extreme Privacy Script Completed ===" "SUCCESS"
 Write-Host ""

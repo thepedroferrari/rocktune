@@ -1,0 +1,109 @@
+@layer layout {
+  header {
+    text-align: center;
+    padding: 0;
+    position: relative;
+    animation: fadeInUp 0.8s var(--ease-out-expo) forwards;
+
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 300px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent 0%, color-mix(in oklch, var(--accent) 30%, transparent) 20%, color-mix(in oklch, oklch(1 0 0) 20%, transparent) 50%, color-mix(in oklch, var(--accent) 30%, transparent) 80%, transparent 100%);
+    }
+  }
+
+  main {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: var(--space-lg);
+  }
+
+  footer {
+    text-align: center;
+    padding: var(--space-2xl);
+    color: var(--text-hint);
+    font-size: 0.875rem;
+    border-top: 1px solid var(--border);
+    margin-top: var(--space-3xl);
+
+    & a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: color 0.2s;
+
+      &:hover {
+        color: var(--accent);
+        text-shadow: 0 0 8px color-mix(in oklch, var(--accent) 40%, transparent);
+      }
+    }
+  }
+
+  .upgrades-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-md);
+    margin-bottom: var(--space-md);
+  }
+
+  .upgrades-grid--danger { margin-top: var(--space-lg); }
+
+  .core-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-md);
+    margin-bottom: var(--space-md);
+  }
+
+  .peripherals-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-md);
+  }
+
+  .peripherals-grid > fieldset {
+    grid-column: span 2;
+  }
+
+  .peripheral-columns {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-md);
+  }
+
+  .peripheral-column {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+  }
+
+  @media (max-width: 1024px) {
+    .peripherals-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .peripherals-grid > fieldset {
+      grid-column: span 1;
+    }
+  }
+
+  .driver-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-md);
+  }
+
+  @media (max-width: 768px) {
+    .upgrades-grid,
+    .core-grid,
+    .peripheral-columns,
+    .monitor-columns,
+    .driver-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+}

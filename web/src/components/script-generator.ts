@@ -10,13 +10,11 @@ import {
 } from '../types'
 import { getHardwareProfile, getSelectedOptimizations } from './summary/'
 
-// Preview state for diff tracking
 const preview = {
   previous: '',
   current: '',
 }
 
-// Peripheral package mapping - typed with PeripheralType
 const PERIPHERAL_PACKAGES: Record<PeripheralType, string> = {
   [PERIPHERAL_TYPES.LOGITECH]: 'Logitech.GHUB',
   [PERIPHERAL_TYPES.RAZER]: 'RazerInc.RazerInstaller.Synapse4',
@@ -26,7 +24,6 @@ const PERIPHERAL_PACKAGES: Record<PeripheralType, string> = {
   [PERIPHERAL_TYPES.WOOTING]: 'Wooting.Wootility',
 }
 
-// Monitor software package mapping
 const MONITOR_PACKAGES: Record<MonitorSoftwareType, string> = {
   [MONITOR_SOFTWARE_TYPES.DELL]: 'Dell.DisplayManager',
   [MONITOR_SOFTWARE_TYPES.LG]: 'LG.OnScreenControl',
@@ -53,13 +50,11 @@ export function generateScript(): string {
     .map((key) => store.getPackage(key)?.id)
     .filter((id): id is string => Boolean(id))
 
-  // Add peripheral software
   for (const p of hw.peripherals) {
     const pkg = PERIPHERAL_PACKAGES[p]
     if (pkg) packages.push(pkg)
   }
 
-  // Add monitor software
   for (const m of hw.monitorSoftware) {
     const pkg = MONITOR_PACKAGES[m]
     if (pkg) packages.push(pkg)
@@ -184,7 +179,6 @@ pause
 function generateOptCode(opts: string[], hw: HardwareProfile): string {
   const code: string[] = []
 
-  // ALWAYS INCLUDED: Core gaming optimizations
   code.push(`
 # Scheduler optimization for gaming
 Set-Reg "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\PriorityControl" "Win32PrioritySeparation" 26
@@ -220,7 +214,6 @@ Set-Reg "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\kernel" "Gl
 Set-Reg "HKLM:\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile" "SystemResponsiveness" 0
 Write-OK "Timer resolution hints configured"`)
 
-  // OPTIONAL: Checkbox-based optimizations
   if (opts.includes(OPTIMIZATION_KEYS.PAGEFILE))
     code.push(`
 $ramGB = [math]::Round((gcim Win32_PhysicalMemory | Measure -Property Capacity -Sum).Sum / 1GB)
@@ -430,7 +423,6 @@ if (Test-Path $razerPath) {
 }
 Write-OK "OEM/Razer WPBT auto-install blocked"`)
 
-  // Caution tier optimizations
   if (opts.includes(OPTIMIZATION_KEYS.ULTIMATE_PERF))
     code.push(`
 # Ultimate Performance power plan

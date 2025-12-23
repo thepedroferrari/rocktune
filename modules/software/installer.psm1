@@ -1,37 +1,11 @@
 #Requires -RunAsAdministrator
 
-<#
-.SYNOPSIS
-    Software installation module using winget and software catalog
-.DESCRIPTION
-    Installs gaming-related software using winget package manager.
-    Reads package definitions from web/catalog.json (single source of truth).
 
-    Features:
-    - Hardware-conditional peripheral software (Logitech, Razer, Corsair)
-    - Category-based installation (essential, recommended, optional)
-    - Winget availability checking and installation
-    - Package status verification
 
-    User decisions:
-    - Python/Zed/qBittorrent: Keep for now (future web: optional)
-.NOTES
-    Author: @thepedroferrari
-    Risk Level: TIER_1_LOW
-    Reversible: Partial (can uninstall via winget)
-#>
-
-# Import core modules
 Import-Module (Join-Path $PSScriptRoot "..\core\logger.psm1") -Force -Global
 
-#region Winget Management
 
-<#
-.SYNOPSIS
-    Test if winget is available
-.OUTPUTS
-    [bool] True if winget is available, false otherwise
-#>
+
 function Test-WingetAvailable {
     try {
         $null = winget --version 2>&1
@@ -41,16 +15,10 @@ function Test-WingetAvailable {
     }
 }
 
-<#
-.SYNOPSIS
-    Install winget (App Installer) if not available
-.OUTPUTS
-    [bool] True if winget is now available, false otherwise
-#>
+
 function Install-Winget {
     Write-Log "Checking for winget..." "INFO"
 
-    # Check if winget is already available
     if (Test-WingetAvailable) {
         $wingetVersion = winget --version 2>&1
         Write-Log "winget is available: $wingetVersion" "SUCCESS"
@@ -59,7 +27,6 @@ function Install-Winget {
 
     Write-Log "winget not found. Attempting to install..." "INFO"
 
-    # Method 1: Try to install via Microsoft Store (App Installer)
     Write-Log "Method 1: Installing via Microsoft Store..." "INFO"
     try {
         $storeApp = Get-AppxPackage -Name "Microsoft.WindowsStore" -ErrorAction SilentlyContinue
@@ -75,7 +42,6 @@ function Install-Winget {
         Write-Log "Could not open Microsoft Store: $_" "ERROR"
     }
 
-    # Method 2: Direct download and install App Installer
     Write-Log "Method 2: Downloading App Installer directly..." "INFO"
     try {
         $appInstallerUrl = "https://aka.ms/getwinget"
@@ -90,7 +56,7 @@ function Install-Winget {
         Remove-Item $downloadPath -ErrorAction SilentlyContinue
 
         Write-Log "App Installer installed successfully. Please restart PowerShell." "SUCCESS"
-        return $false  # Requires restart
+        return $false
 
     } catch {
         Write-Log "Failed to download/install App Installer: $_" "ERROR"
@@ -99,16 +65,9 @@ function Install-Winget {
     }
 }
 
-#endregion
 
-#region Catalog Management
 
-<#
-.SYNOPSIS
-    Load software catalog from JSON
-.OUTPUTS
-    [PSCustomObject] Software catalog object or $null
-#>
+
 function Get-SoftwareCatalog {
     try {
         $catalogPath = Join-Path $PSScriptRoot "..\..\web\catalog.json"
@@ -128,35 +87,19 @@ function Get-SoftwareCatalog {
     }
 }
 
-#endregion
 
-#region Hardware Detection
 
-<#
-.SYNOPSIS
-    Detect USB peripheral vendor by VID (Vendor ID)
-.DESCRIPTION
-    Scans USB devices to detect gaming peripheral vendors.
 
-    Vendor IDs:
-    - 046D: Logitech
-    - 1532: Razer
-    - 1B1C: Corsair
-.OUTPUTS
-    [string[]] Array of detected vendor names
-#>
 function Test-HardwarePeripherals {
     try {
         Write-Log "Detecting gaming peripheral hardware..." "INFO"
 
-        # Get USB devices
         $usbDevices = Get-PnpDevice -Class "HIDClass", "USB" -ErrorAction SilentlyContinue |
             Where-Object { $_.InstanceId -match "USB\\VID_" }
 
         $detectedVendors = @()
 
         foreach ($device in $usbDevices) {
-            # Extract VID from instance ID (format: USB\VID_046D&PID_C332\...)
             if ($device.InstanceId -match "VID_([0-9A-F]{4})") {
                 $vid = $matches[1]
 
@@ -194,16 +137,9 @@ function Test-HardwarePeripherals {
     }
 }
 
-#endregion
 
-#region Installation Functions
 
-<#
-.SYNOPSIS
-    Install a single package from catalog
-.OUTPUTS
-    [bool] True if installed successfully, false otherwise
-#>
+
 function Install-PackageFromCatalog {
     param(
         [Parameter(Mandatory=$true)]
@@ -216,14 +152,12 @@ function Install-PackageFromCatalog {
     try {
         Write-Log "Installing $($Package.name)..." "INFO"
 
-        # Run winget install
         $result = winget install --id $Package.id --source winget --accept-package-agreements --accept-source-agreements --silent 2>&1
 
         if ($LASTEXITCODE -eq 0) {
             Write-Log "Installed: $($Package.name)" "SUCCESS"
             return $true
         } else {
-            # Check if it's already installed
             $installedCheck = winget list --id $Package.id --source winget --accept-source-agreements 2>&1
             if ($LASTEXITCODE -eq 0 -and $installedCheck -match $Package.id) {
                 Write-Log "Already installed: $($Package.name)" "SUCCESS"
@@ -239,12 +173,7 @@ function Install-PackageFromCatalog {
     }
 }
 
-<#
-.SYNOPSIS
-    Install peripheral software if hardware detected
-.OUTPUTS
-    [int] Number of peripheral packages installed
-#>
+
 function Install-PeripheralSoftware {
     param(
         [Parameter(Mandatory=$true)]
@@ -256,7 +185,6 @@ function Install-PeripheralSoftware {
     $installed = 0
 
     try {
-        # Filter peripheral packages
         $peripheralPackages = $Catalog.packages.PSObject.Properties |
             Where-Object { $_.Value.category -eq "peripheral" }
 
@@ -264,7 +192,6 @@ function Install-PeripheralSoftware {
             $package = $pkg.Value
             $packageName = $pkg.Name
 
-            # Check if hardware is detected
             $shouldInstall = $false
             foreach ($vendorId in $package.hardware_detection.vendor_ids) {
                 $vendorName = $Catalog.hardware_vendor_ids.$vendorId
@@ -290,22 +217,9 @@ function Install-PeripheralSoftware {
     return $installed
 }
 
-#endregion
 
-#region Main Functions
 
-<#
-.SYNOPSIS
-    Install software from catalog
-.DESCRIPTION
-    Main entry point for software installation.
-.PARAMETER Categories
-    Categories to install (essential, recommended, keep, optional, peripheral)
-.PARAMETER IncludeOptional
-    Include optional packages (default: false)
-.PARAMETER IncludePeripherals
-    Include peripheral software based on hardware detection (default: true)
-#>
+
 function Invoke-SoftwareInstallation {
     param(
         [string[]]$Categories = @("essential", "recommended", "keep"),
@@ -315,7 +229,6 @@ function Invoke-SoftwareInstallation {
 
     Write-Log "Starting software installation..." "INFO"
 
-    # Check winget availability
     if (-not (Test-WingetAvailable)) {
         Write-Log "winget not available. Attempting to install..." "INFO"
         if (-not (Install-Winget)) {
@@ -324,7 +237,6 @@ function Invoke-SoftwareInstallation {
         }
     }
 
-    # Load catalog
     $catalog = Get-SoftwareCatalog
     if (-not $catalog) {
         Write-Log "Could not load software catalog. Skipping software installation." "ERROR"
@@ -335,7 +247,6 @@ function Invoke-SoftwareInstallation {
     $failed = 0
 
     try {
-        # Install packages by category
         $packagesToInstall = $catalog.packages.PSObject.Properties |
             Where-Object { $Categories -contains $_.Value.category }
 
@@ -350,7 +261,6 @@ function Invoke-SoftwareInstallation {
             }
         }
 
-        # Optional packages (if enabled)
         if ($IncludeOptional) {
             $optionalPackages = $catalog.packages.PSObject.Properties |
                 Where-Object { $_.Value.category -eq "optional" }
@@ -367,7 +277,6 @@ function Invoke-SoftwareInstallation {
             }
         }
 
-        # Peripheral software (hardware-conditional)
         if ($IncludePeripherals) {
             $detectedVendors = Test-HardwarePeripherals
             $peripheralInstalled = Install-PeripheralSoftware -Catalog $catalog -DetectedVendors $detectedVendors
@@ -381,9 +290,7 @@ function Invoke-SoftwareInstallation {
     }
 }
 
-#endregion
 
-# Export functions
 Export-ModuleMember -Function @(
     'Test-WingetAvailable',
     'Install-Winget',

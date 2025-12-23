@@ -1,18 +1,6 @@
-# Configuration Management Module
-# Handles loading, saving, and merging JSON configuration files
 
-<#
-.SYNOPSIS
-    Configuration management for Gaming PC Setup
 
-.DESCRIPTION
-    Provides functions for loading defaults, user configs, profiles,
-    saving user preferences, and merging configurations
-#>
 
-# ============================================================================
-# CONFIGURATION FILE PATHS
-# ============================================================================
 
 $script:ConfigDir = Join-Path $PSScriptRoot "..\..\config"
 $script:DataDir = Join-Path $PSScriptRoot "..\..\data"
@@ -20,22 +8,9 @@ $script:DefaultsPath = Join-Path $script:ConfigDir "defaults.json"
 $script:UserConfigPath = Join-Path $script:ConfigDir "user-config.json"
 $script:ProfilesDir = Join-Path $script:ConfigDir "profiles"
 
-# ============================================================================
-# CORE CONFIGURATION FUNCTIONS
-# ============================================================================
 
 function Get-DefaultConfig {
-    <#
-    .SYNOPSIS
-        Loads the default recommended configuration
-
-    .DESCRIPTION
-        Returns default settings from config/defaults.json
-        If file doesn't exist, returns hardcoded safe defaults
-
-    .OUTPUTS
-        Hashtable containing default configuration
-    #>
+    
 
     [CmdletBinding()]
     param()
@@ -49,7 +24,6 @@ function Get-DefaultConfig {
         }
     }
 
-    # Hardcoded fallback defaults
     return @{
         version = "2.0"
         performance = @{
@@ -106,17 +80,7 @@ function Get-DefaultConfig {
 }
 
 function Get-UserConfig {
-    <#
-    .SYNOPSIS
-        Loads user's saved configuration
-
-    .DESCRIPTION
-        Returns user config from config/user-config.json
-        If doesn't exist, returns defaults
-
-    .OUTPUTS
-        Hashtable containing user configuration
-    #>
+    
 
     [CmdletBinding()]
     param()
@@ -130,22 +94,11 @@ function Get-UserConfig {
         }
     }
 
-    # No user config exists, return defaults
     return Get-DefaultConfig
 }
 
 function Save-UserConfig {
-    <#
-    .SYNOPSIS
-        Saves user configuration to disk
-
-    .PARAMETER Config
-        Configuration hashtable to save
-
-    .DESCRIPTION
-        Writes config to config/user-config.json
-        Creates backup of existing config before overwriting
-    #>
+    
 
     [CmdletBinding()]
     param(
@@ -154,18 +107,15 @@ function Save-UserConfig {
     )
 
     try {
-        # Ensure config directory exists
         if (-not (Test-Path $script:ConfigDir)) {
             New-Item -ItemType Directory -Path $script:ConfigDir -Force | Out-Null
         }
 
-        # Backup existing config
         if (Test-Path $script:UserConfigPath) {
             $backupPath = "$script:UserConfigPath.backup"
             Copy-Item $script:UserConfigPath $backupPath -Force
         }
 
-        # Convert to JSON and save
         $json = $Config | ConvertTo-Json -Depth 10
         Set-Content -Path $script:UserConfigPath -Value $json -Force
 
@@ -179,16 +129,7 @@ function Save-UserConfig {
 }
 
 function Get-Profile {
-    <#
-    .SYNOPSIS
-        Loads a pre-made configuration profile
-
-    .PARAMETER ProfileName
-        Name of profile to load (competitive, balanced, privacy-focused)
-
-    .OUTPUTS
-        Hashtable containing profile configuration
-    #>
+    
 
     [CmdletBinding()]
     param(
@@ -210,18 +151,11 @@ function Get-Profile {
         Write-Warning "Profile not found: $profilePath. Using defaults."
     }
 
-    # Fallback to defaults
     return Get-DefaultConfig
 }
 
 function Get-AvailableProfiles {
-    <#
-    .SYNOPSIS
-        Lists available configuration profiles
-
-    .OUTPUTS
-        Array of profile names
-    #>
+    
 
     if (Test-Path $script:ProfilesDir) {
         $profiles = Get-ChildItem -Path $script:ProfilesDir -Filter "*.json" |
@@ -229,27 +163,11 @@ function Get-AvailableProfiles {
         return $profiles
     }
 
-    return @('competitive', 'balanced', 'privacy-focused')  # Default list
+    return @('competitive', 'balanced', 'privacy-focused')
 }
 
 function Merge-Config {
-    <#
-    .SYNOPSIS
-        Merges two configuration hashtables
-
-    .PARAMETER Base
-        Base configuration (defaults)
-
-    .PARAMETER Override
-        Configuration to merge on top (user selections)
-
-    .DESCRIPTION
-        Deep merges Override into Base, with Override taking precedence
-        Useful for applying user selections on top of defaults
-
-    .OUTPUTS
-        Merged configuration hashtable
-    #>
+    
 
     [CmdletBinding()]
     param(
@@ -264,15 +182,12 @@ function Merge-Config {
 
     foreach ($key in $Override.Keys) {
         if ($merged.ContainsKey($key)) {
-            # If both are hashtables, merge recursively
             if ($merged[$key] -is [hashtable] -and $Override[$key] -is [hashtable]) {
                 $merged[$key] = Merge-Config -Base $merged[$key] -Override $Override[$key]
             } else {
-                # Override value
                 $merged[$key] = $Override[$key]
             }
         } else {
-            # Add new key
             $merged[$key] = $Override[$key]
         }
     }
@@ -281,16 +196,7 @@ function Merge-Config {
 }
 
 function Test-ConfigValid {
-    <#
-    .SYNOPSIS
-        Validates configuration structure
-
-    .PARAMETER Config
-        Configuration hashtable to validate
-
-    .OUTPUTS
-        Boolean: $true if valid, $false otherwise
-    #>
+    
 
     [CmdletBinding()]
     param(
@@ -298,7 +204,6 @@ function Test-ConfigValid {
         [hashtable]$Config
     )
 
-    # Required top-level keys
     $requiredKeys = @('performance', 'power', 'privacy', 'software', 'network', 'games')
 
     foreach ($key in $requiredKeys) {
@@ -311,18 +216,9 @@ function Test-ConfigValid {
     return $true
 }
 
-# ============================================================================
-# HELPER FUNCTIONS
-# ============================================================================
 
 function Convert-PSObjectToHashtable {
-    <#
-    .SYNOPSIS
-        Converts PSCustomObject to Hashtable recursively
-
-    .PARAMETER InputObject
-        PSCustomObject from ConvertFrom-Json
-    #>
+    
 
     param($InputObject)
 
@@ -348,9 +244,6 @@ function Convert-PSObjectToHashtable {
     }
 }
 
-# ============================================================================
-# EXPORT FUNCTIONS
-# ============================================================================
 
 Export-ModuleMember -Function @(
     'Get-DefaultConfig',

@@ -1,4 +1,3 @@
-// Visual effects: cursor glow, scroll animations, ripple effect
 
 export function setupCursorGlow(): void {
   const glow = document.querySelector('.cursor-glow') as HTMLElement | null
@@ -33,12 +32,12 @@ export function setupScrollAnimations(): void {
     ;(section as HTMLElement).style.setProperty('--stagger', String(idx))
   })
 
-  const observer = new IntersectionObserver(
+  const revealObserver = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
           entry.target.classList.add('visible')
-          observer.unobserve(entry.target)
+          revealObserver.unobserve(entry.target)
         }
       })
     },
@@ -46,7 +45,31 @@ export function setupScrollAnimations(): void {
   )
 
   for (const section of sections) {
-    observer.observe(section)
+    revealObserver.observe(section)
+  }
+
+  const dots = document.querySelectorAll<HTMLAnchorElement>('.step-dot')
+  if (!dots.length) return
+
+  const progressObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          const id = entry.target.id
+          dots.forEach((dot) => {
+            dot.removeAttribute('aria-current')
+            if (dot.getAttribute('href') === `#${id}`) {
+              dot.setAttribute('aria-current', 'step')
+            }
+          })
+        }
+      })
+    },
+    { threshold: 0.3, rootMargin: '-20% 0px -60% 0px' },
+  )
+
+  for (const section of sections) {
+    progressObserver.observe(section)
   }
 }
 

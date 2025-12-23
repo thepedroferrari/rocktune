@@ -1,48 +1,9 @@
-# Menu System Module
-# Provides interactive CLI menu functionality for user selection
 
-<#
-.SYNOPSIS
-    Interactive menu system for Gaming PC Setup
 
-.DESCRIPTION
-    Provides functions for creating checkbox-style menus, category selection,
-    and user input validation with visual indicators ([*] recommended, [!] warning, [i] info)
-#>
 
-# ============================================================================
-# MENU RENDERING FUNCTIONS
-# ============================================================================
 
 function Show-Menu {
-    <#
-    .SYNOPSIS
-        Displays an interactive menu with checkbox-style selection
-
-    .PARAMETER Title
-        Menu title to display at top
-
-    .PARAMETER Options
-        Array of menu option objects with properties:
-        - Label: Display text
-        - Selected: Boolean for checkbox state
-        - Icon: Optional icon ([*] [!] [i])
-        - Description: Optional description text
-        - Disabled: Optional boolean to gray out option
-
-    .PARAMETER Legend
-        Optional legend text to display at bottom
-
-    .PARAMETER AllowMultiple
-        If true, user can toggle multiple items. If false, single selection only.
-
-    .EXAMPLE
-        $options = @(
-            @{ Label = "Enable HPET Disable"; Selected = $true; Icon = "[*]"; Description = "Recommended" }
-            @{ Label = "Enable MSI Mode"; Selected = $true; Icon = "[*]" }
-        )
-        $selected = Show-Menu -Title "Performance Options" -Options $options -Legend "[*] = Recommended"
-    #>
+    
 
     [CmdletBinding()]
     param(
@@ -62,24 +23,19 @@ function Show-Menu {
     do {
         Clear-Host
 
-        # Draw border
         Write-Host "?????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????" -ForegroundColor Cyan
         Write-Host "    $Title" -ForegroundColor Cyan
         Write-Host "?????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????" -ForegroundColor Cyan
         Write-Host ""
 
-        # Draw menu items
         for ($i = 0; $i -lt $Options.Count; $i++) {
             $option = $Options[$i]
             $index = $i + 1
 
-            # Checkbox
             $checkbox = if ($option.Selected) { "X" } else { " " }
 
-            # Icon
             $icon = if ($option.Icon) { " $($option.Icon)" } else { "" }
 
-            # Color based on state
             $color = "White"
             if ($option.Disabled) {
                 $color = "DarkGray"
@@ -91,39 +47,31 @@ function Show-Menu {
                 $color = "Cyan"
             }
 
-            # Format line
             $line = " [$checkbox] $index. $($option.Label)$icon"
             Write-Host $line -ForegroundColor $color
 
-            # Description (if provided)
             if ($option.Description) {
                 Write-Host "      $($option.Description)" -ForegroundColor DarkGray
             }
         }
 
-        # Legend
         if ($Legend) {
             Write-Host ""
             Write-Host "Legend: $Legend" -ForegroundColor DarkGray
         }
 
-        # Instructions
         Write-Host ""
         Write-Host "Toggle with numbers, 'A' for all, 'N' for none, 'R' for recommended, Enter to continue" -ForegroundColor Yellow
 
-        # Get input
         $choice = Read-Host "Your choice"
 
-        # Process input
         if ($choice -match '^\d+$') {
-            # Numeric selection - toggle item
             $idx = [int]$choice - 1
             if ($idx -ge 0 -and $idx -lt $Options.Count -and -not $Options[$idx].Disabled) {
                 $Options[$idx].Selected = -not $Options[$idx].Selected
             }
         }
         elseif ($choice -eq 'A' -or $choice -eq 'a') {
-            # Select all
             for ($i = 0; $i -lt $Options.Count; $i++) {
                 if (-not $Options[$i].Disabled) {
                     $Options[$i].Selected = $true
@@ -131,25 +79,21 @@ function Show-Menu {
             }
         }
         elseif ($choice -eq 'N' -or $choice -eq 'n') {
-            # Select none
             for ($i = 0; $i -lt $Options.Count; $i++) {
                 $Options[$i].Selected = $false
             }
         }
         elseif ($choice -eq 'R' -or $choice -eq 'r') {
-            # Select recommended only
             for ($i = 0; $i -lt $Options.Count; $i++) {
                 $Options[$i].Selected = ($Options[$i].Icon -eq "[*]")
             }
         }
         elseif ($choice -eq '') {
-            # Enter pressed - confirm selection
             break
         }
 
     } while ($true)
 
-    # Return selected indices
     $selectedIndices = @()
     for ($i = 0; $i -lt $Options.Count; $i++) {
         if ($Options[$i].Selected) {
@@ -161,22 +105,7 @@ function Show-Menu {
 }
 
 function Show-CategoryMenu {
-    <#
-    .SYNOPSIS
-        Shows top-level category selection menu
-
-    .PARAMETER Categories
-        Hashtable of categories with metadata:
-        - Key: Category name
-        - Value: @{ ItemCount = 10; Icon = "[PERF]"; Recommended = 8 }
-
-    .EXAMPLE
-        $categories = @{
-            "Performance" = @{ ItemCount = 10; Icon = "[PERF]"; Recommended = 8 }
-            "Privacy" = @{ ItemCount = 8; Icon = "[PRIV]"; Recommended = 6 }
-        }
-        $selected = Show-CategoryMenu -Categories $categories
-    #>
+    
 
     [CmdletBinding()]
     param(
@@ -184,24 +113,21 @@ function Show-CategoryMenu {
         [hashtable]$Categories
     )
 
-    # Convert hashtable to array of options
     $options = @()
     $index = 0
     foreach ($key in $Categories.Keys) {
         $cat = $Categories[$key]
         $options += @{
             Label = "$($cat.Icon) $key"
-            Selected = $true  # Default: all selected
+            Selected = $true
             Description = "$($cat.ItemCount) items ($($cat.Recommended) recommended)"
             Icon = ""
         }
         $index++
     }
 
-    # Show menu
     $selectedIndices = Show-Menu -Title "SELECT CATEGORIES" -Options $options -AllowMultiple $true
 
-    # Return selected category names
     $categoryKeys = @($Categories.Keys)
     $selectedCategories = @()
     foreach ($idx in $selectedIndices) {
@@ -212,22 +138,7 @@ function Show-CategoryMenu {
 }
 
 function Get-UserChoice {
-    <#
-    .SYNOPSIS
-        Gets validated user input for simple choices
-
-    .PARAMETER Prompt
-        Question to ask user
-
-    .PARAMETER ValidChoices
-        Array of valid inputs (e.g., @('1', '2', '3', 'Y', 'N'))
-
-    .PARAMETER DefaultChoice
-        Default value if user presses Enter
-
-    .EXAMPLE
-        $choice = Get-UserChoice -Prompt "Continue?" -ValidChoices @('Y', 'N') -DefaultChoice 'Y'
-    #>
+    
 
     [CmdletBinding()]
     param(
@@ -250,12 +161,10 @@ function Get-UserChoice {
 
         $choice = Read-Host $fullPrompt
 
-        # Use default if empty
         if ($choice -eq '' -and $DefaultChoice) {
             $choice = $DefaultChoice
         }
 
-        # Check if valid
         if ($ValidChoices -contains $choice) {
             return $choice
         }
@@ -266,19 +175,7 @@ function Get-UserChoice {
 }
 
 function Show-Summary {
-    <#
-    .SYNOPSIS
-        Displays configuration summary before execution
-
-    .PARAMETER Config
-        Configuration hashtable to display
-
-    .PARAMETER Title
-        Summary title
-
-    .EXAMPLE
-        Show-Summary -Title "Configuration Summary" -Config $userConfig
-    #>
+    
 
     [CmdletBinding()]
     param(
@@ -320,13 +217,7 @@ function Show-Summary {
 }
 
 function Show-Welcome {
-    <#
-    .SYNOPSIS
-        Displays welcome screen with system information
-
-    .PARAMETER SystemInfo
-        Hashtable containing system information (RAM, CPU, OS, etc.)
-    #>
+    
 
     [CmdletBinding()]
     param(
@@ -354,13 +245,7 @@ function Show-Welcome {
 }
 
 function Show-SetupModeSelection {
-    <#
-    .SYNOPSIS
-        Shows initial setup mode selection (Express/Custom/Profile)
-
-    .OUTPUTS
-        String: "express", "custom", or "profile"
-    #>
+    
 
     Clear-Host
     Write-Host "?????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????" -ForegroundColor Cyan
@@ -396,9 +281,6 @@ function Show-SetupModeSelection {
     }
 }
 
-# ============================================================================
-# EXPORT FUNCTIONS
-# ============================================================================
 
 Export-ModuleMember -Function @(
     'Show-Menu',

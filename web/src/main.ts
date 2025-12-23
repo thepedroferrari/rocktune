@@ -1,7 +1,4 @@
-/**
- * RockTune — A Loadout Builder for Windows Gaming
- * Generate personalized PowerShell scripts to tune Windows for gaming
- */
+
 
 import { setupAuditPanel } from './components/audit'
 import { renderSoftwareGrid, updateCategoryBadges } from './components/cards'
@@ -18,9 +15,6 @@ import { CATEGORY_SVG_ICONS } from './types'
 import { $id, onReady } from './utils/dom'
 import { setupCursorGlow, setupImageFallbacks, setupScrollAnimations } from './utils/effects'
 
-// =============================================================================
-// ERROR STATE
-// =============================================================================
 
 interface LoadState {
   error: string | null
@@ -32,9 +26,6 @@ const loadState: LoadState = {
   isLoading: false,
 }
 
-// =============================================================================
-// CATALOG LOADING
-// =============================================================================
 
 async function loadCatalog(): Promise<ValidatedCatalog> {
   loadState.isLoading = true
@@ -64,9 +55,6 @@ async function loadCatalog(): Promise<ValidatedCatalog> {
   }
 }
 
-// =============================================================================
-// ERROR UI
-// =============================================================================
 
 function showError(message: string): void {
   const banner = $id('error-banner')
@@ -102,9 +90,6 @@ async function handleRetry(): Promise<void> {
   }
 }
 
-// =============================================================================
-// INITIALIZATION
-// =============================================================================
 
 async function init(): Promise<void> {
   setupErrorHandlers()
@@ -148,8 +133,5 @@ function setupInteractions(): void {
   setupDriverLinks()
 }
 
-// =============================================================================
-// BOOTSTRAP
-// =============================================================================
 
 onReady(init)

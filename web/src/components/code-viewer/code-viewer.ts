@@ -1,7 +1,6 @@
 import { diffLines } from 'diff'
 import { escapeHtml } from '../../utils/dom'
 
-// Skip header lines when finding "meaningful" changes (timestamp always changes)
 const SKIP_HEADER_LINES = 12
 
 export interface DiffResult {
@@ -27,13 +26,11 @@ export function renderDiffHtml(previous = '', current = ''): DiffResult {
   const rows: string[] = []
   const changedLineIds: string[] = []
 
-  // Debug logging (can remove after verification)
   console.log('[Diff Debug] Previous length:', previous.length, 'Current length:', current.length)
   console.log('[Diff Debug] Parts count:', diffParts.length)
 
   for (const part of diffParts) {
     const lines = part.value.split('\n')
-    // Drop trailing empty line caused by split on final newline
     if (lines[lines.length - 1] === '') lines.pop()
 
     const isAdded = Boolean(part.added)
@@ -51,7 +48,6 @@ export function renderDiffHtml(previous = '', current = ''): DiffResult {
       const escaped = escapeHtml(line)
       const lineId = `diff-line-${rowIndex}`
 
-      // Track changed lines for navigation
       if (isAdded || isRemoved) {
         changedLineIds.push(lineId)
       }
@@ -72,7 +68,6 @@ export function renderDiffHtml(previous = '', current = ''): DiffResult {
   }
 }
 
-// Get meaningful changes (skip header/timestamp lines)
 export function getMeaningfulChanges(changedLineIds: string[]): string[] {
   return changedLineIds.filter((id) => {
     const lineNum = parseInt(id.split('-')[2], 10)
@@ -113,12 +108,10 @@ export function createCodeViewer(root: HTMLElement | null): CodeViewer | null {
 
     navContainer.hidden = mode !== 'diff'
 
-    // Find current index within meaningful changes
     const currentId = meaningfulChanges[currentChangeIndex] || ''
     const displayIndex = currentChangeIndex >= 0 ? currentChangeIndex + 1 : 0
     navCount.textContent = `${displayIndex}/${total}`
 
-    // Update button states
     if (navPrev) navPrev.disabled = currentChangeIndex <= 0
     if (navNext) navNext.disabled = currentChangeIndex >= total - 1
   }
@@ -132,12 +125,10 @@ export function createCodeViewer(root: HTMLElement | null): CodeViewer | null {
     const element = root?.querySelector(`#${lineId}`)
 
     if (element) {
-      // Remove focus from all lines
       root?.querySelectorAll('.cv-line.diff-focus').forEach((el) => {
         el.classList.remove('diff-focus')
       })
 
-      // Add focus to current line
       element.classList.add('diff-focus')
       element.scrollIntoView({ behavior: 'smooth', block: 'center' })
     }
@@ -178,14 +169,11 @@ export function createCodeViewer(root: HTMLElement | null): CodeViewer | null {
       ;(panes.edit as HTMLTextAreaElement).value = currentValue
     }
 
-    // Show/hide navigation based on mode
     updateNavUI()
 
-    // Auto-scroll to last meaningful change when switching to diff mode
     if (next === 'diff') {
       const meaningfulChanges = getMeaningfulChanges(changedLineIds)
       if (meaningfulChanges.length > 0) {
-        // Scroll to the last change (most recent addition)
         setTimeout(() => scrollToChange(meaningfulChanges.length - 1), 100)
       }
     }
@@ -225,7 +213,6 @@ export function createCodeViewer(root: HTMLElement | null): CodeViewer | null {
     return currentChangeIndex
   }
 
-  // Tab click handlers
   for (const tab of tabs) {
     tab.addEventListener('click', () => {
       const tabMode = tab.dataset.mode
@@ -233,11 +220,9 @@ export function createCodeViewer(root: HTMLElement | null): CodeViewer | null {
     })
   }
 
-  // Navigation button handlers
   navPrev?.addEventListener('click', () => navigateDiff('prev'))
   navNext?.addEventListener('click', () => navigateDiff('next'))
 
-  // Default to current view
   setMode('current')
 
   return {

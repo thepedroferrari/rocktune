@@ -1,9 +1,6 @@
 import { z } from 'zod'
 import { CATEGORIES, CPU_TYPES, GPU_TYPES, PERIPHERAL_TYPES, PROFILE_VERSION } from './types.ts'
 
-// =============================================================================
-// SCHEMA DEFINITIONS - Single source of truth, derived from types.ts constants
-// =============================================================================
 
 export const CategorySchema = z.enum(CATEGORIES)
 
@@ -18,9 +15,6 @@ export const PeripheralTypeSchema = z.enum([
   PERIPHERAL_TYPES.STEELSERIES,
 ])
 
-// =============================================================================
-// SOFTWARE PACKAGE SCHEMA
-// =============================================================================
 
 export const SoftwarePackageSchema = z.object({
   id: z.string().min(1, 'Package ID is required'),
@@ -34,9 +28,6 @@ export const SoftwarePackageSchema = z.object({
 
 export const SoftwareCatalogSchema = z.record(z.string().min(1), SoftwarePackageSchema)
 
-// =============================================================================
-// HARDWARE PROFILE SCHEMA
-// =============================================================================
 
 export const HardwareProfileSchema = z.object({
   cpu: CpuTypeSchema,
@@ -44,9 +35,6 @@ export const HardwareProfileSchema = z.object({
   peripherals: z.array(PeripheralTypeSchema),
 })
 
-// =============================================================================
-// SAVED PROFILE SCHEMA
-// =============================================================================
 
 export const SavedProfileSchema = z.object({
   version: z.literal(PROFILE_VERSION),
@@ -56,18 +44,12 @@ export const SavedProfileSchema = z.object({
   software: z.array(z.string()),
 })
 
-// =============================================================================
-// INFERRED TYPES - These match the runtime validation
-// =============================================================================
 
 export type ValidatedPackage = z.infer<typeof SoftwarePackageSchema>
 export type ValidatedCatalog = z.infer<typeof SoftwareCatalogSchema>
 export type ValidatedHardware = z.infer<typeof HardwareProfileSchema>
 export type ValidatedProfile = z.infer<typeof SavedProfileSchema>
 
-// =============================================================================
-// RESULT TYPES - Discriminated unions for type narrowing
-// =============================================================================
 
 type ParseSuccess<T> = { readonly success: true; readonly data: T }
 type ParseFailure = { readonly success: false; readonly error: z.ZodError }
@@ -81,9 +63,6 @@ export function isParseFailure<T>(result: ParseResult<T>): result is ParseFailur
   return !result.success
 }
 
-// =============================================================================
-// VALIDATION FUNCTIONS - Throwing variants
-// =============================================================================
 
 export function validateCatalog(data: unknown): ValidatedCatalog {
   return SoftwareCatalogSchema.parse(data)
@@ -97,9 +76,6 @@ export function validatePackage(data: unknown): ValidatedPackage {
   return SoftwarePackageSchema.parse(data)
 }
 
-// =============================================================================
-// SAFE PARSE FUNCTIONS - Return discriminated unions
-// =============================================================================
 
 export function safeParseCatalog(data: unknown): ParseResult<ValidatedCatalog> {
   const result = SoftwareCatalogSchema.safeParse(data)
@@ -122,9 +98,6 @@ export function safeParsePackage(data: unknown): ParseResult<ValidatedPackage> {
     : { success: false, error: result.error }
 }
 
-// =============================================================================
-// TYPE GUARDS - For runtime validation without Zod overhead
-// =============================================================================
 
 export function isCatalogEntry(value: unknown): value is [string, ValidatedPackage] {
   if (!Array.isArray(value) || value.length !== 2) return false
@@ -141,9 +114,6 @@ export function isValidProfile(value: unknown): value is ValidatedProfile {
   return SavedProfileSchema.safeParse(value).success
 }
 
-// =============================================================================
-// ERROR FORMATTING
-// =============================================================================
 
 export function formatZodErrors(error: z.ZodError, maxIssues = 3): string {
   return error.issues

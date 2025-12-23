@@ -1,31 +1,12 @@
 ﻿#Requires -RunAsAdministrator
 
-<#
-.SYNOPSIS
-    GPU optimizations for gaming (NVIDIA, AMD, Intel)
-.DESCRIPTION
-    GPU-specific optimizations including HAGS configuration and vendor-specific tweaks.
 
-    HAGS (Hardware Accelerated GPU Scheduling) can improve or hurt performance
-    depending on the game and GPU. Always benchmark before enabling.
-.NOTES
-    Author: @thepedroferrari
-    Risk Level: TIER_1_LOW
-    Reversible: Yes (via Undo-GPUOptimizations)
-#>
 
-# Import core modules
 Import-Module (Join-Path $PSScriptRoot "..\core\logger.psm1") -Force -Global
 Import-Module (Join-Path $PSScriptRoot "..\core\registry.psm1") -Force -Global
 
-#region Detection Functions
 
-<#
-.SYNOPSIS
-    Detect GPU vendor (NVIDIA, AMD, Intel)
-.OUTPUTS
-    [string] GPU vendor: "nvidia", "amd", "intel", or "unknown"
-#>
+
 function Test-GPUVendor {
     try {
         $gpu = Get-CimInstance Win32_VideoController -ErrorAction Stop | Select-Object -First 1
@@ -49,18 +30,12 @@ function Test-GPUVendor {
     }
 }
 
-<#
-.SYNOPSIS
-    Verify GPU optimizations are applied correctly
-.OUTPUTS
-    [bool] True if all optimizations verified, false otherwise
-#>
+
 function Test-GPUOptimizations {
     $allPassed = $true
 
     Write-Log "Verifying GPU optimizations..." "INFO"
 
-    # Check HAGS status
     $hagsPath = "HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers"
     $hagsValue = Get-RegistryValue -Path $hagsPath -Name "HwSchMode"
     if ($hagsValue -eq 2) {
@@ -72,31 +47,9 @@ function Test-GPUOptimizations {
     return $allPassed
 }
 
-#endregion
 
-#region Apply Functions
 
-<#
-.SYNOPSIS
-    Set HAGS (Hardware Accelerated GPU Scheduling)
-.DESCRIPTION
-    This is now OPT-IN only.
 
-    HAGS moves GPU scheduling from CPU to GPU, potentially reducing latency.
-    However, results are game-dependent and GPU-dependent.
-
-    Requirements:
-    - Windows 10 20H1 or later
-    - WDDM 2.7+ GPU driver
-    - Supported GPU (GTX 1000 series+, RX 5000 series+)
-
-    WEB_CONFIG: gpu.hags_enabled (boolean, default: false)
-    Description: "Enable HAGS (validate with benchmarks first)"
-    Risk Level: TIER_1_LOW
-    Note: "Can improve or hurt performance depending on game/GPU"
-.PARAMETER Enable
-    If true, enables HAGS. If false (default), keeps it disabled.
-#>
 function Set-HAGS {
     param(
         [bool]$Enable = $false
@@ -121,16 +74,7 @@ function Set-HAGS {
     }
 }
 
-<#
-.SYNOPSIS
-    Configure NVIDIA-specific optimizations
-.DESCRIPTION
-    NVIDIA driver registry tweaks and telemetry task disabling.
 
-    WEB_CONFIG: gpu.nvidia_telemetry_disabled (boolean, default: true)
-    Description: "Disable NVIDIA telemetry scheduled tasks"
-    Risk Level: TIER_1_LOW
-#>
 function Set-NVIDIAOptimizations {
     try {
         $nvidiaPath = "HKLM:\SYSTEM\CurrentControlSet\Services\nvlddmkm"
@@ -143,7 +87,6 @@ function Set-NVIDIAOptimizations {
         Write-Log "Applying NVIDIA optimizations..." "INFO"
         Backup-RegistryKey -Path $nvidiaPath
 
-        # Disable NVIDIA telemetry scheduled tasks
         $nvidiaTasks = @(
             "NvTmRep_CrashReport1_{B2FE1952-0186-46C3-BAEC-A80AA35AC5B8}",
             "NvTmRep_CrashReport2_{B2FE1952-0186-46C3-BAEC-A80AA35AC5B8}",
@@ -162,7 +105,6 @@ function Set-NVIDIAOptimizations {
                     $disabled++
                 }
             } catch {
-                # Task may not exist
             }
         }
 
@@ -183,25 +125,14 @@ function Set-NVIDIAOptimizations {
     }
 }
 
-<#
-.SYNOPSIS
-    Configure AMD-specific optimizations
-.DESCRIPTION
-    AMD driver optimizations. Manual Radeon Software recommendations.
 
-    WEB_CONFIG: gpu.amd_optimized (boolean, default: true)
-    Description: "Apply AMD GPU optimizations"
-    Risk Level: TIER_1_LOW
-#>
 function Set-AMDOptimizations {
     try {
         Write-Log "Applying AMD optimizations..." "INFO"
 
-        # AMD driver registry path (if exists)
         $amdPath = "HKLM:\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000"
         if (Test-Path $amdPath) {
             Backup-RegistryKey -Path $amdPath
-            # AMD-specific tweaks can go here if needed
         }
 
         Write-Log "AMD optimizations complete" "SUCCESS"
@@ -218,16 +149,7 @@ function Set-AMDOptimizations {
     }
 }
 
-<#
-.SYNOPSIS
-    Configure Intel-specific optimizations
-.DESCRIPTION
-    Intel GPU optimizations. Manual Intel Graphics Command Center recommendations.
 
-    WEB_CONFIG: gpu.intel_optimized (boolean, default: true)
-    Description: "Apply Intel GPU optimizations"
-    Risk Level: TIER_1_LOW
-#>
 function Set-IntelOptimizations {
     try {
         Write-Log "Applying Intel GPU optimizations..." "INFO"
@@ -243,19 +165,9 @@ function Set-IntelOptimizations {
     }
 }
 
-#endregion
 
-#region Main Functions
 
-<#
-.SYNOPSIS
-    Apply all GPU optimizations
-.DESCRIPTION
-    Main entry point for GPU optimizations. Auto-detects vendor and applies
-    vendor-specific optimizations.
-.PARAMETER EnableHAGS
-    Enable HAGS (opt-in, default: false - validate with benchmarks first)
-#>
+
 function Invoke-GPUOptimizations {
     param(
         [bool]$EnableHAGS = $false
@@ -264,10 +176,8 @@ function Invoke-GPUOptimizations {
     Write-Log "Applying GPU optimizations..." "INFO"
 
     try {
-        # Set HAGS (opt-in only, default: disabled)
         Set-HAGS -Enable $EnableHAGS
 
-        # Detect GPU vendor and apply vendor-specific optimizations
         $vendor = Test-GPUVendor
 
         switch ($vendor) {
@@ -293,20 +203,13 @@ function Invoke-GPUOptimizations {
     }
 }
 
-<#
-.SYNOPSIS
-    Rollback GPU optimizations to defaults
-.DESCRIPTION
-    Restores GPU settings to Windows defaults.
-#>
+
 function Undo-GPUOptimizations {
     Write-Log "Rolling back GPU optimizations..." "INFO"
 
     try {
-        # Restore HAGS to disabled
         Set-HAGS -Enable $false
 
-        # Re-enable NVIDIA telemetry tasks
         $nvidiaTasks = @(
             "NvTmRep_CrashReport1_{B2FE1952-0186-46C3-BAEC-A80AA35AC5B8}",
             "NvTmRep_CrashReport2_{B2FE1952-0186-46C3-BAEC-A80AA35AC5B8}",
@@ -321,7 +224,6 @@ function Undo-GPUOptimizations {
             schtasks /Change /TN $task /ENABLE 2>&1 | Out-Null
         }
 
-        # Restore registry paths
         $paths = @(
             "HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers",
             "HKLM:\SYSTEM\CurrentControlSet\Services\nvlddmkm",
@@ -342,9 +244,7 @@ function Undo-GPUOptimizations {
     }
 }
 
-#endregion
 
-# Export functions
 Export-ModuleMember -Function @(
     'Test-GPUVendor',
     'Set-HAGS',

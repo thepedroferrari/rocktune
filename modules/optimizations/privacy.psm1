@@ -1,51 +1,17 @@
 #Requires -RunAsAdministrator
 
-<#
-.SYNOPSIS
-    Privacy and telemetry optimizations (tiered approach)
-.DESCRIPTION
-    Three-tier privacy approach:
 
-    TIER 1 (SAFE - Default):
-    - Advertising ID disable
-    - Activity History disable
-    - Optional diagnostic data reduction
-    - WiFi Sense disable
-    - Windows Feedback disable
 
-    TIER 2 (MODERATE - Opt-in):
-    - DiagTrack service disable (may affect diagnostics)
-    - SysMain (Superfetch) disable (may affect load times)
-    - Windows Error Reporting disable
-
-    TIER 3 (AGGRESSIVE - Strongly discouraged, opt-in only):
-    - Xbox services disable (BREAKS Game Pass)
-
-    SmartScreen and Windows Update are NEVER disabled (security surface).
-.NOTES
-    Author: @thepedroferrari
-    Risk Level: TIER_1_LOW (default), TIER_2_MED (moderate), TIER_3_HIGH (aggressive)
-    Reversible: Yes (via Undo-PrivacyOptimizations)
-#>
-
-# Import core modules
 Import-Module (Join-Path $PSScriptRoot "..\core\logger.psm1") -Force -Global
 Import-Module (Join-Path $PSScriptRoot "..\core\registry.psm1") -Force -Global
 
-#region Detection Functions
 
-<#
-.SYNOPSIS
-    Verify privacy optimizations are applied correctly
-.OUTPUTS
-    [bool] True if all optimizations verified, false otherwise
-#>
+
 function Test-PrivacyOptimizations {
     $allPassed = $true
 
     Write-Log "Verifying privacy optimizations..." "INFO"
 
-    # Check Advertising ID disabled
     $advID = Get-RegistryValue -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\AdvertisingInfo" -Name "Enabled"
     if ($advID -eq 0) {
         Write-Log "✓ Advertising ID disabled" "SUCCESS"
@@ -54,7 +20,6 @@ function Test-PrivacyOptimizations {
         $allPassed = $false
     }
 
-    # Check Activity History disabled
     $activityHistory = Get-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" -Name "PublishUserActivities"
     if ($activityHistory -eq 0) {
         Write-Log "✓ Activity History disabled" "SUCCESS"
@@ -63,25 +28,13 @@ function Test-PrivacyOptimizations {
     return $allPassed
 }
 
-#endregion
 
-#region TIER 1: Safe Privacy Tweaks (Default)
 
-<#
-.SYNOPSIS
-    Apply Tier 1 safe privacy tweaks (default)
-.DESCRIPTION
-    Safe privacy optimizations with no functional impact.
 
-    WEB_CONFIG: privacy.tier1_safe (boolean, default: true)
-    Description: "Safe privacy tweaks (Advertising ID, Activity History, Feedback)"
-    Risk Level: TIER_1_LOW
-#>
 function Apply-PrivacyTier1Safe {
     try {
         Write-Log "Applying Tier 1 safe privacy tweaks..." "INFO"
 
-        # Advertising ID
         $advPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\AdvertisingInfo"
         Backup-RegistryKey -Path $advPath
         Set-RegistryValue -Path $advPath -Name "Enabled" -Value 0 -Type "DWORD"
@@ -91,27 +44,23 @@ function Apply-PrivacyTier1Safe {
         Set-RegistryValue -Path $advPath2 -Name "DisabledByGroupPolicy" -Value 1 -Type "DWORD"
         Write-Log "Disabled Advertising ID" "SUCCESS"
 
-        # Activity History / Timeline
         $activityPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System"
         Backup-RegistryKey -Path $activityPath
         Set-RegistryValue -Path $activityPath -Name "PublishUserActivities" -Value 0 -Type "DWORD"
         Set-RegistryValue -Path $activityPath -Name "UploadUserActivities" -Value 0 -Type "DWORD"
         Write-Log "Disabled Activity History / Timeline" "SUCCESS"
 
-        # WiFi Sense (shares WiFi passwords)
         $wifiPath = "HKLM:\SOFTWARE\Microsoft\WcmSvc\wifinetworkmanager\config"
         Backup-RegistryKey -Path $wifiPath
         Set-RegistryValue -Path $wifiPath -Name "AutoConnectAllowedOEM" -Value 0 -Type "DWORD"
         Set-RegistryValue -Path $wifiPath -Name "WiFISenseAllowed" -Value 0 -Type "DWORD"
         Write-Log "Disabled WiFi Sense" "SUCCESS"
 
-        # Windows Feedback
         $feedbackPath = "HKCU:\Software\Microsoft\Siuf\Rules"
         Backup-RegistryKey -Path $feedbackPath
         Set-RegistryValue -Path $feedbackPath -Name "NumberOfSIUFInPeriod" -Value 0 -Type "DWORD"
         Write-Log "Disabled Windows Feedback" "SUCCESS"
 
-        # Windows Spotlight
         $spotlightPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager"
         Backup-RegistryKey -Path $spotlightPath
         Set-RegistryValue -Path $spotlightPath -Name "RotatingLockScreenEnabled" -Value 0 -Type "DWORD"
@@ -119,13 +68,11 @@ function Apply-PrivacyTier1Safe {
         Set-RegistryValue -Path $spotlightPath -Name "SubscribedContent-338389Enabled" -Value 0 -Type "DWORD"
         Write-Log "Disabled Windows Spotlight" "SUCCESS"
 
-        # Cloud Clipboard Sync
         $clipboardPath = "HKCU:\Software\Microsoft\Clipboard"
         Backup-RegistryKey -Path $clipboardPath
         Set-RegistryValue -Path $clipboardPath -Name "EnableClipboardHistory" -Value 0 -Type "DWORD"
         Write-Log "Disabled Cloud Clipboard Sync" "SUCCESS"
 
-        # Optional Diagnostic Data (reduce to minimum)
         $telemetryPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\DataCollection"
         Backup-RegistryKey -Path $telemetryPath
         Set-RegistryValue -Path $telemetryPath -Name "AllowTelemetry" -Value 1 -Type "DWORD"  # 1 = Security only (not 0 = off, requires Enterprise)
@@ -140,26 +87,13 @@ function Apply-PrivacyTier1Safe {
     }
 }
 
-#endregion
 
-#region TIER 2: Moderate Privacy Tweaks (Opt-in)
 
-<#
-.SYNOPSIS
-    Apply Tier 2 moderate privacy tweaks (opt-in)
-.DESCRIPTION
-    Moderate privacy optimizations with potential functional impact.
 
-    WEB_CONFIG: privacy.tier2_moderate (boolean, default: false)
-    Description: "Moderate privacy (DiagTrack, SysMain disable - may affect diagnostics/load times)"
-    Risk Level: TIER_2_MED
-    Note: "Can affect Windows diagnostics and app load times"
-#>
 function Apply-PrivacyTier2Moderate {
     try {
         Write-Log "Applying Tier 2 moderate privacy tweaks (opt-in)..." "INFO"
 
-        # DiagTrack service (Connected User Experiences and Telemetry)
         try {
             $service = Get-Service -Name "DiagTrack" -ErrorAction SilentlyContinue
             if ($service) {
@@ -171,7 +105,6 @@ function Apply-PrivacyTier2Moderate {
             Write-Log "Error disabling DiagTrack: $_" "ERROR"
         }
 
-        # dmwappushservice (WAP Push Message Routing Service)
         try {
             $service = Get-Service -Name "dmwappushservice" -ErrorAction SilentlyContinue
             if ($service) {
@@ -183,7 +116,6 @@ function Apply-PrivacyTier2Moderate {
             Write-Log "Error disabling dmwappushservice: $_" "ERROR"
         }
 
-        # SysMain (Superfetch) - may affect load times
         try {
             $service = Get-Service -Name "SysMain" -ErrorAction SilentlyContinue
             if ($service) {
@@ -195,13 +127,11 @@ function Apply-PrivacyTier2Moderate {
             Write-Log "Error disabling SysMain: $_" "ERROR"
         }
 
-        # Windows Error Reporting
         $werPath = "HKLM:\SOFTWARE\Microsoft\Windows\Windows Error Reporting"
         Backup-RegistryKey -Path $werPath
         Set-RegistryValue -Path $werPath -Name "Disabled" -Value 1 -Type "DWORD"
         Write-Log "Disabled Windows Error Reporting" "SUCCESS"
 
-        # Delivery Optimization P2P
         $doPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\DeliveryOptimization\Config"
         Backup-RegistryKey -Path $doPath
         Set-RegistryValue -Path $doPath -Name "DODownloadMode" -Value 0 -Type "DWORD"
@@ -216,33 +146,19 @@ function Apply-PrivacyTier2Moderate {
     }
 }
 
-#endregion
 
-#region TIER 3: Aggressive Privacy Tweaks (Strongly discouraged, opt-in only)
 
-<#
-.SYNOPSIS
-    Apply Tier 3 aggressive privacy tweaks (opt-in, BREAKS features)
-.DESCRIPTION
-    Aggressive privacy optimizations that BREAK functionality.
 
-    WARNING: Disabling Xbox services BREAKS Game Pass and Xbox app functionality.
-
-    WEB_CONFIG: privacy.tier3_aggressive (boolean, default: false)
-    Description: "AGGRESSIVE: Disable Xbox services (BREAKS Game Pass)"
-    Risk Level: TIER_3_HIGH
-    Note: "Strongly discouraged - will break Game Pass and Xbox app"
-#>
 function Apply-PrivacyTier3Aggressive {
     try {
         Write-Log "Applying Tier 3 aggressive privacy tweaks (opt-in, BREAKS features)..." "INFO"
         Write-Log "WARNING: This will BREAK Game Pass and Xbox app functionality!" "ERROR"
 
         $xboxServices = @(
-            "XblAuthManager",      # Xbox Live Auth Manager
-            "XblGameSave",         # Xbox Live Game Save
-            "XboxGipSvc",          # Xbox Accessory Management Service
-            "XboxNetApiSvc"        # Xbox Live Networking Service
+            "XblAuthManager",
+            "XblGameSave",
+            "XboxGipSvc",
+            "XboxNetApiSvc"
         )
 
         foreach ($serviceName in $xboxServices) {
@@ -266,23 +182,9 @@ function Apply-PrivacyTier3Aggressive {
     }
 }
 
-#endregion
 
-#region Bloatware Removal
 
-<#
-.SYNOPSIS
-    Remove UWP bloatware apps
-.DESCRIPTION
-    Removes pre-installed UWP apps that are not needed for gaming.
 
-    IMPORTANT: Xbox apps are NOT removed by default (needed for Game Pass).
-    Use Tier 3 aggressive to remove Xbox apps (BREAKS Game Pass).
-
-    WEB_CONFIG: privacy.bloatware_removal (boolean, default: true)
-    Description: "Remove UWP bloatware (safe list, excludes Xbox apps)"
-    Risk Level: TIER_1_LOW
-#>
 function Remove-Bloatware {
     try {
         Write-Log "Removing UWP bloatware..." "INFO"
@@ -323,16 +225,7 @@ function Remove-Bloatware {
     }
 }
 
-<#
-.SYNOPSIS
-    Remove Xbox UWP apps (BREAKS Game Pass)
-.DESCRIPTION
-    Removes Xbox UWP apps. This BREAKS Game Pass and Xbox app functionality.
 
-    WEB_CONFIG: privacy.remove_xbox_apps (boolean, default: false)
-    Description: "Remove Xbox apps (BREAKS Game Pass)"
-    Risk Level: TIER_3_HIGH
-#>
 function Remove-XboxApps {
     try {
         Write-Log "Removing Xbox UWP apps (BREAKS Game Pass)..." "INFO"
@@ -368,16 +261,9 @@ function Remove-XboxApps {
     }
 }
 
-#endregion
 
-#region Additional Privacy Toggles
 
-<#
-.SYNOPSIS
-    Disable background Store apps
-.DESCRIPTION
-    Blocks Store apps from running in the background to reduce wakeups.
-#>
+
 function Set-BackgroundAppsOff {
     try {
         $path = "HKCU:\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications"
@@ -395,12 +281,7 @@ function Set-BackgroundAppsOff {
     }
 }
 
-<#
-.SYNOPSIS
-    Apply Edge debloat policies
-.DESCRIPTION
-    Removes first run, rewards, widget, shopping assistant noise.
-#>
+
 function Apply-EdgeDebloat {
     try {
         $edge = "HKLM:\SOFTWARE\Policies\Microsoft\Edge"
@@ -416,12 +297,7 @@ function Apply-EdgeDebloat {
     }
 }
 
-<#
-.SYNOPSIS
-    Disable Microsoft Copilot surface/background hooks
-.DESCRIPTION
-    Win11 guard; no-op on Win10.
-#>
+
 function Disable-Copilot {
     try {
         $userCopilot = "HKCU:\SOFTWARE\Microsoft\Windows\Shell\CopilotAI"
@@ -439,26 +315,9 @@ function Disable-Copilot {
     }
 }
 
-#endregion
 
-#region Main Functions
 
-<#
-.SYNOPSIS
-    Apply privacy optimizations with tiered approach
-.DESCRIPTION
-    Main entry point for privacy optimizations.
-.PARAMETER Tier1Safe
-    Apply Tier 1 safe privacy tweaks (default: true)
-.PARAMETER Tier2Moderate
-    Apply Tier 2 moderate privacy tweaks (opt-in, default: false)
-.PARAMETER Tier3Aggressive
-    Apply Tier 3 aggressive privacy tweaks (opt-in, BREAKS features, default: false)
-.PARAMETER RemoveBloatware
-    Remove UWP bloatware (default: true)
-.PARAMETER RemoveXboxApps
-    Remove Xbox apps - BREAKS Game Pass (default: false)
-#>
+
 function Invoke-PrivacyOptimizations {
     param(
         [bool]$Tier1Safe = $true,
@@ -474,27 +333,22 @@ function Invoke-PrivacyOptimizations {
     Write-Log "Applying privacy optimizations..." "INFO"
 
     try {
-        # Tier 1 (safe, default)
         if ($Tier1Safe) {
             Apply-PrivacyTier1Safe
         }
 
-        # Tier 2 (moderate, opt-in)
         if ($Tier2Moderate) {
             Apply-PrivacyTier2Moderate
         }
 
-        # Tier 3 (aggressive, opt-in, BREAKS features)
         if ($Tier3Aggressive) {
             Apply-PrivacyTier3Aggressive
         }
 
-        # Bloatware removal
         if ($RemoveBloatware) {
             Remove-Bloatware
         }
 
-        # Xbox apps removal (opt-in, BREAKS Game Pass)
         if ($RemoveXboxApps) {
             Remove-XboxApps
         }
@@ -520,17 +374,11 @@ function Invoke-PrivacyOptimizations {
     }
 }
 
-<#
-.SYNOPSIS
-    Rollback privacy optimizations to defaults
-.DESCRIPTION
-    Restores privacy settings to Windows defaults.
-#>
+
 function Undo-PrivacyOptimizations {
     Write-Log "Rolling back privacy optimizations..." "INFO"
 
     try {
-        # Re-enable services
         $services = @("DiagTrack", "dmwappushservice", "SysMain", "XblAuthManager", "XblGameSave", "XboxGipSvc", "XboxNetApiSvc")
         foreach ($serviceName in $services) {
             try {
@@ -545,7 +393,6 @@ function Undo-PrivacyOptimizations {
             }
         }
 
-        # Restore registry paths
         $paths = @(
             "HKCU:\Software\Microsoft\Windows\CurrentVersion\AdvertisingInfo",
             "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo",
@@ -578,9 +425,7 @@ function Undo-PrivacyOptimizations {
     }
 }
 
-#endregion
 
-# Export functions
 Export-ModuleMember -Function @(
     'Apply-PrivacyTier1Safe',
     'Apply-PrivacyTier2Moderate',

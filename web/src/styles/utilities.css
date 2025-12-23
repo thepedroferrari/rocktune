@@ -1,10 +1,7 @@
-/**
- * Utility Classes
- * Helper classes for common patterns
- */
+
 
 @layer utilities {
-  /* Accessibility - Screen reader only */
+  
   .sr-only {
     position: absolute;
     width: 1px;
@@ -17,7 +14,7 @@
     border: 0;
   }
 
-  /* Skip link for keyboard navigation */
+  
   .skip-link {
     position: absolute;
     top: -100px;
@@ -39,7 +36,7 @@
     }
   }
 
-  /* Cursor glow effect */
+  
   .cursor-glow {
     position: fixed;
     width: 400px;

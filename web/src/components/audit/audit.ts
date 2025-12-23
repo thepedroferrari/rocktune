@@ -12,7 +12,6 @@ export function setupAuditPanel(): void {
 
   auditViewer = createCodeViewer($id('audit-viewer'))
 
-  // Toggle panel
   toggle?.addEventListener('click', () => {
     panel?.classList.toggle('open')
   })
@@ -29,10 +28,8 @@ export function setupAuditPanel(): void {
 
   document.addEventListener('script-change-request', updateAudit)
 
-  // Initial update
   updateAudit()
 
-  // Copy from audit viewer
   $id('audit-copy')?.addEventListener('click', async () => {
     const script = auditViewer?.getContent() || ''
     try {

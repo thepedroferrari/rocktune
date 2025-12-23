@@ -1,10 +1,7 @@
-/**
- * Code Viewer Component Styles
- * Script preview, diff viewer, and code editing
- */
+
 
 @layer components {
-  /* Code Viewer */
+  
   .code-viewer {
     display: flex;
     flex-direction: column;

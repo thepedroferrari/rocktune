@@ -1,28 +1,6 @@
 #Requires -RunAsAdministrator
 
-<#
-.SYNOPSIS
-    Gaming PC Setup - Modular Windows Optimization Script
-.DESCRIPTION
-    Evidence-based Windows optimizations for gaming performance, organized into
-    modular components with full reversibility.
 
-    Behavior notes:
-    - AMD X3D: CPPC enabled (required for AMD 3D V-Cache optimizer)
-    - Core Parking: Enabled by default (X3D benefits from C-states)
-    - HPET: Opt-in only (limited benefit on Win11)
-    - Page File: 4GB for 32GB+ RAM, 8GB for 16GB RAM
-.PARAMETER DryRun
-    Preview optimizations without applying changes
-.PARAMETER ConfigFile
-    Load configuration from JSON file
-.PARAMETER Profile
-    Load pre-made profile (competitive, balanced, privacy-focused)
-.NOTES
-    Author: @thepedroferrari
-    Date: 2025-12-20
-    Repository: https://github.com/thepedroferrari/gaming-pc-setup
-#>
 
 param(
     [switch]$DryRun,
@@ -30,9 +8,7 @@ param(
     [string]$Profile
 )
 
-#region Script Initialization
 
-# Get script directory (works even if run from different location)
 $ScriptRoot = $PSScriptRoot
 if (-not $ScriptRoot) {
     $ScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -48,19 +24,15 @@ if ($DryRun) {
     Write-Host ""
 }
 
-#endregion
 
-#region Module Import
 
 Write-Host "Loading modules..." -ForegroundColor Cyan
 
-# Import core modules
 Import-Module (Join-Path $ScriptRoot "modules\core\logger.psm1") -Force -Global
 Import-Module (Join-Path $ScriptRoot "modules\core\registry.psm1") -Force -Global
 Import-Module (Join-Path $ScriptRoot "modules\core\config.psm1") -Force -Global
 Import-Module (Join-Path $ScriptRoot "modules\core\menu.psm1") -Force -Global
 
-# Import optimization modules
 Import-Module (Join-Path $ScriptRoot "modules\optimizations\system.psm1") -Force -Global
 Import-Module (Join-Path $ScriptRoot "modules\optimizations\amd-x3d.psm1") -Force -Global
 Import-Module (Join-Path $ScriptRoot "modules\optimizations\performance.psm1") -Force -Global
@@ -74,9 +46,7 @@ Import-Module (Join-Path $ScriptRoot "modules\software\installer.psm1") -Force -
 Write-Host "All modules loaded successfully" -ForegroundColor Green
 Write-Host ""
 
-#endregion
 
-#region Logger Initialization
 
 $logPath = Join-Path $ScriptRoot "gaming-pc-setup.log"
 Initialize-Logger -LogPath $logPath -ClearExisting $true
@@ -85,9 +55,7 @@ Write-Log "=== Gaming PC Setup Started ===" "SUCCESS"
 Write-Log "Script root: $ScriptRoot" "INFO"
 Write-Log "Dry run: $DryRun" "INFO"
 
-#endregion
 
-#region System Information
 
 function Get-SystemInfo {
     $cpu = (Get-CimInstance Win32_Processor).Name
@@ -116,11 +84,8 @@ Write-Host ""
 
 Write-Log "System: $($sysInfo.CPU) | $($sysInfo.RAM) | $($sysInfo.GPU)" "INFO"
 
-#endregion
 
-#region Optimization Sections
 
-# Define optimization sections with weights (for progress tracking)
 $sections = @(
     @{
         Name = "AMD X3D Optimizations"
@@ -196,22 +161,18 @@ $sections = @(
     }
 )
 
-# Calculate total weight for progress tracking
 $totalWeight = 0
 foreach ($section in $sections) {
     $totalWeight += $section.Weight
 }
 $completedWeight = 0
 
-#endregion
 
-#region User Confirmation
 
 Write-Host "The following optimizations will be applied:" -ForegroundColor Yellow
 Write-Host ""
 
 foreach ($section in $sections) {
-    # Check condition (if any)
     if ($section.Condition) {
         if (-not (& $section.Condition)) {
             Write-Host "  [SKIP] $($section.Name) (condition not met)" -ForegroundColor Gray
@@ -240,12 +201,9 @@ Write-Host ""
 Write-Host "Starting optimizations..." -ForegroundColor Cyan
 Write-Host ""
 
-#endregion
 
-#region Execute Optimizations
 
 foreach ($section in $sections) {
-    # Check condition (if any)
     if ($section.Condition) {
         if (-not (& $section.Condition)) {
             Write-Log "Skipping $($section.Name) (condition not met)" "INFO"
@@ -253,7 +211,6 @@ foreach ($section in $sections) {
         }
     }
 
-    # Calculate progress percentage
     $progressPercent = [int](($completedWeight / $totalWeight) * 100)
     Write-Progress -Activity "Gaming PC Setup" -Status $section.Name -PercentComplete $progressPercent
 
@@ -265,10 +222,8 @@ foreach ($section in $sections) {
             Write-Log "DRY RUN: Would execute $($section.Function)" "INFO"
             Write-Host "  DRY RUN: Would apply optimizations" -ForegroundColor Yellow
         } else {
-            # Execute optimization function
             & $section.Function
 
-            # Verify if test function exists
             if ($section.TestFunction) {
                 Write-Log "Verifying $($section.Name)..." "INFO"
                 $testResult = & $section.TestFunction
@@ -292,12 +247,9 @@ foreach ($section in $sections) {
 
 Write-Progress -Activity "Gaming PC Setup" -Completed
 
-#endregion
 
-#region Post-Setup Checklist
 
 if (-not $DryRun) {
-    # Create post-setup checklist
     $checklistPath = Join-Path $ScriptRoot "POST-SETUP-CHECKLIST.txt"
 
     $checklistContent = @"
@@ -558,13 +510,10 @@ Happy gaming! 🎮
     Set-Content -Path $checklistPath -Value $checklistContent -Encoding UTF8
     Write-Log "Post-setup checklist created: $checklistPath" "SUCCESS"
 
-    # Open checklist in notepad
     Start-Process "notepad.exe" -ArgumentList $checklistPath
 }
 
-#endregion
 
-#region Completion
 
 Write-Host ""
 Write-Host "=== Gaming PC Setup Complete ===" -ForegroundColor Green
@@ -593,4 +542,3 @@ if (-not $DryRun) {
     Write-Host ""
 }
 
-#endregion

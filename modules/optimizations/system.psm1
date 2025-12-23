@@ -1,36 +1,12 @@
 ﻿#Requires -RunAsAdministrator
 
-<#
-.SYNOPSIS
-    System-level optimizations (page file, memory compression, fast startup)
-.DESCRIPTION
-    Core Windows system optimizations for gaming performance:
-    - Fixed page file sizing (4GB for 32GB+ RAM, 8GB for 16GB RAM)
-    - Memory compression management (opt-in disable for 32GB+ RAM)
-    - Fast startup disable (cleaner boots)
 
-    Page File Logic (User Decision):
-    - 32GB+ RAM: 4GB fixed page file
-    - 16GB RAM: 8GB fixed page file
-    - < 16GB RAM: Keep system-managed (not modified)
-.NOTES
-    Author: @thepedroferrari
-    Risk Level: TIER_2_MED (page file changes can affect stability)
-    Reversible: Yes (via Undo-SystemOptimizations)
-#>
 
-# Import core modules
 Import-Module (Join-Path $PSScriptRoot "..\core\logger.psm1") -Force -Global
 Import-Module (Join-Path $PSScriptRoot "..\core\registry.psm1") -Force -Global
 
-#region Detection Functions
 
-<#
-.SYNOPSIS
-    Get total system RAM in GB
-.OUTPUTS
-    [int] Total RAM in gigabytes (rounded)
-#>
+
 function Get-SystemRAM {
     try {
         $totalRAM = [math]::Round((Get-CimInstance Win32_PhysicalMemory -ErrorAction Stop |
@@ -44,19 +20,13 @@ function Get-SystemRAM {
     }
 }
 
-<#
-.SYNOPSIS
-    Verify system optimizations are applied correctly
-.OUTPUTS
-    [bool] True if all optimizations verified, false otherwise
-#>
+
 function Test-SystemOptimizations {
     $allPassed = $true
 
     Write-Log "Verifying system optimizations..." "INFO"
 
     try {
-        # Check 1: Page file configuration
         $ComputerSystem = Get-WmiObject Win32_ComputerSystem -EnableAllPrivileges
         $totalRAM = Get-SystemRAM
 
@@ -84,7 +54,6 @@ function Test-SystemOptimizations {
             }
         }
 
-        # Check 2: Fast startup disabled
         $hiberboot = Get-RegistryValue -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Power" -Name "HiberbootEnabled"
         if ($hiberboot -eq 0) {
             Write-Log "✓ Fast Startup disabled" "SUCCESS"
@@ -93,7 +62,6 @@ function Test-SystemOptimizations {
             $allPassed = $false
         }
 
-        # Check 3: Memory compression (informational only)
         $mmAgent = Get-MMAgent -ErrorAction SilentlyContinue
         if ($mmAgent) {
             $compressionStatus = if ($mmAgent.MemoryCompression) { "enabled" } else { "disabled" }
@@ -108,25 +76,9 @@ function Test-SystemOptimizations {
     return $allPassed
 }
 
-#endregion
 
-#region Apply Functions
 
-<#
-.SYNOPSIS
-    Set fixed page file size based on system RAM
-.DESCRIPTION
-    Configures page file with fixed sizing strategy:
-    - 32GB+ RAM: 4GB (4096 MB) fixed
-    - 16GB RAM: 8GB (8192 MB) fixed
-    - < 16GB RAM: Keep system-managed (no change)
 
-    Fixed sizing provides predictable performance and prevents dynamic resizing overhead.
-
-    WEB_CONFIG: system.page_file_size_gb (dropdown: 4, 8, 16, "system-managed", default: "auto-detect")
-    Description: "4GB for 32GB+ RAM, 8GB for 16GB RAM (user preference)"
-    Risk Level: TIER_2_MED
-#>
 function Set-PageFile {
     try {
         $totalRAM = Get-SystemRAM
@@ -136,16 +88,14 @@ function Set-PageFile {
             return
         }
 
-        # Determine page file size based on RAM
         $pageFileSize = if ($totalRAM -ge 32) {
-            4096  # 32GB+ RAM: 4GB page file
+            4096
         } else {
-            8192  # 16GB RAM: 8GB page file
+            8192
         }
 
         Write-Log "System has ${totalRAM}GB RAM - setting ${pageFileSize}MB fixed page file" "INFO"
 
-        # Disable automatic page file management
         $ComputerSystem = Get-WmiObject Win32_ComputerSystem -EnableAllPrivileges
         if ($ComputerSystem.AutomaticManagedPagefile) {
             $ComputerSystem.AutomaticManagedPagefile = $false
@@ -153,7 +103,6 @@ function Set-PageFile {
             Write-Log "Disabled automatic page file management" "SUCCESS"
         }
 
-        # Set fixed size page file
         $PageFile = Get-WmiObject -Query "Select * From Win32_PageFileSetting Where Name='C:\\pagefile.sys'"
         if ($PageFile) {
             $PageFile.InitialSize = $pageFileSize
@@ -162,7 +111,6 @@ function Set-PageFile {
             $sizeGB = [math]::Round($pageFileSize / 1024, 1)
             Write-Log "Set page file to fixed ${pageFileSize}MB size (${sizeGB}GB)" "SUCCESS"
         } else {
-            # Create page file if it doesn't exist
             $PageFile = ([WMIClass]"Win32_PageFileSetting").CreateInstance()
             $PageFile.Name = "C:\pagefile.sys"
             $PageFile.InitialSize = $pageFileSize
@@ -179,19 +127,7 @@ function Set-PageFile {
     }
 }
 
-<#
-.SYNOPSIS
-    Disable memory compression on systems with 32GB+ RAM (opt-in)
-.DESCRIPTION
-    Memory compression trades CPU cycles for reduced memory pressure.
-    On systems with ample RAM (32GB+), disabling can reduce CPU overhead.
 
-    Default: KEEP ENABLED (even on 32GB+ systems) unless validated with ETW traces.
-
-    WEB_CONFIG: system.memory_compression_disabled (boolean, default: false)
-    Description: "Disable memory compression on 32GB+ RAM (opt-in, validate with ETW first)"
-    Risk Level: TIER_1_LOW
-#>
 function Set-MemoryCompression {
     param(
         [bool]$Disable = $false
@@ -217,23 +153,10 @@ function Set-MemoryCompression {
     }
 }
 
-<#
-.SYNOPSIS
-    Disable Fast Startup (hybrid boot)
-.DESCRIPTION
-    Fast Startup uses hibernation for faster boot times, but can cause issues:
-    - Hardware not fully reinitialized
-    - Driver state inconsistencies
-    - Boot from true cold state preferred for gaming PCs
 
-    WEB_CONFIG: system.fast_startup_disabled (boolean, default: true)
-    Description: "Disable Fast Startup for cleaner boots (recommended for gaming)"
-    Risk Level: TIER_1_LOW
-#>
 function Disable-FastStartup {
     $regPath = "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Power"
 
-    # Backup registry before changes
     Backup-RegistryKey -Path $regPath
 
     try {
@@ -246,12 +169,7 @@ function Disable-FastStartup {
     }
 }
 
-<#
-.SYNOPSIS
-    Disable Explorer auto folder-type detection
-.DESCRIPTION
-    Prevents Explorer from rescanning folder types; improves responsiveness.
-#>
+
 function Disable-ExplorerAutoType {
     try {
         $shellPath = "HKCU:\Software\Classes\Local Settings\Software\Microsoft\Windows\Shell\Bags\AllFolders\Shell"
@@ -264,12 +182,7 @@ function Disable-ExplorerAutoType {
     }
 }
 
-<#
-.SYNOPSIS
-    Run Disk Cleanup (ResetBase)
-.DESCRIPTION
-    Frees component store space before updates.
-#>
+
 function Invoke-DiskCleanup {
     try {
         Dism.exe /Online /Cleanup-Image /StartComponentCleanup /ResetBase 2>&1 | Out-Null
@@ -280,12 +193,7 @@ function Invoke-DiskCleanup {
     }
 }
 
-<#
-.SYNOPSIS
-    Purge TEMP folders
-.DESCRIPTION
-    Clears user and system temp to avoid cache bloat.
-#>
+
 function Invoke-TempPurge {
     try {
         $tempPaths = @("$env:TEMP","$env:WINDIR\Temp")
@@ -301,12 +209,7 @@ function Invoke-TempPurge {
     }
 }
 
-<#
-.SYNOPSIS
-    Trim non-critical services to Manual
-.DESCRIPTION
-    Sets curated list of services to Manual and stops them.
-#>
+
 function Set-ServiceTrimSafe {
     param(
         [bool]$Enable = $true
@@ -330,12 +233,7 @@ function Set-ServiceTrimSafe {
     }
 }
 
-<#
-.SYNOPSIS
-    Block Razer/OEM auto-installs
-.DESCRIPTION
-    Disables Razer-related services/tasks if present to avoid WPBT-style installs.
-#>
+
 function Disable-RazerAutoInstall {
     param(
         [bool]$Enable = $true
@@ -361,19 +259,9 @@ function Disable-RazerAutoInstall {
     }
 }
 
-#endregion
 
-#region Main Functions
 
-<#
-.SYNOPSIS
-    Apply all system optimizations
-.DESCRIPTION
-    Main entry point for system-level optimizations.
-    Applies page file, fast startup, and optionally memory compression settings.
-.PARAMETER DisableMemoryCompression
-    If true, disables memory compression on systems with 32GB+ RAM (opt-in)
-#>
+
 function Invoke-SystemOptimizations {
     param(
         [bool]$DisableMemoryCompression = $false,
@@ -387,13 +275,10 @@ function Invoke-SystemOptimizations {
     Write-Log "Applying system optimizations..." "INFO"
 
     try {
-        # Set fixed page file (4GB for 32GB+ RAM, 8GB for 16GB RAM)
         Set-PageFile
 
-        # Disable fast startup
         Disable-FastStartup
 
-        # Memory compression (opt-in disable for 32GB+ RAM)
         Set-MemoryCompression -Disable $DisableMemoryCompression
 
         if ($DisableExplorerAutoType) {
@@ -420,20 +305,11 @@ function Invoke-SystemOptimizations {
     }
 }
 
-<#
-.SYNOPSIS
-    Rollback system optimizations to defaults
-.DESCRIPTION
-    Restores system settings to Windows defaults:
-    - Page file: System-managed (automatic)
-    - Fast startup: Enabled
-    - Memory compression: Enabled
-#>
+
 function Undo-SystemOptimizations {
     Write-Log "Rolling back system optimizations..." "INFO"
 
     try {
-        # Restore page file to system-managed
         $ComputerSystem = Get-WmiObject Win32_ComputerSystem -EnableAllPrivileges
         if (-not $ComputerSystem.AutomaticManagedPagefile) {
             $ComputerSystem.AutomaticManagedPagefile = $true
@@ -441,28 +317,23 @@ function Undo-SystemOptimizations {
             Write-Log "Restored automatic page file management" "SUCCESS"
         }
 
-        # Remove custom page file settings
         $PageFile = Get-WmiObject -Query "Select * From Win32_PageFileSetting Where Name='C:\\pagefile.sys'"
         if ($PageFile) {
             $PageFile.Delete()
             Write-Log "Removed custom page file settings" "SUCCESS"
         }
 
-        # Restore fast startup registry
         $regPath = "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Power"
         if (Restore-RegistryKey -Path $regPath) {
             Write-Log "Restored Fast Startup registry settings" "SUCCESS"
         } else {
-            # Fallback: enable fast startup manually
             Set-RegistryValue -Path $regPath -Name "HiberbootEnabled" -Value 1 -Type "DWORD"
             Write-Log "Re-enabled Fast Startup" "SUCCESS"
         }
 
-        # Restore Explorer auto-type
         $shellPath = "HKCU:\Software\Classes\Local Settings\Software\Microsoft\Windows\Shell\Bags\AllFolders\Shell"
         Restore-RegistryKey -Path $shellPath | Out-Null
 
-        # Re-enable memory compression
         Enable-MMAgent -MemoryCompression -ErrorAction SilentlyContinue
         Write-Log "Re-enabled memory compression" "SUCCESS"
 
@@ -474,9 +345,7 @@ function Undo-SystemOptimizations {
     }
 }
 
-#endregion
 
-# Export functions
 Export-ModuleMember -Function @(
     'Get-SystemRAM',
     'Set-PageFile',

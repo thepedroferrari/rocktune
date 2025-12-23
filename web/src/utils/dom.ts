@@ -1,8 +1,4 @@
-// =============================================================================
-// DOM QUERY UTILITIES - Type-safe element selection
-// =============================================================================
 
-// Overloads for querySelector with specific element types
 export function $<K extends keyof HTMLElementTagNameMap>(
   selector: K,
 ): HTMLElementTagNameMap[K] | null
@@ -11,7 +7,6 @@ export function $(selector: string): Element | null {
   return document.querySelector(selector)
 }
 
-// Overloads for querySelectorAll
 export function $$<K extends keyof HTMLElementTagNameMap>(
   selector: K,
 ): NodeListOf<HTMLElementTagNameMap[K]>
@@ -20,12 +15,10 @@ export function $$(selector: string): NodeListOf<Element> {
   return document.querySelectorAll(selector)
 }
 
-// Type-safe getElementById with narrowing
 export function $id(id: string): HTMLElement | null {
   return document.getElementById(id)
 }
 
-// Strict version that throws if not found
 export function $idStrict(id: string): HTMLElement {
   const element = document.getElementById(id)
   if (!element) {
@@ -34,9 +27,6 @@ export function $idStrict(id: string): HTMLElement {
   return element
 }
 
-// =============================================================================
-// ELEMENT TYPE GUARDS
-// =============================================================================
 
 export function isHTMLElement(value: unknown): value is HTMLElement {
   return value instanceof HTMLElement
@@ -58,9 +48,6 @@ export function isDialogElement(value: unknown): value is HTMLDialogElement {
   return value instanceof HTMLDialogElement
 }
 
-// =============================================================================
-// ACCESSIBILITY
-// =============================================================================
 
 const SR_ANNOUNCE_ID = 'sr-announce' as const
 
@@ -68,15 +55,11 @@ export function announce(message: string): void {
   const announcer = $id(SR_ANNOUNCE_ID)
   if (announcer) {
     announcer.textContent = ''
-    // Force reflow for screen readers
     void announcer.offsetHeight
     announcer.textContent = message
   }
 }
 
-// =============================================================================
-// HTML SANITIZATION - XSS Prevention
-// =============================================================================
 
 const HTML_ESCAPE_MAP = {
   '&': '&amp;',
@@ -94,7 +77,6 @@ export function escapeHtml(text: string): string {
   return text.replace(ESCAPE_REGEX, (char) => HTML_ESCAPE_MAP[char as EscapeChar])
 }
 
-// Overloads for sanitize with better inference
 export function sanitize(text: string): string
 export function sanitize(text: undefined): ''
 export function sanitize(text: null): ''
@@ -104,9 +86,6 @@ export function sanitize(text: string | undefined | null): string {
   return escapeHtml(String(text))
 }
 
-// =============================================================================
-// DEBOUNCE - Type-preserving with improved signature
-// =============================================================================
 
 type AnyFunction = (...args: never[]) => unknown
 
@@ -152,9 +131,6 @@ export function debounce<T extends AnyFunction>(fn: T, delay: number): Debounced
   return debounced
 }
 
-// =============================================================================
-// THROTTLE - Complementary to debounce
-// =============================================================================
 
 export function throttle<T extends AnyFunction>(
   fn: T,
@@ -171,9 +147,6 @@ export function throttle<T extends AnyFunction>(
   }
 }
 
-// =============================================================================
-// EVENT UTILITIES
-// =============================================================================
 
 type EventHandler<E extends Event = Event> = (event: E) => void
 
@@ -203,9 +176,6 @@ export function onInput<E extends HTMLInputElement | HTMLTextAreaElement>(
   return () => element.removeEventListener('input', handler)
 }
 
-// =============================================================================
-// CLASS UTILITIES
-// =============================================================================
 
 export function toggleClass(
   element: HTMLElement | null,

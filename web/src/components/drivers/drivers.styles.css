@@ -1,10 +1,7 @@
-/**
- * Drivers Component Styles
- * Driver links section and hardware driver cards
- */
+
 
 @layer components {
-  /* Driver Links Section */
+  
   .driver-links {
     margin-top: var(--space-lg);
     padding: var(--space-lg);
@@ -73,7 +70,7 @@
     }
   }
 
-  /* Explicit selectors for mobo/monitor to ensure visibility */
+  
   .driver-card.driver-card--mobo,
   .driver-card.driver-card--monitor {
     opacity: 1;

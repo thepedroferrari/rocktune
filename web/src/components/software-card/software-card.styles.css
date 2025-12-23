@@ -1,10 +1,7 @@
-/**
- * Software Card Component Styles
- * Self-contained styles for the software selection cards
- */
+
 
 @layer components {
-  /* Software Card */
+  
   .software-card {
     --light-x: 50%;
     --light-y: 50%;
@@ -327,7 +324,7 @@
     }
   }
 
-  /* Ripple effect for card interaction */
+  
   .software-card .ripple {
     position: absolute;
     border-radius: 50%;

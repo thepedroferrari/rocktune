@@ -21,14 +21,14 @@ All icons follow these standards:
 
 ### Color Usage
 ```svg
-<!-- Primary elements -->
+
 fill="currentColor"
 stroke="currentColor"
 
-<!-- Accents/highlights -->
+
 opacity="0.3" to "0.8"
 
-<!-- Specific colors (use sparingly) -->
+
 #ff4444 (red), #44ff44 (green), #4444ff (blue)
 ```
 

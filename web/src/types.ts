@@ -1,6 +1,3 @@
-// =============================================================================
-// BRANDED TYPES - Nominal typing for better type safety
-// =============================================================================
 
 declare const __brand: unique symbol
 type Brand<T, B> = T & { readonly [__brand]: B }
@@ -16,9 +13,6 @@ export function asWingetId(id: string): WingetId {
   return id as WingetId
 }
 
-// =============================================================================
-// CATEGORY SYSTEM - Single source of truth
-// =============================================================================
 
 export const CATEGORIES = [
   'launcher',
@@ -40,9 +34,6 @@ export function isCategory(value: unknown): value is Category {
   return typeof value === 'string' && CATEGORIES.includes(value as Category)
 }
 
-// =============================================================================
-// SOFTWARE PACKAGE - With strict typing
-// =============================================================================
 
 export interface SoftwarePackage {
   readonly id: WingetId
@@ -60,9 +51,6 @@ export function isPackageKey(catalog: SoftwareCatalog, key: string): key is Pack
   return key in catalog
 }
 
-// =============================================================================
-// HARDWARE TYPES - Discriminated by vendor
-// =============================================================================
 
 export const CPU_TYPES = {
   AMD_X3D: 'amd_x3d',
@@ -106,7 +94,6 @@ export interface HardwareProfile {
   readonly monitorSoftware: readonly MonitorSoftwareType[]
 }
 
-// Type guards for hardware
 export function isCpuType(value: unknown): value is CpuType {
   return typeof value === 'string' && Object.values(CPU_TYPES).includes(value as CpuType)
 }
@@ -128,9 +115,6 @@ export function isMonitorSoftwareType(value: unknown): value is MonitorSoftwareT
   )
 }
 
-// =============================================================================
-// VIEW & FILTER - Const objects with derived types
-// =============================================================================
 
 export const VIEW_MODES = {
   GRID: 'grid',
@@ -146,9 +130,6 @@ export function isFilterAll(filter: FilterValue): filter is typeof FILTER_ALL {
   return filter === FILTER_ALL
 }
 
-// =============================================================================
-// OPTIMIZATION SYSTEM - Grouped by risk tier
-// =============================================================================
 
 export const OPTIMIZATION_TIERS = {
   SAFE: 'safe',
@@ -158,7 +139,6 @@ export const OPTIMIZATION_TIERS = {
 
 export type OptimizationTier = (typeof OPTIMIZATION_TIERS)[keyof typeof OPTIMIZATION_TIERS]
 
-// Safe tier optimizations (low risk, high impact)
 const SAFE_OPTIMIZATIONS = {
   PAGEFILE: 'pagefile',
   FASTBOOT: 'fastboot',
@@ -178,7 +158,6 @@ const SAFE_OPTIMIZATIONS = {
   RAZER_BLOCK: 'razer_block',
 } as const
 
-// Caution tier optimizations (test before/after)
 const CAUTION_OPTIMIZATIONS = {
   MSI_MODE: 'msi_mode',
   HPET: 'hpet',
@@ -190,7 +169,6 @@ const CAUTION_OPTIMIZATIONS = {
   DISK_CLEANUP: 'disk_cleanup',
 } as const
 
-// Risky tier optimizations (may break features)
 const RISKY_OPTIMIZATIONS = {
   PRIVACY_TIER1: 'privacy_tier1',
   PRIVACY_TIER2: 'privacy_tier2',
@@ -228,9 +206,6 @@ export function isOptimizationKey(value: unknown): value is OptimizationKey {
   )
 }
 
-// =============================================================================
-// APP STATE - Immutable by default
-// =============================================================================
 
 export interface AppState {
   readonly software: SoftwareCatalog
@@ -240,7 +215,6 @@ export interface AppState {
   readonly currentView: ViewMode
 }
 
-// Mutable version for internal store use
 export interface MutableAppState {
   software: Record<string, SoftwarePackage>
   selectedSoftware: Set<string>
@@ -249,9 +223,6 @@ export interface MutableAppState {
   currentView: ViewMode
 }
 
-// =============================================================================
-// PRESET SYSTEM
-// =============================================================================
 
 export const PRESET_TYPES = {
   COMPETITIVE: 'competitive',
@@ -269,9 +240,6 @@ export interface Preset {
   readonly software: readonly PackageKey[]
 }
 
-// =============================================================================
-// PROFILE SAVE/LOAD
-// =============================================================================
 
 export const PROFILE_VERSION = '1.0' as const
 
@@ -283,9 +251,6 @@ export interface SavedProfile {
   readonly software: readonly string[]
 }
 
-// =============================================================================
-// SCRIPT GENERATION
-// =============================================================================
 
 export const SCRIPT_FILENAME = 'rocktune-setup.ps1' as const
 export const GUIDE_FILENAME = 'POST-SETUP-GUIDE.html' as const
@@ -297,9 +262,6 @@ export interface ScriptConfig {
   readonly packages: readonly WingetId[]
 }
 
-// =============================================================================
-// UI CONSTANTS
-// =============================================================================
 
 export const CATEGORY_ICONS = {
   launcher: '🎮',
@@ -343,9 +305,6 @@ export const CATEGORY_SVG_ICONS = {
 
 export const SIMPLE_ICONS_CDN = 'https://cdn.simpleicons.org' as const
 
-// =============================================================================
-// UTILITY TYPES
-// =============================================================================
 
 export type DeepReadonly<T> = T extends (infer U)[]
   ? readonly DeepReadonly<U>[]

@@ -1,10 +1,7 @@
-/**
- * Filters Component Styles
- * Filter bar, search, and view toggle for software grid
- */
+
 
 @layer components {
-  /* Filter bar */
+  
   .filter-bar {
     display: flex;
     flex-wrap: wrap;
@@ -53,7 +50,7 @@
     }
   }
 
-  /* Software toolbar */
+  
   .software-toolbar {
     display: flex;
     align-items: center;
@@ -135,7 +132,7 @@
     }
   }
 
-  /* Software scroll container */
+  
   .software-scroll {
     max-height: 480px;
     overflow-y: auto;

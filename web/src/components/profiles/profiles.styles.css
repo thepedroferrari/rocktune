@@ -1,10 +1,7 @@
-/**
- * Profiles Component Styles
- * Save/Load profile actions
- */
+
 
 @layer components {
-  /* Profile actions */
+  
   .profile-actions {
     display: flex;
     gap: var(--space-md);

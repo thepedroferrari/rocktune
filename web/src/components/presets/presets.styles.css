@@ -1,10 +1,7 @@
-/**
- * Presets Component Styles
- * Preset buttons, badges, and related UI
- */
+
 
 @layer components {
-  /* Preset badges */
+  
   .preset-badge {
     font-size: 0.6rem;
     font-weight: 600;
@@ -55,7 +52,7 @@
     }
   }
 
-  /* Presets container */
+  
   .presets {
     display: flex;
     gap: var(--space-sm);
@@ -155,7 +152,7 @@
     flex-shrink: 0;
   }
 
-  /* Info button */
+  
   .info-btn {
     width: 18px;
     height: 18px;
@@ -181,7 +178,7 @@
     }
   }
 
-  /* Help popover */
+  
   .help-popover {
     position: fixed;
     inset: unset;

@@ -1,10 +1,7 @@
-/**
- * Audit Component Styles
- * Audit panel and error banner
- */
+
 
 @layer components {
-  /* Audit Panel */
+  
   .audit-panel {
     position: fixed;
     right: -480px;
@@ -111,7 +108,7 @@
     background: var(--bg-tertiary);
   }
 
-  /* Error Banner */
+  
   .error-banner {
     position: fixed;
     top: 0;

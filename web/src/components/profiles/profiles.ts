@@ -11,9 +11,6 @@ import { $, $$, $id, isInputElement } from '../../utils/dom'
 import { renderSoftwareGrid } from '../cards'
 import { getHardwareProfile, getSelectedOptimizations, updateSummary } from '../summary/'
 
-// =============================================================================
-// PROFILE SAVE
-// =============================================================================
 
 export function saveProfile(): void {
   const profile = buildProfile()
@@ -43,9 +40,6 @@ function downloadProfile(profile: SavedProfile): void {
   URL.revokeObjectURL(url)
 }
 
-// =============================================================================
-// PROFILE LOAD
-// =============================================================================
 
 type LoadResult =
   | { readonly success: true; readonly profile: ValidatedProfile }
@@ -89,9 +83,6 @@ function parseProfileFile(event: ProgressEvent<FileReader>): LoadResult {
   }
 }
 
-// =============================================================================
-// PROFILE APPLICATION
-// =============================================================================
 
 function applyProfile(profile: ValidatedProfile): void {
   applyHardwareSettings(profile)
@@ -103,19 +94,16 @@ function applyProfile(profile: ValidatedProfile): void {
 function applyHardwareSettings(profile: ValidatedProfile): void {
   const { hardware } = profile
 
-  // Apply CPU
   const cpuInput = $<HTMLInputElement>(`input[name="cpu"][value="${hardware.cpu}"]`)
   if (isInputElement(cpuInput)) {
     cpuInput.checked = true
   }
 
-  // Apply GPU
   const gpuInput = $<HTMLInputElement>(`input[name="gpu"][value="${hardware.gpu}"]`)
   if (isInputElement(gpuInput)) {
     gpuInput.checked = true
   }
 
-  // Apply peripherals
   const peripheralInputs = $$<HTMLInputElement>('input[name="peripheral"]')
   for (const input of peripheralInputs) {
     const value = input.value
@@ -143,9 +131,6 @@ function showLoadSuccess(profile: ValidatedProfile): void {
   alert(`Profile loaded: ${packageCount} packages, ${optCount} optimizations`)
 }
 
-// =============================================================================
-// SETUP
-// =============================================================================
 
 export function setupProfileActions(): void {
   $id('save-profile-btn')?.addEventListener('click', saveProfile)
@@ -163,6 +148,6 @@ function handleFileSelect(event: Event): void {
   const file = target.files?.[0]
   if (file) {
     loadProfile(file)
-    target.value = '' // Reset for next load
+    target.value = ''
   }
 }

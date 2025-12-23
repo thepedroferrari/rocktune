@@ -8,16 +8,10 @@ import type {
 } from './types'
 import { FILTER_ALL, isFilterAll, VIEW_MODES } from './types'
 
-// =============================================================================
-// LISTENER TYPES
-// =============================================================================
 
 type Listener = () => void
 type Unsubscribe = () => void
 
-// =============================================================================
-// STORE CLASS - Immutable external API, mutable internal state
-// =============================================================================
 
 class Store {
   private state = {
@@ -30,9 +24,6 @@ class Store {
 
   private readonly listeners = new Set<Listener>()
 
-  // ===========================================================================
-  // GETTERS - Return immutable views of state
-  // ===========================================================================
 
   get software(): SoftwareCatalog {
     return Object.freeze({ ...this.state.software }) as SoftwareCatalog
@@ -54,9 +45,6 @@ class Store {
     return this.state.currentView
   }
 
-  // ===========================================================================
-  // PACKAGE ACCESS - With overloads for better inference
-  // ===========================================================================
 
   getPackage(key: PackageKey): Readonly<SoftwarePackage>
   getPackage(key: string): Readonly<SoftwarePackage> | undefined
@@ -69,9 +57,6 @@ class Store {
     return key in this.state.software
   }
 
-  // ===========================================================================
-  // SELECTION MANAGEMENT
-  // ===========================================================================
 
   isSelected(key: PackageKey): boolean
   isSelected(key: string): boolean {
@@ -100,13 +85,9 @@ class Store {
     this.notify()
   }
 
-  // ===========================================================================
-  // CATALOG MANAGEMENT
-  // ===========================================================================
 
   setSoftware(catalog: SoftwareCatalog): void {
     this.state.software = { ...catalog }
-    // Initialize selected from catalog defaults
     for (const [key, pkg] of Object.entries(catalog)) {
       if (pkg.selected) {
         this.state.selectedSoftware.add(key)
@@ -115,9 +96,6 @@ class Store {
     this.notify()
   }
 
-  // ===========================================================================
-  // FILTER & SEARCH
-  // ===========================================================================
 
   setFilter(filter: FilterValue): void {
     this.state.currentFilter = filter
@@ -134,9 +112,6 @@ class Store {
     this.notify()
   }
 
-  // ===========================================================================
-  // DERIVED STATE - Computed from current state
-  // ===========================================================================
 
   getFilteredSoftware(): readonly [PackageKey, Readonly<SoftwarePackage>][] {
     const { software, currentFilter, searchTerm } = this.state
@@ -173,9 +148,6 @@ class Store {
     return Object.keys(this.state.software).length
   }
 
-  // ===========================================================================
-  // SUBSCRIPTION SYSTEM
-  // ===========================================================================
 
   subscribe(listener: Listener): Unsubscribe {
     this.listeners.add(listener)
@@ -191,11 +163,7 @@ class Store {
   }
 }
 
-// =============================================================================
-// SINGLETON EXPORT
-// =============================================================================
 
 export const store = new Store()
 
-// Re-export store type for testing
 export type { Store }

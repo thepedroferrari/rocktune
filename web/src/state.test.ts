@@ -11,9 +11,6 @@ import type {
 } from './types.ts'
 import { asPackageKey, asWingetId, FILTER_ALL, isFilterAll, VIEW_MODES } from './types.ts'
 
-// =============================================================================
-// TEST STORE - Mirrors the actual store but for isolated testing
-// =============================================================================
 
 type Listener = () => void
 
@@ -159,9 +156,6 @@ class TestStore {
   }
 }
 
-// =============================================================================
-// MOCK DATA HELPERS
-// =============================================================================
 
 function createMockPackage(
   id: string,
@@ -204,9 +198,6 @@ function createMockCatalog(): SoftwareCatalog {
   } as SoftwareCatalog
 }
 
-// =============================================================================
-// TESTS
-// =============================================================================
 
 describe('Store', () => {
   let store: TestStore

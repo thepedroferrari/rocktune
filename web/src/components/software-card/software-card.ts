@@ -1,7 +1,4 @@
-/**
- * Software Card Component
- * Handles individual card creation, rendering, and interactions
- */
+
 
 import { store } from '../../state'
 import type { Category, PackageKey, SoftwarePackage } from '../../types'
@@ -9,9 +6,6 @@ import { CATEGORY_SVG_ICONS, SIMPLE_ICONS_CDN } from '../../types'
 import { sanitize } from '../../utils/dom'
 import { createRipple } from '../../utils/effects'
 
-// =============================================================================
-// CONSTANTS
-// =============================================================================
 
 const DESCRIPTION_MAX_LENGTH = 60 as const
 const MAGNETIC_FACTOR = 0.05 as const
@@ -21,9 +15,6 @@ const ARIA_LABELS = {
   unselectedAction: 'add to',
 } as const
 
-// =============================================================================
-// TYPES
-// =============================================================================
 
 interface CardConfig {
   readonly key: PackageKey
@@ -39,9 +30,6 @@ interface LogoConfig {
   readonly html: string
 }
 
-// =============================================================================
-// CARD CREATION
-// =============================================================================
 
 function buildCardConfig(
   key: PackageKey,
@@ -92,9 +80,6 @@ function setupCardAccessibility(card: HTMLDivElement, config: CardConfig): void 
   )
 }
 
-// =============================================================================
-// LOGO BUILDING
-// =============================================================================
 
 function determineLogoType(pkg: Readonly<SoftwarePackage>): LogoType {
   if (pkg.icon) {
@@ -142,9 +127,6 @@ function getCategoryIcon(category: Category): string {
   return CATEGORY_SVG_ICONS[category] ?? CATEGORY_SVG_ICONS.default
 }
 
-// =============================================================================
-// CARD HTML BUILDING
-// =============================================================================
 
 function buildCardHTML(config: CardConfig): string {
   const { pkg, isSelected } = config
@@ -179,9 +161,6 @@ function buildCardHTML(config: CardConfig): string {
   `
 }
 
-// =============================================================================
-// EVENT HANDLING
-// =============================================================================
 
 function attachCardEventListeners(card: HTMLDivElement, key: PackageKey): void {
   card.addEventListener('click', (e) => {
@@ -219,9 +198,6 @@ function attachCardEventListeners(card: HTMLDivElement, key: PackageKey): void {
   })
 }
 
-// =============================================================================
-// CARD STATE MANAGEMENT
-// =============================================================================
 
 export function toggleCardSelection(key: PackageKey, card: HTMLElement): void {
   const isNowSelected = store.toggleSoftware(key)

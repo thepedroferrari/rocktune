@@ -1,28 +1,21 @@
-/**
- * Design Tokens
- * All CSS custom properties using modern oklch() color space
- * with color-mix() for derived variants
- */
+
 
 @layer tokens {
   :root {
-    /* =========================================================================
-       COLOR SYSTEM - oklch (Lightness, Chroma, Hue)
-       Using perceptually uniform color space for better color mixing
-       ========================================================================= */
 
-    /* Shimmer Effect - Soft Magenta/Purple (matches accent) */
-    --shimmer-hue-1: 310;  /* Magenta */
-    --shimmer-hue-2: 292;  /* Purple (accent) */
-    --shimmer-hue-3: 270;  /* Violet */
-    --shimmer-l-1: 0.52;   /* Softer, not too bright */
-    --shimmer-c-1: 0.18;   /* Moderate chroma */
+
+
+    --shimmer-hue-1: 310;
+    --shimmer-hue-2: 292;
+    --shimmer-hue-3: 270;
+    --shimmer-l-1: 0.52;
+    --shimmer-c-1: 0.18;
     --shimmer-l-2: 0.48;
     --shimmer-c-2: 0.20;
     --shimmer-l-3: 0.45;
     --shimmer-c-3: 0.18;
 
-    /* Background Surfaces */
+
     --bg-primary: oklch(0.13 0.02 285);
     --bg-secondary: oklch(0.15 0.02 285);
     --bg-tertiary: oklch(0.18 0.02 285);
@@ -30,12 +23,12 @@
     --bg-card-hover: oklch(0.20 0.02 285);
     --bg-card-selected: oklch(0.22 0.04 285);
 
-    /* Text Hierarchy */
+
     --text-primary: oklch(0.96 0.01 285);
     --text-secondary: oklch(0.65 0.03 285);
     --text-hint: oklch(0.45 0.02 285);
 
-    /* Accent Color Family - Purple/Violet */
+
     --accent-hue: 292;
     --accent: oklch(0.628 0.22 var(--accent-hue));
     --accent-hover: oklch(0.72 0.18 var(--accent-hue));
@@ -43,30 +36,30 @@
     --accent-glow: color-mix(in oklch, var(--accent) 30%, transparent);
     --accent-glow-strong: color-mix(in oklch, var(--accent) 50%, transparent);
 
-    /* Status Colors - Safe (Teal/Cyan) */
+
     --safe-hue: 175;
     --safe: oklch(0.75 0.15 var(--safe-hue));
     --safe-dim: oklch(0.55 0.12 var(--safe-hue));
     --safe-bg: color-mix(in oklch, var(--safe) 8%, transparent);
 
-    /* Status Colors - Caution (Amber/Yellow) */
+
     --caution-hue: 85;
     --caution: oklch(0.82 0.18 var(--caution-hue));
     --caution-dim: oklch(0.65 0.16 var(--caution-hue));
     --caution-bg: color-mix(in oklch, var(--caution) 8%, transparent);
 
-    /* Status Colors - Risky (Pink/Red) */
+
     --risky-hue: 10;
     --risky: oklch(0.72 0.18 var(--risky-hue));
     --risky-dim: oklch(0.55 0.22 var(--risky-hue));
     --risky-bg: color-mix(in oklch, var(--risky) 8%, transparent);
 
-    /* Borders */
+
     --border: oklch(0.22 0.02 285);
     --border-light: oklch(0.28 0.02 285);
     --border-accent: oklch(0.35 0.03 285);
 
-    /* Glass Effects */
+
     --glass-bg: color-mix(in oklch, oklch(1 0 0) 2%, transparent);
     --glass-border: color-mix(in oklch, oklch(1 0 0) 6%, transparent);
     --glass-blur: 16px;
@@ -74,18 +67,16 @@
     --glass-highlight: color-mix(in oklch, oklch(1 0 0) 10%, transparent);
     --glass-shadow: color-mix(in oklch, oklch(0 0 0) 20%, transparent);
 
-    /* Glass Depth System */
+
     --glass-depth-1: 8px;
     --glass-depth-2: 16px;
     --glass-depth-3: 24px;
 
-    /* Light System for Glassmorphism */
+
     --light-angle: 135deg;
     --light-intensity: 0.15;
 
-    /* =========================================================================
-       SPACING SCALE
-       ========================================================================= */
+
     --space-xs: 0.25rem;
     --space-sm: 0.5rem;
     --space-md: 1rem;
@@ -94,27 +85,21 @@
     --space-2xl: 3rem;
     --space-3xl: 4rem;
 
-    /* =========================================================================
-       TYPOGRAPHY
-       ========================================================================= */
+
     --font-body: 'Exo 2', system-ui, -apple-system, sans-serif;
     --font-ui: 'Rajdhani', 'Exo 2', system-ui, sans-serif;
     --font-display: 'Orbitron', 'Rajdhani', system-ui, sans-serif;
     --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
-    /* =========================================================================
-       SIZING & LAYOUT
-       ========================================================================= */
-    --max-width: 960px;
+
+    --max-width: 1200px;
     --radius-sm: 6px;
     --radius: 10px;
     --radius-md: 12px;
     --radius-lg: 14px;
     --radius-xl: 20px;
 
-    /* =========================================================================
-       ANIMATION & TRANSITIONS
-       ========================================================================= */
+
     --spring-duration: 0.5s;
     --spring-easing: linear(
       0, 0.002, 0.01 0.9%, 0.038 1.8%, 0.156, 0.312 5.8%, 0.789 11.1%, 1.015 14.2%,
