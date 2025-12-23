@@ -472,17 +472,43 @@ Write-OK "Non-critical services set to manual"`)
 
   if (opts.includes(OPTIMIZATION_KEYS.DISK_CLEANUP))
     code.push(`
-# Disk Cleanup with ResetBase
-Write-Host "  Running Disk Cleanup..." -NoNewline
-# Set cleanup flags
-$cleanupKey = "HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\VolumeCaches"
-Get-ChildItem $cleanupKey -EA SilentlyContinue | ForEach-Object {
-    Set-ItemProperty -Path $_.PSPath -Name "StateFlags0100" -Value 2 -EA SilentlyContinue
-}
-Start-Process "cleanmgr.exe" -ArgumentList "/sagerun:100" -Wait -WindowStyle Hidden
-# ResetBase to remove old component store files
-Dism.exe /online /Cleanup-Image /StartComponentCleanup /ResetBase 2>&1 | Out-Null
-Write-OK "Disk cleaned"`)
+# Disk Cleanup (only if system drive is 90%+ full)
+$sysDrive = (Get-CimInstance Win32_OperatingSystem).SystemDrive
+$disk = Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='$sysDrive'"
+$usedPercent = [math]::Round((($disk.Size - $disk.FreeSpace) / $disk.Size) * 100, 1)
+
+if ($usedPercent -ge 90) {
+    Write-Host "  System drive $usedPercent% full - running cleanup..." -NoNewline
+    $cleanupKey = "HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\VolumeCaches"
+    Get-ChildItem $cleanupKey -EA SilentlyContinue | ForEach-Object {
+        Set-ItemProperty -Path $_.PSPath -Name "StateFlags0100" -Value 2 -EA SilentlyContinue
+    }
+    Start-Process "cleanmgr.exe" -ArgumentList "/sagerun:100" -Wait -WindowStyle Hidden
+    Write-OK "Disk Cleanup done"
+
+    Write-Host "  Starting DISM ResetBase in background..." -NoNewline
+    $dismJob = Start-Job -ScriptBlock {
+        Dism.exe /online /Cleanup-Image /StartComponentCleanup /ResetBase 2>&1 | Out-Null
+    }
+    Register-ObjectEvent -InputObject $dismJob -EventName StateChanged -Action {
+        if ($Sender.State -eq 'Completed') {
+            [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null
+            $template = [Windows.UI.Notifications.ToastNotificationManager]::GetTemplateContent([Windows.UI.Notifications.ToastTemplateType]::ToastText02)
+            $text = $template.GetElementsByTagName("text")
+            $text.Item(0).AppendChild($template.CreateTextNode("Rocktune")) | Out-Null
+            $text.Item(1).AppendChild($template.CreateTextNode("DISM ResetBase complete! Disk space reclaimed.")) | Out-Null
+            $notifier = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("Rocktune")
+            $notifier.Show([Windows.UI.Notifications.ToastNotification]::new($template))
+            Unregister-Event -SourceIdentifier $Event.SourceIdentifier
+            Remove-Job $Sender
+        }
+    } | Out-Null
+    Write-OK "DISM running in background (toast on completion)"
+} else {
+    Write-Host "  System drive $usedPercent% full - " -NoNewline
+    Write-Host "SKIP" -ForegroundColor Yellow -NoNewline
+    Write-Host " (cleanup only runs at 90%+)"
+}`)
 
   if (opts.includes(OPTIMIZATION_KEYS.IPV4_PREFER))
     code.push(`

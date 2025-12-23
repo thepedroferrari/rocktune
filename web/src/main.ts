@@ -12,6 +12,7 @@ import { store } from './state'
 import { CATEGORY_SVG_ICONS } from './types'
 import { $id, onReady } from './utils/dom'
 import { setupCursorGlow, setupImageFallbacks, setupScrollAnimations } from './utils/effects'
+import { setupRichTooltips } from './utils/tooltips'
 
 interface LoadState {
   error: string | null
@@ -108,6 +109,7 @@ function setupVisualEffects(): void {
   setupScrollAnimations()
   setupImageFallbacks(CATEGORY_SVG_ICONS)
   setupHeroCube()
+  setupRichTooltips()
 }
 
 function setupUI(): void {

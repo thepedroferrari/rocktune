@@ -160,7 +160,7 @@ const _OPT_DISPLAY_NAMES = {
   fso_disable: 'FSO Off',
   ultimate_perf: 'Ultimate',
   services_trim: 'Services',
-  disk_cleanup: 'Disk Clean',
+  disk_cleanup: 'Disk Clean (if 90%+ full)',
   privacy_tier1: 'Privacy T1',
   privacy_tier2: 'Privacy T2',
   privacy_tier3: 'Privacy T3',

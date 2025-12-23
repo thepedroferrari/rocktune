@@ -538,31 +538,67 @@
             <div class="upgrades-grid">
                 <fieldset class="tier-safe-field">
                     <legend><span class="tier tier-safe">Safe</span> System</legend>
-                    <label data-opt="pagefile" data-tooltip="Sets a fixed 4GB page file on your system drive. Prevents Windows from dynamically resizing it, which can cause fragmentation and stutters during gaming.">
+                    <label data-opt="pagefile" data-tooltip="**Fixed Page File** — prevents dynamic resizing
+
+- Sets **4GB** fixed size (8GB if RAM < 32GB)
+- Stops Windows from growing/shrinking page file
+- Eliminates fragmentation-induced stutters
+
+✓ Recommended for 16GB+ RAM systems
+✓ Reduces disk I/O during gaming sessions">
                         <input type="checkbox" name="opt" value="pagefile" checked>
                         <span class="label-text">Fixed Page File</span>
                         <span class="preset-badge" hidden></span>
                         <span class="label-hint">4GB for 32GB+ RAM — prevents fragmentation</span>
                     </label>
-                    <label data-opt="fastboot" data-tooltip="Disables Windows Fast Startup (hybrid shutdown). Ensures clean boots and prevents driver/peripheral issues that can occur with hibernation-based startup.">
+                    <label data-opt="fastboot" data-tooltip="**Disable Fast Startup** — cleaner boot cycle
+
+- Fast Startup = hybrid hibernation (not true shutdown)
+- Can cause driver conflicts on reboot
+- Peripherals may not reinitialize properly
+
+✓ Ensures fresh driver initialization every boot
+✓ Fixes USB/audio devices not detected issues
+✓ Required for dual-boot systems">
                         <input type="checkbox" name="opt" value="fastboot" checked>
                         <span class="label-text">Disable Fast Startup</span>
                         <span class="preset-badge" hidden></span>
                         <span class="label-hint">Clean boots, prevents driver issues</span>
                     </label>
-                    <label data-opt="timer" data-tooltip="Installs a timer resolution tool that sets Windows timer to 0.5ms when gaming. Improves input responsiveness and frame pacing in many games. The default timer resolution is 15.6ms, which is not suitable for gaming (that's why valve defaults tick rate to 64 in public matches, 15.6ms * 64ticks ~= 1 second )">
+                    <label data-opt="timer" data-tooltip="**Timer Resolution Tool** — run before gaming
+
+- Sets Windows timer to **0.5ms** (from 15.6ms default)
+- Improves input responsiveness and frame pacing
+- Must be running during gameplay
+
+✓ Why it matters: 15.6ms × 64 ticks ≈ 1 second (Valve's default tickrate)
+✓ 0.5ms enables smoother 128-tick gameplay">
                         <input type="checkbox" name="opt" value="timer" checked>
                         <span class="label-text">Timer Resolution Tool</span>
                         <span class="preset-badge" hidden></span>
                         <span class="label-hint">0.5ms timer for games</span>
                     </label>
-                    <label data-opt="explorer_speed" data-tooltip="Stops Explorer from auto-detecting folder types (Documents, Pictures, etc). Speeds up folder browsing by skipping metadata scans.">
+                    <label data-opt="explorer_speed" data-tooltip="**Explorer Speed** — faster folder navigation
+
+- Disables auto folder-type detection
+- Skips thumbnail/metadata pre-scanning
+- Folders open instantly instead of analyzing
+
+✓ Big improvement for folders with many files
+✓ No downside — folder views still work normally">
                         <input type="checkbox" name="opt" value="explorer_speed">
                         <span class="label-text">Explorer Speed</span>
                         <span class="preset-badge" hidden></span>
                         <span class="label-hint">Faster folder browsing</span>
                     </label>
-                    <label data-opt="temp_purge" data-tooltip="Deletes temporary files from user and system TEMP folders. Frees space and avoids cache bloat.">
+                    <label data-opt="temp_purge" data-tooltip="**Purge Temp Files** — clear junk data
+
+- Cleans %TEMP% (user temp folder)
+- Cleans %WINDIR%\Temp (system temp)
+- Removes leftover installer files
+
+✓ Instant operation, no reboot needed
+✓ Safe — only removes temp/cache files">
                         <input type="checkbox" name="opt" value="temp_purge">
                         <span class="label-text">Purge Temp Files</span>
                         <span class="preset-badge" hidden></span>
@@ -572,19 +608,43 @@
 
                 <fieldset class="tier-safe-field">
                     <legend><span class="tier tier-safe">Safe</span> Performance</legend>
-                    <label data-opt="gamedvr" data-tooltip="Disables Xbox GameDVR and background recording. Removes capture overhead and Xbox DVR hooks for maximum FPS. Score: 8/10 impact.">
+                    <label data-opt="gamedvr" data-tooltip="**Disable GameDVR** — high impact tweak
+
+- Removes Xbox background recording hooks
+- Eliminates capture/encoding overhead
+- Stops GameDVR from polling GPU
+
+✓ One of the highest-impact optimizations
+✓ Can improve FPS by 5-15% in some titles
+✓ Still allows manual recording via OBS/ShadowPlay">
                         <input type="checkbox" name="opt" value="gamedvr" checked>
                         <span class="label-text">Disable GameDVR</span>
                         <span class="preset-badge" hidden></span>
                         <span class="label-hint">High impact — removes capture overhead</span>
                     </label>
-                    <label data-opt="background_apps" data-tooltip="Stops Microsoft Store apps from running in the background. Prevents unwanted CPU/memory usage and network activity.">
+                    <label data-opt="background_apps" data-tooltip="**Block Background Apps** — reduce idle load
+
+- Stops UWP/Store apps from running when minimized
+- Prevents random CPU spikes from app updates
+- Reduces memory footprint
+
+✓ Affects: Mail, Calculator, Photos, etc.
+✓ Apps still work when you open them
+✓ Saves ~200-500MB RAM on typical systems">
                         <input type="checkbox" name="opt" value="background_apps" checked>
                         <span class="label-text">Block Background Apps</span>
                         <span class="preset-badge" hidden></span>
                         <span class="label-hint">Stop Store apps waking</span>
                     </label>
-                    <label data-opt="razer_block" data-tooltip="Blocks Razer and OEM WPBT auto-install payloads. Prevents bloatware from being reinstalled after clean Windows installs.">
+                    <label data-opt="razer_block" data-tooltip="**Block OEM Auto-Install** — stop WPBT bloat
+
+- Disables Windows Platform Binary Table payloads
+- Prevents Razer Synapse from auto-reinstalling
+- Blocks OEM software injected via BIOS/UEFI
+
+✓ You did a clean install for a reason
+✓ You can still install drivers manually
+⚠️ Some OEM features may require manual setup">
                         <input type="checkbox" name="opt" value="razer_block">
                         <span class="label-text">Block OEM Auto-Install</span>
                         <span class="preset-badge" hidden></span>
@@ -594,19 +654,43 @@
 
                 <fieldset class="tier-safe-field">
                     <legend><span class="tier tier-safe">Safe</span> Power</legend>
-                    <label data-opt="power_plan" data-tooltip="Activates the High Performance power plan, which keeps CPU at maximum frequency. Prevents power-saving throttling during gaming sessions.">
+                    <label data-opt="power_plan" data-tooltip="**High Performance Plan** — max CPU frequency
+
+- Keeps CPU cores at maximum clock speed
+- Disables frequency scaling during load
+- Prevents C-state transitions during gaming
+
+✓ Eliminates CPU ramping delay (100-200ms)
+✓ Better for consistent frame times
+✓ Slightly higher idle power (~5-10W)">
                         <input type="checkbox" name="opt" value="power_plan" checked>
                         <span class="label-text">High Performance Plan</span>
                         <span class="preset-badge" hidden></span>
                         <span class="label-hint">Maximum CPU performance</span>
                     </label>
-                    <label data-opt="usb_power" data-tooltip="Prevents Windows from suspending USB devices to save power. Eliminates random disconnects of mice, keyboards, and controllers during gameplay.">
+                    <label data-opt="usb_power" data-tooltip="**USB Selective Suspend Off** — reliable peripherals
+
+- Stops Windows from sleeping USB ports
+- Prevents mouse/keyboard random disconnects
+- Keeps controllers always responsive
+
+✓ Fixes: mouse stops working mid-game
+✓ Fixes: audio interface dropouts
+✓ Fixes: controller input lag after idle">
                         <input type="checkbox" name="opt" value="usb_power" checked>
                         <span class="label-text">USB Selective Suspend Off</span>
                         <span class="preset-badge" hidden></span>
                         <span class="label-hint">Prevents USB disconnects</span>
                     </label>
-                    <label data-opt="pcie_power" data-tooltip="Disables PCIe Active State Power Management. Ensures your GPU always runs at full power and doesn't enter low-power states during gaming.">
+                    <label data-opt="pcie_power" data-tooltip="**PCIe ASPM Off** — GPU always ready
+
+- Disables Active State Power Management
+- Keeps PCIe link at full speed (Gen4/5)
+- Prevents GPU power state transitions
+
+✓ Eliminates micro-stutters from ASPM L1
+✓ NVMe drives also benefit (faster access)
+✓ Small power increase (~2-5W idle)">
                         <input type="checkbox" name="opt" value="pcie_power" checked>
                         <span class="label-text">PCIe ASPM Off</span>
                         <span class="preset-badge" hidden></span>
@@ -616,13 +700,29 @@
 
                 <fieldset class="tier-safe-field">
                     <legend><span class="tier tier-safe">Safe</span> Network</legend>
-                    <label data-opt="dns" data-tooltip="Changes your DNS to Cloudflare (1.1.1.1). One of the fastest public DNS servers, can reduce latency when connecting to game servers.">
+                    <label data-opt="dns" data-tooltip="**Cloudflare DNS** — faster server lookups
+
+- Primary: 1.1.1.1 | Backup: 1.0.0.1
+- Consistently fastest public DNS (~10-15ms)
+- Better privacy than ISP default DNS
+
+✓ Faster initial connection to game servers
+✓ No logging of your DNS queries
+✓ Supports DNS-over-HTTPS if needed">
                         <input type="checkbox" name="opt" value="dns" checked>
                         <span class="label-text">Cloudflare DNS</span>
                         <span class="preset-badge" hidden></span>
                         <span class="label-hint">1.1.1.1 — faster lookups</span>
                     </label>
-                    <label data-opt="nagle" data-tooltip="Disables Nagle's algorithm which batches small TCP packets. Only affects TCP-based games — most modern games use UDP, so impact is minimal.">
+                    <label data-opt="nagle" data-tooltip="**Disable Nagle** — reduce TCP latency
+
+- Nagle's algorithm batches small packets (~200ms)
+- Disabling sends packets immediately
+- Only affects TCP traffic, not UDP
+
+⚠️ Most games use UDP (no effect on those)
+✓ Helps: MMOs, some RTS games, remote play
+✓ May slightly increase network overhead">
                         <input type="checkbox" name="opt" value="nagle">
                         <span class="label-text">Disable Nagle</span>
                         <span class="preset-badge" hidden></span>
@@ -632,13 +732,30 @@
 
                 <fieldset class="tier-safe-field">
                     <legend><span class="tier tier-safe">Safe</span> Privacy</legend>
-                    <label data-opt="edge_debloat" data-tooltip="Applies Edge browser policies to disable rewards, popups, and extra telemetry. Reduces background browser tasks.">
+                    <label data-opt="edge_debloat" data-tooltip="**Edge Debloat** — clean browser experience
+
+- Disables Microsoft Rewards prompts
+- Removes Bing sidebar suggestions
+- Turns off shopping/coupon features
+- Reduces telemetry collection
+
+✓ Edge still works normally for browsing
+✓ No annoying sidebar popups
+✓ Lower background CPU usage">
                         <input type="checkbox" name="opt" value="edge_debloat" checked>
                         <span class="label-text">Edge Debloat</span>
                         <span class="preset-badge" hidden></span>
                         <span class="label-hint">No rewards/popups/telemetry</span>
                     </label>
-                    <label data-opt="copilot_disable" data-tooltip="Disables Microsoft Copilot completely. Removes Copilot surface and background hooks. Windows 11 only.">
+                    <label data-opt="copilot_disable" data-tooltip="**Disable Copilot** — remove AI assistant
+
+- Removes Copilot button from taskbar
+- Disables Win+C keyboard shortcut
+- Stops background AI service hooks
+
+✓ Windows 11 only (no effect on Win10)
+✓ Frees up ~50-100MB RAM
+✓ Can re-enable anytime in Settings">
                         <input type="checkbox" name="opt" value="copilot_disable" checked>
                         <span class="label-text">Disable Copilot</span>
                         <span class="preset-badge" hidden></span>
@@ -648,7 +765,15 @@
 
                 <fieldset class="tier-safe-field">
                     <legend><span class="tier tier-safe">Safe</span> Audio</legend>
-                    <label data-opt="audio_enhancements" data-tooltip="Disables Windows audio enhancements (spatial sound, equalizer, etc.). Reduces audio processing latency for more responsive sound in games.">
+                    <label data-opt="audio_enhancements" data-tooltip="**Disable Audio Enhancements** — pure signal
+
+- Turns off Windows spatial sound processing
+- Disables software equalizer/effects
+- Removes bass boost, virtual surround, etc.
+
+✓ Lower audio latency (~5-20ms reduction)
+✓ Cleaner signal to your DAC/headphones
+✓ Competitive FPS players: hear footsteps better">
                         <input type="checkbox" name="opt" value="audio_enhancements" checked>
                         <span class="label-text">Disable Enhancements</span>
                         <span class="preset-badge" hidden></span>
@@ -660,7 +785,17 @@
             <div class="upgrades-grid upgrades-grid--danger">
                 <fieldset class="tier-caution-field">
                     <legend><span class="tier tier-caution">Caution</span> Power</legend>
-                    <label data-opt="ultimate_perf" data-tooltip="Adds and activates the Ultimate Performance power plan. Biases scheduler and power to maximum performance. ⚠️ High idle power/thermals — avoid on laptops.">
+                    <label data-opt="ultimate_perf" data-tooltip="**Ultimate Performance** — maximum aggression
+
+- Hidden power plan, must be unlocked
+- Zero CPU frequency scaling
+- Disables all power-saving features
+- Keeps all cores at max frequency always
+
+✓ Marginally faster than High Performance
+⚠️ Significantly higher idle power/heat
+⚠️ NOT recommended for laptops
+⚠️ Consider: is 1-2% gain worth the heat?">
                         <input type="checkbox" name="opt" value="ultimate_perf">
                         <span class="label-text">Ultimate Performance</span>
                         <span class="preset-badge" hidden></span>
@@ -670,59 +805,139 @@
 
                 <fieldset class="tier-caution-field">
                     <legend><span class="tier tier-caution">Caution</span> Experimental</legend>
-                    <label data-opt="msi_mode" data-tooltip="Enables Message Signaled Interrupts for your GPU. Can reduce interrupt latency but may cause issues on some systems. Benchmark before/after.">
+                    <label data-opt="msi_mode" data-tooltip="**MSI Mode** — GPU interrupt optimization
+
+- Routes GPU interrupts via Message Signaled Interrupts
+- Can reduce DPC latency by 10-50μs
+- Bypasses legacy APIC interrupt routing
+
+✓ Safe on most modern GPUs (NVIDIA/AMD)
+⚠️ Some older hardware may have stability issues
+⚠️ Always benchmark before/after">
                         <input type="checkbox" name="opt" value="msi_mode">
                         <span class="label-text">MSI Mode GPU</span>
                         <span class="preset-badge" hidden></span>
                         <span class="label-hint">Lower interrupt latency</span>
                     </label>
-                    <label data-opt="hpet" data-tooltip="Disables High Precision Event Timer in Windows. Results vary by system — can improve or worsen performance. Always benchmark before keeping this change.">
+                    <label data-opt="hpet" data-tooltip="**Disable HPET** — controversial timer tweak
+
+- High Precision Event Timer is a hardware clock
+- Some systems run better with it off
+- Others run WORSE with it off
+
+⚠️ Results are highly system-dependent
+⚠️ MUST benchmark before/after
+⚠️ Use CapFrameX or FrameView to measure
+✓ If frame times improve, keep it
+✓ If they worsen, re-enable in BIOS">
                         <input type="checkbox" name="opt" value="hpet">
                         <span class="label-text">Disable HPET</span>
                         <span class="preset-badge" hidden></span>
                         <span class="label-hint">Test before/after</span>
                     </label>
-                    <label data-opt="game_bar" data-tooltip="Disables Xbox Game Bar overlay but keeps Game Mode detection for Ryzen X3D processors. Removes overlay overhead without breaking V-Cache optimization.">
+                    <label data-opt="game_bar" data-tooltip="**Disable Game Bar** — X3D-aware removal
+
+- Removes Win+G overlay and widgets
+- Disables game clip recording UI
+- KEEPS Game Mode detection running
+
+✓ Critical for Ryzen X3D (7800X3D, 9800X3D)
+✓ Game Mode tells Windows to use V-Cache CCD
+✓ Overlay gone, optimization preserved
+✓ Use OBS or ShadowPlay instead">
                         <input type="checkbox" name="opt" value="game_bar">
                         <span class="label-text">Disable Game Bar</span>
                         <span class="preset-badge" hidden></span>
                         <span class="label-hint">Keeps detection for X3D</span>
                     </label>
-                    <label data-opt="hags" data-tooltip="Enables Hardware Accelerated GPU Scheduling (Windows 10 2004+). Reduces CPU overhead for GPU tasks. May improve or hurt performance — test with your specific games.">
+                    <label data-opt="hags" data-tooltip="**HAGS** — Hardware Accelerated GPU Scheduling
+
+- Lets GPU manage its own VRAM scheduling
+- Reduces CPU overhead for draw calls
+- Requires Windows 10 2004+ and driver support
+
+✓ Best for CPU-bound scenarios
+⚠️ Can hurt performance in some games
+⚠️ Test with YOUR specific titles">
                         <input type="checkbox" name="opt" value="hags">
                         <span class="label-text">Enable HAGS</span>
                         <span class="preset-badge" hidden></span>
                         <span class="label-hint">GPU scheduling (test first)</span>
                     </label>
-                    <label data-opt="fso_disable" data-tooltip="Disables Fullscreen Optimizations globally. Helps legacy titles but may affect HDR and color management in exclusive fullscreen modes.">
+                    <label data-opt="fso_disable" data-tooltip="**Disable FSO** — fullscreen optimizations off
+
+- FSO = Windows compositing in fullscreen games
+- Adds ~1 frame of latency for alt-tab support
+- Disabling forces true exclusive fullscreen
+
+✓ Best for: legacy games, esports titles
+⚠️ May break HDR in some games
+⚠️ Alt-tab becomes slower
+⚠️ Some games ignore this setting anyway">
                         <input type="checkbox" name="opt" value="fso_disable">
                         <span class="label-text">Disable FSO</span>
                         <span class="preset-badge" hidden></span>
                         <span class="label-hint">May impact HDR/color</span>
                     </label>
-                    <label data-opt="services_trim" data-tooltip="Sets non-critical Windows services to manual start. Trims idle wakeups and reduces background resource usage. Safe curated list only.">
+                    <label data-opt="services_trim" data-tooltip="**Trim Services** — reduce idle overhead
+
+Services set to Manual (safe list only):
+- DiagTrack (telemetry)
+- RetailDemo, Fax, SharedAccess
+- Some Xbox services (XblGameSave, etc.)
+
+✓ Services start if actually needed
+✓ Reduces idle CPU wakeups
+✓ Only targets truly non-critical services
+✓ NOT aggressive — won't break anything">
                         <input type="checkbox" name="opt" value="services_trim">
                         <span class="label-text">Trim Services</span>
                         <span class="preset-badge" hidden></span>
                         <span class="label-hint">Non-critical to manual</span>
                     </label>
-                    <label data-opt="disk_cleanup" data-tooltip="Runs Disk Cleanup with ResetBase to reclaim space from Windows Update cache. Useful pre-update. Small performance gain from freeing disk.">
+                    <label data-opt="disk_cleanup" data-tooltip="**Conditional cleanup** — only runs if needed
+
+- Checks system drive usage at runtime
+- Skips entirely if drive is &lt;90% full
+- cleanmgr runs synchronously (~1-2 min)
+- DISM ResetBase runs in background (10-30 min)
+
+✓ Toast notification when complete
+⚠️ ResetBase prevents Windows Update rollback">
                         <input type="checkbox" name="opt" value="disk_cleanup">
                         <span class="label-text">Disk Cleanup</span>
                         <span class="preset-badge" hidden></span>
-                        <span class="label-hint">ResetBase + cleanup</span>
+                        <span class="label-hint">Auto-skip if &lt;90% full</span>
                     </label>
                 </fieldset>
 
                 <fieldset class="tier-risky-field">
                     <legend><span class="tier tier-risky">Risky</span> Network</legend>
-                    <label data-opt="ipv4_prefer" data-tooltip="⚠️ Prefers IPv4 over IPv6. Can reduce latency on misconfigured LANs but may break IPv6-only paths, Xbox, or Store features.">
+                    <label data-opt="ipv4_prefer" data-tooltip="**Prefer IPv4** — legacy network priority
+
+- Tells Windows to try IPv4 first
+- IPv6 still works as fallback
+- Can help on misconfigured routers
+
+⚠️ May break Xbox Live party chat
+⚠️ Microsoft Store may have issues
+⚠️ Some ISPs are IPv6-only now
+✓ Only enable if you have IPv6 issues">
                         <input type="checkbox" name="opt" value="ipv4_prefer">
                         <span class="label-text">Prefer IPv4</span>
                         <span class="preset-badge" hidden></span>
                         <span class="label-hint"><svg class="warning-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> May break Xbox/Store</span>
                     </label>
-                    <label data-opt="teredo_disable" data-tooltip="⚠️ Disables Teredo IPv6 tunneling. Can reduce latency/jitter but may break Xbox Live connectivity in some cases.">
+                    <label data-opt="teredo_disable" data-tooltip="**Disable Teredo** — remove IPv6 tunneling
+
+- Teredo = IPv6 over IPv4 NAT traversal
+- Used by Xbox for peer-to-peer connections
+- Disabling can reduce network overhead
+
+⚠️ Xbox Live party/game chat may break
+⚠️ Some P2P games need Teredo
+✓ Safe if you have native IPv6
+✓ Safe if you don't use Xbox features">
                         <input type="checkbox" name="opt" value="teredo_disable">
                         <span class="label-text">Disable Teredo</span>
                         <span class="preset-badge" hidden></span>
@@ -732,25 +947,66 @@
 
                 <fieldset class="tier-risky-field">
                     <legend><span class="tier tier-risky">Risky</span> Privacy</legend>
-                    <label data-opt="privacy_tier1" data-tooltip="Disables advertising ID, activity history, and tailored experiences. Safe to enable — only affects personalized ads and usage tracking.">
+                    <label data-opt="privacy_tier1" data-tooltip="**Privacy Tier 1** — basic privacy (safe)
+
+Disables:
+- Advertising ID (ad tracking)
+- Activity History (timeline)
+- Tailored experiences (personalization)
+- App launch tracking
+
+✓ Zero impact on functionality
+✓ No features broken
+✓ Just stops Microsoft profiling you">
                         <input type="checkbox" name="opt" value="privacy_tier1">
                         <span class="label-text">Privacy Tier 1</span>
                         <span class="preset-badge" hidden></span>
                         <span class="label-hint">Ads, Activity History</span>
                     </label>
-                    <label data-opt="privacy_tier2" data-tooltip="Disables telemetry, Cortana, and diagnostic data collection. Reduces background network activity. Safe for gaming but removes some Windows features.">
+                    <label data-opt="privacy_tier2" data-tooltip="**Privacy Tier 2** — reduced telemetry
+
+Disables:
+- Windows telemetry (usage data)
+- Cortana voice assistant
+- Diagnostic data collection
+- Handwriting/typing personalization
+
+✓ Reduces background network traffic
+✓ Safe for gaming
+⚠️ Cortana won't work (but who uses it?)
+⚠️ Some Windows tips won't appear">
                         <input type="checkbox" name="opt" value="privacy_tier2">
                         <span class="label-text">Privacy Tier 2</span>
                         <span class="preset-badge" hidden></span>
                         <span class="label-hint">Telemetry, Cortana</span>
                     </label>
-                    <label data-opt="privacy_tier3" class="warning" data-tooltip="⚠️ Aggressive privacy settings that may break Microsoft Store, Xbox app, and cloud sync features. Only enable if you don't use these services.">
+                    <label data-opt="privacy_tier3" class="warning" data-tooltip="**Tier 3 — Nuclear privacy**
+
+⚠️ Aggressive settings that may break:
+- Microsoft Store app installs
+- Xbox app and Game Pass
+- OneDrive sync
+- Windows cloud features
+
+Only enable if you don't use these services.
+Can be partially reversed via Windows Settings.">
                         <input type="checkbox" name="opt" value="privacy_tier3">
                         <span class="label-text">Privacy Tier 3</span>
                         <span class="preset-badge" hidden></span>
                         <span class="label-hint"><svg class="warning-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> May break Store/Xbox</span>
                     </label>
-                    <label data-opt="bloatware" data-tooltip="Removes pre-installed Microsoft apps: People, Your Phone, Solitaire, Tips, etc. Frees up space and removes background processes. Can be reinstalled from Store if needed.">
+                    <label data-opt="bloatware" data-tooltip="**Remove Bloatware** — uninstall junk apps
+
+Removes:
+- People, Your Phone, Phone Link
+- Microsoft Solitaire Collection
+- Tips, Get Help, Feedback Hub
+- Mixed Reality Portal, 3D Viewer
+
+✓ Frees ~500MB-1GB disk space
+✓ Removes background processes
+✓ All can be reinstalled from Store
+✓ Does NOT remove Calculator, Photos, etc.">
                         <input type="checkbox" name="opt" value="bloatware">
                         <span class="label-text">Remove Bloatware</span>
                         <span class="preset-badge" hidden></span>

@@ -2031,3 +2031,95 @@
        }
      }
    }
+
+   @layer components {
+     body:has(#rich-tooltip) [data-tooltip]::after {
+       display: none !important;
+     }
+
+     #rich-tooltip {
+       position: absolute;
+       z-index: 9999;
+       max-width: 320px;
+       padding: var(--space-sm) var(--space-md);
+       background: color-mix(in oklch, oklch(0.1 0.02 285) 97%, transparent);
+       backdrop-filter: blur(16px) saturate(1.4);
+       -webkit-backdrop-filter: blur(16px) saturate(1.4);
+       border: 1px solid color-mix(in oklch, var(--control-accent) 30%, transparent);
+       border-radius: var(--radius);
+       font-size: 0.8rem;
+       font-weight: 400;
+       line-height: 1.55;
+       color: var(--text-secondary);
+       box-shadow:
+         0 12px 40px color-mix(in oklch, oklch(0 0 0) 60%, transparent),
+         0 0 1px color-mix(in oklch, oklch(1 0 0) 10%, transparent),
+         inset 0 1px 0 color-mix(in oklch, oklch(1 0 0) 5%, transparent);
+       opacity: 0;
+       visibility: hidden;
+       transform: translateY(-6px);
+       transition:
+         opacity 0.2s var(--ease-out-expo),
+         transform 0.25s var(--ease-out-expo),
+         visibility 0.2s;
+       pointer-events: none;
+
+       &.tt-visible {
+         opacity: 1;
+         visibility: visible;
+         transform: translateY(0);
+       }
+
+       &.tt-above {
+         transform: translateY(6px);
+
+         &.tt-visible {
+           transform: translateY(0);
+         }
+       }
+
+       /* Rich content styles */
+       &.tt-rich {
+         p {
+           margin: 0 0 0.5em;
+
+           &:last-child {
+             margin-bottom: 0;
+           }
+         }
+
+         ul {
+           margin: 0.5em 0;
+           padding-left: 1.2em;
+           list-style: none;
+
+           li {
+             position: relative;
+             margin: 0.3em 0;
+
+             &::before {
+               content: '›';
+               position: absolute;
+               left: -1em;
+               color: var(--control-accent);
+               font-weight: 600;
+             }
+           }
+         }
+
+         strong {
+           color: var(--text-primary);
+           font-weight: 600;
+         }
+
+         .tt-warn {
+           color: var(--caution);
+           padding-left: 0.2em;
+         }
+
+         .tt-ok {
+           color: var(--safe);
+         }
+       }
+     }
+   }
