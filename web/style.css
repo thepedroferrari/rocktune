@@ -292,39 +292,56 @@
      .step-progress {
        display: flex;
        justify-content: center;
-       gap: var(--space-sm);
+       gap: var(--space-xs);
        margin: var(--space-lg) 0;
        position: sticky;
        top: var(--space-md);
        z-index: 100;
-       padding: var(--space-sm);
-       background: color-mix(in oklch, var(--bg-primary) 90%, transparent);
-       backdrop-filter: blur(8px);
+       padding: var(--space-xs);
+       background: color-mix(in oklch, var(--bg-primary) 92%, transparent);
+       backdrop-filter: blur(12px);
        border-radius: 100px;
        width: fit-content;
        margin-inline: auto;
+       border: 1px solid var(--border);
+       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+
+       @media (max-width: 600px) {
+         max-width: calc(100vw - var(--space-md) * 2);
+         overflow-x: auto;
+         overflow-y: hidden;
+         scrollbar-width: none;
+         -ms-overflow-style: none;
+         justify-content: flex-start;
+
+         &::-webkit-scrollbar {
+           display: none;
+         }
+       }
      }
 
      .step-dot {
-       width: 2rem;
-       height: 2rem;
        display: flex;
        align-items: center;
        justify-content: center;
-       border-radius: 50%;
+       padding: var(--space-xs) var(--space-sm);
+       border-radius: 100px;
        font-family: var(--font-display);
-       font-size: 0.75rem;
-       font-weight: 700;
+       font-size: 0.7rem;
+       font-weight: 600;
        text-decoration: none;
+       text-transform: uppercase;
+       letter-spacing: 0.03em;
        color: var(--text-hint);
-       background: var(--bg-tertiary);
-       border: 1px solid var(--border);
+       background: transparent;
+       border: 1px solid transparent;
        transition: all 0.2s var(--ease-out-expo);
+       white-space: nowrap;
+       flex-shrink: 0;
 
        &:hover {
          color: var(--text-primary);
-         border-color: var(--accent);
-         transform: scale(1.1);
+         background: color-mix(in oklch, var(--accent) 10%, transparent);
        }
 
        &[aria-current="step"] {
@@ -333,6 +350,15 @@
          color: white;
          box-shadow: 0 0 12px var(--accent-glow);
        }
+
+       @media (max-width: 600px) {
+         font-size: 0.65rem;
+         padding: var(--space-xs) calc(var(--space-sm) * 0.8);
+       }
+     }
+
+     .step-label {
+       display: block;
      }
 
     .quick-start-callout {

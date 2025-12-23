@@ -25,10 +25,10 @@ export function setupCursorGlow(): void {
 }
 
 export function setupScrollAnimations(): void {
-  const sections = document.querySelectorAll('.step')
-  if (!sections.length) return
+  const stepSections = document.querySelectorAll('.step')
+  if (!stepSections.length) return
 
-  sections.forEach((section, idx) => {
+  stepSections.forEach((section, idx) => {
     ;(section as HTMLElement).style.setProperty('--stagger', String(idx))
   })
 
@@ -44,33 +44,87 @@ export function setupScrollAnimations(): void {
     { threshold: 0.1, rootMargin: '-30px' },
   )
 
-  for (const section of sections) {
+  for (const section of stepSections) {
     revealObserver.observe(section)
   }
 
+  setupProgressNav()
+}
+
+function setupProgressNav(): void {
   const dots = document.querySelectorAll<HTMLAnchorElement>('.step-dot')
   if (!dots.length) return
 
+  const quickStart = document.getElementById('quick-start')
+  const stepSections = document.querySelectorAll<HTMLElement>('.step')
+  const allSections = quickStart ? [quickStart, ...stepSections] : [...stepSections]
+
+  if (!allSections.length) return
+
+  let currentSection: string | null = null
+
+  function updateActiveNav(sectionId: string): void {
+    if (currentSection === sectionId) return
+    currentSection = sectionId
+
+    dots.forEach((dot) => {
+      dot.removeAttribute('aria-current')
+      if (dot.getAttribute('href') === `#${sectionId}`) {
+        dot.setAttribute('aria-current', 'step')
+      }
+    })
+  }
+
   const progressObserver = new IntersectionObserver(
     (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          const id = entry.target.id
-          dots.forEach((dot) => {
-            dot.removeAttribute('aria-current')
-            if (dot.getAttribute('href') === `#${id}`) {
-              dot.setAttribute('aria-current', 'step')
-            }
-          })
-        }
-      })
+      const visible = entries
+        .filter((e) => e.isIntersecting)
+        .sort((a, b) => {
+          const aTop = a.boundingClientRect.top
+          const bTop = b.boundingClientRect.top
+          return Math.abs(aTop) - Math.abs(bTop)
+        })
+
+      if (visible.length > 0) {
+        updateActiveNav(visible[0].target.id)
+      }
     },
-    { threshold: 0.3, rootMargin: '-20% 0px -60% 0px' },
+    { threshold: [0, 0.1, 0.25, 0.5], rootMargin: '-45% 0px -45% 0px' },
   )
 
-  for (const section of sections) {
+  for (const section of allSections) {
     progressObserver.observe(section)
   }
+
+  handleEdgeCases(allSections, updateActiveNav)
+}
+
+function handleEdgeCases(
+  sections: HTMLElement[],
+  updateActiveNav: (id: string) => void,
+): void {
+  const firstSection = sections[0]
+  const lastSection = sections[sections.length - 1]
+
+  let ticking = false
+  window.addEventListener('scroll', () => {
+    if (ticking) return
+    ticking = true
+
+    requestAnimationFrame(() => {
+      const scrollTop = window.scrollY
+      const scrollBottom = scrollTop + window.innerHeight
+      const docHeight = document.documentElement.scrollHeight
+
+      if (scrollTop < 100 && firstSection) {
+        updateActiveNav(firstSection.id)
+      } else if (scrollBottom >= docHeight - 50 && lastSection) {
+        updateActiveNav(lastSection.id)
+      }
+
+      ticking = false
+    })
+  })
 }
 
 export function createRipple(e: MouseEvent, card: HTMLElement): void {
