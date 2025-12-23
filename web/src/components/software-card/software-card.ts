@@ -5,7 +5,8 @@ import { sanitize } from '../../utils/dom'
 import { createRipple } from '../../utils/effects'
 
 const DESCRIPTION_MAX_LENGTH = 60 as const
-const MAGNETIC_FACTOR = 0.15 as const
+const MAGNETIC_FACTOR = 0.12 as const
+const TILT_FACTOR = 15 as const
 
 const ARIA_LABELS = {
   selectedAction: 'remove from',
@@ -169,9 +170,18 @@ function attachCardEventListeners(card: HTMLDivElement, key: PackageKey): void {
 
   card.addEventListener('mousemove', (e) => {
     const rect = card.getBoundingClientRect()
-    const magneticX = (e.clientX - rect.left - rect.width / 2) * MAGNETIC_FACTOR
-    const magneticY = (e.clientY - rect.top - rect.height / 2) * MAGNETIC_FACTOR
-    card.style.transform = `translate(${magneticX}px, ${magneticY}px)`
+    const centerX = e.clientX - rect.left - rect.width / 2
+    const centerY = e.clientY - rect.top - rect.height / 2
+
+    const magneticX = centerX * MAGNETIC_FACTOR
+    const magneticY = centerY * MAGNETIC_FACTOR
+
+    const normalizedX = centerX / (rect.width / 2)
+    const normalizedY = centerY / (rect.height / 2)
+    const rotateY = normalizedX * TILT_FACTOR
+    const rotateX = -normalizedY * TILT_FACTOR
+
+    card.style.transform = `translate(${magneticX}px, ${magneticY}px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`
 
     const lightX = ((e.clientX - rect.left) / rect.width) * 100
     const lightY = ((e.clientY - rect.top) / rect.height) * 100
