@@ -51,36 +51,7 @@ export function setupCursorGlow(controller?: CleanupController): void {
   }
 }
 
-export function setupScrollAnimations(controller?: CleanupController): void {
-  const stepSections = document.querySelectorAll('.step')
-  if (!stepSections.length) return
-
-  stepSections.forEach((section, idx) => {
-    ;(section as HTMLElement).style.setProperty('--stagger', String(idx))
-  })
-
-  const revealObserver = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('visible')
-          revealObserver.unobserve(entry.target)
-        }
-      })
-    },
-    { threshold: 0.1, rootMargin: '-30px' },
-  )
-
-  controller?.addObserver(revealObserver)
-
-  for (const section of stepSections) {
-    revealObserver.observe(section)
-  }
-
-  setupProgressNav(controller)
-}
-
-function setupProgressNav(controller?: CleanupController): void {
+export function setupProgressNav(controller?: CleanupController): void {
   const dots = document.querySelectorAll<HTMLAnchorElement>('.step-dot')
   if (!dots.length) return
 

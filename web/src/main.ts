@@ -15,7 +15,7 @@ import { formatZodErrors, isParseSuccess, safeParseCatalog, type ValidatedCatalo
 import { store } from './state'
 import { CATEGORY_SVG_ICONS } from './types'
 import { $id, onReady } from './utils/dom'
-import { setupCursorGlow, setupImageFallbacks, setupScrollAnimations } from './utils/effects'
+import { setupCursorGlow, setupImageFallbacks, setupProgressNav } from './utils/effects'
 import { type CleanupController, createCleanupController } from './utils/lifecycle'
 import { setupRichTooltips } from './utils/tooltips'
 
@@ -123,7 +123,7 @@ async function init(): Promise<void> {
 
 function setupVisualEffects(controller: CleanupController): void {
   setupCursorGlow(controller)
-  setupScrollAnimations(controller)
+  setupProgressNav(controller)
   setupImageFallbacks(CATEGORY_SVG_ICONS)
   setupHeroCube(controller)
   setupRichTooltips(controller)
