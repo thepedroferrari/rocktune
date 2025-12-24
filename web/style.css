@@ -1431,32 +1431,33 @@
 
 
     .tier {
-      font-family: var(--font-ui);
-      font-size: 0.65rem;
+      font-family: var(--font-display);
+      font-size: 0.6rem;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.06em;
-      padding: 0.2rem 0.5rem;
-      border-radius: 4px;
+      letter-spacing: 0.08em;
+      padding: 0.2rem 0.6rem;
+      border-radius: 0;
+      clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
       position: relative;
       animation: tierGlow 3s ease-in-out infinite;
     }
 
     .tier-safe {
       background: linear-gradient(135deg, var(--safe) 0%, var(--safe-dim) 100%);
-      color: oklch(0.15 0.05 175);
+      color: oklch(0.12 0.04 175);
       box-shadow:
-        0 0 12px color-mix(in oklch, var(--safe) 30%, transparent),
-        0 0 24px color-mix(in oklch, var(--safe) 15%, transparent);
+        0 0 10px color-mix(in oklch, var(--safe) 40%, transparent),
+        0 0 20px color-mix(in oklch, var(--safe) 20%, transparent);
       text-shadow: 0 0 4px color-mix(in oklch, var(--safe) 30%, transparent);
     }
 
     .tier-caution {
       background: linear-gradient(135deg, var(--caution) 0%, var(--caution-dim) 100%);
-      color: oklch(0.2 0.08 85);
+      color: oklch(0.15 0.06 85);
       box-shadow:
-        0 0 12px color-mix(in oklch, var(--caution) 30%, transparent),
-        0 0 24px color-mix(in oklch, var(--caution) 15%, transparent);
+        0 0 10px color-mix(in oklch, var(--caution) 40%, transparent),
+        0 0 20px color-mix(in oklch, var(--caution) 20%, transparent);
       text-shadow: 0 0 4px color-mix(in oklch, var(--caution) 30%, transparent);
     }
 
@@ -1464,8 +1465,8 @@
       background: linear-gradient(135deg, var(--risky) 0%, var(--risky-dim) 100%);
       color: oklch(1 0 0);
       box-shadow:
-        0 0 12px color-mix(in oklch, var(--risky) 30%, transparent),
-        0 0 24px color-mix(in oklch, var(--risky) 15%, transparent);
+        0 0 10px color-mix(in oklch, var(--risky) 40%, transparent),
+        0 0 20px color-mix(in oklch, var(--risky) 20%, transparent);
       text-shadow: 0 0 6px color-mix(in oklch, var(--risky) 40%, transparent);
     }
 
@@ -1870,7 +1871,7 @@
          left: 0;
          width: 2px;
          height: 100%;
-         background: var(--accent);
+         background: var(--cyber-yellow);
          opacity: 0;
          transition: opacity 0.2s;
        }
@@ -1879,11 +1880,11 @@
          background: linear-gradient(
            135deg,
            var(--bg-card-hover) 0%,
-           color-mix(in oklch, var(--accent) 8%, var(--bg-card)) 100%
+           color-mix(in oklch, var(--cyber-yellow) 6%, var(--bg-card)) 100%
          );
-         border-color: var(--accent);
+         border-color: color-mix(in oklch, var(--cyber-yellow) 50%, var(--border-light));
          color: var(--text-primary);
-         box-shadow: 0 0 15px color-mix(in oklch, var(--accent) 15%, transparent);
+         box-shadow: 0 0 18px color-mix(in oklch, var(--cyber-yellow) 15%, transparent);
 
          &::before {
            opacity: 1;
@@ -1933,9 +1934,13 @@
        width: 800px;
        padding: 0;
        background: var(--bg-secondary);
-       border: 1px solid var(--border-light);
-       border-radius: var(--radius-lg);
-       box-shadow: 0 25px 50px -12px color-mix(in oklch, oklch(0 0 0) 50%, transparent);
+       border: 1px solid color-mix(in oklch, var(--cyber-yellow) 30%, var(--border-light));
+       border-top: 3px solid var(--cyber-yellow);
+       border-radius: 0;
+       clip-path: var(--clip-cyber-lg);
+       box-shadow:
+         0 25px 60px color-mix(in oklch, oklch(0 0 0) 60%, transparent),
+         0 0 40px color-mix(in oklch, var(--cyber-yellow) 15%, transparent);
        overflow: hidden;
        opacity: 1;
        transition:
@@ -1950,8 +1955,8 @@
        }
 
        &::backdrop {
-         background: color-mix(in oklch, oklch(0 0 0) 70%, transparent);
-         backdrop-filter: blur(4px);
+         background: color-mix(in oklch, oklch(0 0 0) 75%, transparent);
+         backdrop-filter: blur(6px);
          opacity: 1;
          transition:
            opacity 0.2s ease-out,
@@ -1969,30 +1974,53 @@
        justify-content: space-between;
        align-items: center;
        padding: var(--space-lg);
-       border-bottom: 1px solid var(--border);
+       border-bottom: 1px solid color-mix(in oklch, var(--cyber-yellow) 20%, var(--border));
+       background: linear-gradient(
+         90deg,
+         color-mix(in oklch, var(--cyber-yellow) 8%, transparent) 0%,
+         transparent 50%
+       );
+       position: relative;
+
+       &::before {
+         content: '◢';
+         position: absolute;
+         left: var(--space-sm);
+         top: 50%;
+         transform: translateY(-50%);
+         font-size: 0.6rem;
+         color: var(--cyber-yellow);
+         opacity: 0.6;
+       }
 
        & h3 {
          font-family: var(--font-display);
          margin: 0;
-         font-size: 1.25rem;
+         margin-left: var(--space-sm);
+         font-size: 1.1rem;
          font-weight: 700;
-         letter-spacing: 0.02em;
+         letter-spacing: 0.06em;
          text-transform: uppercase;
-         color: var(--text-primary);
+         color: var(--cyber-yellow);
+         text-shadow: 0 0 12px var(--cyber-yellow-glow);
        }
      }
 
      .modal-close {
-       background: none;
-       border: none;
-       font-size: 1.5rem;
-       color: var(--text-secondary);
+       background: color-mix(in oklch, var(--risky) 15%, transparent);
+       border: 1px solid color-mix(in oklch, var(--risky) 30%, transparent);
+       font-size: 1.2rem;
+       color: var(--risky);
        cursor: pointer;
-       padding: 0;
+       padding: 4px 8px;
        line-height: 1;
+       clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
+       transition: all 0.2s ease;
 
        &:hover {
-         color: var(--text-primary);
+         background: var(--risky);
+         color: white;
+         box-shadow: 0 0 12px color-mix(in oklch, var(--risky) 50%, transparent);
        }
      }
 
@@ -2097,53 +2125,9 @@
        padding: var(--space-md) var(--space-lg);
        background: var(--bg-tertiary);
        border: 1px solid var(--border);
-       border-radius: var(--radius);
+       border-radius: 0;
+       clip-path: var(--clip-cyber-sm);
        margin-bottom: var(--space-xl);
-     }
-
-     .toggle-switch {
-       position: relative;
-       width: 48px;
-       height: 24px;
-       flex-shrink: 0;
-
-       & input {
-         opacity: 0;
-         width: 0;
-         height: 0;
-
-         &:checked + .toggle-slider {
-           background: var(--accent);
-
-           &::before {
-             transform: translateX(24px);
-           }
-         }
-       }
-     }
-
-     .toggle-slider {
-       position: absolute;
-       cursor: pointer;
-       top: 0;
-       left: 0;
-       right: 0;
-       bottom: 0;
-       background: var(--border-light);
-       border-radius: 24px;
-       transition: all 0.3s;
-
-       &::before {
-         position: absolute;
-         content: "";
-         height: 18px;
-         width: 18px;
-         left: 3px;
-         bottom: 3px;
-         background: var(--text-primary);
-         border-radius: 50%;
-         transition: all 0.3s;
-       }
      }
 
      .toggle-label {
@@ -2167,13 +2151,17 @@
        width: 90vw;
        padding: 0;
        background: var(--bg-secondary);
-       border: 1px solid var(--border-light);
-       border-radius: var(--radius-lg);
-       box-shadow: 0 25px 50px -12px color-mix(in oklch, oklch(0 0 0) 50%, transparent);
+       border: 1px solid color-mix(in oklch, var(--accent) 30%, var(--border-light));
+       border-top: 3px solid var(--accent);
+       border-radius: 0;
+       clip-path: var(--clip-cyber-md);
+       box-shadow:
+         0 25px 60px color-mix(in oklch, oklch(0 0 0) 60%, transparent),
+         0 0 30px color-mix(in oklch, var(--accent) 15%, transparent);
 
        &::backdrop {
-         background: color-mix(in oklch, oklch(0 0 0) 70%, transparent);
-         backdrop-filter: blur(4px);
+         background: color-mix(in oklch, oklch(0 0 0) 75%, transparent);
+         backdrop-filter: blur(6px);
        }
      }
 

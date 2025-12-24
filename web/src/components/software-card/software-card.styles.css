@@ -188,16 +188,8 @@
         }
       }
 
-      /* Hide text content on selected - show only on hover */
+      /* Keep name visible when selected */
       & .software-card-front .name {
-        opacity: 0;
-        transform: translateY(4px);
-        transition: opacity 0.2s ease, transform 0.2s ease;
-      }
-
-      &:hover .software-card-front .name,
-      &:focus .software-card-front .name,
-      &:focus-within .software-card-front .name {
         opacity: 1;
         transform: translateY(0);
       }

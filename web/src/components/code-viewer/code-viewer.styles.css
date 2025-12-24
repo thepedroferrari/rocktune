@@ -6,12 +6,12 @@
     background:
       radial-gradient(
         120% 140% at 20% 20%,
-        color-mix(in oklch, var(--accent) 18%, transparent),
+        color-mix(in oklch, var(--cyber-yellow) 10%, transparent),
         transparent 55%
       ),
       radial-gradient(
         140% 160% at 80% 0%,
-        color-mix(in oklch, oklch(0.6 0.15 250) 16%, transparent),
+        color-mix(in oklch, var(--accent) 12%, transparent),
         transparent 60%
       ),
       linear-gradient(
@@ -19,11 +19,14 @@
         color-mix(in oklch, oklch(0.1 0.02 285) 96%, transparent),
         color-mix(in oklch, oklch(0.08 0.02 285) 98%, transparent)
       );
-    border: 1px solid var(--glass-border);
-    border-radius: var(--radius-lg);
+    border: 1px solid color-mix(in oklch, var(--cyber-yellow) 20%, var(--glass-border));
+    border-left: 3px solid var(--cyber-yellow);
+    border-radius: 0;
+    clip-path: var(--clip-cyber-lg);
     padding: var(--space-sm);
     box-shadow:
       0 20px 60px color-mix(in oklch, oklch(0 0 0) 55%, transparent),
+      0 0 30px color-mix(in oklch, var(--cyber-yellow) 8%, transparent),
       inset 0 1px 0 color-mix(in oklch, oklch(1 0 0) 5%, transparent);
     backdrop-filter: blur(16px);
     position: relative;
@@ -61,45 +64,56 @@
     background: color-mix(in oklch, oklch(1 0 0) 2%, transparent);
     color: var(--text-primary);
     padding: 0.35rem 0.75rem;
-    border-radius: var(--radius);
-    font-size: 0.8rem;
+    border-radius: 0;
+    clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+    font-size: 0.75rem;
+    font-family: var(--font-mono);
+    letter-spacing: 0.03em;
     cursor: pointer;
     transition: all 0.2s ease;
     backdrop-filter: blur(6px);
 
     &:hover {
-      border-color: var(--accent);
-      color: var(--accent-hover);
+      border-color: var(--cyber-yellow);
+      color: var(--cyber-yellow);
       transform: translateY(-1px);
+      box-shadow: 0 0 12px color-mix(in oklch, var(--cyber-yellow) 20%, transparent);
     }
 
     &.active {
       background: linear-gradient(
         135deg,
-        color-mix(in oklch, var(--accent) 20%, transparent),
-        color-mix(in oklch, oklch(0.6 0.15 250) 20%, transparent)
+        color-mix(in oklch, var(--cyber-yellow) 25%, transparent),
+        color-mix(in oklch, var(--cyber-yellow) 15%, transparent)
       );
-      border-color: var(--accent);
-      color: #fff;
-      box-shadow: 0 8px 24px color-mix(in oklch, var(--accent) 25%, transparent);
+      border-color: var(--cyber-yellow);
+      color: var(--cyber-yellow);
+      box-shadow:
+        0 0 20px color-mix(in oklch, var(--cyber-yellow) 30%, transparent),
+        inset 0 0 10px color-mix(in oklch, var(--cyber-yellow) 10%, transparent);
+      text-shadow: 0 0 8px var(--cyber-yellow-glow);
     }
   }
 
   .cv-pill {
     margin-left: auto;
-    padding: 0.25rem 0.6rem;
-    border-radius: 999px;
-    background: color-mix(in oklch, oklch(1 0 0) 6%, transparent);
-    border: 1px solid color-mix(in oklch, oklch(1 0 0) 8%, transparent);
-    font-size: 0.72rem;
-    color: var(--text-secondary);
-    letter-spacing: 0.02em;
+    padding: 0.2rem 0.6rem;
+    border-radius: 0;
+    clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
+    background: color-mix(in oklch, var(--cyber-yellow) 8%, transparent);
+    border: 1px solid color-mix(in oklch, var(--cyber-yellow) 20%, transparent);
+    font-size: 0.68rem;
+    font-family: var(--font-mono);
+    color: var(--cyber-yellow-dim);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
   }
 
   .cv-body {
     position: relative;
     border: 1px solid var(--border);
-    border-radius: var(--radius);
+    border-radius: 0;
+    clip-path: var(--clip-cyber-md);
     background: var(--bg-primary);
     overflow: hidden;
     min-height: 260px;
@@ -204,7 +218,8 @@
     padding: 0;
     border: 1px solid var(--border);
     background: color-mix(in oklch, oklch(1 0 0) 2%, transparent);
-    border-radius: var(--radius-sm);
+    border-radius: 0;
+    clip-path: polygon(3px 0, 100% 0, 100% calc(100% - 3px), calc(100% - 3px) 100%, 0 100%, 0 3px);
     color: var(--text-secondary);
     cursor: pointer;
     transition: all 0.15s ease;
@@ -215,9 +230,10 @@
     }
 
     &:hover:not(:disabled) {
-      background: color-mix(in oklch, var(--accent) 15%, transparent);
-      border-color: var(--accent);
-      color: var(--accent);
+      background: color-mix(in oklch, var(--cyber-yellow) 15%, transparent);
+      border-color: var(--cyber-yellow);
+      color: var(--cyber-yellow);
+      box-shadow: 0 0 8px color-mix(in oklch, var(--cyber-yellow) 25%, transparent);
     }
 
     &:disabled {
@@ -256,4 +272,5 @@
     align-items: center;
   }
 }
+
 

@@ -4,6 +4,7 @@ import {
   setupSoftwareListeners,
   updateCategoryBadges,
 } from './components/cards'
+import { initCyberToggle } from './components/cyber-toggle'
 import { setupDriverLinks } from './components/drivers'
 import { setupClearAll, setupFilters, setupSearch, setupViewToggle } from './components/filters'
 import { setupHeroCube } from './components/hero-cube'
@@ -146,6 +147,7 @@ function setupInteractions(controller: CleanupController): void {
   setupProfileActions()
   setupAuditPanel(controller)
   setupDriverLinks()
+  initCyberToggle()
 }
 
 onReady(init)

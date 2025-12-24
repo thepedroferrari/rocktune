@@ -12,18 +12,32 @@
       color-mix(in oklch, oklch(0.1 0.02 285) 98%, transparent) 100%
     );
     backdrop-filter: blur(20px);
-    border: 1px solid var(--glass-border);
+    border: 1px solid color-mix(in oklch, var(--cyber-yellow) 20%, var(--glass-border));
     border-right: none;
-    border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+    border-left: 3px solid var(--cyber-yellow);
+    border-radius: 0;
     box-shadow:
-      -10px 0 40px color-mix(in oklch, oklch(0 0 0) 40%, transparent),
+      -10px 0 50px color-mix(in oklch, oklch(0 0 0) 50%, transparent),
+      0 0 40px color-mix(in oklch, var(--cyber-yellow) 10%, transparent),
       inset 1px 0 0 color-mix(in oklch, oklch(1 0 0) 5%, transparent);
     transition: right 0.4s var(--ease-out-expo);
     z-index: 100;
     display: flex;
+    overflow: visible;
 
     &.open {
       right: 0;
+    }
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 16px;
+      height: 16px;
+      background: linear-gradient(135deg, var(--bg-primary) 50%, transparent 50%);
+      z-index: 10;
     }
   }
 
@@ -35,10 +49,11 @@
     width: 48px;
     height: 64px;
     background: var(--bg-secondary);
-    border: 1px solid var(--border-light);
+    border: 1px solid color-mix(in oklch, var(--cyber-yellow) 30%, var(--border-light));
     border-right: none;
-    border-radius: var(--radius) 0 0 var(--radius);
-    color: var(--accent);
+    border-radius: 0;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+    color: var(--cyber-yellow);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -46,8 +61,9 @@
     transition: all 0.2s;
 
     &:hover {
-      background: var(--bg-tertiary);
-      color: var(--accent-hover);
+      background: color-mix(in oklch, var(--cyber-yellow) 10%, var(--bg-tertiary));
+      color: var(--cyber-yellow);
+      box-shadow: -4px 0 20px color-mix(in oklch, var(--cyber-yellow) 25%, transparent);
     }
 
     & svg {
@@ -70,14 +86,35 @@
 
   .audit-header {
     padding: var(--space-md) var(--space-lg);
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid color-mix(in oklch, var(--cyber-yellow) 15%, var(--border));
+    background: linear-gradient(
+      90deg,
+      color-mix(in oklch, var(--cyber-yellow) 8%, transparent) 0%,
+      transparent 60%
+    );
+    position: relative;
+
+    &::before {
+      content: '◢';
+      position: absolute;
+      left: var(--space-sm);
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.5rem;
+      color: var(--cyber-yellow);
+      opacity: 0.5;
+    }
 
     & h3 {
-      font-family: var(--font-ui);
+      font-family: var(--font-display);
       margin: 0;
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--accent);
+      margin-left: var(--space-sm);
+      font-size: 0.9rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--cyber-yellow);
+      text-shadow: 0 0 10px var(--cyber-yellow-glow);
     }
   }
 
@@ -121,15 +158,33 @@
     padding: var(--space-md) var(--space-lg);
     background: linear-gradient(
       135deg,
-      color-mix(in oklch, var(--risky) 15%, transparent) 0%,
-      color-mix(in oklch, var(--risky) 8%, transparent) 100%
+      color-mix(in oklch, var(--risky) 18%, var(--bg-secondary)) 0%,
+      color-mix(in oklch, var(--risky) 10%, var(--bg-secondary)) 100%
     );
-    border: 1px solid color-mix(in oklch, var(--risky) 30%, transparent);
-    border-top: none;
-    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
-    backdrop-filter: blur(12px);
-    box-shadow: 0 4px 24px color-mix(in oklch, var(--risky) 15%, transparent);
+    border: 1px solid color-mix(in oklch, var(--risky) 50%, transparent);
+    border-top: 3px solid var(--risky);
+    border-radius: 0;
+    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%, 0 calc(100% - 12px));
+    backdrop-filter: blur(16px);
+    box-shadow:
+      0 4px 30px color-mix(in oklch, var(--risky) 25%, transparent),
+      0 0 60px color-mix(in oklch, var(--risky) 10%, transparent);
     animation: slideDown 0.3s var(--ease-out-expo);
+
+    &::before {
+      content: '◢ ALERT';
+      position: absolute;
+      top: -1px;
+      left: 0;
+      background: var(--risky);
+      color: white;
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      padding: 0.15rem 0.5rem;
+      clip-path: polygon(0 0, calc(100% - 4px) 0, 100% 100%, 0 100%);
+    }
 
     &[hidden] {
       display: none;
@@ -141,27 +196,44 @@
     height: 20px;
     color: var(--risky);
     flex-shrink: 0;
+    animation: alertPulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes alertPulse {
+    0%, 100% {
+      filter: drop-shadow(0 0 4px transparent);
+    }
+    50% {
+      filter: drop-shadow(0 0 8px color-mix(in oklch, var(--risky) 60%, transparent));
+    }
   }
 
   #error-message {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
+    font-family: var(--font-mono);
     color: var(--text-primary);
+    letter-spacing: 0.02em;
   }
 
   .error-retry {
     padding: var(--space-xs) var(--space-md);
     background: var(--risky);
-    color: var(--bg-primary);
+    color: white;
     border: none;
-    border-radius: var(--radius-sm);
-    font-size: 0.8rem;
-    font-weight: 600;
+    border-radius: 0;
+    clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
+    font-family: var(--font-display);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
     cursor: pointer;
     transition: all 0.2s;
 
     &:hover {
       background: var(--risky-dim);
       transform: scale(1.05);
+      box-shadow: 0 0 16px color-mix(in oklch, var(--risky) 50%, transparent);
     }
   }
 
@@ -172,15 +244,20 @@
     align-items: center;
     justify-content: center;
     background: transparent;
-    border: none;
+    border: 1px solid color-mix(in oklch, var(--risky) 30%, transparent);
+    border-radius: 0;
+    clip-path: polygon(3px 0, 100% 0, 100% calc(100% - 3px), calc(100% - 3px) 100%, 0 100%, 0 3px);
     color: var(--text-secondary);
-    font-size: 1.2rem;
+    font-size: 1rem;
     cursor: pointer;
-    transition: color 0.2s;
+    transition: all 0.2s;
 
     &:hover {
+      background: color-mix(in oklch, var(--risky) 20%, transparent);
+      border-color: var(--risky);
       color: var(--risky);
     }
   }
 }
+
 
