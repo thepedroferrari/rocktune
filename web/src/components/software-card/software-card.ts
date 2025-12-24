@@ -5,8 +5,8 @@ import { sanitize } from '../../utils/dom'
 import { createRipple } from '../../utils/effects'
 
 const DESCRIPTION_MAX_LENGTH = 60 as const
-const MAGNETIC_FACTOR = 0.12 as const
-const TILT_FACTOR = 15 as const
+const MAGNETIC_FACTOR = 0.04 as const
+const TILT_FACTOR = 5 as const
 
 const ARIA_LABELS = {
   selectedAction: 'remove from',
@@ -98,10 +98,9 @@ function buildLogoHTML(pkg: Readonly<SoftwarePackage>): LogoConfig {
     case 'cdn': {
       const safeIcon = sanitize(pkg.icon ?? '')
       const safeCategory = sanitize(pkg.category)
-      const safeEmoji = sanitize(pkg.emoji ?? '')
       return {
         type,
-        html: `<img src="${SIMPLE_ICONS_CDN}/${safeIcon}/white" alt="${safeName} logo" loading="lazy" data-category="${safeCategory}" data-fallback="${safeEmoji}">`,
+        html: `<img src="${SIMPLE_ICONS_CDN}/${safeIcon}/white" alt="${safeName} logo" loading="lazy" data-category="${safeCategory}" onerror="this.onerror=null;this.style.display='none';this.parentElement.innerHTML='<svg class=\\'sprite-icon fallback-icon\\' viewBox=\\'0 0 48 48\\'><use href=\\'icons/sprite.svg#fallback\\'></use></svg>'">`,
       }
     }
     case 'emoji': {
@@ -139,6 +138,11 @@ function buildCardHTML(config: CardConfig): string {
 
   return `
     <div class="software-card-inner">
+      <div class="software-card-scanlines"></div>
+      <div class="software-card-corner software-card-corner--tl"></div>
+      <div class="software-card-corner software-card-corner--tr"></div>
+      <div class="software-card-corner software-card-corner--bl"></div>
+      <div class="software-card-corner software-card-corner--br"></div>
       <div class="software-card-front">
         <div class="logo">${logo.html}</div>
         <span class="name">${safeName}</span>
@@ -169,6 +173,11 @@ function attachCardEventListeners(card: HTMLDivElement, key: PackageKey): void {
   })
 
   card.addEventListener('mousemove', (e) => {
+    const grid = card.closest('.software-grid')
+    const isListView = grid?.classList.contains('list-view')
+
+    if (isListView) return
+
     const rect = card.getBoundingClientRect()
     const centerX = e.clientX - rect.left - rect.width / 2
     const centerY = e.clientY - rect.top - rect.height / 2

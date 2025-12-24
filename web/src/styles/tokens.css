@@ -119,5 +119,22 @@
     --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
     --ease-out-back: cubic-bezier(0.34, 1.56, 0.64, 1);
     --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+    --neon-cyan: oklch(0.85 0.18 195);
+    --neon-cyan-dim: oklch(0.65 0.15 195);
+    --neon-cyan-glow: oklch(0.7 0.2 195 / 60%);
+    --neon-magenta: oklch(0.72 0.25 330);
+    --neon-magenta-dim: oklch(0.55 0.22 330);
+    --neon-magenta-glow: oklch(0.6 0.28 330 / 60%);
+    --neon-electric: oklch(0.8 0.22 280);
+    --neon-electric-dim: oklch(0.6 0.2 280);
+    --neon-electric-glow: oklch(0.65 0.25 280 / 60%);
+    --neon-yellow: oklch(0.92 0.2 100);
+    --neon-yellow-glow: oklch(0.85 0.22 100 / 50%);
+
+    --cyber-border-speed: 3s;
+    --cyber-glitch-speed: 0.15s;
+    --cyber-pulse-speed: 2s;
+    --cyber-scanline-speed: 8s;
   }
 }

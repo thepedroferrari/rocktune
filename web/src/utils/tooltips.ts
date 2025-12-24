@@ -167,7 +167,10 @@ function clearTimeouts(): void {
 }
 
 function handleMouseEnter(e: Event, controller?: CleanupController): void {
-  const trigger = (e.target as HTMLElement).closest('[data-tooltip]') as HTMLElement | null
+  const target = e.target
+  if (!(target instanceof Element)) return
+
+  const trigger = target.closest('[data-tooltip]') as HTMLElement | null
   if (!trigger) return
 
   if (hideTimeout) {
@@ -198,7 +201,10 @@ function handleMouseLeave(controller?: CleanupController): void {
 }
 
 function handleFocusIn(e: Event): void {
-  const trigger = (e.target as HTMLElement).closest('[data-tooltip]') as HTMLElement | null
+  const target = e.target
+  if (!(target instanceof Element)) return
+
+  const trigger = target.closest('[data-tooltip]') as HTMLElement | null
   if (trigger) showTooltip(trigger)
 }
 

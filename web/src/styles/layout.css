@@ -80,7 +80,7 @@
 
   .peripheral-columns {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr 2fr;
     gap: var(--space-md);
   }
 
@@ -88,6 +88,8 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-xs);
+    overflow: hidden;
+    min-width: 0;
   }
 
   @media (max-width: 1024px) {
