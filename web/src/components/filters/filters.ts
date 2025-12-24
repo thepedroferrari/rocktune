@@ -9,16 +9,27 @@ const ANIMATION_DELAY_MS = 20 as const
 const SEARCH_ANNOUNCE_DELAY_MS = 500 as const
 
 export function setupFilters(): void {
-  const buttons = $$<HTMLButtonElement>('.filter')
+  const filterButtons = $$<HTMLButtonElement>('.filter')
+  const selectedBadgeBtn = $<HTMLButtonElement>('.selected-count-btn')
 
-  for (const btn of buttons) {
-    btn.addEventListener('click', () => handleFilterClick(btn, buttons))
+  const allFilterButtons = selectedBadgeBtn
+    ? [...filterButtons, selectedBadgeBtn]
+    : [...filterButtons]
+
+  for (const btn of filterButtons) {
+    btn.addEventListener('click', () => handleFilterClick(btn, allFilterButtons))
+  }
+
+  if (selectedBadgeBtn) {
+    selectedBadgeBtn.addEventListener('click', () =>
+      handleFilterClick(selectedBadgeBtn, allFilterButtons),
+    )
   }
 }
 
 function handleFilterClick(
   activeBtn: HTMLButtonElement,
-  allButtons: NodeListOf<HTMLButtonElement>,
+  allButtons: HTMLButtonElement[],
 ): void {
   for (const btn of allButtons) {
     btn.classList.toggle('active', btn === activeBtn)

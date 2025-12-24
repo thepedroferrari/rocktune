@@ -5,8 +5,8 @@ import { sanitize } from '../../utils/dom'
 import { createRipple } from '../../utils/effects'
 
 const DESCRIPTION_MAX_LENGTH = 60 as const
-const MAGNETIC_FACTOR = 0.04 as const
-const TILT_FACTOR = 5 as const
+const MAGNETIC_FACTOR = 0.015 as const
+const TILT_FACTOR = 3 as const
 
 const ARIA_LABELS = {
   selectedAction: 'remove from',
@@ -183,7 +183,8 @@ function attachCardEventListeners(card: HTMLDivElement, key: PackageKey): void {
     const centerY = e.clientY - rect.top - rect.height / 2
 
     const magneticX = centerX * MAGNETIC_FACTOR
-    const magneticY = centerY * MAGNETIC_FACTOR
+    // Constrain vertical movement: only allow slight downward press, no upward lift
+    const magneticY = Math.max(0, centerY * MAGNETIC_FACTOR * 0.5)
 
     const normalizedX = centerX / (rect.width / 2)
     const normalizedY = centerY / (rect.height / 2)

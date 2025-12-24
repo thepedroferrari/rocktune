@@ -45,11 +45,15 @@ export { createCard, toggleCardSelection as toggleSoftware } from './software-ca
 export function updateSoftwareCounter(): void {
   const counter = $id('software-counter')
   if (counter) {
-    counter.textContent = `${store.selectedCount} selected`
+    counter.textContent = String(store.selectedCount)
   }
   const selectedBadge = $id('count-selected')
   if (selectedBadge) {
     selectedBadge.textContent = String(store.selectedCount)
+  }
+  const actionBadge = $id('selected-action-badge')
+  if (actionBadge) {
+    actionBadge.classList.toggle('has-selection', store.selectedCount > 0)
   }
 }
 

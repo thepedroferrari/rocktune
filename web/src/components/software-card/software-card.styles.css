@@ -92,51 +92,45 @@
       z-index: 1;
 
       &::before {
-        opacity: 1;
-        filter: blur(8px);
-        animation:
-          cyberBorderRotate calc(var(--cyber-border-speed) * 0.5) linear infinite,
-          cyberNeonPulse var(--cyber-pulse-speed) ease-in-out infinite;
+        opacity: 0.5;
+        filter: blur(6px);
+        animation: cyberBorderRotate calc(var(--cyber-border-speed) * 2) linear infinite;
       }
 
       &::after {
         content: "";
         position: absolute;
-        inset: -6px;
+        inset: -4px;
         background: conic-gradient(
           from var(--border-angle),
-          var(--neon-cyan-glow) 0deg,
-          transparent 60deg,
-          var(--neon-magenta-glow) 120deg,
-          transparent 180deg,
-          var(--neon-electric-glow) 240deg,
-          transparent 300deg,
-          var(--neon-cyan-glow) 360deg
+          color-mix(in oklch, var(--accent) 40%, transparent) 0deg,
+          transparent 90deg,
+          color-mix(in oklch, var(--neon-cyan) 30%, transparent) 180deg,
+          transparent 270deg,
+          color-mix(in oklch, var(--accent) 40%, transparent) 360deg
         );
-        clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px);
+        clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
         z-index: -2;
-        opacity: 0.5;
-        filter: blur(12px);
-        animation: cyberBorderRotate calc(var(--cyber-border-speed) * 0.75) linear infinite reverse;
+        opacity: 0.3;
+        filter: blur(8px);
+        animation: cyberBorderRotate calc(var(--cyber-border-speed) * 2.5) linear infinite reverse;
       }
 
       & .software-card-front,
       & .software-card-back {
-        border-color: var(--neon-cyan);
+        border-color: color-mix(in oklch, var(--accent) 70%, var(--neon-cyan));
         background: linear-gradient(
           135deg,
-          color-mix(in oklch, var(--neon-cyan) 12%, transparent) 0%,
-          color-mix(in oklch, var(--neon-magenta) 6%, transparent) 50%,
-          color-mix(in oklch, var(--neon-electric) 8%, transparent) 100%
+          color-mix(in oklch, var(--accent) 8%, transparent) 0%,
+          color-mix(in oklch, var(--neon-cyan) 4%, transparent) 50%,
+          color-mix(in oklch, var(--accent) 6%, transparent) 100%
         );
         box-shadow:
-          0 0 0 1px var(--neon-cyan-dim),
-          0 0 20px var(--neon-cyan-glow),
-          0 0 40px var(--neon-magenta-glow),
-          0 8px 30px color-mix(in oklch, oklch(0 0 0) 40%, transparent),
-          inset 0 0 20px color-mix(in oklch, var(--neon-cyan) 8%, transparent),
-          inset 0 1px 1px color-mix(in oklch, oklch(1 0 0) 15%, transparent);
-        animation: cyberGlitchFlicker 4s ease-in-out infinite;
+          0 0 0 1px color-mix(in oklch, var(--accent) 50%, transparent),
+          0 0 12px color-mix(in oklch, var(--accent) 25%, transparent),
+          0 6px 20px color-mix(in oklch, oklch(0 0 0) 35%, transparent),
+          inset 0 0 15px color-mix(in oklch, var(--accent) 5%, transparent),
+          inset 0 1px 1px color-mix(in oklch, oklch(1 0 0) 10%, transparent);
       }
 
       & .software-card-front::after {
@@ -146,7 +140,7 @@
         right: 12px;
         width: 18px;
         height: 18px;
-        background: linear-gradient(135deg, var(--neon-cyan), var(--neon-magenta));
+        background: linear-gradient(135deg, var(--accent), var(--neon-cyan));
         color: oklch(0.1 0 0);
         font-size: 10px;
         font-weight: 800;
@@ -154,37 +148,58 @@
         align-items: center;
         justify-content: center;
         clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
-        z-index: 2;
-        box-shadow:
-          0 0 8px var(--neon-cyan-glow),
-          0 0 16px var(--neon-magenta-glow);
-        animation: cyberHoloShift 3s ease-in-out infinite;
+        z-index: 20;
+        box-shadow: 0 0 6px color-mix(in oklch, var(--accent) 50%, transparent);
+        animation: selectedBadgePulse 3s ease-in-out infinite;
       }
 
       & .software-card-back .back-action {
-        background: linear-gradient(135deg, var(--neon-cyan-dim), var(--neon-magenta-dim));
-        box-shadow: 0 0 12px var(--neon-cyan-glow);
+        background: linear-gradient(135deg, var(--accent-dim), var(--neon-cyan-dim));
+        box-shadow: 0 0 8px color-mix(in oklch, var(--accent) 30%, transparent);
       }
 
       & .software-card-corner {
-        opacity: 1;
+        opacity: 0.7;
 
         &::before,
         &::after {
-          background: var(--neon-magenta);
-          box-shadow: 0 0 8px var(--neon-magenta-glow);
+          background: var(--accent);
+          box-shadow: 0 0 4px color-mix(in oklch, var(--accent) 40%, transparent);
         }
       }
 
       & .software-card-scanlines {
-        opacity: 0.25;
+        opacity: 0.15;
       }
 
       & .name {
-        text-shadow:
-          -1px 0 var(--neon-cyan),
-          1px 0 var(--neon-magenta),
-          0 0 12px var(--neon-electric-glow);
+        text-shadow: 0 0 8px color-mix(in oklch, var(--accent) 40%, transparent);
+      }
+
+      /* Logo should stay visible and prominent */
+      & .logo {
+        z-index: 10;
+
+        & svg,
+        & img {
+          filter:
+            drop-shadow(0 0 6px color-mix(in oklch, var(--accent) 40%, transparent))
+            drop-shadow(0 2px 4px color-mix(in oklch, oklch(0 0 0) 20%, transparent));
+        }
+      }
+
+      /* Hide text content on selected - show only on hover */
+      & .software-card-front .name {
+        opacity: 0;
+        transform: translateY(4px);
+        transition: opacity 0.2s ease, transform 0.2s ease;
+      }
+
+      &:hover .software-card-front .name,
+      &:focus .software-card-front .name,
+      &:focus-within .software-card-front .name {
+        opacity: 1;
+        transform: translateY(0);
       }
     }
 
