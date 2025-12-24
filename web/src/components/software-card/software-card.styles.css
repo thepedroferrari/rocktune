@@ -2,24 +2,58 @@
   .software-card {
     --light-x: 50%;
     --light-y: 50%;
+    --border-angle: 0deg;
+    --cyber-intensity: 0;
     position: relative;
     aspect-ratio: 1;
     cursor: pointer;
     transform-style: preserve-3d;
     transform: translateZ(0);
-    transition: transform 0.15s ease-out;
-    will-change: transform;
+    transition:
+      transform 0.15s ease-out,
+      --cyber-intensity 0.3s ease;
+    will-change: transform, --cyber-intensity;
+
+    &::before {
+      content: "";
+      position: absolute;
+      inset: -2px;
+      background: conic-gradient(
+        from var(--border-angle),
+        var(--neon-cyan) 0deg,
+        var(--neon-magenta) 120deg,
+        var(--neon-electric) 240deg,
+        var(--neon-cyan) 360deg
+      );
+      clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
+      z-index: -1;
+      opacity: 0.3;
+      filter: blur(3px);
+      animation: cyberBorderRotate var(--cyber-border-speed) linear infinite;
+      transition: opacity 0.3s ease, filter 0.3s ease;
+    }
+
+    &:hover::before {
+      opacity: 0.7;
+      filter: blur(6px);
+    }
 
     &:focus {
       outline: none;
-      box-shadow: 0 0 0 2px var(--accent-glow);
+    }
+
+    &:focus::before {
+      opacity: 0.8;
+      filter: blur(8px);
     }
 
     &:focus-visible {
       outline: none;
-      box-shadow:
-        0 0 0 3px var(--accent),
-        0 0 20px var(--accent-glow);
+    }
+
+    &:focus-visible::before {
+      opacity: 1;
+      filter: blur(10px);
     }
 
     &.entering {
@@ -44,6 +78,10 @@
         visibility 0s 0.2s;
     }
 
+    &.hidden::before {
+      animation: none;
+    }
+
     &:not(.hidden) {
       transition:
         opacity 0.25s ease,
@@ -54,58 +92,104 @@
       z-index: 1;
 
       &::before {
+        opacity: 1;
+        filter: blur(8px);
+        animation:
+          cyberBorderRotate calc(var(--cyber-border-speed) * 0.5) linear infinite,
+          cyberNeonPulse var(--cyber-pulse-speed) ease-in-out infinite;
+      }
+
+      &::after {
         content: "";
         position: absolute;
-        inset: -3px;
-        background: linear-gradient(
-          45deg,
-          color-mix(in oklch, oklch(0.7 0.25 350) 40%, transparent),
-          color-mix(in oklch, oklch(0.8 0.2 175) 30%, transparent),
-          color-mix(in oklch, oklch(0.7 0.2 260) 40%, transparent)
+        inset: -6px;
+        background: conic-gradient(
+          from var(--border-angle),
+          var(--neon-cyan-glow) 0deg,
+          transparent 60deg,
+          var(--neon-magenta-glow) 120deg,
+          transparent 180deg,
+          var(--neon-electric-glow) 240deg,
+          transparent 300deg,
+          var(--neon-cyan-glow) 360deg
         );
-        filter: blur(10px);
-        border-radius: calc(var(--radius) + 3px);
-        z-index: -1;
-        opacity: 0.7;
-        animation: chromaticPulse 3s ease-in-out infinite;
+        clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px);
+        z-index: -2;
+        opacity: 0.5;
+        filter: blur(12px);
+        animation: cyberBorderRotate calc(var(--cyber-border-speed) * 0.75) linear infinite reverse;
       }
 
       & .software-card-front,
       & .software-card-back {
-        border-color: var(--accent);
+        border-color: var(--neon-cyan);
         background: linear-gradient(
           135deg,
-          color-mix(in oklch, var(--accent) 12%, transparent) 0%,
-          color-mix(in oklch, var(--accent) 4%, transparent) 100%
+          color-mix(in oklch, var(--neon-cyan) 12%, transparent) 0%,
+          color-mix(in oklch, var(--neon-magenta) 6%, transparent) 50%,
+          color-mix(in oklch, var(--neon-electric) 8%, transparent) 100%
         );
         box-shadow:
-          0 0 0 1px var(--accent),
-          0 0 30px var(--accent-glow-strong),
-          0 12px 40px color-mix(in oklch, oklch(0 0 0) 50%, transparent),
+          0 0 0 1px var(--neon-cyan-dim),
+          0 0 20px var(--neon-cyan-glow),
+          0 0 40px var(--neon-magenta-glow),
+          0 8px 30px color-mix(in oklch, oklch(0 0 0) 40%, transparent),
+          inset 0 0 20px color-mix(in oklch, var(--neon-cyan) 8%, transparent),
           inset 0 1px 1px color-mix(in oklch, oklch(1 0 0) 15%, transparent);
+        animation: cyberGlitchFlicker 4s ease-in-out infinite;
       }
 
       & .software-card-front::after {
         content: "✓";
         position: absolute;
-        top: 8px;
-        right: 8px;
-        width: 20px;
-        height: 20px;
-        background: var(--accent);
-        color: white;
-        font-size: 11px;
-        font-weight: 700;
+        top: 0;
+        right: 12px;
+        width: 18px;
+        height: 18px;
+        background: linear-gradient(135deg, var(--neon-cyan), var(--neon-magenta));
+        color: oklch(0.1 0 0);
+        font-size: 10px;
+        font-weight: 800;
         display: flex;
         align-items: center;
         justify-content: center;
-        border-radius: 50%;
+        clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
         z-index: 2;
+        box-shadow:
+          0 0 8px var(--neon-cyan-glow),
+          0 0 16px var(--neon-magenta-glow);
+        animation: cyberHoloShift 3s ease-in-out infinite;
       }
 
       & .software-card-back .back-action {
-        background: var(--safe);
+        background: linear-gradient(135deg, var(--neon-cyan-dim), var(--neon-magenta-dim));
+        box-shadow: 0 0 12px var(--neon-cyan-glow);
       }
+
+      & .software-card-corner {
+        opacity: 1;
+
+        &::before,
+        &::after {
+          background: var(--neon-magenta);
+          box-shadow: 0 0 8px var(--neon-magenta-glow);
+        }
+      }
+
+      & .software-card-scanlines {
+        opacity: 0.25;
+      }
+
+      & .name {
+        text-shadow:
+          -1px 0 var(--neon-cyan),
+          1px 0 var(--neon-magenta),
+          0 0 12px var(--neon-electric-glow);
+      }
+    }
+
+    &:active:not(.hidden) {
+      animation: cyberGlitchSkew var(--cyber-glitch-speed) ease-out;
     }
   }
 
@@ -146,13 +230,13 @@
     padding: var(--space-md);
     background: linear-gradient(
       135deg,
-      color-mix(in oklch, oklch(1 0 0) 4%, transparent) 0%,
-      color-mix(in oklch, oklch(1 0 0) 1%, transparent) 100%
+      color-mix(in oklch, oklch(0.15 0.02 220) 80%, transparent) 0%,
+      color-mix(in oklch, oklch(0.08 0.01 220) 90%, transparent) 100%
     );
     backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
     -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--radius);
+    border: 1px solid oklch(0.3 0.05 280);
+    clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
     box-shadow:
       inset 0 1px 0 color-mix(in oklch, oklch(1 0 0) 6%, transparent),
       inset 0 -1px 0 color-mix(in oklch, oklch(0 0 0) 10%, transparent),
@@ -161,7 +245,39 @@
     overflow: hidden;
     transition:
       opacity 0.25s var(--ease-out-expo),
-      transform 0.25s var(--ease-out-expo);
+      transform 0.25s var(--ease-out-expo),
+      border-color 0.3s ease,
+      box-shadow 0.3s ease;
+
+    .software-card:hover & {
+      border-color: var(--neon-electric-dim);
+      box-shadow:
+        inset 0 1px 0 color-mix(in oklch, oklch(1 0 0) 6%, transparent),
+        inset 0 -1px 0 color-mix(in oklch, oklch(0 0 0) 10%, transparent),
+        0 4px 24px color-mix(in oklch, oklch(0 0 0) 20%, transparent),
+        0 0 15px var(--neon-electric-glow);
+    }
+  }
+
+  .software-card-scanlines {
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent 0px,
+      transparent 2px,
+      color-mix(in oklch, oklch(0 0 0) 15%, transparent) 2px,
+      color-mix(in oklch, oklch(0 0 0) 15%, transparent) 4px
+    );
+    pointer-events: none;
+    opacity: 0;
+    z-index: 15;
+    transition: opacity 0.3s ease;
+    animation: cyberScanlines var(--cyber-scanline-speed) linear infinite;
+
+    .software-card:hover & {
+      opacity: 0.4;
+    }
   }
 
   .software-card-front {
@@ -207,9 +323,25 @@
       content: "";
       position: absolute;
       inset: 0;
-      background: radial-gradient(circle at center, var(--accent-glow) 0%, transparent 70%);
-      opacity: 0.4;
+      background:
+        radial-gradient(circle at center, var(--neon-electric-glow) 0%, transparent 60%),
+        repeating-linear-gradient(
+          90deg,
+          transparent 0px,
+          transparent 20px,
+          color-mix(in oklch, var(--neon-cyan) 5%, transparent) 20px,
+          color-mix(in oklch, var(--neon-cyan) 5%, transparent) 21px
+        ),
+        repeating-linear-gradient(
+          0deg,
+          transparent 0px,
+          transparent 20px,
+          color-mix(in oklch, var(--neon-magenta) 5%, transparent) 20px,
+          color-mix(in oklch, var(--neon-magenta) 5%, transparent) 21px
+        );
+      opacity: 0.5;
       pointer-events: none;
+      animation: cyberDataStream 20s linear infinite;
     }
 
     .software-card:hover &,
@@ -268,13 +400,22 @@
       filter: drop-shadow(0 2px 4px color-mix(in oklch, oklch(0 0 0) 10%, transparent));
     }
 
+    & .fallback-icon {
+      color: oklch(0.5 0.1 220);
+      opacity: 0.7;
+    }
+
     .software-card:hover & svg,
     .software-card:hover & img,
     .software-card:focus & svg,
     .software-card:focus & img {
       color: var(--text-primary);
       opacity: 1;
-      transform: scale(1.05);
+      transform: scale(1.1);
+      filter:
+        drop-shadow(0 0 4px var(--neon-cyan-glow))
+        drop-shadow(0 0 8px var(--neon-magenta-glow))
+        drop-shadow(0 2px 4px color-mix(in oklch, oklch(0 0 0) 20%, transparent));
     }
   }
 
@@ -285,6 +426,130 @@
     position: relative;
     z-index: 1;
     line-height: 1.2;
+    transition: text-shadow 0.2s ease;
+
+    .software-card:hover & {
+      text-shadow:
+        -1px 0 var(--neon-cyan),
+        1px 0 var(--neon-magenta),
+        0 0 8px var(--neon-electric-glow);
+      animation: cyberChromaticSplit 0.8s ease-in-out infinite;
+    }
+  }
+
+  .software-card-corner {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    z-index: 20;
+
+    &::before,
+    &::after {
+      content: "";
+      position: absolute;
+      background: var(--neon-cyan);
+      box-shadow: 0 0 6px var(--neon-cyan-glow);
+    }
+
+    .software-card:hover & {
+      opacity: 1;
+      animation: cyberCornerPulse var(--cyber-pulse-speed) ease-in-out infinite;
+    }
+  }
+
+  .software-card-corner--tl {
+    top: 4px;
+    left: 16px;
+
+    &::before {
+      width: 8px;
+      height: 2px;
+      top: 0;
+      left: 0;
+    }
+
+    &::after {
+      width: 2px;
+      height: 8px;
+      top: 0;
+      left: 0;
+    }
+
+    .software-card:hover & {
+      transform: translate(-2px, -2px);
+    }
+  }
+
+  .software-card-corner--tr {
+    top: 4px;
+    right: 4px;
+
+    &::before {
+      width: 8px;
+      height: 2px;
+      top: 0;
+      right: 0;
+    }
+
+    &::after {
+      width: 2px;
+      height: 8px;
+      top: 0;
+      right: 0;
+    }
+
+    .software-card:hover & {
+      transform: translate(2px, -2px);
+    }
+  }
+
+  .software-card-corner--bl {
+    bottom: 16px;
+    left: 4px;
+
+    &::before {
+      width: 8px;
+      height: 2px;
+      bottom: 0;
+      left: 0;
+    }
+
+    &::after {
+      width: 2px;
+      height: 8px;
+      bottom: 0;
+      left: 0;
+    }
+
+    .software-card:hover & {
+      transform: translate(-2px, 2px);
+    }
+  }
+
+  .software-card-corner--br {
+    bottom: 4px;
+    right: 16px;
+
+    &::before {
+      width: 8px;
+      height: 2px;
+      bottom: 0;
+      right: 0;
+    }
+
+    &::after {
+      width: 2px;
+      height: 8px;
+      bottom: 0;
+      right: 0;
+    }
+
+    .software-card:hover & {
+      transform: translate(2px, 2px);
+    }
   }
 
   .software-card-back .back-name {
@@ -316,18 +581,41 @@
   .software-card-back .back-action {
     margin-top: auto;
     padding: 0.3rem 0.8rem;
-    background: var(--accent);
+    background: linear-gradient(135deg, var(--neon-electric-dim), var(--accent));
     color: white;
     font-size: 0.65rem;
     font-weight: 600;
-    border-radius: 100px;
+    border-radius: 0;
+    clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+    border: 1px solid var(--neon-electric-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
     transition:
       transform 0.2s,
-      box-shadow 0.2s;
+      box-shadow 0.2s,
+      background 0.2s;
+    position: relative;
+
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent, var(--neon-cyan-glow), transparent);
+      transform: translateX(-100%);
+      transition: transform 0.4s ease;
+    }
 
     .software-card:hover &:hover {
-      transform: scale(1.05);
-      box-shadow: 0 4px 12px var(--accent-glow);
+      transform: scale(1.08);
+      background: linear-gradient(135deg, var(--neon-cyan-dim), var(--neon-magenta-dim));
+      border-color: var(--neon-cyan);
+      box-shadow:
+        0 0 12px var(--neon-cyan-glow),
+        0 0 24px var(--neon-magenta-glow);
+
+      &::before {
+        transform: translateX(100%);
+      }
     }
   }
 
@@ -341,3 +629,5 @@
     pointer-events: none;
   }
 }
+
+

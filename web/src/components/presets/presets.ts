@@ -42,7 +42,20 @@ const PRESETS = {
       'ipv4_prefer',
       'teredo_disable',
     ],
-    software: ['steam', 'discord', 'processlasso'],
+    software: [
+      'steam',
+      'discord',
+      'processlasso',
+      'hwinfo',
+      'afterburner',
+      'rtss',
+      'capframex',
+      'cinebench',
+      'furmark',
+      'occt',
+      'nvcleanstall',
+      'displaydriveruninstaller',
+    ],
   },
   competitive: {
     opts: [
@@ -69,7 +82,7 @@ const PRESETS = {
       'disk_cleanup',
       'privacy_tier2',
     ],
-    software: ['steam', 'discord', 'processlasso'],
+    software: ['steam', 'discord', 'processlasso', 'hwinfo', 'afterburner', 'rtss', '7zip', 'sharex'],
   },
   streaming: {
     opts: [
@@ -93,7 +106,19 @@ const PRESETS = {
       'disk_cleanup',
       'privacy_tier1',
     ],
-    software: ['steam', 'discord', 'obs', 'vlc', '7zip'],
+    software: [
+      'steam',
+      'discord',
+      'obs',
+      'vlc',
+      '7zip',
+      'voicemeeter',
+      'nvidiabroadcast',
+      'elgato',
+      'sharex',
+      'moonlight',
+      'sunshine',
+    ],
   },
   balanced: {
     opts: [
@@ -115,7 +140,18 @@ const PRESETS = {
       'disk_cleanup',
       'privacy_tier1',
     ],
-    software: ['steam', 'discord', 'vlc', '7zip'],
+    software: [
+      'steam',
+      'discord',
+      'vlc',
+      '7zip',
+      'brave',
+      'bitwarden',
+      'powertoys',
+      'sharex',
+      'spotify',
+      'qbittorrent',
+    ],
   },
   minimal: {
     opts: [
@@ -127,7 +163,7 @@ const PRESETS = {
       'temp_purge',
       'razer_block',
     ],
-    software: ['steam', '7zip'],
+    software: ['steam', '7zip', 'brave', 'vcredist', 'dotnet'],
   },
 } as const satisfies Record<PresetType, PresetConfig>
 
