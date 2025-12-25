@@ -526,6 +526,31 @@
     box-shadow: 0 0 8px color-mix(in oklch, var(--card-glow) 50%, transparent);
   }
 
+  /* Risk level indicator below intensity bar */
+  .risk-label {
+    font-size: 0.5rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    text-align: right;
+    margin-top: 2px;
+  }
+
+  .risk-label--low {
+    color: var(--safe);
+    text-shadow: 0 0 6px color-mix(in oklch, var(--safe) 40%, transparent);
+  }
+
+  .risk-label--medium {
+    color: var(--caution);
+    text-shadow: 0 0 6px color-mix(in oklch, var(--caution) 40%, transparent);
+  }
+
+  .risk-label--high {
+    color: var(--risky);
+    text-shadow: 0 0 6px color-mix(in oklch, var(--risky) 40%, transparent);
+  }
+
   .preset-card__stats {
     display: flex;
     flex-direction: column;

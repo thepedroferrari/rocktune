@@ -130,7 +130,9 @@
 }
 
 .id-badge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-family: var(--font-mono);
   font-size: 0.6rem;
   font-weight: 600;
@@ -142,6 +144,18 @@
   clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
   text-decoration: none;
   transition: all 0.2s var(--ease-out-expo);
+}
+
+.id-badge .github-icon {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+a.id-badge:hover .github-icon {
+  opacity: 1;
 }
 
 a.id-badge:hover {

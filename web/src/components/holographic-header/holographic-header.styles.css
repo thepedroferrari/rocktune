@@ -291,10 +291,12 @@
     gap: 6px;
   }
 
-  .loading-line:nth-child(1) { animation-delay: 0.5s; }
-  .loading-line:nth-child(2) { animation-delay: 1.5s; }
-  .loading-line:nth-child(3) { animation-delay: 2.5s; }
-  .loading-line:nth-child(4) { animation-delay: 3.5s; }
+  /* Delayed start (+1s) to let page load, then cascade 1s apart */
+  .loading-line:nth-child(1) { animation-delay: 1.5s; }
+  .loading-line:nth-child(2) { animation-delay: 2.5s; }
+  .loading-line:nth-child(3) { animation-delay: 3.5s; }
+  .loading-line:nth-child(4) { animation-delay: 4.5s; }
+  .loading-line:nth-child(5) { animation-delay: 5.5s; }
 
   .loading-line .result {
     color: var(--safe);
@@ -374,12 +376,13 @@
   }
 
   .holo-btn:hover {
-    background: color-mix(in oklch, var(--holo-primary) 15%, transparent);
+    background: color-mix(in oklch, var(--holo-primary) 35%, transparent);
     color: var(--holo-primary);
     box-shadow:
       0 0 30px var(--holo-glow),
-      0 0 60px color-mix(in oklch, var(--holo-primary) 30%, transparent);
-    text-shadow: 0 0 10px var(--holo-glow);
+      0 0 60px color-mix(in oklch, var(--holo-primary) 40%, transparent),
+      inset 0 0 20px color-mix(in oklch, var(--holo-primary) 15%, transparent);
+    text-shadow: 0 0 12px var(--holo-glow);
     animation: btnGlitchHover 0.3s steps(1) infinite;
   }
 
