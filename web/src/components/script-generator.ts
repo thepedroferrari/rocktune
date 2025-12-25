@@ -70,6 +70,8 @@ export function generateScript(): string {
 
   const optCode = generateOptCode(opts, hw)
   const postSetupHtml = generatePostSetupHTML(hw, opts, packages)
+  const configHereString = toHereString(config)
+  const postSetupHereString = toHereString(postSetupHtml)
 
   return `#Requires -RunAsAdministrator
 <#
@@ -82,9 +84,7 @@ export function generateScript(): string {
     Windows is the arena. RockTune is the upgrade bay.
 #>
 
-$Config = @'
-${config}
-'@ | ConvertFrom-Json
+$Config = ${configHereString} | ConvertFrom-Json
 
 function Write-Step { param([string]$M) Write-Host ""; Write-Host "=== $M ===" -ForegroundColor Cyan }
 function Write-OK { param([string]$M) Write-Host "  [OK] $M" -ForegroundColor Green }
@@ -161,9 +161,7 @@ Write-Host ""
 Write-Host "  Opening POST-SETUP GUIDE in your browser..." -ForegroundColor Cyan
 
 # Generate comprehensive HTML guide
-$htmlGuide = @'
-${postSetupHtml}
-'@
+$htmlGuide = ${postSetupHereString}
 
 $guidePath = Join-Path $env:TEMP "rocktune-guide.html"
 Set-Content -Path $guidePath -Value $htmlGuide -Encoding UTF8
@@ -175,6 +173,11 @@ Write-Host "  Need help? github.com/thepedroferrari/windows-gaming-settings" -Fo
 Write-Host ""
 pause
 `
+}
+
+function toHereString(content: string): string {
+  const normalized = content.replace(/\r\n?/g, '\n').replace(/\n+$/, '')
+  return `@'\n${normalized}\n'@`
 }
 
 function generateOptCode(opts: string[], hw: HardwareProfile): string {
@@ -1008,7 +1011,8 @@ function generatePostSetupHTML(hw: HardwareProfile, _opts: string[], _packages: 
 }
 
 export function downloadFile(content: string, filename: string): void {
-  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
+  const withBom = `\ufeff${content}`
+  const blob = new Blob([withBom], { type: 'text/plain;charset=utf-8' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
