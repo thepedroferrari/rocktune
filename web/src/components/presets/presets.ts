@@ -198,6 +198,7 @@ const _OPT_DISPLAY_NAMES = {
   ultimate_perf: 'Ultimate',
   services_trim: 'Services',
   disk_cleanup: 'Disk Clean (if 90%+ full)',
+  native_nvme: 'Native NVMe',
   privacy_tier1: 'Privacy T1',
   privacy_tier2: 'Privacy T2',
   privacy_tier3: 'Privacy T3',
@@ -243,7 +244,7 @@ const CATEGORY_OPTS = {
   },
   experimental: {
     label: 'Experimental',
-    opts: ['msi_mode', 'services_trim', 'disk_cleanup'],
+    opts: ['msi_mode', 'services_trim', 'disk_cleanup', 'native_nvme'],
   },
 } as const satisfies Record<string, { label: string; opts: readonly string[] }>
 

@@ -422,29 +422,40 @@
     }
 
     .quick-start-header {
-      margin-bottom: var(--space-lg);
+      margin-bottom: var(--space-xl);
 
       & h2 {
         font-family: var(--font-display);
-        font-size: 1.3rem;
+        font-size: 1.8rem;
+        font-weight: 700;
         display: inline-flex;
         align-items: center;
         gap: var(--space-sm);
-        margin: 0 0 var(--space-xs);
-        color: var(--text-secondary);
+        margin: 0 0 var(--space-sm);
+        color: var(--text-primary);
+        text-shadow: 0 0 20px color-mix(in oklch, var(--accent) 40%, transparent);
+        letter-spacing: 0.02em;
       }
 
       & p {
-        color: var(--text-muted);
-        font-size: 0.85rem;
+        color: var(--text-secondary);
+        font-size: 1rem;
         margin: 0;
+        font-weight: 500;
       }
     }
 
     .quick-start-icon {
-      width: 20px;
-      height: 20px;
+      width: 28px;
+      height: 28px;
       color: var(--accent);
+      filter: drop-shadow(0 0 8px var(--accent));
+      animation: quickStartIconPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes quickStartIconPulse {
+      0%, 100% { filter: drop-shadow(0 0 8px var(--accent)); }
+      50% { filter: drop-shadow(0 0 16px var(--accent)); }
     }
 
 
@@ -906,8 +917,8 @@
        display: inline-flex;
        align-items: center;
        justify-content: center;
-       width: 2.2rem;
-       height: 2.2rem;
+       width: 2.6rem;
+       height: 2.6rem;
        background: linear-gradient(
          135deg,
          var(--cyber-yellow) 0%,
@@ -915,20 +926,20 @@
        );
        color: oklch(0.12 0.02 102);
        font-family: var(--font-display);
-       font-size: 0.9rem;
+       font-size: 1rem;
        font-weight: 800;
        border-radius: 0;
        clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
        box-shadow:
-         0 0 20px var(--cyber-yellow-glow),
-         0 0 40px color-mix(in oklch, var(--cyber-yellow) 20%, transparent);
+         0 0 25px var(--cyber-yellow-glow),
+         0 0 50px color-mix(in oklch, var(--cyber-yellow) 25%, transparent);
        transition: all 0.3s var(--ease-out-expo);
        position: relative;
 
        &::before {
          content: '';
          position: absolute;
-         inset: -3px;
+         inset: -4px;
          background: linear-gradient(
            135deg,
            var(--cyber-yellow) 0%,
@@ -937,20 +948,20 @@
          );
          clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
          z-index: -1;
-         opacity: 0.4;
+         opacity: 0.5;
          animation: stepNumPulse 2s ease-in-out infinite;
        }
 
        .step:hover & {
          transform: scale(1.15) rotate(5deg);
          box-shadow:
-           0 0 30px var(--cyber-yellow-glow),
-           0 0 60px color-mix(in oklch, var(--cyber-yellow) 35%, transparent);
+           0 0 35px var(--cyber-yellow-glow),
+           0 0 70px color-mix(in oklch, var(--cyber-yellow) 40%, transparent);
          text-shadow:
            0 0 4px color-mix(in oklch, var(--cyber-yellow) 60%, transparent);
 
          &::before {
-           opacity: 0.7;
+           opacity: 0.8;
          }
        }
      }
