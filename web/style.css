@@ -458,6 +458,61 @@
       50% { filter: drop-shadow(0 0 16px var(--accent)); }
     }
 
+     /* Driver warning callout */
+     .driver-warning {
+       display: flex;
+       align-items: flex-start;
+       gap: var(--space-md);
+       padding: var(--space-md) var(--space-lg);
+       margin-top: var(--space-lg);
+       background: linear-gradient(
+         135deg,
+         color-mix(in oklch, var(--caution) 8%, var(--bg-tertiary)) 0%,
+         color-mix(in oklch, var(--caution) 4%, var(--bg-tertiary)) 100%
+       );
+       border: 1px solid color-mix(in oklch, var(--caution) 40%, var(--border));
+       border-left: 3px solid var(--caution);
+       clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+       animation: driverWarningPulse 3s ease-in-out infinite;
+     }
+
+     @keyframes driverWarningPulse {
+       0%, 100% {
+         box-shadow: 0 0 0 0 color-mix(in oklch, var(--caution) 20%, transparent);
+       }
+       50% {
+         box-shadow: 0 0 20px 0 color-mix(in oklch, var(--caution) 30%, transparent);
+       }
+     }
+
+     .driver-warning .warning-icon {
+       width: 24px;
+       height: 24px;
+       color: var(--caution);
+       flex-shrink: 0;
+       filter: drop-shadow(0 0 6px color-mix(in oklch, var(--caution) 50%, transparent));
+     }
+
+     .driver-warning .warning-content {
+       display: flex;
+       flex-direction: column;
+       gap: 4px;
+
+       & strong {
+         font-family: var(--font-display);
+         font-size: 0.9rem;
+         font-weight: 700;
+         color: var(--caution);
+         letter-spacing: 0.02em;
+       }
+
+       & span {
+         font-size: 0.8rem;
+         color: var(--text-secondary);
+         line-height: 1.5;
+       }
+     }
+
 
      .driver-cards {
        display: grid;
@@ -725,8 +780,30 @@
     .peripheral-links {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: var(--space-xs);
+      gap: var(--space-sm);
       width: 100%;
+    }
+
+    .peripheral-links--expanded {
+      grid-template-columns: repeat(2, 1fr);
+      max-height: 400px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: color-mix(in oklch, var(--accent) 40%, transparent) transparent;
+      padding-right: var(--space-xs);
+
+      &::-webkit-scrollbar {
+        width: 4px;
+      }
+
+      &::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      &::-webkit-scrollbar-thumb {
+        background: color-mix(in oklch, var(--accent) 40%, transparent);
+        border-radius: 2px;
+      }
     }
 
     .peripheral-link {
@@ -735,7 +812,7 @@
       align-items: center;
       justify-content: space-between;
       gap: var(--space-sm);
-      padding: var(--space-xs) var(--space-sm);
+      padding: var(--space-sm) var(--space-md);
       background: linear-gradient(135deg, color-mix(in oklch, var(--pf-accent, var(--accent)) 8%, var(--bg-card)), var(--bg-card));
       border: 1px solid color-mix(in oklch, var(--pf-accent, var(--accent)) 20%, var(--border));
       border-radius: 0;
@@ -766,7 +843,7 @@
     .peripheral-link-title {
       font-family: var(--font-ui);
       font-weight: 600;
-      font-size: 0.8rem;
+      font-size: 0.85rem;
       color: var(--text-primary);
       transition: text-shadow 0.2s;
     }
