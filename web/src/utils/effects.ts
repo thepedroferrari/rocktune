@@ -1,3 +1,4 @@
+import { getFrameScheduler } from './frame'
 import type { CleanupController } from './lifecycle'
 
 export function setupCursorGlow(controller?: CleanupController): void {
@@ -10,8 +11,7 @@ export function setupCursorGlow(controller?: CleanupController): void {
   let currentY = 0
   let isAnimating = false
 
-  const scheduleFrame = (cb: FrameRequestCallback): number =>
-    controller ? controller.requestAnimationFrame(cb) : requestAnimationFrame(cb)
+  const frame = getFrameScheduler(controller)
 
   const handleMouseMove = (e: MouseEvent): void => {
     targetX = e.clientX
@@ -19,7 +19,7 @@ export function setupCursorGlow(controller?: CleanupController): void {
 
     if (!isAnimating && !controller?.signal.aborted) {
       isAnimating = true
-      scheduleFrame(animate)
+      frame.schedule(animate)
     }
   }
 
@@ -48,7 +48,7 @@ export function setupCursorGlow(controller?: CleanupController): void {
     if (settled) {
       isAnimating = false
     } else {
-      scheduleFrame(animate)
+      frame.schedule(animate)
     }
   }
 }

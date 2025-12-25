@@ -2,6 +2,7 @@ import { store } from '../state'
 import { asPackageKey, type PackageKey } from '../types'
 import { $id } from '../utils/dom'
 import { createRipple } from '../utils/effects'
+import { getFrameScheduler } from '../utils/frame'
 import type { CleanupController } from '../utils/lifecycle'
 import { createCard, toggleCardSelection } from './software-card'
 
@@ -102,7 +103,58 @@ function setupCardInteractions(controller?: CleanupController): void {
     card.style.setProperty('--light-y', '50%')
   }
 
+  const frame = getFrameScheduler(controller)
+
   let activeCard: HTMLDivElement | null = null
+  let activeRect: DOMRect | null = null
+  let rectDirty = true
+  let pendingPointer: { x: number; y: number } | null = null
+
+  const applyTilt = (): void => {
+    if (!activeCard || !pendingPointer) return
+
+    const gridEl = activeCard.closest('.software-grid')
+    if (gridEl?.classList.contains('list-view')) {
+      resetCardVisual(activeCard)
+      pendingPointer = null
+      return
+    }
+
+    if (rectDirty || !activeRect) {
+      activeRect = activeCard.getBoundingClientRect()
+      rectDirty = false
+    }
+
+    const rect = activeRect
+    const centerX = pendingPointer.x - rect.left - rect.width / 2
+    const centerY = pendingPointer.y - rect.top - rect.height / 2
+
+    const magneticX = centerX * MAGNETIC_FACTOR
+    // Constrain vertical movement: only allow slight downward press, no upward lift
+    const magneticY = Math.max(0, centerY * MAGNETIC_FACTOR * 0.5)
+
+    const normalizedX = centerX / (rect.width / 2)
+    const normalizedY = centerY / (rect.height / 2)
+    const rotateY = normalizedX * TILT_FACTOR
+    const rotateX = -normalizedY * TILT_FACTOR
+
+    activeCard.style.transform = `translate(${magneticX}px, ${magneticY}px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`
+
+    const lightX = ((pendingPointer.x - rect.left) / rect.width) * 100
+    const lightY = ((pendingPointer.y - rect.top) / rect.height) * 100
+    activeCard.style.setProperty('--light-x', `${lightX}%`)
+    activeCard.style.setProperty('--light-y', `${lightY}%`)
+  }
+
+  const markRectDirty = (): void => {
+    rectDirty = true
+    if (activeCard && pendingPointer) {
+      frame.schedule(applyTilt)
+    }
+  }
+
+  addListener(window, 'resize', markRectDirty)
+  addListener(window, 'scroll', markRectDirty, { passive: true })
 
   addListener(grid, 'click', (e: Event) => {
     if (!(e instanceof MouseEvent)) return
@@ -133,6 +185,9 @@ function setupCardInteractions(controller?: CleanupController): void {
         resetCardVisual(activeCard)
         activeCard = null
       }
+      pendingPointer = null
+      activeRect = null
+      rectDirty = true
       return
     }
 
@@ -143,33 +198,23 @@ function setupCardInteractions(controller?: CleanupController): void {
         resetCardVisual(activeCard)
         activeCard = null
       }
+      pendingPointer = null
+      activeRect = null
+      rectDirty = true
       return
     }
 
     if (activeCard && activeCard !== card) {
       resetCardVisual(activeCard)
     }
+    if (activeCard !== card) {
+      activeRect = null
+      rectDirty = true
+    }
     activeCard = card
 
-    const rect = card.getBoundingClientRect()
-    const centerX = e.clientX - rect.left - rect.width / 2
-    const centerY = e.clientY - rect.top - rect.height / 2
-
-    const magneticX = centerX * MAGNETIC_FACTOR
-    // Constrain vertical movement: only allow slight downward press, no upward lift
-    const magneticY = Math.max(0, centerY * MAGNETIC_FACTOR * 0.5)
-
-    const normalizedX = centerX / (rect.width / 2)
-    const normalizedY = centerY / (rect.height / 2)
-    const rotateY = normalizedX * TILT_FACTOR
-    const rotateX = -normalizedY * TILT_FACTOR
-
-    card.style.transform = `translate(${magneticX}px, ${magneticY}px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`
-
-    const lightX = ((e.clientX - rect.left) / rect.width) * 100
-    const lightY = ((e.clientY - rect.top) / rect.height) * 100
-    card.style.setProperty('--light-x', `${lightX}%`)
-    card.style.setProperty('--light-y', `${lightY}%`)
+    pendingPointer = { x: e.clientX, y: e.clientY }
+    frame.schedule(applyTilt)
   })
 
   addListener(grid, 'mouseleave', () => {
@@ -177,6 +222,9 @@ function setupCardInteractions(controller?: CleanupController): void {
       resetCardVisual(activeCard)
       activeCard = null
     }
+    pendingPointer = null
+    activeRect = null
+    rectDirty = true
   })
 
   addListener(grid, 'animationend', (e: Event) => {
