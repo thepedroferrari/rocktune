@@ -298,13 +298,31 @@ Write-OK "Privacy Tier 1 (ads, activity, spotlight disabled)"`)
 
   if (opts.includes(OPTIMIZATION_KEYS.PRIVACY_TIER2))
     code.push(`
-# Privacy Tier 2: Disable tracking services
+# Privacy Tier 2: Disable tracking services + scheduled tasks
 Set-Reg "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection" "AllowTelemetry" 1
 Stop-Service DiagTrack -Force -EA SilentlyContinue; Set-Service DiagTrack -StartupType Disabled -EA SilentlyContinue
 Stop-Service dmwappushservice -Force -EA SilentlyContinue; Set-Service dmwappushservice -StartupType Disabled -EA SilentlyContinue
 Set-Reg "HKLM:\\SOFTWARE\\Microsoft\\Windows\\Windows Error Reporting" "Disabled" 1
 Set-Reg "HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\DeliveryOptimization\\Config" "DODownloadMode" 0
-Write-OK "Privacy Tier 2 (tracking services disabled)"
+
+# Disable telemetry scheduled tasks (like WinUtil)
+$telemetryTasks = @(
+    "\\Microsoft\\Windows\\Application Experience\\Microsoft Compatibility Appraiser",
+    "\\Microsoft\\Windows\\Application Experience\\ProgramDataUpdater",
+    "\\Microsoft\\Windows\\Autochk\\Proxy",
+    "\\Microsoft\\Windows\\Customer Experience Improvement Program\\Consolidator",
+    "\\Microsoft\\Windows\\Customer Experience Improvement Program\\UsbCeip",
+    "\\Microsoft\\Windows\\DiskDiagnostic\\Microsoft-Windows-DiskDiagnosticDataCollector",
+    "\\Microsoft\\Windows\\Feedback\\Siuf\\DmClient",
+    "\\Microsoft\\Windows\\Feedback\\Siuf\\DmClientOnScenarioDownload",
+    "\\Microsoft\\Windows\\Windows Error Reporting\\QueueReporting",
+    "\\Microsoft\\Windows\\PI\\Sqm-Tasks",
+    "\\Microsoft\\Windows\\NetTrace\\GatherNetworkInfo"
+)
+foreach ($task in $telemetryTasks) {
+    schtasks /Change /TN $task /Disable 2>&1 | Out-Null
+}
+Write-OK "Privacy Tier 2 (tracking services + scheduled tasks disabled)"
 Write-Host "  [WARN] May affect Windows diagnostics" -ForegroundColor Yellow`)
 
   if (opts.includes(OPTIMIZATION_KEYS.PRIVACY_TIER3))
@@ -510,15 +528,28 @@ if ($usedPercent -ge 90) {
     Write-Host " (cleanup only runs at 90%+)"
 }`)
 
-  if (opts.includes(OPTIMIZATION_KEYS.IPV4_PREFER))
+  // Handle IPv4/Teredo together to avoid registry conflict
+  // DisabledComponents bitmask: 0x20 (32) = Prefer IPv4, 0x01 (1) = Disable tunnels
+  const hasIpv4Prefer = opts.includes(OPTIMIZATION_KEYS.IPV4_PREFER)
+  const hasTeredoDisable = opts.includes(OPTIMIZATION_KEYS.TEREDO_DISABLE)
+
+  if (hasIpv4Prefer && hasTeredoDisable) {
+    // Both selected - combine flags: 32 + 1 = 33
+    code.push(`
+# Prefer IPv4 + Disable Teredo (combined)
+netsh interface teredo set state disabled 2>&1 | Out-Null
+Set-Reg "HKLM:\\SYSTEM\\CurrentControlSet\\Services\\Tcpip6\\Parameters" "DisabledComponents" 33
+Write-OK "IPv4 preferred + Teredo disabled (combined)"
+Write-Host "  [WARN] May break Xbox Live and IPv6-only services" -ForegroundColor Yellow
+Write-Host "  [INFO] Requires reboot to take effect" -ForegroundColor Gray`)
+  } else if (hasIpv4Prefer) {
     code.push(`
 # Prefer IPv4 over IPv6
 Set-Reg "HKLM:\\SYSTEM\\CurrentControlSet\\Services\\Tcpip6\\Parameters" "DisabledComponents" 32
 Write-OK "IPv4 preferred over IPv6"
 Write-Host "  [WARN] May break IPv6-only paths or Xbox/Store features" -ForegroundColor Yellow
 Write-Host "  [INFO] Requires reboot to take effect" -ForegroundColor Gray`)
-
-  if (opts.includes(OPTIMIZATION_KEYS.TEREDO_DISABLE))
+  } else if (hasTeredoDisable) {
     code.push(`
 # Disable Teredo tunneling
 netsh interface teredo set state disabled 2>&1 | Out-Null
@@ -526,6 +557,7 @@ Set-Reg "HKLM:\\SYSTEM\\CurrentControlSet\\Services\\Tcpip6\\Parameters" "Disabl
 Write-OK "Teredo IPv6 tunneling disabled"
 Write-Host "  [WARN] May break Xbox Live connectivity" -ForegroundColor Yellow
 Write-Host "  [INFO] Requires reboot to take effect" -ForegroundColor Gray`)
+  }
 
   if (opts.includes(OPTIMIZATION_KEYS.NATIVE_NVME))
     code.push(`
@@ -560,6 +592,216 @@ if (-not $nvmeDrives) {
         Write-Host "  [WARN] EXPERIMENTAL: Known issues with Data Deduplication - disable dedup first if enabled" -ForegroundColor Yellow
         Write-Host "  [INFO] Rollback: Set registry value to 0 and reboot" -ForegroundColor Gray
     }
+}`)
+
+  // ===== NEW OPTIMIZATIONS =====
+
+  // Note: restore_point is handled by pre-flight at script start, not here
+  // The checkbox enables/enhances the pre-flight behavior
+
+  if (opts.includes(OPTIMIZATION_KEYS.CLASSIC_MENU))
+    code.push(`
+# Classic Right-Click Context Menu (Windows 11)
+$build = [int](Get-CimInstance Win32_OperatingSystem).BuildNumber
+if ($build -ge 22000) {
+    $menuPath = "HKCU:\\Software\\Classes\\CLSID\\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\\InprocServer32"
+    if (!(Test-Path $menuPath)) { New-Item -Path $menuPath -Force | Out-Null }
+    Set-ItemProperty -Path $menuPath -Name "(Default)" -Value "" -Force
+    Write-OK "Classic right-click menu enabled (restart Explorer or reboot)"
+} else {
+    Write-Host "  [SKIP] Classic menu: Windows 10 already uses classic menu" -ForegroundColor Gray
+}`)
+
+  if (opts.includes(OPTIMIZATION_KEYS.STORAGE_SENSE))
+    code.push(`
+# Disable Storage Sense (prevent surprise file deletions)
+Set-Reg "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\StorageSense\\Parameters\\StoragePolicy" "01" 0
+Set-Reg "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\StorageSense" "AllowStorageSenseGlobal" 0
+Write-OK "Storage Sense disabled (no auto-cleanup during gaming)"`)
+
+  if (opts.includes(OPTIMIZATION_KEYS.DISPLAY_PERF))
+    code.push(`
+# Display Performance Mode (faster visual transitions)
+$vfx = "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\VisualEffects"
+Set-Reg $vfx "VisualFXSetting" 2
+$adv = "HKCU:\\Control Panel\\Desktop"
+Set-ItemProperty -Path $adv -Name "UserPreferencesMask" -Value ([byte[]](0x90,0x12,0x03,0x80,0x10,0x00,0x00,0x00)) -Type Binary -EA SilentlyContinue
+Set-Reg "HKCU:\\Control Panel\\Desktop\\WindowMetrics" "MinAnimate" 0 "String"
+Write-OK "Display performance mode enabled"`)
+
+  if (opts.includes(OPTIMIZATION_KEYS.END_TASK))
+    code.push(`
+# Taskbar End Task (Windows 11 22H2+)
+$build = [int](Get-CimInstance Win32_OperatingSystem).BuildNumber
+if ($build -ge 22621) {
+    Set-Reg "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced\\TaskbarDeveloperSettings" "TaskbarEndTask" 1
+    Write-OK "End Task enabled in taskbar context menu"
+} else {
+    Write-Host "  [SKIP] Taskbar End Task: Requires Windows 11 22H2+" -ForegroundColor Gray
+}`)
+
+  if (opts.includes(OPTIMIZATION_KEYS.EXPLORER_CLEANUP))
+    code.push(`
+# Explorer Cleanup - Remove Home/Gallery from navigation (Windows 11)
+$build = [int](Get-CimInstance Win32_OperatingSystem).BuildNumber
+if ($build -ge 22000) {
+    # Remove Home
+    $homePath = "HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Desktop\\NameSpace\\{f874310e-b6b7-47dc-bc84-b9e6b38f5903}"
+    if (Test-Path $homePath) { Remove-Item $homePath -Force -EA SilentlyContinue }
+    # Remove Gallery
+    $galleryPath = "HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Desktop\\NameSpace\\{e88865ea-0e1c-4e20-9aa6-edcd0212c87c}"
+    if (Test-Path $galleryPath) { Remove-Item $galleryPath -Force -EA SilentlyContinue }
+    Write-OK "Home and Gallery removed from Explorer navigation"
+} else {
+    Write-Host "  [SKIP] Explorer cleanup: Windows 11 specific" -ForegroundColor Gray
+}`)
+
+  if (opts.includes(OPTIMIZATION_KEYS.NOTIFICATIONS_OFF))
+    code.push(`
+# Disable Notifications (no popup distractions)
+Set-Reg "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\PushNotifications" "ToastEnabled" 0
+Set-Reg "HKCU:\\Software\\Policies\\Microsoft\\Windows\\Explorer" "DisableNotificationCenter" 1
+Set-Reg "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Notifications\\Settings" "NOC_GLOBAL_SETTING_TOASTS_ENABLED" 0
+Write-OK "Windows notifications disabled (no popups during gaming)"`)
+
+  if (opts.includes(OPTIMIZATION_KEYS.PS7_TELEMETRY))
+    code.push(`
+# Disable PowerShell 7 Telemetry
+[System.Environment]::SetEnvironmentVariable("POWERSHELL_TELEMETRY_OPTOUT", "1", "Machine")
+Write-OK "PowerShell 7 telemetry disabled"`)
+
+  if (opts.includes(OPTIMIZATION_KEYS.MULTIPLANE_OVERLAY))
+    code.push(`
+# Disable Multiplane Overlay (fixes streaming/encoding issues)
+Set-Reg "HKLM:\\SOFTWARE\\Microsoft\\Windows\\Dwm" "OverlayTestMode" 5
+Write-OK "Multiplane Overlay disabled (streamer fix)"
+Write-Host "  [INFO] Reduces GPU overhead from DWM composition" -ForegroundColor Gray`)
+
+  if (opts.includes(OPTIMIZATION_KEYS.MOUSE_ACCEL))
+    code.push(`
+# Disable Mouse Acceleration (1:1 raw input)
+Set-Reg "HKCU:\\Control Panel\\Mouse" "MouseSpeed" 0 "String"
+Set-Reg "HKCU:\\Control Panel\\Mouse" "MouseThreshold1" 0 "String"
+Set-Reg "HKCU:\\Control Panel\\Mouse" "MouseThreshold2" 0 "String"
+Write-OK "Mouse acceleration disabled (enhanced pointer precision off)"`)
+
+  if (opts.includes(OPTIMIZATION_KEYS.USB_SUSPEND))
+    code.push(`
+# Disable USB Selective Suspend (keep peripherals awake)
+Set-Reg "HKLM:\\SYSTEM\\CurrentControlSet\\Services\\USB" "DisableSelectiveSuspend" 1
+# Also disable via power config
+powercfg /setacvalueindex SCHEME_CURRENT 2a737441-1930-4402-8d77-b2bebba308a3 48e6b7a6-50f5-4782-a5d4-53bb8f07e226 0 2>$null
+powercfg /setactive SCHEME_CURRENT 2>$null
+Write-OK "USB Selective Suspend disabled (peripherals always awake)"`)
+
+  if (opts.includes(OPTIMIZATION_KEYS.KEYBOARD_RESPONSE))
+    code.push(`
+# Maximize Keyboard Response
+Set-Reg "HKCU:\\Control Panel\\Keyboard" "KeyboardDelay" 0 "String"
+Set-Reg "HKCU:\\Control Panel\\Keyboard" "KeyboardSpeed" 31 "String"
+Write-OK "Keyboard response maximized (fastest repeat rate)"`)
+
+  if (opts.includes(OPTIMIZATION_KEYS.WPBT_DISABLE))
+    code.push(`
+# Disable WPBT (Windows Platform Binary Table - OEM bloat injection)
+Set-Reg "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Session Manager" "DisableWpbt" 1
+Write-OK "WPBT disabled (blocks OEM firmware bloat injection)"
+Write-Host "  [WARN] Some OEM features may require manual driver installation" -ForegroundColor Yellow`)
+
+  if (opts.includes(OPTIMIZATION_KEYS.QOS_GAMING))
+    code.push(`
+# QoS Gaming Priority (prioritize game traffic)
+$qosPath = "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\QoS"
+if (!(Test-Path "$qosPath\\GameTraffic")) { New-Item -Path "$qosPath\\GameTraffic" -Force | Out-Null }
+Set-Reg "$qosPath\\GameTraffic" "Version" "1.0" "String"
+Set-Reg "$qosPath\\GameTraffic" "Protocol" "*" "String"
+Set-Reg "$qosPath\\GameTraffic" "Local Port" "*" "String"
+Set-Reg "$qosPath\\GameTraffic" "DSCP Value" 46 "String"
+Set-Reg "$qosPath\\GameTraffic" "Throttle Rate" -1
+Write-OK "QoS Gaming policy created (DSCP 46 priority)"
+Write-Host "  [INFO] Works best with router QoS enabled" -ForegroundColor Gray`)
+
+  if (opts.includes(OPTIMIZATION_KEYS.NETWORK_THROTTLING))
+    code.push(`
+# Disable Network Throttling
+Set-Reg "HKLM:\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile" "NetworkThrottlingIndex" 0xFFFFFFFF
+Set-Reg "HKLM:\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile" "SystemResponsiveness" 0
+Write-OK "Network throttling disabled"`)
+
+  if (opts.includes(OPTIMIZATION_KEYS.INTERRUPT_AFFINITY))
+    code.push(`
+# GPU Interrupt Affinity (lock to CPU core 0)
+$gpuDevice = Get-PnpDevice -Class Display | Where-Object { $_.Status -eq "OK" } | Select-Object -First 1
+if ($gpuDevice) {
+    $msiPath = "HKLM:\\SYSTEM\\CurrentControlSet\\Enum\\$($gpuDevice.InstanceId -replace '\\\\','\\\\')\\Device Parameters\\Interrupt Management\\Affinity Policy"
+    if (!(Test-Path $msiPath)) { New-Item -Path $msiPath -Force | Out-Null }
+    Set-Reg $msiPath "DevicePolicy" 4
+    Set-Reg $msiPath "AssignmentSetOverride" 1
+    Write-OK "GPU interrupt affinity set to CPU 0 (reboot required)"
+}`)
+
+  if (opts.includes(OPTIMIZATION_KEYS.PROCESS_MITIGATION))
+    code.push(`
+# Disable Process Mitigations (benchmarking mode)
+Set-Reg "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\kernel" "KernelShadowStacksForceDisabled" 1
+Set-Reg "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\kernel" "DisableExceptionChainValidation" 1
+Write-OK "Process mitigations disabled (benchmark mode)"
+Write-Host "  [WARN] Reduces security - consider re-enabling for daily use" -ForegroundColor Yellow`)
+
+  if (opts.includes(OPTIMIZATION_KEYS.SMT_DISABLE))
+    code.push(`
+# Disable SMT/Hyperthreading (BIOS-only operation)
+Write-Host ""
+Write-Host "  ╔══════════════════════════════════════════════════════════════╗" -ForegroundColor Yellow
+Write-Host "  ║  SMT/HYPERTHREADING CANNOT BE DISABLED VIA WINDOWS           ║" -ForegroundColor Yellow
+Write-Host "  ╠══════════════════════════════════════════════════════════════╣" -ForegroundColor Yellow
+Write-Host "  ║  This must be done in BIOS/UEFI settings:                    ║" -ForegroundColor White
+Write-Host "  ║                                                              ║" -ForegroundColor White
+Write-Host "  ║  AMD:   Advanced → CPU Configuration → SMT Mode → Disabled   ║" -ForegroundColor Cyan
+Write-Host "  ║  Intel: Advanced → CPU Configuration → Hyper-Threading → Off ║" -ForegroundColor Cyan
+Write-Host "  ║                                                              ║" -ForegroundColor White
+Write-Host "  ║  ⚠️  ONLY for single-threaded benchmarks!                     ║" -ForegroundColor Red
+Write-Host "  ║  ⚠️  Re-enable immediately after benchmarking!                ║" -ForegroundColor Red
+Write-Host "  ╚══════════════════════════════════════════════════════════════╝" -ForegroundColor Yellow
+Write-Host ""
+Write-Host "  [INFO] Press Enter to continue..." -ForegroundColor Gray
+pause`)
+
+  if (opts.includes(OPTIMIZATION_KEYS.AUDIO_EXCLUSIVE))
+    code.push(`
+# WASAPI Exclusive Mode (lower audio latency)
+Set-Reg "HKCU:\\Software\\Microsoft\\Multimedia\\Audio" "UserDuckingPreference" 3
+Write-OK "WASAPI Exclusive Mode configured"
+Write-Host "  [WARN] Only one app can use audio at a time in exclusive mode" -ForegroundColor Yellow`)
+
+  if (opts.includes(OPTIMIZATION_KEYS.TCP_OPTIMIZER))
+    code.push(`
+# TCP Stack Optimization (aggressive settings)
+$tcpPath = "HKLM:\\SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters"
+Set-Reg $tcpPath "TcpNoDelay" 1
+Set-Reg $tcpPath "TcpAckFrequency" 1
+Set-Reg $tcpPath "TcpDelAckTicks" 0
+Set-Reg $tcpPath "MaxUserPort" 65534
+Set-Reg $tcpPath "TcpTimedWaitDelay" 30
+netsh int tcp set global autotuninglevel=disabled 2>&1 | Out-Null
+netsh int tcp set global chimney=disabled 2>&1 | Out-Null
+netsh int tcp set supplemental template=internet congestionprovider=ctcp 2>&1 | Out-Null
+Write-OK "TCP stack optimized (aggressive gaming settings)"
+Write-Host "  [WARN] May increase bandwidth usage" -ForegroundColor Yellow`)
+
+  if (opts.includes(OPTIMIZATION_KEYS.CORE_ISOLATION_OFF))
+    code.push(`
+# Disable Core Isolation / VBS (security tradeoff for performance)
+Write-Host "  [WARN] Disabling Core Isolation significantly reduces security!" -ForegroundColor Yellow
+$confirm = Read-Host "  Are you sure? This disables Virtualization Based Security (y/N)"
+if ($confirm -eq 'y' -or $confirm -eq 'Y') {
+    Set-Reg "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\DeviceGuard" "EnableVirtualizationBasedSecurity" 0
+    Set-Reg "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\DeviceGuard\\Scenarios\\HypervisorEnforcedCodeIntegrity" "Enabled" 0
+    bcdedit /set hypervisorlaunchtype off 2>&1 | Out-Null
+    Write-OK "Core Isolation / VBS disabled (reboot required)"
+    Write-Host "  [INFO] Re-enable: Device Security → Core Isolation → Memory Integrity" -ForegroundColor Cyan
+} else {
+    Write-Host "  [SKIP] Core Isolation disable cancelled" -ForegroundColor Gray
 }`)
 
   return code.join('\n')

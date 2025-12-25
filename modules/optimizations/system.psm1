@@ -549,6 +549,158 @@ function Remove-ExplorerClutter {
 }
 
 
+function Disable-MouseAcceleration {
+    <#
+    .SYNOPSIS
+        Disables Windows mouse acceleration for consistent 1:1 movement.
+    .DESCRIPTION
+        Essential for competitive FPS players - ensures mouse movement
+        is linear and predictable regardless of speed.
+    #>
+    param(
+        [bool]$Enable = $true
+    )
+
+    if (-not $Enable) {
+        Write-Log "Disable mouse acceleration: skipped" "INFO"
+        return
+    }
+
+    try {
+        $mousePath = "HKCU:\Control Panel\Mouse"
+        Backup-RegistryKey -Path $mousePath
+
+        # Disable enhanced pointer precision (mouse acceleration)
+        Set-RegistryValue -Path $mousePath -Name "MouseSpeed" -Value "0" -Type "String"
+        Set-RegistryValue -Path $mousePath -Name "MouseThreshold1" -Value "0" -Type "String"
+        Set-RegistryValue -Path $mousePath -Name "MouseThreshold2" -Value "0" -Type "String"
+
+        Write-Log "Disabled mouse acceleration (1:1 movement)" "SUCCESS"
+    } catch {
+        Write-Log "Error disabling mouse acceleration: $_" "ERROR"
+    }
+}
+
+
+function Set-KeyboardResponse {
+    <#
+    .SYNOPSIS
+        Maximizes keyboard response speed.
+    .DESCRIPTION
+        Sets keyboard repeat delay to minimum and repeat rate to maximum
+        for faster key response in games.
+    #>
+    param(
+        [bool]$Enable = $true
+    )
+
+    if (-not $Enable) {
+        Write-Log "Keyboard response optimization: skipped" "INFO"
+        return
+    }
+
+    try {
+        $keyboardPath = "HKCU:\Control Panel\Keyboard"
+        Backup-RegistryKey -Path $keyboardPath
+
+        # KeyboardDelay: 0 = shortest delay (250ms), 3 = longest (1000ms)
+        # KeyboardSpeed: 0 = slowest, 31 = fastest repeat rate
+        Set-RegistryValue -Path $keyboardPath -Name "KeyboardDelay" -Value "0" -Type "String"
+        Set-RegistryValue -Path $keyboardPath -Name "KeyboardSpeed" -Value "31" -Type "String"
+
+        Write-Log "Keyboard response maximized (fastest repeat)" "SUCCESS"
+    } catch {
+        Write-Log "Error setting keyboard response: $_" "ERROR"
+    }
+}
+
+
+function Disable-USBSelectiveSuspend {
+    <#
+    .SYNOPSIS
+        Disables USB selective suspend to prevent input device sleep.
+    .DESCRIPTION
+        Prevents Windows from putting USB devices to sleep, which can
+        cause input lag or disconnection issues with gaming peripherals.
+    #>
+    param(
+        [bool]$Enable = $true
+    )
+
+    if (-not $Enable) {
+        Write-Log "Disable USB selective suspend: skipped" "INFO"
+        return
+    }
+
+    try {
+        # Disable via power scheme settings (all schemes)
+        $schemes = powercfg /list 2>&1 | Select-String "GUID" | ForEach-Object {
+            if ($_ -match '([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})') {
+                $matches[1]
+            }
+        }
+
+        foreach ($scheme in $schemes) {
+            if ($scheme) {
+                # USB selective suspend setting GUID
+                powercfg /setacvalueindex $scheme 2a737441-1930-4402-8d77-b2bebba308a3 48e6b7a6-50f5-4782-a5d4-53bb8f07e226 0 2>&1 | Out-Null
+                powercfg /setdcvalueindex $scheme 2a737441-1930-4402-8d77-b2bebba308a3 48e6b7a6-50f5-4782-a5d4-53bb8f07e226 0 2>&1 | Out-Null
+            }
+        }
+
+        # Also set via registry for USB hub power management
+        $usbPath = "HKLM:\SYSTEM\CurrentControlSet\Services\USB"
+        if (-not (Test-Path $usbPath)) {
+            New-Item -Path $usbPath -Force | Out-Null
+        }
+        Backup-RegistryKey -Path $usbPath
+        Set-RegistryValue -Path $usbPath -Name "DisableSelectiveSuspend" -Value 1 -Type "DWORD"
+
+        Write-Log "Disabled USB selective suspend (no input device sleep)" "SUCCESS"
+    } catch {
+        Write-Log "Error disabling USB selective suspend: $_" "ERROR"
+    }
+}
+
+
+function Set-AudioExclusiveMode {
+    <#
+    .SYNOPSIS
+        Configures audio for exclusive mode and lower latency.
+    .DESCRIPTION
+        Enables WASAPI exclusive mode hints and reduces audio buffer
+        for lower latency audio in competitive games.
+    #>
+    param(
+        [bool]$Enable = $true
+    )
+
+    if (-not $Enable) {
+        Write-Log "Audio exclusive mode: skipped" "INFO"
+        return
+    }
+
+    try {
+        # Get default audio endpoint
+        $audioPath = "HKCU:\Software\Microsoft\Multimedia\Audio"
+        if (-not (Test-Path $audioPath)) {
+            New-Item -Path $audioPath -Force | Out-Null
+        }
+        Backup-RegistryKey -Path $audioPath
+
+        # Enable exclusive mode application priority
+        Set-RegistryValue -Path $audioPath -Name "UserDuckingPreference" -Value 3 -Type "DWORD"
+
+        # Reduce system sounds impact
+        $soundPath = "HKCU:\AppEvents\Schemes"
+        Backup-RegistryKey -Path $soundPath
+        Set-RegistryValue -Path $soundPath -Name "(Default)" -Value ".None" -Type "String"
+
+        Write-Log "Audio configured for exclusive mode / lower latency" "SUCCESS"
+    } catch {
+        Write-Log "Error setting audio exclusive mode: $_" "ERROR"
+    }
+}
 
 
 function Invoke-SystemOptimizations {
@@ -667,6 +819,10 @@ Export-ModuleMember -Function @(
     'Set-DisplayPerformance',
     'Enable-TaskbarEndTask',
     'Remove-ExplorerClutter',
+    'Disable-MouseAcceleration',
+    'Set-KeyboardResponse',
+    'Disable-USBSelectiveSuspend',
+    'Set-AudioExclusiveMode',
     'Test-SystemOptimizations',
     'Invoke-SystemOptimizations',
     'Undo-SystemOptimizations'

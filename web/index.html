@@ -783,6 +783,71 @@
                         <span class="preset-badge" hidden></span>
                         <span class="label-hint">Free disk space</span>
                     </label>
+                    <label data-opt="restore_point" data-tooltip="**Create Restore Point** — safety net
+
+- Creates system restore point before changes
+- Allows rollback if something goes wrong
+- Only takes a few seconds
+
+✓ Always recommended before major changes
+✓ No impact on performance">
+                        <input type="checkbox" name="opt" value="restore_point">
+                        <span class="label-text">Restore Point</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint">Safety backup first</span>
+                    </label>
+                    <label data-opt="classic_menu" data-tooltip="**Classic Context Menu** — Win11 right-click fix
+
+- Restores Windows 10 style right-click menu
+- Removes 'Show more options' extra click
+- All options visible immediately
+
+✓ Windows 11 only (no effect on Win10)
+✓ Much faster workflow">
+                        <input type="checkbox" name="opt" value="classic_menu">
+                        <span class="label-text">Classic Context Menu</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint">Win11 right-click fix</span>
+                    </label>
+                    <label data-opt="storage_sense" data-tooltip="**Disable Storage Sense** — no surprise cleanups
+
+- Stops Windows from auto-deleting files
+- Prevents unexpected disk cleanup during gaming
+- You control when files are deleted
+
+✓ Prevents stutters from background disk activity
+✓ Full control over your files">
+                        <input type="checkbox" name="opt" value="storage_sense">
+                        <span class="label-text">Disable Storage Sense</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint">No auto-cleanup</span>
+                    </label>
+                    <label data-opt="end_task" data-tooltip="**Taskbar End Task** — quick app termination
+
+- Adds 'End Task' to taskbar right-click menu
+- Kill frozen apps without Task Manager
+- Faster than Ctrl+Shift+Esc
+
+✓ Windows 11 22H2+ feature
+✓ No downsides">
+                        <input type="checkbox" name="opt" value="end_task">
+                        <span class="label-text">Taskbar End Task</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint">Quick app killer</span>
+                    </label>
+                    <label data-opt="explorer_cleanup" data-tooltip="**Explorer Cleanup** — remove clutter
+
+- Removes Home folder from navigation pane
+- Removes Gallery from navigation pane
+- Cleaner Explorer sidebar
+
+✓ Windows 11 only
+✓ Purely cosmetic, no functionality lost">
+                        <input type="checkbox" name="opt" value="explorer_cleanup">
+                        <span class="label-text">Explorer Cleanup</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint">Remove Home/Gallery</span>
+                    </label>
                 </fieldset>
 
                 <fieldset class="tier-safe-field">
@@ -829,6 +894,34 @@
                         <span class="preset-badge" hidden></span>
                         <span class="label-hint">Razer/WPBT bloat prevention</span>
                     </label>
+                    <label data-opt="display_perf" data-tooltip="**Display Performance Mode** — snappier UI
+
+- Adjusts visual effects for best performance
+- Keeps smooth font rendering
+- Disables unnecessary animations
+
+✓ Reduces GPU load on desktop
+✓ Faster window transitions
+✓ Still looks good">
+                        <input type="checkbox" name="opt" value="display_perf">
+                        <span class="label-text">Display Performance</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint">Faster visual transitions</span>
+                    </label>
+                    <label data-opt="multiplane_overlay" data-tooltip="**Disable Multiplane Overlay** — streamer essential
+
+- Reduces GPU overhead from DWM composition
+- Prevents encoding stutters in OBS/NVENC
+- Fixes black screen issues in some captures
+
+✓ Best for: Streamers and content creators
+✓ May reduce micro-stutters in windowed games
+⚠️ Minor visual glitches possible in some apps">
+                        <input type="checkbox" name="opt" value="multiplane_overlay">
+                        <span class="label-text">Disable MPO</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint">Streamer fix, less GPU overhead</span>
+                    </label>
                 </fieldset>
 
                 <fieldset class="tier-safe-field">
@@ -874,6 +967,20 @@
                         <span class="label-text">PCIe ASPM Off</span>
                         <span class="preset-badge" hidden></span>
                         <span class="label-hint">Maximum GPU power</span>
+                    </label>
+                    <label data-opt="usb_suspend" data-tooltip="**Disable USB Selective Suspend** — always-on peripherals
+
+- Prevents USB devices from entering low-power mode
+- Keeps mice/keyboards at full polling rate
+- No wake-up latency for input devices
+
+✓ Critical for competitive gaming
+✓ Fixes random input delays
+✓ Slightly higher power usage (~0.5W)">
+                        <input type="checkbox" name="opt" value="usb_suspend">
+                        <span class="label-text">USB Selective Suspend</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint">Keeps peripherals awake</span>
                     </label>
                 </fieldset>
 
@@ -940,6 +1047,33 @@
                         <span class="preset-badge" hidden></span>
                         <span class="label-hint">Remove AI assistant hooks</span>
                     </label>
+                    <label data-opt="notifications_off" data-tooltip="**Disable Notifications** — no distractions
+
+- Stops all Windows toast notifications
+- No popups during gaming or streaming
+- Focus remains on your game
+
+✓ Essential for streamers
+✓ No embarrassing popup reveals
+✓ Can re-enable in Settings">
+                        <input type="checkbox" name="opt" value="notifications_off">
+                        <span class="label-text">Disable Notifications</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint">No popup distractions</span>
+                    </label>
+                    <label data-opt="ps7_telemetry" data-tooltip="**PowerShell 7 Telemetry Off** — privacy
+
+- Disables PowerShell Core telemetry collection
+- Sets POWERSHELL_TELEMETRY_OPTOUT=1
+- No usage data sent to Microsoft
+
+✓ Only affects PowerShell 7+ (not Windows PowerShell)
+✓ No functionality impact">
+                        <input type="checkbox" name="opt" value="ps7_telemetry">
+                        <span class="label-text">PS7 Telemetry Off</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint">PowerShell 7 privacy</span>
+                    </label>
                 </fieldset>
 
                 <fieldset class="tier-safe-field">
@@ -959,9 +1093,73 @@
                         <span class="label-hint">Lower audio latency</span>
                     </label>
                 </fieldset>
+
+                <fieldset class="tier-safe-field">
+                    <legend><span class="tier tier-safe">Safe</span> Input</legend>
+                    <label data-opt="mouse_accel" data-tooltip="**Disable Mouse Acceleration** — 1:1 movement
+
+- Removes enhanced pointer precision
+- Physical movement = exact cursor movement
+- No curve or acceleration applied
+
+✓ Essential for competitive FPS players
+✓ Consistent muscle memory building
+✓ Most pros play with this disabled">
+                        <input type="checkbox" name="opt" value="mouse_accel">
+                        <span class="label-text">Disable Mouse Accel</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint">1:1 raw input</span>
+                    </label>
+                    <label data-opt="keyboard_response" data-tooltip="**Maximize Keyboard Response** — fastest input
+
+- Sets keyboard repeat delay to minimum (0)
+- Sets keyboard repeat rate to maximum (31)
+- Faster response when holding keys
+
+✓ Competitive advantage in games
+✓ Faster typing/navigation
+✓ Purely preference-based">
+                        <input type="checkbox" name="opt" value="keyboard_response">
+                        <span class="label-text">Keyboard Response</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint">Fastest repeat rate</span>
+                    </label>
+                </fieldset>
             </div>
 
             <div class="upgrades-grid upgrades-grid--danger">
+                <fieldset class="tier-caution-field">
+                    <legend><span class="tier tier-caution">Caution</span> Network</legend>
+                    <label data-opt="qos_gaming" data-tooltip="**QoS Gaming Priority** — network traffic shaping
+
+- Creates QoS policies for game traffic
+- Prioritizes UDP packets with DSCP 46
+- Covers common game port ranges
+
+✓ Reduces latency spikes on busy networks
+✓ Best for shared home connections
+⚠️ May need router QoS support for full effect">
+                        <input type="checkbox" name="opt" value="qos_gaming">
+                        <span class="label-text">QoS Gaming</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint">Prioritize game traffic</span>
+                    </label>
+                    <label data-opt="network_throttling" data-tooltip="**Disable Network Throttling** — remove limits
+
+- Sets NetworkThrottlingIndex to 0xFFFFFFFF
+- Removes Windows network limiting
+- More bandwidth for games
+
+✓ Helps on fast connections (1Gbps+)
+⚠️ Slightly higher CPU usage
+⚠️ Marginal effect on slow connections">
+                        <input type="checkbox" name="opt" value="network_throttling">
+                        <span class="label-text">Disable Net Throttle</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint">Remove bandwidth limits</span>
+                    </label>
+                </fieldset>
+
                 <fieldset class="tier-caution-field">
                     <legend><span class="tier tier-caution">Caution</span> Power</legend>
                     <label data-opt="ultimate_perf" data-tooltip="**Ultimate Performance** — maximum aggression
@@ -1107,6 +1305,34 @@ After reboot:
                         <span class="preset-badge" hidden></span>
                         <span class="label-hint"><svg class="warning-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> Win11 24H2+, experimental</span>
                     </label>
+                    <label data-opt="interrupt_affinity" data-tooltip="**GPU Interrupt Affinity** — lock GPU to CPU core
+
+- Assigns GPU interrupts to specific CPU core
+- Reduces cross-core communication latency
+- May improve frame time consistency
+
+✓ Best for: Benchmarking, competitive gaming
+⚠️ Requires reboot to take effect
+⚠️ Results vary by CPU topology">
+                        <input type="checkbox" name="opt" value="interrupt_affinity">
+                        <span class="label-text">GPU IRQ Affinity</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint">Lock GPU to CPU core</span>
+                    </label>
+                    <label data-opt="process_mitigation" data-tooltip="**Disable Process Mitigations** — benchmarking mode
+
+- Disables kernel shadow stacks
+- Reduces security overhead for benchmarks
+- Maximum raw performance
+
+⚠️ Reduces security protections
+⚠️ Only for benchmarking sessions
+⚠️ Consider re-enabling for daily use">
+                        <input type="checkbox" name="opt" value="process_mitigation">
+                        <span class="label-text">Disable Mitigations</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint"><svg class="warning-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> Security tradeoff</span>
+                    </label>
                 </fieldset>
 
                 <fieldset class="tier-risky-field">
@@ -1140,6 +1366,21 @@ After reboot:
                         <span class="label-text">Disable Teredo</span>
                         <span class="preset-badge" hidden></span>
                         <span class="label-hint"><svg class="warning-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> May affect Xbox Live</span>
+                    </label>
+                    <label data-opt="tcp_optimizer" data-tooltip="**TCP Stack Optimization** — aggressive network tuning
+
+- Disables Nagle algorithm (TcpNoDelay)
+- Sets TcpAckFrequency to 1 (immediate ACK)
+- Disables auto-tuning level
+- Reduces bufferbloat
+
+✓ Best for: Competitive gaming
+⚠️ May increase bandwidth usage
+⚠️ Not recommended for high-latency connections">
+                        <input type="checkbox" name="opt" value="tcp_optimizer">
+                        <span class="label-text">TCP Optimizer</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint"><svg class="warning-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> Aggressive TCP tuning</span>
                     </label>
                 </fieldset>
 
@@ -1209,6 +1450,68 @@ Removes:
                         <span class="label-text">Remove Bloatware</span>
                         <span class="preset-badge" hidden></span>
                         <span class="label-hint">Built-in UWP apps</span>
+                    </label>
+                    <label data-opt="wpbt_disable" data-tooltip="**Disable WPBT** — block firmware bloat
+
+- Windows Platform Binary Table
+- OEMs use this to inject software via BIOS
+- Prevents auto-reinstall of OEM bloatware
+
+✓ Clean install stays clean
+⚠️ Some OEM features may not work
+⚠️ You can still install drivers manually">
+                        <input type="checkbox" name="opt" value="wpbt_disable">
+                        <span class="label-text">Disable WPBT</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint"><svg class="warning-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> Block OEM firmware injection</span>
+                    </label>
+                </fieldset>
+
+                <fieldset class="tier-risky-field">
+                    <legend><span class="tier tier-risky">Risky</span> Experimental</legend>
+                    <label data-opt="audio_exclusive" data-tooltip="**WASAPI Exclusive Mode** — lower audio latency
+
+- Forces applications to use exclusive audio mode
+- Bypasses Windows Audio Session API mixer
+- Direct audio pipeline to hardware
+
+✓ Best for: Competitive FPS, audio production
+⚠️ Only one app can use audio at a time
+⚠️ Discord/music may cut out during games">
+                        <input type="checkbox" name="opt" value="audio_exclusive">
+                        <span class="label-text">WASAPI Exclusive</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint"><svg class="warning-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> Lowest audio latency</span>
+                    </label>
+                    <label data-opt="smt_disable" data-tooltip="**Disable SMT/Hyperthreading** — BIOS ONLY
+
+⚠️ CANNOT be disabled via Windows!
+This option shows BIOS instructions only.
+
+- Must be changed in BIOS/UEFI settings
+- AMD: CPU Configuration → SMT Mode → Disabled
+- Intel: CPU Configuration → Hyper-Threading → Off
+
+⚠️ ONLY for single-threaded benchmarks
+⚠️ Re-enable IMMEDIATELY after testing">
+                        <input type="checkbox" name="opt" value="smt_disable">
+                        <span class="label-text">Disable SMT</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint"><svg class="warning-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> BIOS only!</span>
+                    </label>
+                    <label data-opt="core_isolation_off" data-tooltip="**Disable Core Isolation** — remove VBS overhead
+
+- Disables Virtualization Based Security (VBS)
+- Removes hypervisor security layer
+- Can improve gaming performance 5-10%
+
+⚠️ Significantly reduces security
+⚠️ Disables memory integrity protection
+⚠️ Consider your threat model carefully">
+                        <input type="checkbox" name="opt" value="core_isolation_off">
+                        <span class="label-text">Core Isolation Off</span>
+                        <span class="preset-badge" hidden></span>
+                        <span class="label-hint"><svg class="warning-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> Major security tradeoff</span>
                     </label>
                 </fieldset>
             </div>

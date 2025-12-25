@@ -156,6 +156,19 @@ const SAFE_OPTIMIZATIONS = {
   EXPLORER_SPEED: 'explorer_speed',
   TEMP_PURGE: 'temp_purge',
   RAZER_BLOCK: 'razer_block',
+  // New WinUtil-inspired + Gaming optimizations
+  RESTORE_POINT: 'restore_point',
+  CLASSIC_MENU: 'classic_menu',
+  STORAGE_SENSE: 'storage_sense',
+  DISPLAY_PERF: 'display_perf',
+  END_TASK: 'end_task',
+  EXPLORER_CLEANUP: 'explorer_cleanup',
+  NOTIFICATIONS_OFF: 'notifications_off',
+  PS7_TELEMETRY: 'ps7_telemetry',
+  MULTIPLANE_OVERLAY: 'multiplane_overlay',
+  MOUSE_ACCEL: 'mouse_accel',
+  USB_SUSPEND: 'usb_suspend',
+  KEYBOARD_RESPONSE: 'keyboard_response',
 } as const
 
 const CAUTION_OPTIMIZATIONS = {
@@ -167,6 +180,12 @@ const CAUTION_OPTIMIZATIONS = {
   ULTIMATE_PERF: 'ultimate_perf',
   SERVICES_TRIM: 'services_trim',
   DISK_CLEANUP: 'disk_cleanup',
+  // New gaming optimizations
+  WPBT_DISABLE: 'wpbt_disable',
+  QOS_GAMING: 'qos_gaming',
+  NETWORK_THROTTLING: 'network_throttling',
+  INTERRUPT_AFFINITY: 'interrupt_affinity',
+  PROCESS_MITIGATION: 'process_mitigation',
 } as const
 
 const RISKY_OPTIMIZATIONS = {
@@ -177,6 +196,11 @@ const RISKY_OPTIMIZATIONS = {
   IPV4_PREFER: 'ipv4_prefer',
   TEREDO_DISABLE: 'teredo_disable',
   NATIVE_NVME: 'native_nvme',
+  // New experimental/risky gaming optimizations
+  SMT_DISABLE: 'smt_disable',
+  AUDIO_EXCLUSIVE: 'audio_exclusive',
+  TCP_OPTIMIZER: 'tcp_optimizer',
+  CORE_ISOLATION_OFF: 'core_isolation_off',
 } as const
 
 export const OPTIMIZATION_KEYS = {

@@ -279,6 +279,135 @@ function Disable-Teredo {
 }
 
 
+function Enable-QoSGaming {
+    <#
+    .SYNOPSIS
+        Creates QoS policies to prioritize gaming network traffic.
+    .DESCRIPTION
+        Configures Windows QoS to mark gaming UDP traffic with high priority
+        DSCP values for better handling by routers that support QoS.
+    #>
+    param(
+        [bool]$Enable = $true,
+        [string[]]$GamePorts = @("27015-27030", "3478-3480", "7000-9000")  # Common game ports
+    )
+
+    if (-not $Enable) {
+        Write-Log "QoS Gaming: skipped" "INFO"
+        return
+    }
+
+    try {
+        # Remove existing gaming QoS policies first
+        Get-NetQosPolicy | Where-Object { $_.Name -like "RockTune-*" } | Remove-NetQosPolicy -Confirm:$false -ErrorAction SilentlyContinue
+
+        # Create QoS policy for UDP gaming traffic with DSCP 46 (Expedited Forwarding)
+        foreach ($portRange in $GamePorts) {
+            $policyName = "RockTune-Gaming-$($portRange -replace '-','to')"
+            New-NetQosPolicy -Name $policyName `
+                -NetworkProfile All `
+                -IPProtocolMatchCondition UDP `
+                -IPDstPortMatchCondition $portRange `
+                -DSCPAction 46 `
+                -ErrorAction SilentlyContinue | Out-Null
+        }
+
+        # Create policy for common voice chat (Discord, etc.)
+        New-NetQosPolicy -Name "RockTune-VoiceChat" `
+            -NetworkProfile All `
+            -IPProtocolMatchCondition UDP `
+            -IPDstPortMatchCondition "50000-50100" `
+            -DSCPAction 46 `
+            -ErrorAction SilentlyContinue | Out-Null
+
+        Write-Log "QoS Gaming policies created (DSCP 46 for game traffic)" "SUCCESS"
+        Write-Log "Note: Router must support QoS for full benefit" "INFO"
+    } catch {
+        Write-Log "Error enabling QoS Gaming: $_" "ERROR"
+    }
+}
+
+
+function Disable-NetworkThrottling {
+    <#
+    .SYNOPSIS
+        Disables Windows network throttling mechanisms.
+    .DESCRIPTION
+        Removes the NetworkThrottlingIndex limit that Windows applies
+        to multimedia streaming to prevent network congestion.
+        This can improve network performance for games.
+    #>
+    param(
+        [bool]$Enable = $true
+    )
+
+    if (-not $Enable) {
+        Write-Log "Disable network throttling: skipped" "INFO"
+        return
+    }
+
+    try {
+        $mmcssPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile"
+        Backup-RegistryKey -Path $mmcssPath
+
+        # Set NetworkThrottlingIndex to maximum (0xFFFFFFFF = disabled)
+        Set-RegistryValue -Path $mmcssPath -Name "NetworkThrottlingIndex" -Value 0xFFFFFFFF -Type "DWORD"
+
+        # Also set SystemResponsiveness to 0 for minimum reserved bandwidth
+        Set-RegistryValue -Path $mmcssPath -Name "SystemResponsiveness" -Value 0 -Type "DWORD"
+
+        Write-Log "Disabled network throttling (maximum throughput)" "SUCCESS"
+    } catch {
+        Write-Log "Error disabling network throttling: $_" "ERROR"
+    }
+}
+
+
+function Set-TCPOptimizations {
+    <#
+    .SYNOPSIS
+        Optimizes TCP stack settings for gaming.
+    .DESCRIPTION
+        Configures TCP settings for lower latency gaming including
+        disabling Nagle's algorithm, optimizing ACK behavior, and
+        tuning window scaling.
+    #>
+    param(
+        [bool]$Enable = $true
+    )
+
+    if (-not $Enable) {
+        Write-Log "TCP optimizations: skipped" "INFO"
+        return
+    }
+
+    try {
+        $tcpPath = "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters"
+        Backup-RegistryKey -Path $tcpPath
+
+        # Disable Nagle's Algorithm globally (reduces latency)
+        Set-RegistryValue -Path $tcpPath -Name "TcpNoDelay" -Value 1 -Type "DWORD"
+
+        # Reduce TCP ACK frequency for faster acknowledgments
+        Set-RegistryValue -Path $tcpPath -Name "TcpAckFrequency" -Value 1 -Type "DWORD"
+
+        # Disable TCP/IP auto-tuning for more predictable behavior
+        netsh int tcp set global autotuninglevel=disabled 2>&1 | Out-Null
+
+        # Disable ECN (Explicit Congestion Notification) - can cause issues with some games
+        netsh int tcp set global ecncapability=disabled 2>&1 | Out-Null
+
+        # Disable timestamps for slightly lower overhead
+        netsh int tcp set global timestamps=disabled 2>&1 | Out-Null
+
+        # Set higher initial RTO (Retransmission Timeout) for stable connections
+        netsh int tcp set global initialRto=2000 2>&1 | Out-Null
+
+        Write-Log "TCP stack optimized for gaming (Nagle off, fast ACK)" "SUCCESS"
+    } catch {
+        Write-Log "Error applying TCP optimizations: $_" "ERROR"
+    }
+}
 
 
 function Invoke-NetworkOptimizations {
@@ -373,8 +502,9 @@ Export-ModuleMember -Function @(
     'Set-IPv4Preference',
     'Disable-Teredo',
     'Set-QoSConfiguration',
-    'Set-IPv4Preference',
-    'Disable-Teredo',
+    'Enable-QoSGaming',
+    'Disable-NetworkThrottling',
+    'Set-TCPOptimizations',
     'Test-NetworkOptimizations',
     'Invoke-NetworkOptimizations',
     'Undo-NetworkOptimizations'

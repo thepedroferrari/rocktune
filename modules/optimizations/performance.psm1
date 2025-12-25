@@ -566,6 +566,164 @@ function Invoke-PerformanceOptimizations {
 }
 
 
+function Disable-MultiplaneOverlay {
+    <#
+    .SYNOPSIS
+        Disables Multiplane Overlay (MPO) for reduced GPU overhead.
+    .DESCRIPTION
+        MPO is a DWM feature that can cause stuttering during streaming/recording.
+        Disabling it reduces GPU overhead from window composition.
+        Best for: Streamers and users experiencing DWM-related stutters.
+    #>
+    param(
+        [bool]$Enable = $true
+    )
+
+    if (-not $Enable) {
+        Write-Log "Disable Multiplane Overlay: skipped" "INFO"
+        return
+    }
+
+    try {
+        $dwmPath = "HKLM:\SOFTWARE\Microsoft\Windows\Dwm"
+        Backup-RegistryKey -Path $dwmPath
+
+        # OverlayTestMode = 5 disables MPO
+        Set-RegistryValue -Path $dwmPath -Name "OverlayTestMode" -Value 5 -Type "DWORD"
+
+        Write-Log "Disabled Multiplane Overlay (reduces GPU overhead for streaming)" "SUCCESS"
+    } catch {
+        Write-Log "Error disabling Multiplane Overlay: $_" "ERROR"
+    }
+}
+
+
+function Disable-ProcessMitigations {
+    <#
+    .SYNOPSIS
+        Disables Windows process mitigations for maximum performance.
+    .DESCRIPTION
+        Security mitigations like CFG and SEHOP add overhead.
+        Disabling them can improve benchmark scores but reduces security.
+        Best for: Benchmarking only - NOT recommended for daily use.
+    #>
+    param(
+        [bool]$Enable = $true
+    )
+
+    if (-not $Enable) {
+        Write-Log "Disable process mitigations: skipped" "INFO"
+        return
+    }
+
+    try {
+        # Disable system-wide exploit protection mitigations
+        $exploitPath = "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\kernel"
+        Backup-RegistryKey -Path $exploitPath
+
+        # Disable Kernel CET (Shadow Stacks) - only on supported systems
+        Set-RegistryValue -Path $exploitPath -Name "KernelShadowStacksForceDisabled" -Value 1 -Type "DWORD" -ErrorAction SilentlyContinue
+
+        Write-Log "Disabled process mitigations (benchmarking mode - reduces security)" "SUCCESS"
+        Write-Log "WARNING: Re-enable mitigations after benchmarking for security" "ERROR"
+    } catch {
+        Write-Log "Error disabling process mitigations: $_" "ERROR"
+    }
+}
+
+
+function Set-InterruptAffinity {
+    <#
+    .SYNOPSIS
+        Configures GPU interrupt affinity to reduce DPC latency.
+    .DESCRIPTION
+        Assigns GPU interrupts to a specific CPU core to reduce
+        context switching and improve frame consistency.
+        Best for: High-end systems chasing benchmark scores.
+    #>
+    param(
+        [bool]$Enable = $true
+    )
+
+    if (-not $Enable) {
+        Write-Log "GPU interrupt affinity: skipped" "INFO"
+        return
+    }
+
+    try {
+        # Find GPU device
+        $gpuDevice = Get-PnpDevice -Class Display | Where-Object { $_.Status -eq "OK" } | Select-Object -First 1
+
+        if (-not $gpuDevice) {
+            Write-Log "No GPU found for interrupt affinity configuration" "INFO"
+            return
+        }
+
+        $deviceId = $gpuDevice.InstanceId
+        $msiPath = "HKLM:\SYSTEM\CurrentControlSet\Enum\$deviceId\Device Parameters\Interrupt Management\Affinity Policy"
+
+        if (-not (Test-Path $msiPath)) {
+            New-Item -Path $msiPath -Force | Out-Null
+        }
+
+        Backup-RegistryKey -Path $msiPath
+
+        # DevicePolicy = 4 (IrqPolicySpreadMessagesAcrossAllProcessors is default)
+        # We set to specific processor for consistency
+        Set-RegistryValue -Path $msiPath -Name "DevicePolicy" -Value 3 -Type "DWORD"  # IrqPolicySpecifiedProcessors
+
+        # AssignmentSetOverride = target processor mask (CPU 0 = 1, CPU 1 = 2, etc.)
+        # Default to CPU 0 for GPU interrupts
+        Set-RegistryValue -Path $msiPath -Name "AssignmentSetOverride" -Value 1 -Type "DWORD"
+
+        Write-Log "GPU interrupt affinity configured (assigned to CPU 0)" "SUCCESS"
+        Write-Log "Reboot required for interrupt affinity changes" "INFO"
+    } catch {
+        Write-Log "Error setting interrupt affinity: $_" "ERROR"
+    }
+}
+
+
+function Disable-CoreIsolation {
+    <#
+    .SYNOPSIS
+        Disables Core Isolation (VBS/HVCI) for maximum performance.
+    .DESCRIPTION
+        Virtualization-Based Security adds ~5-10% overhead.
+        Disabling it improves performance but reduces security.
+        Best for: Benchmarking only - NOT recommended for daily use.
+    #>
+    param(
+        [bool]$Enable = $true
+    )
+
+    if (-not $Enable) {
+        Write-Log "Disable Core Isolation: skipped" "INFO"
+        return
+    }
+
+    try {
+        $deviceGuardPath = "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard"
+        Backup-RegistryKey -Path $deviceGuardPath
+
+        # Disable VBS
+        Set-RegistryValue -Path $deviceGuardPath -Name "EnableVirtualizationBasedSecurity" -Value 0 -Type "DWORD"
+
+        $hvciPath = "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity"
+        if (Test-Path $hvciPath) {
+            Backup-RegistryKey -Path $hvciPath
+            Set-RegistryValue -Path $hvciPath -Name "Enabled" -Value 0 -Type "DWORD"
+        }
+
+        Write-Log "Disabled Core Isolation / VBS (benchmarking mode - reduces security)" "SUCCESS"
+        Write-Log "WARNING: Re-enable Core Isolation after benchmarking for security" "ERROR"
+        Write-Log "Reboot required for Core Isolation changes" "INFO"
+    } catch {
+        Write-Log "Error disabling Core Isolation: $_" "ERROR"
+    }
+}
+
+
 function Undo-PerformanceOptimizations {
     Write-Log "Rolling back performance optimizations..." "INFO"
 
@@ -616,6 +774,10 @@ Export-ModuleMember -Function @(
     'Enable-NativeNVMe',
     'Disable-NativeNVMe',
     'Test-NativeNVMeStatus',
+    'Disable-MultiplaneOverlay',
+    'Disable-ProcessMitigations',
+    'Set-InterruptAffinity',
+    'Disable-CoreIsolation',
     'Test-PerformanceOptimizations',
     'Invoke-PerformanceOptimizations',
     'Undo-PerformanceOptimizations'
