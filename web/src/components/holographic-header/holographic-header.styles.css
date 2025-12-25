@@ -174,58 +174,260 @@
   }
 
   /* ============================================
-     TERMINAL WINDOW
+     TERMINAL WINDOW - Authentic Terminal Feel
      ============================================ */
 
   .holo-terminal-window {
     width: 100%;
-    max-width: 700px;
-    background: color-mix(in oklch, var(--bg-primary) 95%, transparent);
-    border: 1px solid var(--holo-primary-dim);
-    border-radius: 4px;
-    padding: var(--space-md);
+    max-width: 750px;
+    background: oklch(0.08 0.01 280);
+    border: 1px solid oklch(0.25 0.02 280);
+    border-radius: 8px;
     font-family: var(--font-mono);
     position: relative;
     box-shadow:
-      0 0 30px color-mix(in oklch, var(--holo-primary) 10%, transparent),
-      inset 0 0 20px color-mix(in oklch, var(--holo-primary) 5%, transparent);
-    backdrop-filter: blur(8px);
+      0 20px 60px oklch(0 0 0 / 50%),
+      0 0 40px color-mix(in oklch, var(--holo-primary) 15%, transparent),
+      inset 0 1px 0 oklch(1 0 0 / 5%);
     overflow: hidden;
   }
 
-  .holo-terminal-window::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 2px;
-    background: var(--holo-primary);
-    box-shadow: 0 0 10px var(--holo-primary);
+  /* Terminal chrome - macOS style title bar */
+  .terminal-chrome {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: 10px 14px;
+    background: linear-gradient(180deg, oklch(0.18 0.01 280) 0%, oklch(0.12 0.01 280) 100%);
+    border-bottom: 1px solid oklch(0.08 0.01 280);
   }
 
-  .terminal-header {
-    border-bottom: 1px solid color-mix(in oklch, var(--holo-primary) 20%, transparent);
-    padding-bottom: var(--space-sm);
-    margin-bottom: var(--space-md);
+  .terminal-buttons {
+    display: flex;
+    gap: 8px;
+  }
+
+  .terminal-btn {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    position: relative;
+  }
+
+  .terminal-btn--close {
+    background: linear-gradient(180deg, #ff5f57 0%, #e0443e 100%);
+    box-shadow: inset 0 -1px 1px oklch(0 0 0 / 20%);
+  }
+
+  .terminal-btn--min {
+    background: linear-gradient(180deg, #febc2e 0%, #d89e18 100%);
+    box-shadow: inset 0 -1px 1px oklch(0 0 0 / 20%);
+  }
+
+  .terminal-btn--max {
+    background: linear-gradient(180deg, #28c840 0%, #1aab29 100%);
+    box-shadow: inset 0 -1px 1px oklch(0 0 0 / 20%);
   }
 
   .terminal-title {
-    color: var(--holo-primary);
-    font-size: 0.8rem;
-    font-weight: 600;
+    flex: 1;
+    text-align: center;
+    color: oklch(0.6 0.01 280);
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
   }
+
+  .terminal-spacer {
+    width: 52px; /* Balance the buttons on the left */
+  }
+
+  /* Terminal screen area */
+  .terminal-screen {
+    padding: var(--space-lg);
+    position: relative;
+    min-height: 280px;
+
+    /* CRT scanline effect */
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        oklch(0 0 0 / 3%) 2px,
+        oklch(0 0 0 / 3%) 4px
+      );
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    /* CRT glow effect */
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        ellipse 80% 60% at 50% 50%,
+        color-mix(in oklch, var(--holo-primary) 3%, transparent) 0%,
+        transparent 70%
+      );
+      pointer-events: none;
+    }
+  }
+
+  /* ============================================
+     MATRIX BOOT SEQUENCE
+     ============================================ */
+
+  .terminal-boot {
+    position: absolute;
+    inset: 0;
+    padding: var(--space-lg);
+    background: oklch(0.08 0.01 280);
+    z-index: 5;
+    animation: bootFadeOut 0.5s ease-out 3.5s forwards;
+  }
+
+  @keyframes bootFadeOut {
+    to {
+      opacity: 0;
+      visibility: hidden;
+    }
+  }
+
+  /* Matrix rain effect */
+  .matrix-rain {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    opacity: 0.15;
+
+    &::before,
+    &::after {
+      content: '01001010 11010101 00101101 10110100 01101001 11001010 10010110 01011010';
+      position: absolute;
+      top: -100%;
+      left: 0;
+      right: 0;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--safe);
+      white-space: nowrap;
+      animation: matrixFall 2s linear infinite;
+      text-shadow: 0 0 10px var(--safe);
+      letter-spacing: 4px;
+      word-spacing: 20px;
+      line-height: 1.5;
+    }
+
+    &::after {
+      animation-delay: 1s;
+      left: 50%;
+    }
+  }
+
+  @keyframes matrixFall {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(400%); }
+  }
+
+  .boot-sequence {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .boot-line {
+    opacity: 0;
+    color: oklch(0.5 0.02 280);
+    font-size: 0.7rem;
+    animation: bootLineIn 0.3s ease-out forwards;
+  }
+
+  .boot-line:nth-child(1) { animation-delay: 0.3s; }
+  .boot-line:nth-child(2) { animation-delay: 0.8s; }
+  .boot-line:nth-child(3) { animation-delay: 1.3s; }
+  .boot-line:nth-child(4) { animation-delay: 1.8s; }
+  .boot-line:nth-child(5) { animation-delay: 2.3s; }
+
+  .boot-line.boot-success {
+    color: var(--safe);
+    text-shadow: 0 0 8px color-mix(in oklch, var(--safe) 50%, transparent);
+  }
+
+  @keyframes bootLineIn {
+    from {
+      opacity: 0;
+      transform: translateX(-5px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  /* ============================================
+     TERMINAL BODY - Main content
+     ============================================ */
 
   .terminal-body {
     display: flex;
     flex-direction: column;
     gap: var(--space-md);
+    opacity: 0;
+    animation: terminalBodyIn 0.5s ease-out 3.5s forwards;
+  }
+
+  @keyframes terminalBodyIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  /* Command prompt styling */
+  .terminal-prompt {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    font-size: 0.8rem;
+    margin-bottom: var(--space-xs);
+  }
+
+  .prompt-user {
+    color: var(--safe);
+    font-weight: 600;
+  }
+
+  .prompt-separator {
+    color: oklch(0.5 0 0);
+  }
+
+  .prompt-path {
+    color: oklch(0.6 0.15 250);
+    font-weight: 600;
+  }
+
+  .prompt-symbol {
+    color: oklch(0.5 0 0);
+    margin-right: 8px;
+  }
+
+  .prompt-command {
+    color: var(--text-primary);
   }
 
   /* Prominent tagline styling */
   .terminal-tagline {
     color: var(--text-secondary);
-    font-size: clamp(1.2rem, 2.5vw, 1.6rem);
+    font-size: clamp(1.1rem, 2.2vw, 1.4rem);
     font-weight: 500;
     line-height: 1.4;
     margin: 0;
@@ -258,63 +460,86 @@
     }
   }
 
-  /* Legacy support for terminal-text */
-  .terminal-text {
-    color: var(--text-secondary);
-    font-size: 1.1rem;
-    line-height: 1.5;
-    margin: 0;
-  }
-
   .highlight-text {
     color: var(--text-primary);
     text-shadow: 0 0 8px var(--holo-glow);
     font-weight: 600;
   }
 
+  /* ============================================
+     LOADING LINES
+     ============================================ */
+
   .terminal-loading {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    font-size: 0.85rem;
+    gap: 8px;
+    font-size: 0.8rem;
     color: var(--text-hint);
-    padding: var(--space-sm) 0;
-    border-top: 1px solid color-mix(in oklch, var(--holo-primary) 15%, transparent);
+    padding: var(--space-md) 0;
+    border-top: 1px dashed oklch(0.25 0.02 280);
     margin-top: var(--space-sm);
   }
 
   .loading-line {
     opacity: 0;
-    animation: type-line 0.5s forwards;
+    animation: type-line 0.4s ease-out forwards;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
   }
 
-  /* Delayed start (+1s) to let page load, then cascade 1s apart */
-  .loading-line:nth-child(1) { animation-delay: 1.5s; }
-  .loading-line:nth-child(2) { animation-delay: 2.5s; }
-  .loading-line:nth-child(3) { animation-delay: 3.5s; }
-  .loading-line:nth-child(4) { animation-delay: 4.5s; }
-  .loading-line:nth-child(5) { animation-delay: 5.5s; }
+  /* Delayed animations - starts after boot sequence (3.5s) + stagger */
+  .loading-line:nth-child(1) { animation-delay: 4s; }
+  .loading-line:nth-child(2) { animation-delay: 4.8s; }
+  .loading-line:nth-child(3) { animation-delay: 5.6s; }
+  .loading-line:nth-child(4) { animation-delay: 6.4s; }
+  .loading-line:nth-child(5) { animation-delay: 7.2s; }
+
+  .line-prefix {
+    color: oklch(0.5 0.02 280);
+    font-size: 0.7rem;
+  }
+
+  .line-status {
+    color: var(--safe);
+  }
 
   .loading-line .result {
     color: var(--safe);
     font-weight: 600;
     text-shadow: 0 0 8px color-mix(in oklch, var(--safe) 50%, transparent);
+    margin-left: auto;
   }
 
   .loading-line.success {
-    color: var(--safe);
+    color: var(--holo-primary);
     font-weight: 700;
-    font-size: 0.95rem;
-    margin-top: var(--space-xs);
-    text-shadow: 0 0 10px color-mix(in oklch, var(--safe) 60%, transparent);
+    font-size: 0.9rem;
+    margin-top: var(--space-sm);
+    text-shadow: 0 0 10px var(--holo-glow);
+  }
+
+  /* Blinking cursor */
+  .cursor-blink {
+    animation: cursorBlink 1s step-end infinite;
+    color: var(--holo-primary);
+  }
+
+  @keyframes cursorBlink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
   }
 
   @keyframes type-line {
-    from { opacity: 0; transform: translateX(-10px); }
-    to { opacity: 1; transform: translateX(0); }
+    from {
+      opacity: 0;
+      transform: translateX(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
   }
 
   /* ============================================

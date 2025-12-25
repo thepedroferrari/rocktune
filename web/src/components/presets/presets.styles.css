@@ -33,53 +33,24 @@
   }
 
   /* ============================================
-     PRESETS SCROLL CONTAINER
+     PRESETS CONTAINER WRAPPER
      ============================================ */
   .presets-scroll-container {
     width: 100%;
-    overflow-x: auto;
-    overflow-y: hidden;
     padding: var(--space-sm) 0 var(--space-lg);
-    scrollbar-width: thin;
-    scrollbar-color: color-mix(in oklch, var(--accent) 40%, transparent) transparent;
-
-    &::-webkit-scrollbar {
-      height: 6px;
-    }
-
-    &::-webkit-scrollbar-track {
-      background: transparent;
-    }
-
-    &::-webkit-scrollbar-thumb {
-      background: color-mix(in oklch, var(--accent) 30%, transparent);
-      border-radius: 3px;
-    }
-
-    &::-webkit-scrollbar-thumb:hover {
-      background: color-mix(in oklch, var(--accent) 50%, transparent);
-    }
   }
 
   /* ============================================
      PRESETS CONTAINER
      ============================================ */
   .presets {
-    display: flex;
-    gap: var(--space-lg);
-    justify-content: flex-start;
-    flex-wrap: nowrap;
-    padding: var(--space-xl) var(--space-md);
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-xl);
+    padding: var(--space-xl) var(--space-lg);
     perspective: 1200px;
-    max-width: none;
-    width: max-content;
-    min-width: 100%;
-
-    /* Center on desktop when not scrolling */
-    @media (min-width: 1200px) {
-      justify-content: center;
-      width: 100%;
-    }
+    max-width: 1000px;
+    margin: 0 auto;
   }
 
   /* ============================================
@@ -88,13 +59,12 @@
   .preset-card {
     all: unset;
     display: block;
-    width: clamp(180px, 18vw, 200px);
+    width: 100%;
     aspect-ratio: var(--card-aspect);
     cursor: pointer;
     outline: none;
     -webkit-tap-highlight-color: transparent;
     contain: layout style;
-    flex-shrink: 0;
 
     /* Hardware acceleration */
     transform: translate3d(0, 0, 0.01px);
@@ -818,9 +788,10 @@
      ============================================ */
   @media (max-width: 1100px) {
     .presets {
-      gap: var(--space-md);
-      padding-left: var(--space-lg);
-      padding-right: var(--space-lg);
+      gap: var(--space-lg);
+      padding-left: var(--space-md);
+      padding-right: var(--space-md);
+      max-width: 900px;
     }
 
     .preset-card__title {
@@ -834,23 +805,18 @@
 
   @media (max-width: 900px) {
     .presets {
-      gap: var(--space-md);
-    }
-
-    .preset-card {
-      width: clamp(160px, 40vw, 190px);
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--space-lg);
+      max-width: 500px;
     }
   }
 
   @media (max-width: 640px) {
     .presets {
-      gap: var(--space-sm);
-      padding-left: var(--space-md);
-      padding-right: var(--space-md);
-    }
-
-    .preset-card {
-      width: clamp(150px, 42vw, 180px);
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--space-md);
+      padding-left: var(--space-sm);
+      padding-right: var(--space-sm);
     }
 
     .preset-card__front {

@@ -59,17 +59,41 @@
                 <div class="holo-subtitle">[ MAXIMUM FPS :: ZERO BLOAT ]</div>
             </div>
             <div class="holo-terminal-window">
-                <div class="terminal-header">
-                    <span class="terminal-title">>> MISSION BRIEF: OPTIMIZATION PROTOCOL</span>
+                <div class="terminal-chrome">
+                    <div class="terminal-buttons">
+                        <span class="terminal-btn terminal-btn--close"></span>
+                        <span class="terminal-btn terminal-btn--min"></span>
+                        <span class="terminal-btn terminal-btn--max"></span>
+                    </div>
+                    <span class="terminal-title">rocktune@system:~</span>
+                    <div class="terminal-spacer"></div>
                 </div>
-                <div class="terminal-body">
-                    <p class="terminal-tagline">Your PC was built to game. <span class="highlight-text">Windows wasn't.</span></p>
-                    <div class="terminal-loading">
-                        <span class="loading-line">> 8 network settings... <span class="result">LOWER PING</span></span>
-                        <span class="loading-line">> 47 background services... <span class="result">OPTIMIZED</span></span>
-                        <span class="loading-line">> 12 telemetry endpoints... <span class="result">BLOCKED</span></span>
-                        <span class="loading-line">> Input latency 15.6ms → 0.5ms... <span class="result">FIXED</span></span>
-                        <span class="loading-line success">> YOUR LOADOUT IS READY.</span>
+                <div class="terminal-screen">
+                    <!-- Matrix-style boot sequence -->
+                    <div class="terminal-boot">
+                        <div class="matrix-rain" aria-hidden="true"></div>
+                        <div class="boot-sequence">
+                            <span class="boot-line">[    0.000000] ROCKTUNE kernel loading...</span>
+                            <span class="boot-line">[    0.142857] Detecting hardware configuration</span>
+                            <span class="boot-line">[    0.285714] Initializing optimization modules</span>
+                            <span class="boot-line">[    0.428571] Loading performance profiles</span>
+                            <span class="boot-line boot-success">[    0.571428] System ready. Executing protocol...</span>
+                        </div>
+                    </div>
+                    <!-- Main terminal content (appears after boot) -->
+                    <div class="terminal-body">
+                        <div class="terminal-prompt">
+                            <span class="prompt-user">root@rocktune</span><span class="prompt-separator">:</span><span class="prompt-path">~</span><span class="prompt-symbol">$</span>
+                            <span class="prompt-command">./optimize.sh --mission-brief</span>
+                        </div>
+                        <p class="terminal-tagline">Your PC was built to game. <span class="highlight-text">Windows wasn't.</span></p>
+                        <div class="terminal-loading">
+                            <span class="loading-line"><span class="line-prefix">[<span class="line-status">OK</span>]</span> 8 network settings... <span class="result">LOWER PING</span></span>
+                            <span class="loading-line"><span class="line-prefix">[<span class="line-status">OK</span>]</span> 47 background services... <span class="result">OPTIMIZED</span></span>
+                            <span class="loading-line"><span class="line-prefix">[<span class="line-status">OK</span>]</span> 12 telemetry endpoints... <span class="result">BLOCKED</span></span>
+                            <span class="loading-line"><span class="line-prefix">[<span class="line-status">OK</span>]</span> Input latency 15.6ms → 0.5ms... <span class="result">FIXED</span></span>
+                            <span class="loading-line success">>>> YOUR LOADOUT IS READY. <span class="cursor-blink">█</span></span>
+                        </div>
                     </div>
                 </div>
             </div>
