@@ -130,40 +130,101 @@
   text-align: right;
 }
 
+/* GitHub Badge - Bright Neon Beacon */
 .id-badge {
+  --badge-neon: oklch(0.75 0.18 195); /* Bright cyan */
+  --badge-glow: oklch(0.65 0.2 195 / 60%);
+
   display: inline-flex;
   align-items: center;
   gap: 6px;
   font-family: var(--font-mono);
-  font-size: 0.6rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  color: var(--text-hint);
-  padding: 3px 8px;
-  background: color-mix(in oklch, var(--accent) 10%, transparent);
-  border: 1px solid color-mix(in oklch, var(--accent) 20%, transparent);
-  clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--badge-neon);
+  padding: 5px 12px;
+  background: color-mix(in oklch, var(--badge-neon) 12%, transparent);
+  border: 1px solid var(--badge-neon);
+  clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
   text-decoration: none;
-  transition: all 0.2s var(--ease-out-expo);
+  text-shadow: 0 0 8px var(--badge-glow);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.25s var(--ease-out-expo);
+  box-shadow:
+    0 0 8px var(--badge-glow),
+    0 0 16px color-mix(in oklch, var(--badge-neon) 25%, transparent),
+    inset 0 0 12px color-mix(in oklch, var(--badge-neon) 8%, transparent);
+  animation: badgeGlow 3s ease-in-out infinite;
+}
+
+@keyframes badgeGlow {
+  0%, 100% {
+    box-shadow:
+      0 0 8px var(--badge-glow),
+      0 0 16px color-mix(in oklch, var(--badge-neon) 25%, transparent),
+      inset 0 0 12px color-mix(in oklch, var(--badge-neon) 8%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 12px var(--badge-glow),
+      0 0 24px color-mix(in oklch, var(--badge-neon) 40%, transparent),
+      inset 0 0 16px color-mix(in oklch, var(--badge-neon) 12%, transparent);
+  }
+}
+
+/* Animated scan line effect */
+.id-badge::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in oklch, var(--badge-neon) 40%, transparent) 50%,
+    transparent 100%
+  );
+  width: 50%;
+  opacity: 0;
+  animation: badgeScan 4s ease-in-out infinite;
+}
+
+@keyframes badgeScan {
+  0%, 80%, 100% {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+  85%, 95% {
+    opacity: 1;
+  }
+  90% {
+    transform: translateX(300%);
+  }
 }
 
 .id-badge .github-icon {
-  width: 12px;
-  height: 12px;
+  width: 14px;
+  height: 14px;
   flex-shrink: 0;
-  opacity: 0.7;
-  transition: opacity 0.2s;
+  filter: drop-shadow(0 0 4px var(--badge-glow));
+  transition: filter 0.2s;
 }
 
 a.id-badge:hover .github-icon {
-  opacity: 1;
+  filter: drop-shadow(0 0 8px var(--badge-neon));
 }
 
 a.id-badge:hover {
-  color: var(--text-primary);
-  background: color-mix(in oklch, var(--accent) 25%, transparent);
-  border-color: color-mix(in oklch, var(--accent) 45%, transparent);
-  box-shadow: 0 0 12px color-mix(in oklch, var(--accent) 30%, transparent);
+  color: oklch(0.95 0.05 195);
+  background: color-mix(in oklch, var(--badge-neon) 25%, transparent);
+  border-color: oklch(0.85 0.2 195);
+  box-shadow:
+    0 0 16px var(--badge-glow),
+    0 0 32px color-mix(in oklch, var(--badge-neon) 50%, transparent),
+    inset 0 0 20px color-mix(in oklch, var(--badge-neon) 15%, transparent);
+  text-shadow: 0 0 12px var(--badge-neon);
+  transform: scale(1.02);
 }
 
 /* Add top padding to body when nav is present */

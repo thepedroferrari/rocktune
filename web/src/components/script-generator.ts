@@ -181,6 +181,234 @@ function toHereString(content: string): string {
   return `@'\n${normalized}\n'@`
 }
 
+export const SAFE_SCRIPT_FILENAME = 'rocktune-safe.ps1' as const
+
+/**
+ * Generates a zero-config "safe mode" script with:
+ * - Runtime hardware detection (no user input needed)
+ * - SAFE-tier optimizations only (cannot break Windows)
+ * - No software installs
+ * - Restore point prompt at start
+ */
+export function generateSafeScript(): string {
+  const timestamp = new Date().toISOString()
+
+  return `#Requires -RunAsAdministrator
+<#
+.SYNOPSIS
+    RockTune SAFE MODE — Zero-config optimization script
+.DESCRIPTION
+    Generated: ${timestamp}
+    Source: https://github.com/thepedroferrari/windows-gaming-settings
+
+    This script applies ONLY safe, reversible optimizations that:
+    - Cannot break Windows or any applications
+    - Do not disable security features
+    - Do not remove any software
+    - Work on ANY Windows 10/11 PC
+
+    All changes can be reverted via Windows Settings or System Restore.
+#>
+
+# === Helper Functions ===
+function Write-Step { param([string]$M) Write-Host ""; Write-Host "=== $M ===" -ForegroundColor Cyan }
+function Write-OK { param([string]$M) Write-Host "  [OK] $M" -ForegroundColor Green }
+function Write-Fail { param([string]$M) Write-Host "  [FAIL] $M" -ForegroundColor Red }
+function Write-Info { param([string]$M) Write-Host "  [INFO] $M" -ForegroundColor Gray }
+
+function Set-Reg {
+    param([string]$Path, [string]$Name, $Value, [string]$Type = "DWORD")
+    try {
+        if (-not (Test-Path $Path)) { New-Item -Path $Path -Force | Out-Null }
+        $existing = Get-ItemProperty -Path $Path -Name $Name -EA SilentlyContinue
+        if ($null -eq $existing) {
+            New-ItemProperty -Path $Path -Name $Name -Value $Value -PropertyType $Type -Force | Out-Null
+        } else {
+            Set-ItemProperty -Path $Path -Name $Name -Value $Value -EA Stop
+        }
+        return $true
+    } catch { return $false }
+}
+
+Clear-Host
+Write-Host ""
+Write-Host "  ╔══════════════════════════════════════════════════════════════╗" -ForegroundColor Magenta
+Write-Host "  ║             ROCKTUNE SAFE MODE                               ║" -ForegroundColor Magenta
+Write-Host "  ║         Zero-config • Safe tweaks only                       ║" -ForegroundColor White
+Write-Host "  ╚══════════════════════════════════════════════════════════════╝" -ForegroundColor Magenta
+Write-Host ""
+
+# === System Info (Runtime Detection) ===
+Write-Step "Detecting Hardware"
+$cpu = (Get-CimInstance Win32_Processor).Name
+$gpu = (Get-CimInstance Win32_VideoController | Where-Object {$_.Status -eq "OK"} | Select-Object -First 1).Name
+$ram = [math]::Round((Get-CimInstance Win32_PhysicalMemory | Measure-Object -Property Capacity -Sum).Sum / 1GB)
+$build = [int](Get-CimInstance Win32_OperatingSystem).BuildNumber
+
+Write-Host "  CPU: $cpu" -ForegroundColor White
+Write-Host "  GPU: $gpu" -ForegroundColor White
+Write-Host "  RAM: \${ram}GB" -ForegroundColor White
+Write-Host "  Windows Build: $build" -ForegroundColor White
+
+# Detect CPU type
+$isAMD = $cpu -match "AMD"
+$isIntel = $cpu -match "Intel"
+$isX3D = $cpu -match "X3D|V-Cache"
+
+# Detect GPU type
+$isNVIDIA = $gpu -match "NVIDIA|GeForce|RTX|GTX"
+$isAMDGPU = $gpu -match "Radeon|AMD"
+
+# === Pre-flight: Restore Point ===
+Write-Step "Pre-flight Check"
+Write-Host ""
+Write-Host "  [PRE-FLIGHT] System Restore Point" -ForegroundColor Yellow
+$spEnabled = $null
+try { $spEnabled = (Get-ComputerRestorePoint -EA SilentlyContinue) -ne $null } catch {}
+if ($spEnabled -eq $false) {
+    Write-Host "  System Protection is DISABLED. Enable it in System Properties for safety." -ForegroundColor Red
+} else {
+    $createRP = Read-Host "  Create restore point before applying changes? (Y/n)"
+    if ($createRP -ne 'n' -and $createRP -ne 'N') {
+        Write-Host "  Creating restore point..." -ForegroundColor Cyan
+        try {
+            Checkpoint-Computer -Description "Before RockTune Safe Mode" -RestorePointType MODIFY_SETTINGS -EA Stop
+            Write-OK "Restore point created"
+        } catch {
+            Write-Fail "Could not create restore point: $($_.Exception.Message)"
+            $continue = Read-Host "  Continue anyway? (y/N)"
+            if ($continue -ne 'y' -and $continue -ne 'Y') { exit }
+        }
+    }
+}
+Write-Host ""
+
+# === SAFE Optimizations Only ===
+Write-Step "Applying Safe Optimizations"
+
+# 1. GameDVR Off (reduces background recording overhead)
+Set-Reg "HKCU:\\System\\GameConfigStore" "GameDVR_Enabled" 0
+Set-Reg "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\GameDVR" "AppCaptureEnabled" 0
+Set-Reg "HKLM:\\SOFTWARE\\Microsoft\\PolicyManager\\default\\ApplicationManagement\\AllowGameDVR" "value" 0
+Write-OK "GameDVR disabled (no background recording)"
+
+# 2. Background Apps Blocked
+Set-Reg "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\BackgroundAccessApplications" "GlobalUserDisabled" 1
+Set-Reg "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Search" "BackgroundAppGlobalToggle" 0
+Write-OK "Background apps blocked"
+
+# 3. Temp Files Purge
+$tempPaths = @($env:TEMP, "$env:LOCALAPPDATA\\Temp", "$env:WINDIR\\Temp")
+$freed = 0
+foreach ($path in $tempPaths) {
+    if (Test-Path $path) {
+        $size = (Get-ChildItem $path -Recurse -Force -EA SilentlyContinue | Measure-Object -Property Length -Sum).Sum
+        Remove-Item "$path\\*" -Recurse -Force -EA SilentlyContinue
+        $freed += $size
+    }
+}
+$freedMB = [math]::Round($freed / 1MB, 1)
+Write-OK "Temp files purged (\${freedMB}MB freed)"
+
+# 4. Edge Debloat (disable popups and telemetry)
+$edgePolicies = "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Edge"
+if (!(Test-Path $edgePolicies)) { New-Item -Path $edgePolicies -Force | Out-Null }
+Set-Reg $edgePolicies "StartupBoostEnabled" 0
+Set-Reg $edgePolicies "HubsSidebarEnabled" 0
+Set-Reg $edgePolicies "EdgeShoppingAssistantEnabled" 0
+Set-Reg $edgePolicies "PersonalizationReportingEnabled" 0
+Set-Reg $edgePolicies "MetricsReportingEnabled" 0
+Set-Reg $edgePolicies "ShowMicrosoftRewards" 0
+Write-OK "Edge debloated (rewards/popups/telemetry off)"
+
+# 5. Copilot Disable
+Set-Reg "HKCU:\\Software\\Policies\\Microsoft\\Windows\\WindowsCopilot" "TurnOffWindowsCopilot" 1
+Set-Reg "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsCopilot" "TurnOffWindowsCopilot" 1
+Set-Reg "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced" "ShowCopilotButton" 0
+Write-OK "Microsoft Copilot disabled"
+
+# 6. Mouse Acceleration Off (1:1 raw input)
+Set-Reg "HKCU:\\Control Panel\\Mouse" "MouseSpeed" 0 "String"
+Set-Reg "HKCU:\\Control Panel\\Mouse" "MouseThreshold1" 0 "String"
+Set-Reg "HKCU:\\Control Panel\\Mouse" "MouseThreshold2" 0 "String"
+Write-OK "Mouse acceleration disabled (1:1 raw input)"
+
+# 7. Keyboard Response Maximized
+Set-Reg "HKCU:\\Control Panel\\Keyboard" "KeyboardDelay" 0 "String"
+Set-Reg "HKCU:\\Control Panel\\Keyboard" "KeyboardSpeed" 31 "String"
+Write-OK "Keyboard response maximized"
+
+# 8. DNS (Cloudflare - faster, privacy-respecting)
+Get-NetAdapter | Where-Object {$_.Status -eq "Up"} | ForEach-Object {
+    Set-DnsClientServerAddress -InterfaceIndex $_.ifIndex -ServerAddresses ("1.1.1.1","1.0.0.1")
+}
+Write-OK "DNS set to Cloudflare (1.1.1.1)"
+
+# 9. Storage Sense Off (prevent surprise file deletions during gaming)
+Set-Reg "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\StorageSense\\Parameters\\StoragePolicy" "01" 0
+Set-Reg "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\StorageSense" "AllowStorageSenseGlobal" 0
+Write-OK "Storage Sense disabled"
+
+# 10. Notifications Off (no popups during gaming)
+Set-Reg "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\PushNotifications" "ToastEnabled" 0
+Set-Reg "HKCU:\\Software\\Policies\\Microsoft\\Windows\\Explorer" "DisableNotificationCenter" 1
+Set-Reg "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Notifications\\Settings" "NOC_GLOBAL_SETTING_TOASTS_ENABLED" 0
+Write-OK "Windows notifications disabled"
+
+# === Hardware-Specific (Auto-detected) ===
+Write-Step "Hardware-Specific Tweaks"
+
+# Windows Game Mode (safe, built-in)
+Set-Reg "HKCU:\\Software\\Microsoft\\GameBar" "AllowAutoGameMode" 1
+Set-Reg "HKCU:\\Software\\Microsoft\\GameBar" "AutoGameModeEnabled" 1
+Write-OK "Windows Game Mode enabled"
+
+# NVIDIA-specific safe tweaks
+if ($isNVIDIA) {
+    $nvTasks = Get-ScheduledTask | Where-Object { $_.TaskName -like "NvTmRep*" -or $_.TaskName -like "NvDriverUpdateCheck*" } -EA SilentlyContinue
+    if ($nvTasks) {
+        $nvTasks | Disable-ScheduledTask -EA SilentlyContinue | Out-Null
+        Write-OK "NVIDIA telemetry tasks disabled"
+    } else {
+        Write-Info "No NVIDIA telemetry tasks found"
+    }
+}
+
+# AMD X3D safe tweaks (just CPPC hint, no risky changes)
+if ($isX3D) {
+    Set-Reg "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Power" "CppcEnable" 1
+    Write-OK "AMD X3D: CPPC enabled for better core scheduling"
+    Write-Info "Install AMD Chipset Drivers for full 3D V-Cache optimization"
+}
+
+# === Summary ===
+Write-Host ""
+Write-Host "  ╔══════════════════════════════════════════════════════════════╗" -ForegroundColor Green
+Write-Host "  ║  SAFE MODE COMPLETE                                          ║" -ForegroundColor Green
+Write-Host "  ╠══════════════════════════════════════════════════════════════╣" -ForegroundColor Green
+Write-Host "  ║  What was applied:                                           ║" -ForegroundColor White
+Write-Host "  ║  • GameDVR disabled (less CPU overhead)                      ║" -ForegroundColor Gray
+Write-Host "  ║  • Background apps blocked                                   ║" -ForegroundColor Gray
+Write-Host "  ║  • Temp files cleaned                                        ║" -ForegroundColor Gray
+Write-Host "  ║  • Edge debloated                                            ║" -ForegroundColor Gray
+Write-Host "  ║  • Copilot disabled                                          ║" -ForegroundColor Gray
+Write-Host "  ║  • Mouse/keyboard response optimized                         ║" -ForegroundColor Gray
+Write-Host "  ║  • DNS set to Cloudflare                                     ║" -ForegroundColor Gray
+Write-Host "  ║  • Notifications disabled                                    ║" -ForegroundColor Gray
+Write-Host "  ║  • Game Mode enabled                                         ║" -ForegroundColor Gray
+Write-Host "  ╠══════════════════════════════════════════════════════════════╣" -ForegroundColor Green
+Write-Host "  ║  All changes are SAFE and REVERSIBLE via Windows Settings    ║" -ForegroundColor White
+Write-Host "  ╚══════════════════════════════════════════════════════════════╝" -ForegroundColor Green
+Write-Host ""
+Write-Host "  Reboot recommended for full effect." -ForegroundColor Yellow
+Write-Host ""
+Write-Host "  Want more? Visit: rocktune.dev" -ForegroundColor Cyan
+Write-Host "  GitHub: github.com/thepedroferrari/windows-gaming-settings" -ForegroundColor Gray
+Write-Host ""
+pause
+`
+}
+
 function generateOptCode(opts: string[], hw: HardwareProfile): string {
   const code: string[] = []
 

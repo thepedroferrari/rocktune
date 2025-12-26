@@ -13,7 +13,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;600;700&family=Orbitron:wght@500;600;700;800;900&family=Rajdhani:wght@400;500;600;700&family=Audiowide:wght@700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;600;700&amp;family=Orbitron:wght@500;600;700;800;900&amp;family=Rajdhani:wght@400;500;600;700&amp;family=Audiowide:wght@700&amp;display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="style.css" />
@@ -149,9 +149,12 @@
 
               <p class="terminal-tagline">
                 Your PC was built to game.<br />
-                <span class="highlight-text" data-text="WINDOWS WASN'T."
-                  >WINDOWS WASN'T.</span
+                <span
+                  class="highlight-text"
+                  data-text="WINDOWS WASN'T."
                 >
+                  WINDOWS WASN'T.
+                </span>
               </p>
 
               <div class="terminal-loading">
@@ -189,16 +192,36 @@
           </div>
         </div>
         <div class="holo-actions">
+          <button
+            type="button"
+            id="quick-download-btn"
+            class="holo-btn holo-btn--safe"
+            data-text="DOWNLOAD_SAFE_MODE"
+          >
+            <span class="btn-text">
+              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              DOWNLOAD_SAFE_MODE
+            </span>
+            <span class="glitch-layer"></span>
+            <span class="btn-scanlines"></span>
+          </button>
           <a
             href="#quick-start"
-            class="holo-btn"
-            data-text="INITIALIZE_QUICK_START"
+            class="holo-btn holo-btn--secondary"
+            data-text="CUSTOMIZE"
           >
-            <span class="btn-text">INITIALIZE_QUICK_START</span>
+            <span class="btn-text">CUSTOMIZE →</span>
             <span class="glitch-layer"></span>
             <span class="btn-scanlines"></span>
           </a>
         </div>
+        <p class="quick-download-hint">
+          Zero config • Safe tweaks only • Works on any PC
+        </p>
       </div>
     </header>
 

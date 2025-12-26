@@ -1,3 +1,16 @@
+/* @property for animatable gradient hue - Kevin Powell technique */
+@property --term-hue {
+  syntax: '<angle>';
+  initial-value: 280deg;
+  inherits: false;
+}
+
+@property --glow-intensity {
+  syntax: '<number>';
+  initial-value: 0.6;
+  inherits: false;
+}
+
 @layer components {
   /* ============================================
      HOLOGRAPHIC CONSOLE HEADER
@@ -12,11 +25,11 @@
 
     position: relative;
     width: 100%;
-    min-height: 80vh;
+    min-height: min(85vh, 900px);
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: var(--space-2xl) var(--space-md);
+    padding: var(--space-xl) var(--space-md) var(--space-lg);
     overflow: hidden;
     background: var(--holo-bg);
     border-bottom: 1px solid color-mix(in oklch, var(--holo-primary) 20%, transparent);
@@ -74,7 +87,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: var(--space-xl);
+    gap: var(--space-lg);
     width: 100%;
     max-width: var(--max-width);
     position: relative;
@@ -184,6 +197,7 @@
 
   /* ============================================
      CYBERPUNK TERMINAL - Hacker Console 2077
+     The Crown Jewel - og:image worthy
      ============================================ */
 
   .cyber-terminal {
@@ -191,13 +205,15 @@
     --term-neon-glow: var(--holo-glow);
     --term-danger: oklch(0.65 0.25 25);
     --term-danger-glow: oklch(0.7 0.3 25 / 50%);
-    --term-bg: oklch(0.06 0.02 280);
-    --term-bg-light: oklch(0.1 0.02 280);
+    --term-bg: oklch(0.06 0.03 var(--term-hue));
+    --term-bg-light: oklch(0.12 0.04 var(--term-hue));
+    --term-accent: oklch(0.16 0.05 calc(var(--term-hue) + 40deg));
 
     width: 100%;
     max-width: 800px;
-    background: var(--term-bg);
     font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    font-variant-numeric: tabular-nums;
     position: relative;
     clip-path: polygon(
       0 12px,
@@ -210,51 +226,106 @@
       0 calc(100% - 12px)
     );
 
-    /* Neon border glow */
+    /* Animated CRT phosphor gradient background */
+    background:
+      /* Inner vignette for depth */
+      radial-gradient(
+        ellipse 120% 100% at 50% 0%,
+        transparent 30%,
+        oklch(0.03 0.02 var(--term-hue) / 80%) 100%
+      ),
+      /* Subtle color gradient that shifts */
+      linear-gradient(
+        165deg,
+        oklch(0.1 0.045 var(--term-hue)) 0%,
+        oklch(0.06 0.03 calc(var(--term-hue) + 20deg)) 40%,
+        oklch(0.07 0.035 calc(var(--term-hue) - 10deg)) 70%,
+        oklch(0.08 0.04 var(--term-hue)) 100%
+      );
+
+    /* Slow hue rotation for living feel */
+    animation: termHueShift 30s linear infinite;
+
+    /* Multi-layer neon glow */
+    box-shadow:
+      /* Outer glow - large diffuse */
+      0 0 60px oklch(0.5 0.2 var(--term-hue) / calc(var(--glow-intensity) * 0.3)),
+      /* Mid glow - medium */
+      0 0 30px oklch(0.6 0.25 var(--term-hue) / calc(var(--glow-intensity) * 0.5)),
+      /* Inner glow - tight */
+      0 0 15px oklch(0.7 0.3 var(--term-hue) / calc(var(--glow-intensity) * 0.7)),
+      /* Bottom reflection */
+      0 20px 40px oklch(0.3 0.15 var(--term-hue) / 0.2);
+    border: 1px solid color-mix(in oklch, var(--term-neon) 20%, oklch(0.1 0.02 var(--term-hue)));
+
+    /* Neon border frame */
     &::before {
       content: "";
       position: absolute;
-      inset: -2px;
-      background: linear-gradient(
-        135deg,
-        var(--term-neon) 0%,
-        transparent 30%,
-        transparent 70%,
-        var(--term-neon) 100%
-      );
+      inset: -3px;
+      background:
+        linear-gradient(
+          135deg,
+          var(--term-neon) 0%,
+          oklch(0.6 0.2 calc(var(--term-hue) + 60deg)) 25%,
+          transparent 40%,
+          transparent 60%,
+          oklch(0.6 0.2 calc(var(--term-hue) - 30deg)) 75%,
+          var(--term-neon) 100%
+        );
       clip-path: inherit;
       z-index: -1;
-      animation: borderPulse 3s ease-in-out infinite;
+      opacity: var(--glow-intensity);
+      animation:
+        borderPulse 3s ease-in-out infinite,
+        glowIntensity 4s ease-in-out infinite;
     }
 
-    /* Inner background */
+    /* Inner solid background */
     &::after {
       content: "";
       position: absolute;
       inset: 2px;
-      background: var(--term-bg);
+      background:
+        /* Top highlight */
+        linear-gradient(
+          180deg,
+          oklch(0.16 0.04 var(--term-hue) / 40%) 0%,
+          transparent 30%
+        ),
+        /* Base color */
+        oklch(0.06 0.025 var(--term-hue));
       clip-path: inherit;
       z-index: -1;
     }
+  }
+
+  @keyframes termHueShift {
+    0% { --term-hue: 280deg; }
+    50% { --term-hue: 320deg; }
+    100% { --term-hue: 280deg; }
+  }
+
+  @keyframes glowIntensity {
+    0%, 100% { --glow-intensity: 0.6; }
+    50% { --glow-intensity: 1; }
   }
 
   @keyframes borderPulse {
     0%,
     100% {
-      opacity: 0.6;
-      filter: blur(0px);
+      filter: blur(0px) brightness(1);
     }
     50% {
-      opacity: 1;
-      filter: blur(2px);
+      filter: blur(3px) brightness(1.2);
     }
   }
 
-  /* Corner accents - HUD style */
+  /* Corner accents - HUD style with enhanced glow */
   .terminal-corner {
     position: absolute;
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
     z-index: 20;
   }
 
@@ -263,64 +334,73 @@
     content: "";
     position: absolute;
     background: var(--term-neon);
-    box-shadow: 0 0 10px var(--term-neon-glow);
+    box-shadow:
+      0 0 8px var(--term-neon-glow),
+      0 0 16px var(--term-neon-glow),
+      0 0 24px color-mix(in oklch, var(--term-neon) 40%, transparent);
+    animation: cornerPulse 2s ease-in-out infinite;
+  }
+
+  @keyframes cornerPulse {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 1; }
   }
 
   .terminal-corner--tl {
-    top: 4px;
-    left: 4px;
+    top: 6px;
+    left: 6px;
     &::before {
-      width: 12px;
+      width: 16px;
       height: 2px;
     }
     &::after {
       width: 2px;
-      height: 12px;
+      height: 16px;
     }
   }
 
   .terminal-corner--tr {
-    top: 4px;
-    right: 4px;
+    top: 6px;
+    right: 6px;
     &::before {
-      width: 12px;
+      width: 16px;
       height: 2px;
       right: 0;
     }
     &::after {
       width: 2px;
-      height: 12px;
+      height: 16px;
       right: 0;
     }
   }
 
   .terminal-corner--bl {
-    bottom: 4px;
-    left: 4px;
+    bottom: 6px;
+    left: 6px;
     &::before {
-      width: 12px;
+      width: 16px;
       height: 2px;
       bottom: 0;
     }
     &::after {
       width: 2px;
-      height: 12px;
+      height: 16px;
       bottom: 0;
     }
   }
 
   .terminal-corner--br {
-    bottom: 4px;
-    right: 4px;
+    bottom: 6px;
+    right: 6px;
     &::before {
-      width: 12px;
+      width: 16px;
       height: 2px;
       right: 0;
       bottom: 0;
     }
     &::after {
       width: 2px;
-      height: 12px;
+      height: 16px;
       right: 0;
       bottom: 0;
     }
@@ -336,11 +416,11 @@
     padding: 12px 20px;
     background: linear-gradient(
       90deg,
-      color-mix(in oklch, var(--term-neon) 10%, var(--term-bg)) 0%,
-      var(--term-bg-light) 50%,
-      color-mix(in oklch, var(--term-neon) 10%, var(--term-bg)) 100%
+      color-mix(in oklch, var(--term-neon) 14%, var(--term-bg)) 0%,
+      color-mix(in oklch, var(--term-neon) 6%, var(--term-bg-light)) 50%,
+      color-mix(in oklch, var(--term-neon) 14%, var(--term-bg)) 100%
     );
-    border-bottom: 1px solid color-mix(in oklch, var(--term-neon) 30%, transparent);
+    border-bottom: 1px solid color-mix(in oklch, var(--term-neon) 45%, transparent);
   }
 
   .header-left,
@@ -428,16 +508,111 @@
     padding: var(--space-xl);
     position: relative;
     min-height: 300px;
+    background:
+      repeating-linear-gradient(
+        0deg,
+        oklch(0.25 0.05 var(--term-hue) / 10%) 0px,
+        oklch(0.25 0.05 var(--term-hue) / 10%) 1px,
+        transparent 1px,
+        transparent 3px
+      ),
+      repeating-linear-gradient(
+        90deg,
+        oklch(0.2 0.04 var(--term-hue) / 6%) 0px,
+        oklch(0.2 0.04 var(--term-hue) / 6%) 1px,
+        transparent 1px,
+        transparent 12px
+      ),
+      linear-gradient(
+        180deg,
+        oklch(0.12 0.03 var(--term-hue)) 0%,
+        oklch(0.06 0.02 var(--term-hue)) 100%
+      );
+    background-blend-mode: screen, screen, normal;
+    border: 1px solid color-mix(in oklch, var(--term-neon) 20%, transparent);
+    box-shadow:
+      inset 0 0 0 1px oklch(1 0 0 / 4%),
+      inset 0 0 40px oklch(0.2 0.08 var(--term-hue) / 20%),
+      inset 0 0 80px oklch(0.15 0.06 var(--term-hue) / 20%);
+
+    /* CRT inner bloom/glow effect */
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        /* Top inner glow - phosphor bloom */
+        radial-gradient(
+          ellipse 100% 40% at 50% 0%,
+          oklch(0.4 0.15 var(--term-hue) / 15%) 0%,
+          transparent 70%
+        ),
+        /* Bottom inner glow */
+        radial-gradient(
+          ellipse 100% 30% at 50% 100%,
+          oklch(0.3 0.1 calc(var(--term-hue) + 30deg) / 10%) 0%,
+          transparent 60%
+        ),
+        /* Side glows - subtle */
+        radial-gradient(
+          ellipse 30% 60% at 0% 50%,
+          oklch(0.3 0.1 var(--term-hue) / 8%) 0%,
+          transparent 70%
+        ),
+        radial-gradient(
+          ellipse 30% 60% at 100% 50%,
+          oklch(0.3 0.1 var(--term-hue) / 8%) 0%,
+          transparent 70%
+        );
+      pointer-events: none;
+      z-index: 1;
+      mix-blend-mode: screen;
+    }
+
+    &::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(
+          120deg,
+          oklch(1 0 0 / 6%) 0%,
+          transparent 35%,
+          transparent 65%,
+          oklch(1 0 0 / 3%) 100%
+        ),
+        linear-gradient(
+          180deg,
+          oklch(1 0 0 / 4%) 0%,
+          transparent 30%,
+          transparent 70%,
+          oklch(0 0 0 / 10%) 100%
+        );
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    /* Content needs to be above the glow */
+    & > * {
+      position: relative;
+      z-index: 3;
+    }
   }
 
-  /* Noise texture overlay */
+  /* Noise texture overlay - enhanced */
   .screen-noise {
     position: absolute;
     inset: 0;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-    opacity: 0.03;
+    opacity: 0.04;
     pointer-events: none;
     z-index: 15;
+    animation: noiseFlicker 0.15s steps(5) infinite;
+  }
+
+  @keyframes noiseFlicker {
+    0%, 100% { opacity: 0.04; }
+    50% { opacity: 0.025; }
   }
 
   /* Animated scanline */
@@ -474,7 +649,11 @@
     position: absolute;
     inset: 0;
     padding: var(--space-xl);
-    background: var(--term-bg);
+    background: linear-gradient(
+      180deg,
+      oklch(0.1 0.03 var(--term-hue)) 0%,
+      oklch(0.06 0.02 var(--term-hue)) 100%
+    );
     z-index: 10;
     animation: bootFadeOut 0.8s ease-out 3s forwards;
     overflow: hidden;
@@ -630,6 +809,7 @@
     animation: terminalReveal 0.6s ease-out 3s forwards;
     position: relative;
     z-index: 5;
+    text-shadow: 0 0 10px oklch(0.45 0.08 var(--term-hue) / 35%);
   }
 
   @keyframes terminalReveal {
@@ -652,6 +832,7 @@
     gap: 0;
     font-size: 0.95rem;
     margin-bottom: var(--space-sm);
+    letter-spacing: 0.04em;
   }
 
   .prompt-path {
@@ -666,7 +847,7 @@
   }
 
   .prompt-command {
-    color: oklch(0.85 0.02 280);
+    color: oklch(0.9 0.02 280);
     font-weight: 500;
   }
 
@@ -675,10 +856,10 @@
      ============================================ */
 
   .terminal-tagline {
-    color: oklch(0.75 0.02 280);
+    color: oklch(0.82 0.02 280);
     font-size: clamp(1.3rem, 2.8vw, 1.7rem);
     font-weight: 600;
-    line-height: 1.5;
+    line-height: 1.4;
     margin: var(--space-md) 0;
     position: relative;
   }
@@ -686,9 +867,9 @@
   .terminal-tagline .highlight-text {
     display: block;
     margin-top: var(--space-sm);
-    font-size: 130%;
+    font-size: 120%;
     font-weight: 800;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.05em;
     color: var(--term-danger);
     position: relative;
 
@@ -974,6 +1155,12 @@
     animation: btnIdleGlitch 4s infinite;
   }
 
+  .holo-btn .btn-text {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+  }
+
   /* Chromatic aberration pseudo-elements */
   .holo-btn::before,
   .holo-btn::after {
@@ -1197,6 +1384,144 @@
     100% {
       transform: translateY(4px);
     }
+  }
+
+  /* ============================================
+     HOLO BUTTON VARIANTS
+     ============================================ */
+
+  /* Safe Mode Button - teal accent, refined size */
+  .holo-btn--safe {
+    --btn-color: oklch(0.7 0.16 175);
+    --btn-glow: oklch(0.6 0.18 175 / 60%);
+    border-color: var(--btn-color);
+    color: var(--btn-color);
+    background: color-mix(in oklch, var(--btn-color) 8%, transparent);
+    /* Reduced from 1.1rem/lg+2xl to more compact */
+    font-size: 0.95rem;
+    padding: var(--space-sm) var(--space-xl);
+    gap: var(--space-xs);
+  }
+
+  .holo-btn--safe::before {
+    color: oklch(0.8 0.14 175);
+  }
+
+  .holo-btn--safe::after {
+    color: oklch(0.6 0.18 175);
+  }
+
+  .holo-btn--safe:hover {
+    background: color-mix(in oklch, var(--btn-color) 20%, transparent);
+    box-shadow:
+      0 0 20px var(--btn-glow),
+      0 0 40px color-mix(in oklch, var(--btn-color) 35%, transparent),
+      inset 0 0 15px color-mix(in oklch, var(--btn-color) 12%, transparent);
+    text-shadow: 0 0 10px var(--btn-glow);
+  }
+
+  .holo-btn--safe:active {
+    background: var(--btn-color);
+  }
+
+  .holo-btn--safe .btn-icon {
+    width: 1.1em;
+    height: 1.1em;
+    flex-shrink: 0;
+  }
+
+  .holo-btn--safe .glitch-layer {
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      color-mix(in oklch, var(--btn-color) 20%, transparent) 50%,
+      transparent 100%
+    );
+  }
+
+  .holo-btn--safe .btn-scanlines {
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      color-mix(in oklch, var(--btn-color) 5%, transparent) 2px,
+      color-mix(in oklch, var(--btn-color) 5%, transparent) 4px
+    );
+  }
+
+  /* Secondary/Customize button - with glitch personality */
+  .holo-btn--secondary {
+    --btn-accent: var(--holo-primary);
+    --btn-accent-glow: var(--holo-glow);
+    border-color: color-mix(in oklch, var(--btn-accent) 60%, transparent);
+    color: color-mix(in oklch, var(--btn-accent) 85%, var(--text-primary));
+    background: color-mix(in oklch, var(--btn-accent) 5%, transparent);
+    font-size: 0.9rem;
+    padding: var(--space-sm) var(--space-lg);
+    position: relative;
+  }
+
+  /* Restore glitch layers for secondary */
+  .holo-btn--secondary::before,
+  .holo-btn--secondary::after {
+    display: block;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .holo-btn--secondary:hover::before,
+  .holo-btn--secondary:hover::after {
+    opacity: 1;
+    animation: btnGlitch 0.4s ease-in-out;
+  }
+
+  @keyframes btnGlitch {
+    0%, 100% { transform: translate(0); }
+    20% { transform: translate(-2px, 1px); }
+    40% { transform: translate(2px, -1px); }
+    60% { transform: translate(-1px, 2px); }
+    80% { transform: translate(1px, -2px); }
+  }
+
+  .holo-btn--secondary:hover {
+    border-color: var(--btn-accent);
+    color: var(--btn-accent);
+    background: color-mix(in oklch, var(--btn-accent) 12%, transparent);
+    box-shadow:
+      0 0 15px var(--btn-accent-glow),
+      inset 0 0 10px color-mix(in oklch, var(--btn-accent) 8%, transparent);
+    /* Chromatic aberration text effect */
+    text-shadow:
+      -1px 0 oklch(0.7 0.2 25 / 50%),
+      1px 0 oklch(0.7 0.2 200 / 50%);
+  }
+
+  /* Actions container layout */
+  .holo-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    justify-content: center;
+    align-items: center;
+  }
+
+  /* Quick download hint text - with safe green glow */
+  .quick-download-hint {
+    --hint-color: oklch(0.65 0.15 175);
+    width: 100%;
+    text-align: center;
+    margin-top: var(--space-sm);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--hint-color);
+    letter-spacing: 0.08em;
+    text-shadow: 0 0 10px color-mix(in oklch, var(--hint-color) 50%, transparent);
+    text-transform: uppercase;
+  }
+
+  .quick-download-hint span {
+    opacity: 0.6;
+    margin: 0 0.5em;
   }
 
   /* ============================================

@@ -9,7 +9,12 @@ import { setupDriverLinks } from './components/drivers'
 import { setupClearAll, setupFilters, setupSearch, setupViewToggle } from './components/filters'
 import { setupPresets } from './components/presets'
 import { setupProfileActions } from './components/profiles'
-import { setupDownload } from './components/script-generator'
+import {
+  downloadFile,
+  generateSafeScript,
+  SAFE_SCRIPT_FILENAME,
+  setupDownload,
+} from './components/script-generator'
 import { setupFormListeners, updateSummary } from './components/summary'
 import { formatZodErrors, isParseSuccess, safeParseCatalog, type ValidatedCatalog } from './schemas'
 import { store } from './state'
@@ -136,6 +141,16 @@ function setupUI(controller: CleanupController): void {
   updateCategoryBadges()
 }
 
+function setupQuickDownload(controller: CleanupController): void {
+  const quickBtn = $id('quick-download-btn')
+  if (quickBtn) {
+    controller.addEventListener(quickBtn, 'click', () => {
+      const script = generateSafeScript()
+      downloadFile(script, SAFE_SCRIPT_FILENAME)
+    })
+  }
+}
+
 function setupInteractions(controller: CleanupController): void {
   setupFilters(controller)
   setupSearch(controller)
@@ -148,6 +163,7 @@ function setupInteractions(controller: CleanupController): void {
   setupAuditPanel(controller)
   setupDriverLinks(controller)
   initCyberToggle(controller)
+  setupQuickDownload(controller)
 }
 
 onReady(init)
