@@ -148,6 +148,19 @@ function setupQuickDownload(controller: CleanupController): void {
   }
 }
 
+function setupAuditPanelVisibility(controller: CleanupController): void {
+  const auditPanel = $id('audit-panel')
+  if (!auditPanel) return
+
+  const handleScroll = (): void => {
+    if (window.scrollY > 600) {  // ~78vh hero height
+      auditPanel.classList.add('visible')
+    }
+  }
+
+  controller.addEventListener(window, 'scroll', handleScroll, { passive: true })
+}
+
 function setupInteractions(controller: CleanupController): void {
   setupFilters(controller)
   setupSearch(controller)
@@ -158,9 +171,50 @@ function setupInteractions(controller: CleanupController): void {
   setupDownload(controller)
   setupProfileActions(controller)
   setupAuditPanel(controller)
+  setupAuditPanelVisibility(controller)
   setupDriverLinks(controller)
   initCyberToggle(controller)
   setupQuickDownload(controller)
+  setupPeriodicVerdictFlicker(controller)
+}
+
+/**
+ * Setup periodic verdict flicker (MOT-001 from PRD)
+ * Triggers random flicker burst every 15-20s
+ */
+function setupPeriodicVerdictFlicker(controller: CleanupController): void {
+  const verdictElement = document.querySelector('[data-hero-verdict]') as HTMLElement | null
+  if (!verdictElement) return
+
+  // Check if user prefers reduced motion
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  if (prefersReducedMotion) return
+
+  let timeoutId: number | null = null
+
+  const triggerFlicker = (): void => {
+    // Add flicker class for 260ms
+    verdictElement.classList.add('is-flicker')
+
+    setTimeout(() => {
+      verdictElement.classList.remove('is-flicker')
+
+      // Schedule next flicker (random 15-20s)
+      const nextDelay = 15000 + Math.random() * 5000  // 15000-20000ms
+      timeoutId = window.setTimeout(triggerFlicker, nextDelay)
+    }, 260)  // Burst duration
+  }
+
+  // Initial delay (random 15-20s)
+  const initialDelay = 15000 + Math.random() * 5000
+  timeoutId = window.setTimeout(triggerFlicker, initialDelay)
+
+  // Cleanup on unmount
+  controller.addCleanup(() => {
+    if (timeoutId !== null) {
+      clearTimeout(timeoutId)
+    }
+  })
 }
 
 onReady(init)

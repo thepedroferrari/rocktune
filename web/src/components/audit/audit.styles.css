@@ -20,7 +20,7 @@
       -10px 0 50px color-mix(in oklch, oklch(0 0 0) 50%, transparent),
       0 0 40px color-mix(in oklch, var(--cyber-yellow) 10%, transparent),
       inset 1px 0 0 color-mix(in oklch, oklch(1 0 0) 5%, transparent);
-    transition: right 0.4s var(--ease-out-expo);
+    transition: right 0.4s var(--ease-out-expo), opacity 0.3s ease-out;
     z-index: 100;
     display: flex;
     overflow: visible;
@@ -38,6 +38,15 @@
       height: 16px;
       background: linear-gradient(135deg, var(--bg-primary) 50%, transparent 50%);
       z-index: 10;
+    }
+
+    /* Hide on initial load - show after scroll */
+    opacity: 0;
+    pointer-events: none;
+
+    &.visible {
+      opacity: 1;
+      pointer-events: auto;
     }
   }
 
