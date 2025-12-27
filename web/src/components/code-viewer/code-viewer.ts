@@ -47,7 +47,11 @@ export function renderDiffHtml(previous = '', current = ''): DiffResult {
       }
 
       rows.push(
-        `<div id="${lineId}" class="cv-line ${cls}" data-change="${changeType}"><span class="cv-ln old">${displayOld || '•'}</span><span class="cv-ln new">${displayNew || '•'}</span><span class="cv-code">${escaped || ' '}</span></div>`,
+        `<div id="${lineId}" class="cv-line ${cls}" data-change="${changeType}"><span class="cv-ln old">${
+          displayOld || '•'
+        }</span><span class="cv-ln new">${
+          displayNew || '•'
+        }</span><span class="cv-code">${escaped || ' '}</span></div>`,
       )
       rowIndex++
     }
@@ -210,7 +214,9 @@ export function createCodeViewer(
   }
 
   function getContent(): string {
-    if (mode === 'edit' && panes.edit) return (panes.edit as HTMLTextAreaElement).value
+    if (mode === 'edit' && panes.edit) {
+      return (panes.edit as HTMLTextAreaElement).value
+    }
     return currentValue
   }
 

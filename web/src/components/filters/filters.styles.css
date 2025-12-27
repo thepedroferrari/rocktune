@@ -47,7 +47,8 @@
       animation: filterEnter 0.4s var(--ease-out-expo) forwards;
       animation-delay: calc(
         var(--filter-delay-start) +
-        (sibling-index() - 1) * var(--filter-delay-step)
+        (sibling-index() - 1) *
+        var(--filter-delay-step)
       );
     }
   }
@@ -578,5 +579,64 @@
         background: oklch(0.55 0.15 35);
       }
     }
+  }
+
+  /* === Recommended Filter Styles === */
+
+  .filter-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    background: color-mix(in oklch, var(--accent) 20%, transparent);
+    border-radius: 3px;
+    color: var(--accent);
+  }
+
+  .filter--recommended {
+    position: relative;
+    border-color: color-mix(in oklch, var(--accent) 50%, var(--border));
+    color: var(--accent);
+    font-weight: 600;
+
+    & .filter-badge {
+      background: color-mix(in oklch, var(--accent) 25%, transparent);
+    }
+
+    &:hover {
+      background: color-mix(in oklch, var(--accent) 12%, transparent);
+      border-color: var(--accent);
+      color: var(--text-primary);
+    }
+
+    /* Only show gradient/glow when active */
+    &.active {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dim) 100%);
+      border-color: var(--accent);
+      color: white;
+
+      & .filter-badge {
+        background: color-mix(in oklch, oklch(1 0 0) 20%, transparent);
+        color: white;
+      }
+    }
+  }
+
+  /* Recommended indicator on software cards - subtle star */
+  .software-card.preset-recommended::after {
+    content: "★";
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    font-size: 12px;
+    color: var(--neon-cyan);
+    text-shadow: 0 0 3px var(--neon-cyan-glow);
+    z-index: 10;
+    opacity: 0.7;
   }
 }

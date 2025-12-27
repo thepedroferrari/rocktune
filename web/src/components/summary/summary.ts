@@ -30,14 +30,16 @@ export function updateSummary(): void {
   const hw = getHardwareProfile()
   const opts = getSelectedOptimizations()
 
-  const cpuLabels = { amd_x3d: 'X3D', amd: 'AMD', intel: 'Intel' } as const satisfies Record<
-    CpuType,
-    string
-  >
-  const gpuLabels = { nvidia: 'NVIDIA', amd: 'Radeon', intel: 'Arc' } as const satisfies Record<
-    GpuType,
-    string
-  >
+  const cpuLabels = {
+    amd_x3d: 'X3D',
+    amd: 'AMD',
+    intel: 'Intel',
+  } as const satisfies Record<CpuType, string>
+  const gpuLabels = {
+    nvidia: 'NVIDIA',
+    amd: 'Radeon',
+    intel: 'Arc',
+  } as const satisfies Record<GpuType, string>
 
   const cpuLabel = cpuLabels[hw.cpu] || hw.cpu
   const gpuLabel = gpuLabels[hw.gpu] || hw.gpu
@@ -102,7 +104,6 @@ export function setupFormListeners(controller?: CleanupController): void {
       document.dispatchEvent(new CustomEvent('script-change-request'))
     })
   })
-
   ;['#dns-provider', '#telemetry-level'].forEach((selector) => {
     const el = document.querySelector<HTMLSelectElement>(selector)
     if (el) {

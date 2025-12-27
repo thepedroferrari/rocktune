@@ -257,7 +257,7 @@
       calc(50% + (var(--pointer-from-top) - 0.5) * 100%);
 
     /* Subtle holographic effect */
-    filter: brightness(calc((var(--pointer-from-center) * 0.15) + 0.45)) contrast(1.2) saturate(0.7);
+    filter: brightness(calc(var(--pointer-from-center) * 0.15 + 0.45)) contrast(1.2) saturate(0.7);
     mix-blend-mode: color-dodge;
 
     opacity: calc(var(--card-opacity) * 0.5);
@@ -299,7 +299,7 @@
       center center,
       var(--background-x) var(--background-y);
 
-    filter: brightness(calc((var(--pointer-from-center) * 0.15) + 0.4)) contrast(1.2) saturate(0.6);
+    filter: brightness(calc(var(--pointer-from-center) * 0.15 + 0.4)) contrast(1.2) saturate(0.6);
     mix-blend-mode: color-dodge;
     opacity: calc(var(--card-opacity) * 0.4);
   }
@@ -645,7 +645,7 @@
     }
 
     & .preset-card__shine {
-      filter: brightness(calc((var(--pointer-from-center) * 0.35) + 0.6)) contrast(1.6) saturate(1);
+      filter: brightness(calc(var(--pointer-from-center) * 0.35 + 0.6)) contrast(1.6) saturate(1);
     }
 
     & .preset-card__shine::after {
@@ -678,7 +678,7 @@
     }
 
     & .preset-card__shine {
-      filter: brightness(calc((var(--pointer-from-center) * 0.35) + 0.6)) contrast(1.6) saturate(1);
+      filter: brightness(calc(var(--pointer-from-center) * 0.35 + 0.6)) contrast(1.6) saturate(1);
     }
 
     & .preset-card__shine::after {
@@ -710,7 +710,7 @@
     }
 
     & .preset-card__shine {
-      filter: brightness(calc((var(--pointer-from-center) * 0.35) + 0.6)) contrast(1.6) saturate(1);
+      filter: brightness(calc(var(--pointer-from-center) * 0.35 + 0.6)) contrast(1.6) saturate(1);
     }
 
     & .preset-card__shine::after {
@@ -742,8 +742,7 @@
     }
 
     & .preset-card__shine {
-      filter: brightness(calc((var(--pointer-from-center) * 0.3) + 0.55)) contrast(1.5)
-        saturate(0.9);
+      filter: brightness(calc(var(--pointer-from-center) * 0.3 + 0.55)) contrast(1.5) saturate(0.9);
     }
 
     & .preset-card__shine::after {

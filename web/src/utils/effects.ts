@@ -146,7 +146,9 @@ function handleEdgeCases(
   }
 
   if (controller) {
-    controller.addEventListener(window, 'scroll', handleScroll, { passive: true })
+    controller.addEventListener(window, 'scroll', handleScroll, {
+      passive: true,
+    })
   } else {
     window.addEventListener('scroll', handleScroll, { passive: true })
   }

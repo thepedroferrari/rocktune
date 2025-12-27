@@ -1,13 +1,25 @@
+import { FILTER_VALUES, UI_DELAYS } from '../../constants'
 import { store } from '../../state'
-import type { FilterValue, ViewMode } from '../../types'
+import type { FilterValue, PresetType, ViewMode } from '../../types'
 import { FILTER_ALL, FILTER_SELECTED, isCategory, VIEW_MODES } from '../../types'
 import { $, $$, $id, announce, debounce, isInputElement } from '../../utils/dom'
 import type { CleanupController } from '../../utils/lifecycle'
 
-const FILTER_WILDCARD = '*' as const
-const FILTER_SELECTED_VALUE = 'selected' as const
-const ANIMATION_DELAY_MS = 20 as const
-const SEARCH_ANNOUNCE_DELAY_MS = 500 as const
+const { WILDCARD: FILTER_WILDCARD, SELECTED: FILTER_SELECTED_VALUE } = FILTER_VALUES
+const { FILTER_ANIMATION_MS: ANIMATION_DELAY_MS, SEARCH_ANNOUNCE_MS: SEARCH_ANNOUNCE_DELAY_MS } =
+  UI_DELAYS
+const FILTER_RECOMMENDED = 'recommended' as const
+
+/** Display names for presets in the filter button */
+const PRESET_DISPLAY_NAMES: Record<PresetType, string> = {
+  competitive: 'Competitive',
+  balanced: 'Gamer',
+  streaming: 'Streamer',
+  overkill: 'Benchmarker',
+}
+
+/** Current active preset for recommended filter */
+let currentPresetData: { name: PresetType; software: readonly string[] } | null = null
 
 function addListener(
   controller: CleanupController | undefined,
@@ -50,11 +62,25 @@ export function setupFilters(controller?: CleanupController): void {
 }
 
 function handleFilterClick(activeBtn: HTMLButtonElement, allButtons: HTMLButtonElement[]): void {
-  for (const btn of allButtons) {
+  // Include recommended filter button in toggle logic
+  const recommendedBtn = $<HTMLButtonElement>('[data-filter="recommended"]')
+  const allWithRecommended = recommendedBtn ? [...allButtons, recommendedBtn] : allButtons
+
+  for (const btn of allWithRecommended) {
     btn.classList.toggle('active', btn === activeBtn)
   }
 
   const filterRaw = activeBtn.dataset.filter ?? FILTER_WILDCARD
+
+  // Handle recommended filter specially
+  if (filterRaw === FILTER_RECOMMENDED) {
+    handleRecommendedFilter()
+    return
+  }
+
+  // Clear recommended styling when switching to other filters
+  clearRecommendedStyling()
+
   animateVisibleCards(filterRaw)
 
   const filter: FilterValue = parseFilterValue(filterRaw)
@@ -204,4 +230,106 @@ export function setupClearAll(controller?: CleanupController): void {
 
     document.dispatchEvent(new CustomEvent('software-selection-changed'))
   })
+}
+
+/**
+ * Clear recommended/optional styling from all cards
+ */
+function clearRecommendedStyling(): void {
+  for (const card of $$<HTMLDivElement>('.software-card')) {
+    card.classList.remove('preset-recommended', 'preset-optional')
+  }
+}
+
+/**
+ * Handle recommended filter - shows only software for current preset
+ */
+function handleRecommendedFilter(): void {
+  if (!currentPresetData) return
+
+  const recommendedKeys = new Set(currentPresetData.software)
+  const cards = $$<HTMLDivElement>('.software-card')
+  let visibleIndex = 0
+
+  for (const card of cards) {
+    const key = card.dataset.key
+    const isRecommended = key ? recommendedKeys.has(key) : false
+
+    card.classList.toggle('hidden', !isRecommended)
+    card.classList.toggle('preset-recommended', isRecommended)
+    card.classList.remove('preset-optional')
+
+    if (isRecommended) {
+      card.style.animationDelay = `${visibleIndex * ANIMATION_DELAY_MS}ms`
+      card.classList.add('entering')
+      visibleIndex++
+    }
+  }
+}
+
+/**
+ * Show the recommended filter button when a preset is applied
+ */
+export function showRecommendedFilter(presetName: PresetType, software: readonly string[]): void {
+  currentPresetData = { name: presetName, software }
+
+  const filterBar = $<HTMLDivElement>('.filter-bar')
+  if (!filterBar) return
+
+  // Remove existing recommended button
+  const existingBtn = filterBar.querySelector<HTMLButtonElement>('[data-filter="recommended"]')
+  if (existingBtn) {
+    existingBtn.remove()
+  }
+
+  // Create new recommended filter button
+  const displayName = PRESET_DISPLAY_NAMES[presetName]
+  const btn = document.createElement('button')
+  btn.type = 'button'
+  btn.className = 'filter filter--recommended'
+  btn.dataset.filter = FILTER_RECOMMENDED
+
+  const badge = document.createElement('span')
+  badge.className = 'filter-badge'
+  badge.textContent = String(software.length)
+
+  const label = document.createElement('span')
+  label.textContent = `${displayName} Picks`
+
+  btn.appendChild(badge)
+  btn.appendChild(label)
+
+  // Insert at the beginning
+  const firstFilter = filterBar.querySelector('.filter')
+  if (firstFilter) {
+    filterBar.insertBefore(btn, firstFilter)
+  } else {
+    filterBar.appendChild(btn)
+  }
+
+  // Add click handler
+  btn.addEventListener('click', () => {
+    // Deactivate other filters
+    for (const f of $$<HTMLButtonElement>('.filter, .selected-count-btn')) {
+      f.classList.remove('active')
+    }
+    btn.classList.add('active')
+    handleRecommendedFilter()
+  })
+
+  // Don't add stars immediately - they will appear when user clicks the picks filter
+  // This keeps the UI cleaner when preset is applied but All filter is still active
+}
+
+/**
+ * Hide the recommended filter button
+ */
+export function hideRecommendedFilter(): void {
+  currentPresetData = null
+  clearRecommendedStyling()
+
+  const btn = $<HTMLButtonElement>('[data-filter="recommended"]')
+  if (btn) {
+    btn.remove()
+  }
 }

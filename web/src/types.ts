@@ -1,16 +1,27 @@
+// =============================================================================
+// Branded Types - Nominal typing for compile-time safety
+// =============================================================================
+
 declare const __brand: unique symbol
 type Brand<T, B> = T & { readonly [__brand]: B }
 
+/** Unique identifier for a software package in the catalog */
 export type PackageKey = Brand<string, 'PackageKey'>
+/** Winget package identifier (e.g., "Valve.Steam") */
 export type WingetId = Brand<string, 'WingetId'>
+/** Branded ID for requestAnimationFrame handles - prevents mixing with timeouts */
+export type AnimationFrameId = Brand<number, 'AnimationFrameId'>
+/** Branded ID for setTimeout/setInterval handles */
+export type TimeoutId = Brand<number, 'TimeoutId'>
+/** Branded ID for event listener cleanup tracking */
+export type ListenerId = Brand<symbol, 'ListenerId'>
 
-export function asPackageKey(key: string): PackageKey {
-  return key as PackageKey
-}
-
-export function asWingetId(id: string): WingetId {
-  return id as WingetId
-}
+// Type constructors - zero runtime cost, compile-time safety
+export const asPackageKey = (key: string): PackageKey => key as PackageKey
+export const asWingetId = (id: string): WingetId => id as WingetId
+export const asAnimationFrameId = (id: number): AnimationFrameId => id as AnimationFrameId
+export const asTimeoutId = (id: number): TimeoutId => id as TimeoutId
+export const asListenerId = (): ListenerId => Symbol('listener') as ListenerId
 
 export const CATEGORIES = [
   'launcher',
@@ -252,7 +263,6 @@ export const PRESET_TYPES = {
   COMPETITIVE: 'competitive',
   STREAMING: 'streaming',
   BALANCED: 'balanced',
-  MINIMAL: 'minimal',
 } as const satisfies Record<string, string>
 
 export type PresetType = (typeof PRESET_TYPES)[keyof typeof PRESET_TYPES]

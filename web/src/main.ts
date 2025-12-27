@@ -153,12 +153,15 @@ function setupAuditPanelVisibility(controller: CleanupController): void {
   if (!auditPanel) return
 
   const handleScroll = (): void => {
-    if (window.scrollY > 600) {  // ~78vh hero height
+    if (window.scrollY > 600) {
+      // ~78vh hero height
       auditPanel.classList.add('visible')
     }
   }
 
-  controller.addEventListener(window, 'scroll', handleScroll, { passive: true })
+  controller.addEventListener(window, 'scroll', handleScroll, {
+    passive: true,
+  })
 }
 
 function setupInteractions(controller: CleanupController): void {
@@ -190,31 +193,22 @@ function setupPeriodicVerdictFlicker(controller: CleanupController): void {
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   if (prefersReducedMotion) return
 
-  let timeoutId: number | null = null
-
   const triggerFlicker = (): void => {
     // Add flicker class for 260ms
     verdictElement.classList.add('is-flicker')
 
-    setTimeout(() => {
+    controller.setTimeout(() => {
       verdictElement.classList.remove('is-flicker')
 
       // Schedule next flicker (random 15-20s)
-      const nextDelay = 15000 + Math.random() * 5000  // 15000-20000ms
-      timeoutId = window.setTimeout(triggerFlicker, nextDelay)
-    }, 260)  // Burst duration
+      const nextDelay = 15000 + Math.random() * 5000 // 15000-20000ms
+      controller.setTimeout(triggerFlicker, nextDelay)
+    }, 260) // Burst duration
   }
 
   // Initial delay (random 15-20s)
   const initialDelay = 15000 + Math.random() * 5000
-  timeoutId = window.setTimeout(triggerFlicker, initialDelay)
-
-  // Cleanup on unmount
-  controller.addCleanup(() => {
-    if (timeoutId !== null) {
-      clearTimeout(timeoutId)
-    }
-  })
+  controller.setTimeout(triggerFlicker, initialDelay)
 }
 
 onReady(init)

@@ -1,1 +1,5 @@
-export { createCard, toggleCardSelection, updateCardState } from './software-card'
+export {
+  createCard,
+  toggleCardSelection,
+  updateCardState,
+} from './software-card'

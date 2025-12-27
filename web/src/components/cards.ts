@@ -50,7 +50,10 @@ export function setupSoftwareListeners(controller?: CleanupController): void {
   })
 }
 
-export { createCard, toggleCardSelection as toggleSoftware } from './software-card'
+export {
+  createCard,
+  toggleCardSelection as toggleSoftware,
+} from './software-card'
 
 export function updateSoftwareCounter(): void {
   const counter = $id('software-counter')

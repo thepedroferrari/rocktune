@@ -160,7 +160,8 @@
 }
 
 @keyframes badgeGlow {
-  0%, 100% {
+  0%,
+  100% {
     box-shadow:
       0 0 8px var(--badge-glow),
       0 0 16px color-mix(in oklch, var(--badge-neon) 25%, transparent),
@@ -176,7 +177,7 @@
 
 /* Animated scan line effect */
 .id-badge::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   background: linear-gradient(
@@ -191,11 +192,14 @@
 }
 
 @keyframes badgeScan {
-  0%, 80%, 100% {
+  0%,
+  80%,
+  100% {
     opacity: 0;
     transform: translateX(-100%);
   }
-  85%, 95% {
+  85%,
+  95% {
     opacity: 1;
   }
   90% {

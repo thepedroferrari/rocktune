@@ -239,13 +239,21 @@ export function setupRichTooltips(controller?: CleanupController): void {
   const focusInHandler = (e: Event): void => handleFocusIn(e, controller)
 
   if (controller) {
-    controller.addEventListener(document, 'mouseenter', mouseEnterHandler, { capture: true })
-    controller.addEventListener(document, 'mouseleave', mouseLeaveHandler, { capture: true })
+    controller.addEventListener(document, 'mouseenter', mouseEnterHandler, {
+      capture: true,
+    })
+    controller.addEventListener(document, 'mouseleave', mouseLeaveHandler, {
+      capture: true,
+    })
     controller.addEventListener(document, 'focusin', focusInHandler)
     controller.addEventListener(document, 'focusout', handleFocusOut)
   } else {
-    document.addEventListener('mouseenter', mouseEnterHandler, { capture: true })
-    document.addEventListener('mouseleave', mouseLeaveHandler, { capture: true })
+    document.addEventListener('mouseenter', mouseEnterHandler, {
+      capture: true,
+    })
+    document.addEventListener('mouseleave', mouseLeaveHandler, {
+      capture: true,
+    })
     document.addEventListener('focusin', focusInHandler)
     document.addEventListener('focusout', handleFocusOut)
   }
@@ -258,7 +266,9 @@ export function setupRichTooltips(controller?: CleanupController): void {
   }
 
   if (controller) {
-    controller.addEventListener(window, 'scroll', scrollHandler, { passive: true })
+    controller.addEventListener(window, 'scroll', scrollHandler, {
+      passive: true,
+    })
   } else {
     window.addEventListener('scroll', scrollHandler, { passive: true })
   }

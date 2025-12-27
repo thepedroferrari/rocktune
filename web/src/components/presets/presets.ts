@@ -2,7 +2,9 @@ import { store } from '../../state'
 import type { PresetType } from '../../types'
 import { $$ } from '../../utils/dom'
 import type { CleanupController } from '../../utils/lifecycle'
+import { adjust, clamp, round, Spring, SPRING_PRESETS } from '../../utils/spring'
 import { updateSoftwareCounter } from '../cards'
+import { showRecommendedFilter } from '../filters'
 import { updateSummary } from '../summary/'
 
 interface PresetConfig {
@@ -205,86 +207,14 @@ const PRESETS = {
       'qbittorrent',
     ],
   },
-  minimal: {
-    opts: [
-      'dns',
-      'gamedvr',
-      'background_apps',
-      'edge_debloat',
-      'copilot_disable',
-      'temp_purge',
-      'razer_block',
-    ],
-    software: ['steam', '7zip', 'brave', 'vcredist', 'dotnet'],
-  },
 } as const satisfies Record<PresetType, PresetConfig>
 
 const PRESET_LABELS = {
-  overkill: 'Overkill',
+  overkill: 'Benchmarker',
   competitive: 'Competitive',
-  streaming: 'Streaming',
-  balanced: 'Balanced',
-  minimal: 'Minimal',
+  streaming: 'Streamer',
+  balanced: 'Gamer',
 } as const satisfies Record<PresetType, string>
-
-const _OPT_DISPLAY_NAMES = {
-  pagefile: 'Pagefile',
-  fastboot: 'Fast Boot',
-  timer: 'Timer 0.5ms',
-  power_plan: 'Power Plan',
-  usb_power: 'USB Power',
-  pcie_power: 'PCIe Link',
-  dns: 'DNS',
-  nagle: 'Nagle Off',
-  audio_enhancements: 'Audio',
-  gamedvr: 'GameDVR Off',
-  background_apps: 'BG Apps',
-  edge_debloat: 'Edge Trim',
-  copilot_disable: 'Copilot Off',
-  explorer_speed: 'Explorer',
-  temp_purge: 'Temp Purge',
-  razer_block: 'Razer Block',
-  msi_mode: 'MSI Mode',
-  game_bar: 'Game Bar',
-  fso_disable: 'FSO Off',
-  ultimate_perf: 'Ultimate',
-  services_trim: 'Services',
-  disk_cleanup: 'Disk Clean (if 90%+ full)',
-  native_nvme: 'Native NVMe',
-  privacy_tier1: 'Privacy T1',
-  privacy_tier2: 'Privacy T2',
-  privacy_tier3: 'Privacy T3',
-  bloatware: 'Bloatware',
-  ipv4_prefer: 'IPv4 Pref',
-  teredo_disable: 'Teredo Off',
-  hpet: 'HPET Off',
-  hags: 'HAGS Toggle',
-  // New WinUtil-inspired optimizations
-  restore_point: 'Restore Point',
-  classic_menu: 'Classic Menu',
-  storage_sense: 'Storage Sense',
-  display_perf: 'Display Perf',
-  end_task: 'End Task',
-  explorer_cleanup: 'Explorer Clean',
-  notifications_off: 'Notifs Off',
-  ps7_telemetry: 'PS7 Telemetry',
-  // New gaming/competitive optimizations
-  multiplane_overlay: 'MPO Off',
-  mouse_accel: 'Mouse Accel',
-  usb_suspend: 'USB Suspend',
-  keyboard_response: 'KB Response',
-  // Caution tier
-  wpbt_disable: 'WPBT Off',
-  qos_gaming: 'QoS Gaming',
-  network_throttling: 'Net Throttle',
-  interrupt_affinity: 'IRQ Affinity',
-  process_mitigation: 'Mitigations',
-  // Risky tier
-  smt_disable: 'SMT Off',
-  audio_exclusive: 'WASAPI Excl',
-  tcp_optimizer: 'TCP Optimize',
-  core_isolation_off: 'VBS Off',
-} as const satisfies Record<string, string>
 
 const CATEGORY_OPTS = {
   system: {
@@ -366,84 +296,6 @@ const CATEGORY_OPTS = {
   },
 } as const satisfies Record<string, { label: string; opts: readonly string[] }>
 
-const _RISK_LEVELS = {
-  overkill: { stars: '★★★★★', level: 5 },
-  competitive: { stars: '★★★☆☆', level: 3 },
-  streaming: { stars: '★☆☆☆☆', level: 1 },
-  balanced: { stars: '☆☆☆☆☆', level: 0 },
-  minimal: { stars: '☆☆☆☆☆', level: 0 },
-} as const satisfies Record<PresetType, { stars: string; level: number }>
-
-let currentPreset: PresetType | null = null
-
-const round = (value: number, precision = 3): number => parseFloat(value.toFixed(precision))
-
-const clamp = (value: number, min = 0, max = 100): number => Math.min(Math.max(value, min), max)
-
-const adjust = (
-  value: number,
-  fromMin: number,
-  fromMax: number,
-  toMin: number,
-  toMax: number,
-): number => round(toMin + ((toMax - toMin) * (value - fromMin)) / (fromMax - fromMin))
-
-interface SpringConfig {
-  stiffness?: number
-  damping?: number
-}
-
-interface SpringValue {
-  x: number
-  y: number
-  o?: number
-}
-
-class Spring {
-  target: SpringValue
-  current: SpringValue
-  velocity: SpringValue
-  stiffness: number
-  damping: number
-
-  constructor(initialValue: SpringValue, config: SpringConfig = {}) {
-    this.target = { ...initialValue }
-    this.current = { ...initialValue }
-    this.velocity = { x: 0, y: 0, o: 0 }
-    this.stiffness = config.stiffness ?? 0.066
-    this.damping = config.damping ?? 0.25
-  }
-
-  set(target: SpringValue, options?: { soft?: boolean; hard?: boolean }): void {
-    this.target = { ...target }
-    if (options?.hard) {
-      this.current = { ...target }
-      this.velocity = { x: 0, y: 0, o: 0 }
-    }
-  }
-
-  update(): SpringValue {
-    const keys: (keyof SpringValue)[] = ['x', 'y', 'o']
-    for (const key of keys) {
-      if (this.target[key] !== undefined && this.current[key] !== undefined) {
-        const delta = (this.target[key] as number) - (this.current[key] as number)
-        this.velocity[key] =
-          ((this.velocity[key] as number) + delta * this.stiffness) * (1 - this.damping)
-        ;(this.current[key] as number) += this.velocity[key] as number
-      }
-    }
-    return this.current
-  }
-
-  isSettled(threshold = 0.01): boolean {
-    const dx = Math.abs(this.target.x - this.current.x)
-    const dy = Math.abs(this.target.y - this.current.y)
-    const vx = Math.abs(this.velocity.x)
-    const vy = Math.abs(this.velocity.y)
-    return dx < threshold && dy < threshold && vx < threshold && vy < threshold
-  }
-}
-
 interface CardState {
   card: HTMLButtonElement
   rotator: HTMLElement
@@ -486,7 +338,6 @@ function fadePresetBadge(optValue: string): void {
 
 export function applyPreset(presetName: PresetType): void {
   const preset = PRESETS[presetName]
-  currentPreset = presetName
 
   const optsArray = preset.opts as readonly string[]
   for (const cb of $$<HTMLInputElement>('input[name="opt"]')) {
@@ -494,13 +345,14 @@ export function applyPreset(presetName: PresetType): void {
   }
 
   updatePresetBadges(presetName, [...optsArray])
+
   store.setSelection([...preset.software])
 
-  const softwareArray = preset.software as readonly string[]
+  // Update software card UI
   for (const card of $$('.software-card')) {
     const key = card.dataset.key
     if (!key) continue
-    const selected = softwareArray.includes(key)
+    const selected = preset.software.includes(key)
     card.classList.toggle('selected', selected)
     card.setAttribute('aria-checked', String(selected))
     const action = card.querySelector('.back-action')
@@ -510,6 +362,9 @@ export function applyPreset(presetName: PresetType): void {
   updateSoftwareCounter()
   updateSummary()
   document.dispatchEvent(new CustomEvent('script-change-request'))
+
+  // Show recommended filter for this preset
+  showRecommendedFilter(presetName, preset.software)
 
   // Show action buttons when a preset is selected
   const actionsEl = document.getElementById('preset-actions')
@@ -544,7 +399,9 @@ function applyCardStyles(state: CardState): void {
   card.style.setProperty('--background-x', `${round(springBackground.current.x)}%`)
   card.style.setProperty('--background-y', `${round(springBackground.current.y)}%`)
 
-  rotator.style.transform = `rotateY(${round(springRotate.current.x)}deg) rotateX(${round(springRotate.current.y)}deg)`
+  rotator.style.transform = `rotateY(${round(
+    springRotate.current.x,
+  )}deg) rotateX(${round(springRotate.current.y)}deg)`
 }
 
 function animateCard(state: CardState): void {
@@ -621,12 +478,14 @@ function handlePointerEnter(state: CardState): void {
   state.interacting = true
   state.card.classList.add('interacting')
 
-  state.springRotate.stiffness = 0.066
-  state.springRotate.damping = 0.25
-  state.springGlare.stiffness = 0.066
-  state.springGlare.damping = 0.25
-  state.springBackground.stiffness = 0.066
-  state.springBackground.damping = 0.25
+  // ES2024: Use SPRING_PRESETS for semantic spring configurations
+  const { stiffness, damping } = SPRING_PRESETS.INTERACTIVE
+  state.springRotate.stiffness = stiffness
+  state.springRotate.damping = damping
+  state.springGlare.stiffness = stiffness
+  state.springGlare.damping = damping
+  state.springBackground.stiffness = stiffness
+  state.springBackground.damping = damping
 
   startAnimation(state)
 }
@@ -636,19 +495,19 @@ function handlePointerLeave(state: CardState): void {
   state.interacting = false
   state.card.classList.remove('interacting')
 
-  const snapStiff = 0.01
-  const snapDamp = 0.06
+  // Use gentle preset for snap-back animation
+  const { stiffness, damping } = SPRING_PRESETS.GENTLE
 
-  state.springRotate.stiffness = snapStiff
-  state.springRotate.damping = snapDamp
+  state.springRotate.stiffness = stiffness
+  state.springRotate.damping = damping
   state.springRotate.set({ x: 0, y: 0 })
 
-  state.springGlare.stiffness = snapStiff
-  state.springGlare.damping = snapDamp
+  state.springGlare.stiffness = stiffness
+  state.springGlare.damping = damping
   state.springGlare.set({ x: 50, y: 50, o: 0 })
 
-  state.springBackground.stiffness = snapStiff
-  state.springBackground.damping = snapDamp
+  state.springBackground.stiffness = stiffness
+  state.springBackground.damping = damping
   state.springBackground.set({ x: 50, y: 50 })
 
   startAnimation(state)
@@ -744,6 +603,11 @@ function populateCardStats(card: HTMLButtonElement): void {
 
   const preset = PRESETS[presetName]
 
+  // Update software count
+  const softwareEl = card.querySelector<HTMLElement>('[data-stat="software"]')
+  if (softwareEl) softwareEl.textContent = String(preset.software.length)
+
+  // Update optimization category stats
   const presetOpts = preset.opts as readonly string[]
   for (const [catKey, catConfig] of Object.entries(CATEGORY_OPTS)) {
     const el = card.querySelector<HTMLElement>(`[data-stat="${catKey}"]`)
@@ -755,9 +619,6 @@ function populateCardStats(card: HTMLButtonElement): void {
       el.dataset.total = String(total)
     }
   }
-
-  const softwareEl = card.querySelector<HTMLElement>('[data-stat="software"]')
-  if (softwareEl) softwareEl.textContent = String(preset.software.length)
 }
 
 export function setupPresets(controller?: CleanupController): void {
@@ -811,9 +672,3 @@ export function setupPresets(controller?: CleanupController): void {
     cardStates.clear()
   })
 }
-
-export function getCurrentPreset(): PresetType | null {
-  return currentPreset
-}
-
-export { PRESETS as presets }

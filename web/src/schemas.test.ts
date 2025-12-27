@@ -5,8 +5,8 @@ import {
   isParseSuccess,
   safeParseCatalog,
   safeParseProfile,
-  type ValidatedProfile,
   validateCatalog,
+  type ValidatedProfile,
   validateProfile,
 } from './schemas.ts'
 
@@ -170,7 +170,10 @@ describe('Schema Validation', () => {
     it('should accept all valid CPU types', () => {
       const cpuTypes = ['amd_x3d', 'amd', 'intel']
       for (const cpu of cpuTypes) {
-        const profile = { ...validProfile, hardware: { ...validProfile.hardware, cpu } }
+        const profile = {
+          ...validProfile,
+          hardware: { ...validProfile.hardware, cpu },
+        }
         const result = safeParseProfile(profile)
         assertEquals(isParseSuccess(result), true, `CPU type "${cpu}" should be valid`)
       }
@@ -179,7 +182,10 @@ describe('Schema Validation', () => {
     it('should accept all valid GPU types', () => {
       const gpuTypes = ['nvidia', 'amd', 'intel']
       for (const gpu of gpuTypes) {
-        const profile = { ...validProfile, hardware: { ...validProfile.hardware, gpu } }
+        const profile = {
+          ...validProfile,
+          hardware: { ...validProfile.hardware, gpu },
+        }
         const result = safeParseProfile(profile)
         assertEquals(isParseSuccess(result), true, `GPU type "${gpu}" should be valid`)
       }
@@ -187,19 +193,28 @@ describe('Schema Validation', () => {
 
     it('should accept all valid peripheral types', () => {
       const peripherals = ['logitech', 'razer', 'corsair', 'steelseries']
-      const profile = { ...validProfile, hardware: { ...validProfile.hardware, peripherals } }
+      const profile = {
+        ...validProfile,
+        hardware: { ...validProfile.hardware, peripherals },
+      }
       const result = safeParseProfile(profile)
       assertEquals(isParseSuccess(result), true)
     })
 
     it('should reject invalid CPU type', () => {
-      const profile = { ...validProfile, hardware: { ...validProfile.hardware, cpu: 'invalid' } }
+      const profile = {
+        ...validProfile,
+        hardware: { ...validProfile.hardware, cpu: 'invalid' },
+      }
       const result = safeParseProfile(profile)
       assertEquals(isParseSuccess(result), false)
     })
 
     it('should reject invalid GPU type', () => {
-      const profile = { ...validProfile, hardware: { ...validProfile.hardware, gpu: 'invalid' } }
+      const profile = {
+        ...validProfile,
+        hardware: { ...validProfile.hardware, gpu: 'invalid' },
+      }
       const result = safeParseProfile(profile)
       assertEquals(isParseSuccess(result), false)
     })

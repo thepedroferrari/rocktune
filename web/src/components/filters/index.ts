@@ -1,1 +1,8 @@
-export { setupClearAll, setupFilters, setupSearch, setupViewToggle } from './filters'
+export {
+  hideRecommendedFilter,
+  setupClearAll,
+  setupFilters,
+  setupSearch,
+  setupViewToggle,
+  showRecommendedFilter,
+} from './filters'
