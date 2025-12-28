@@ -1,0 +1,332 @@
+{
+  "meta": {
+    "version": "1.0",
+    "source": "rocktune.pedroferrari.com",
+    "philosophy": "gaming-first, script-first, transparent"
+  },
+  "personas": [
+    {
+      "id": "pro_gamer",
+      "display_name": "Pro Gamer",
+      "card_badge": "PRO_GAMER",
+      "card_icon": "bolt",
+      "card_blurb": "For ranked FPS. Latency first. Minimal overhead.",
+      "risk": "low",
+      "intensity": 0.90,
+      "overhead_label": "Minimal",
+      "latency_label": "Fastest",
+      "mindset": "ranked / tournament",
+      "primary_goals": [
+        "lower perceived input latency",
+        "reduce background noise (services + overlays)",
+        "stable frametimes",
+        "fast, repeatable setup"
+      ],
+      "constraints": [
+        "avoid heavyweight background apps",
+        "avoid excessive overlays unless needed"
+      ],
+      "recommended_software": [
+        {
+          "key": "steam",
+          "reason": "Baseline launcher for most competitive titles + updates."
+        },
+        {
+          "key": "discord",
+          "reason": "Most squads live here; keep it, keep it light."
+        },
+        {
+          "key": "teamspeak",
+          "reason": "Low-latency voice option for serious stacks."
+        },
+        {
+          "key": "rtss",
+          "reason": "Frametime/FPS OSD + frame cap control (helps smoothness)."
+        },
+        {
+          "key": "afterburner",
+          "reason": "Pairs with RTSS; quick GPU monitoring + fan control basics."
+        },
+        {
+          "key": "latencymon",
+          "reason": "Diagnose DPC/ISR spikes (audio crackle, hitching, stutter)."
+        }
+      ],
+      "optional_software": [
+        {
+          "key": "processlasso",
+          "reason": "Advanced CPU scheduling/priority automation (power users only)."
+        },
+        {
+          "key": "hwinfo",
+          "reason": "Deep monitoring for temps/limits while dialing in stability."
+        },
+        {
+          "key": "nvcleanstall",
+          "reason": "Cleaner NVIDIA driver installs (less junk, more control)."
+        }
+      ],
+      "avoid_software": [
+        {
+          "key": "rainmeter",
+          "reason": "Desktop widgets = background overhead + distraction."
+        },
+        {
+          "key": "lively",
+          "reason": "Animated wallpapers waste resources for no competitive upside."
+        },
+        {
+          "key": "spotify",
+          "reason": "Extra background processes; use web/mobile if you must."
+        }
+      ]
+    },
+    {
+      "id": "gamer",
+      "display_name": "Gamer",
+      "card_badge": "GAMER",
+      "card_icon": "scales",
+      "card_blurb": "For most players. Smooth, stable, no drama.",
+      "risk": "low",
+      "intensity": 0.50,
+      "overhead_label": "Low",
+      "latency_label": "Balanced",
+      "mindset": "daily driver / single-player + multiplayer",
+      "primary_goals": [
+        "reduce stutter + hitching",
+        "keep system stable",
+        "keep features working (store, game pass, peripherals)",
+        "easy setup"
+      ],
+      "constraints": [
+        "prefer reversible tweaks",
+        "avoid breaking Xbox/Game Pass and common drivers"
+      ],
+      "recommended_software": [
+        {
+          "key": "steam",
+          "reason": "Main library + updates + cloud saves."
+        },
+        {
+          "key": "discord",
+          "reason": "Voice/text for friends without extra friction."
+        },
+        {
+          "key": "playnite",
+          "reason": "Unifies libraries across launchers (cleaner daily workflow)."
+        },
+        {
+          "key": "7zip",
+          "reason": "Needed constantly (mods, downloads, archives)."
+        },
+        {
+          "key": "vcredist",
+          "reason": "Common game dependency; reduces \"why won't it launch\" moments."
+        }
+      ],
+      "optional_software": [
+        {
+          "key": "xbox",
+          "reason": "Game Pass / Microsoft titles (only if you use it)."
+        },
+        {
+          "key": "brave",
+          "reason": "Fast, privacy-forward browser for downloads + guides."
+        },
+        {
+          "key": "firefox",
+          "reason": "Solid alternative browser; great privacy + extensions."
+        },
+        {
+          "key": "sharex",
+          "reason": "Screenshots + quick sharing (guides, bugs, clips)."
+        },
+        {
+          "key": "everything",
+          "reason": "Instant file search; finding configs/mods becomes trivial."
+        },
+        {
+          "key": "hwinfo",
+          "reason": "Check temps/limits if you're chasing stutters or throttling."
+        }
+      ],
+      "avoid_software": [
+        {
+          "key": "furmark",
+          "reason": "Stress testing is easy to misuse; not needed for most gamers."
+        }
+      ]
+    },
+    {
+      "id": "streamer",
+      "display_name": "Streamer",
+      "card_badge": "STREAMER",
+      "card_icon": "cast",
+      "card_blurb": "For creators. Clean captures, smooth frametimes.",
+      "risk": "low",
+      "intensity": 0.40,
+      "overhead_label": "Capture-Safe",
+      "latency_label": "Smooth",
+      "mindset": "capture-first",
+      "primary_goals": [
+        "smooth capture + stable frametimes",
+        "clean audio (no noise, no crackle)",
+        "predictable CPU/GPU load",
+        "fast scene/stream control"
+      ],
+      "constraints": [
+        "avoid breaking capture devices",
+        "avoid aggressive debloat that impacts drivers/services"
+      ],
+      "recommended_software": [
+        {
+          "key": "obs",
+          "reason": "Creator standard: reliable recording + streaming + plugins."
+        },
+        {
+          "key": "discord",
+          "reason": "Community + voice comms for squads/collabs."
+        },
+        {
+          "key": "voicemeeter",
+          "reason": "Virtual audio routing/mixing (mic/game/music separation)."
+        },
+        {
+          "key": "nvidiabroadcast",
+          "reason": "Noise removal + camera effects (especially in untreated rooms)."
+        },
+        {
+          "key": "elgato",
+          "reason": "Stream Deck control layer (scenes, mutes, clips)."
+        }
+      ],
+      "optional_software": [
+        {
+          "key": "medal",
+          "reason": "Auto-clips for socials; quick highlight workflow."
+        },
+        {
+          "key": "streamlabs",
+          "reason": "All-in-one overlays/widgets (heavier; use if you want the ecosystem)."
+        },
+        {
+          "key": "twitchstudio",
+          "reason": "Beginner-friendly Twitch-first setup."
+        },
+        {
+          "key": "rtss",
+          "reason": "Frame cap + frametime overlay to keep capture stable."
+        },
+        {
+          "key": "latencymon",
+          "reason": "Track down audio crackle and ISR/DPC spikes."
+        },
+        {
+          "key": "sunshine",
+          "reason": "If you stream to other devices; pairs with Moonlight."
+        },
+        {
+          "key": "moonlight",
+          "reason": "Low-latency client for Sunshine/GameStream-style setups."
+        }
+      ],
+      "avoid_software": []
+    },
+    {
+      "id": "benchmarker",
+      "display_name": "Benchmarker",
+      "card_badge": "BENCHMARKER",
+      "card_icon": "diamond",
+      "card_blurb": "For benchmarkers. Max control. Measure everything.",
+      "risk": "high",
+      "intensity": 1.0,
+      "overhead_label": "Maximum",
+      "latency_label": "Variable",
+      "mindset": "data / experimentation",
+      "primary_goals": [
+        "reproducible before/after runs",
+        "frametime capture + analysis",
+        "stress testing for stability",
+        "clean driver + clean background state"
+      ],
+      "constraints": [
+        "expects breakage risk",
+        "wants tools, logs, and receipts"
+      ],
+      "recommended_software": [
+        {
+          "key": "capframex",
+          "reason": "Frametime capture + analysis for real comparisons."
+        },
+        {
+          "key": "hwinfo",
+          "reason": "Log sensors/limits to correlate performance with throttling."
+        },
+        {
+          "key": "rtss",
+          "reason": "OSD + frame cap control for consistent runs."
+        },
+        {
+          "key": "3dmark",
+          "reason": "Widely recognized GPU/CPU benchmark suite."
+        },
+        {
+          "key": "cinebench",
+          "reason": "Quick CPU sanity check; common baseline."
+        },
+        {
+          "key": "occt",
+          "reason": "All-in-one stress testing for stability validation."
+        }
+      ],
+      "optional_software": [
+        {
+          "key": "geekbench",
+          "reason": "Cross-platform CPU/GPU score baseline."
+        },
+        {
+          "key": "furmark",
+          "reason": "GPU stress test; use carefully (thermals/power)."
+        },
+        {
+          "key": "unigine_heaven",
+          "reason": "Classic GPU baseline; useful for consistency checks."
+        },
+        {
+          "key": "unigine_superposition",
+          "reason": "GPU benchmark with modern workloads (winget can be flaky)."
+        },
+        {
+          "key": "crystaldiskmark",
+          "reason": "Disk performance baseline (helps explain load stutter)."
+        },
+        {
+          "key": "latencymon",
+          "reason": "Latency diagnosis for stutter/audio issues during runs."
+        },
+        {
+          "key": "displaydriveruninstaller",
+          "reason": "Clean driver wipe for controlled comparisons."
+        },
+        {
+          "key": "nvcleanstall",
+          "reason": "Minimal NVIDIA driver packages for cleaner test states."
+        },
+        {
+          "key": "sysinternals_suite",
+          "reason": "Deep Windows inspection (autoruns, procmon) for test hygiene."
+        }
+      ],
+      "avoid_software": [
+        {
+          "key": "rainmeter",
+          "reason": "Adds background variability to benchmark runs."
+        },
+        {
+          "key": "lively",
+          "reason": "Animated wallpapers add noise to measurements."
+        }
+      ]
+    }
+  ]
+}

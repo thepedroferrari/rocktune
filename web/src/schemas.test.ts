@@ -5,8 +5,8 @@ import {
   isParseSuccess,
   safeParseCatalog,
   safeParseProfile,
-  validateCatalog,
   type ValidatedProfile,
+  validateCatalog,
   validateProfile,
 } from './schemas.ts'
 

@@ -6,17 +6,34 @@
  */
 
 import type {
+  AppEventName,
+  CpuType,
   FilterValue,
+  GpuType,
+  HardwareProfile,
   PackageKey,
+  PresetType,
   SoftwareCatalog,
   SoftwarePackage,
   ViewMode,
 } from './types'
-import { FILTER_ALL, FILTER_SELECTED, isFilterAll, isFilterSelected, VIEW_MODES } from './types'
+import {
+  CPU_TYPES,
+  FILTER_ALL,
+  GPU_TYPES,
+  isFilterAll,
+  isFilterRecommended,
+  isFilterSelected,
+  VIEW_MODES,
+} from './types'
 
-// =============================================================================
-// Core State - Reactive with $state rune
-// =============================================================================
+/** Default hardware configuration */
+const DEFAULT_HARDWARE: HardwareProfile = {
+  cpu: CPU_TYPES.AMD_X3D,
+  gpu: GPU_TYPES.NVIDIA,
+  peripherals: [],
+  monitorSoftware: [],
+}
 
 export const app = $state({
   /** Software catalog loaded from catalog.json */
@@ -25,7 +42,7 @@ export const app = $state({
   /** Currently selected packages */
   selected: new Set<PackageKey>(),
 
-  /** Current filter: 'all', 'selected', or a category */
+  /** Current filter: 'all', 'selected', 'recommended', or a category */
   filter: FILTER_ALL as FilterValue,
 
   /** Search query */
@@ -33,11 +50,24 @@ export const app = $state({
 
   /** View mode: 'grid' or 'list' */
   view: VIEW_MODES.GRID as ViewMode,
+
+  /** Recommended packages from active preset (for 'recommended' filter) */
+  recommendedPackages: new Set<PackageKey>(),
+
+  /** Active preset selection (if any) */
+  activePreset: null as PresetType | null,
+
+  /** Hardware profile (CPU, GPU, peripherals) */
+  hardware: { ...DEFAULT_HARDWARE } as HardwareProfile,
+
+  /** Number of enabled optimizations */
+  optimizationCount: 0,
 })
 
-// =============================================================================
-// Derived Values - Getter functions (Svelte 5 modules can't export $derived)
-// =============================================================================
+function emitAppEvent(name: AppEventName, detail: unknown): void {
+  if (typeof window === 'undefined') return
+  window.dispatchEvent(new CustomEvent(name, { detail }))
+}
 
 /** Count of selected packages */
 export function getSelectedCount(): number {
@@ -59,12 +89,14 @@ export function getFiltered(): [PackageKey, SoftwarePackage][] {
   const searchLower = app.search.toLowerCase()
 
   return Object.entries(app.software).filter(([key, pkg]) => {
-    // Filter by category or selection
+    // Filter by category, selection, or recommended
     let matchesFilter: boolean
     if (isFilterAll(app.filter)) {
       matchesFilter = true
     } else if (isFilterSelected(app.filter)) {
       matchesFilter = app.selected.has(key as PackageKey)
+    } else if (isFilterRecommended(app.filter)) {
+      matchesFilter = app.recommendedPackages.has(key as PackageKey)
     } else {
       matchesFilter = pkg.category === app.filter
     }
@@ -80,11 +112,6 @@ export function getFiltered(): [PackageKey, SoftwarePackage][] {
   }) as [PackageKey, SoftwarePackage][]
 }
 
-/** Count of filtered results */
-export function getFilteredCount(): number {
-  return getFiltered().length
-}
-
 /** Category counts for filter badges */
 export function getCategoryCounts(): Record<string, number> {
   const packages = Object.values(app.software)
@@ -98,10 +125,6 @@ export function getCategoryCounts(): Record<string, number> {
 
   return counts
 }
-
-// =============================================================================
-// Mutations - Functions to update state
-// =============================================================================
 
 /**
  * Toggle a software package selection
@@ -119,14 +142,8 @@ export function toggleSoftware(key: PackageKey): boolean {
   // Trigger reactivity by reassigning the Set
   app.selected = new Set(app.selected)
 
+  emitAppEvent('software-selection-changed', { selected: Array.from(app.selected) })
   return !wasSelected
-}
-
-/**
- * Check if a package is selected
- */
-export function isSelected(key: PackageKey): boolean {
-  return app.selected.has(key)
 }
 
 /**
@@ -134,6 +151,7 @@ export function isSelected(key: PackageKey): boolean {
  */
 export function clearSelection(): void {
   app.selected = new Set()
+  emitAppEvent('software-selection-changed', { selected: [] })
 }
 
 /**
@@ -141,20 +159,7 @@ export function clearSelection(): void {
  */
 export function setSelection(keys: readonly PackageKey[]): void {
   app.selected = new Set(keys)
-}
-
-/**
- * Add keys to current selection (union)
- */
-export function addToSelection(keys: readonly PackageKey[]): void {
-  app.selected = app.selected.union(new Set(keys))
-}
-
-/**
- * Remove keys from current selection (difference)
- */
-export function removeFromSelection(keys: readonly PackageKey[]): void {
-  app.selected = app.selected.difference(new Set(keys))
+  emitAppEvent('software-selection-changed', { selected: Array.from(app.selected) })
 }
 
 /**
@@ -170,7 +175,19 @@ export function setSoftware(catalog: SoftwareCatalog): void {
       preSelected.add(key as PackageKey)
     }
   }
-  app.selected = preSelected
+
+  const mergedSelection = new Set<PackageKey>()
+  for (const key of app.selected) {
+    if (key in catalog) {
+      mergedSelection.add(key)
+    }
+  }
+  for (const key of preSelected) {
+    mergedSelection.add(key)
+  }
+
+  app.selected = mergedSelection
+  emitAppEvent('software-selection-changed', { selected: Array.from(app.selected) })
 }
 
 /**
@@ -195,54 +212,51 @@ export function setView(view: ViewMode): void {
 }
 
 /**
- * Get a package by key
+ * Set recommended packages (from active preset)
  */
-export function getPackage(key: PackageKey): SoftwarePackage | undefined {
-  return app.software[key]
+export function setRecommendedPackages(keys: readonly string[]): void {
+  app.recommendedPackages = new Set(keys as PackageKey[])
 }
 
 /**
- * Check if a key exists in the catalog
+ * Clear recommended packages
  */
-export function hasPackage(key: string): key is PackageKey {
-  return key in app.software
-}
-
-// =============================================================================
-// ES2024 Set Methods - For advanced selection operations
-// =============================================================================
-
-/**
- * Check if selection is subset of given keys
- */
-export function isSelectionSubsetOf(keys: readonly string[]): boolean {
-  return app.selected.isSubsetOf(new Set(keys))
+export function clearRecommendedPackages(): void {
+  app.recommendedPackages = new Set()
 }
 
 /**
- * Check if selection contains all given keys
+ * Set the active preset
  */
-export function isSelectionSupersetOf(keys: readonly string[]): boolean {
-  return app.selected.isSupersetOf(new Set(keys))
+export function setActivePreset(preset: PresetType | null): void {
+  app.activePreset = preset
+  emitAppEvent('preset-applied', { preset })
 }
 
 /**
- * Get keys that are both selected and in given set
+ * Set CPU type
  */
-export function getSelectedIntersection(keys: readonly string[]): Set<string> {
-  return app.selected.intersection(new Set(keys))
+export function setCpu(cpu: CpuType): void {
+  app.hardware = { ...app.hardware, cpu }
 }
 
 /**
- * Get selected keys not in given set
+ * Set GPU type
  */
-export function getSelectedDifference(keys: readonly string[]): Set<string> {
-  return app.selected.difference(new Set(keys))
+export function setGpu(gpu: GpuType): void {
+  app.hardware = { ...app.hardware, gpu }
 }
 
 /**
- * Get keys in one set but not both
+ * Set full hardware profile
  */
-export function getSymmetricDifference(keys: readonly string[]): Set<string> {
-  return app.selected.symmetricDifference(new Set(keys))
+export function setHardware(hardware: Partial<HardwareProfile>): void {
+  app.hardware = { ...app.hardware, ...hardware }
+}
+
+/**
+ * Set optimization count
+ */
+export function setOptimizationCount(count: number): void {
+  app.optimizationCount = count
 }

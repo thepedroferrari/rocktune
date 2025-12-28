@@ -8,8 +8,6 @@
  * - Empty line creates paragraph break
  */
 
-import type { CleanupController } from './lifecycle'
-
 const TOOLTIP_ID = 'rich-tooltip'
 
 interface TooltipConfig {
@@ -121,7 +119,7 @@ function positionTooltip(tooltip: HTMLElement, trigger: HTMLElement): void {
   tooltip.style.left = `${left + window.scrollX}px`
 }
 
-function showTooltip(trigger: HTMLElement, controller?: CleanupController): void {
+function showTooltip(trigger: HTMLElement): void {
   const tooltip = createTooltipElement()
   const content = trigger.dataset.tooltip || ''
 
@@ -141,10 +139,7 @@ function showTooltip(trigger: HTMLElement, controller?: CleanupController): void
   tooltip.setAttribute('aria-hidden', 'false')
   currentTrigger = trigger
 
-  const scheduleFrame = (cb: FrameRequestCallback): number =>
-    controller ? controller.requestAnimationFrame(cb) : requestAnimationFrame(cb)
-
-  scheduleFrame(() => {
+  requestAnimationFrame(() => {
     positionTooltip(tooltip, trigger)
   })
 }
@@ -158,34 +153,18 @@ function hideTooltip(): void {
   currentTrigger = null
 }
 
-function scheduleTimeout(
-  controller: CleanupController | undefined,
-  fn: () => void,
-  delay: number,
-): ReturnType<typeof setTimeout> {
-  return controller ? controller.setTimeout(fn, delay) : setTimeout(fn, delay)
-}
-
-function clearTimeoutWithController(
-  controller: CleanupController | undefined,
-  id: ReturnType<typeof setTimeout> | null,
-): void {
-  if (!id) return
-  if (controller) {
-    controller.clearTimeout(id)
-  } else {
-    clearTimeout(id)
+function clearTimeouts(): void {
+  if (showTimeout) {
+    clearTimeout(showTimeout)
+    showTimeout = null
+  }
+  if (hideTimeout) {
+    clearTimeout(hideTimeout)
+    hideTimeout = null
   }
 }
 
-function clearTimeouts(controller?: CleanupController): void {
-  clearTimeoutWithController(controller, showTimeout)
-  showTimeout = null
-  clearTimeoutWithController(controller, hideTimeout)
-  hideTimeout = null
-}
-
-function handleMouseEnter(e: Event, controller?: CleanupController): void {
+function handleMouseEnter(e: Event): void {
   const target = e.target
   if (!(target instanceof Element)) return
 
@@ -193,90 +172,84 @@ function handleMouseEnter(e: Event, controller?: CleanupController): void {
   if (!trigger) return
 
   if (hideTimeout) {
-    clearTimeoutWithController(controller, hideTimeout)
+    clearTimeout(hideTimeout)
     hideTimeout = null
   }
 
   if (currentTrigger === trigger) return
 
-  showTimeout = scheduleTimeout(
-    controller,
-    () => showTooltip(trigger, controller),
-    config.showDelay,
-  )
+  showTimeout = setTimeout(() => showTooltip(trigger), config.showDelay)
 }
 
-function handleMouseLeave(controller?: CleanupController): void {
+function handleMouseLeave(): void {
   if (showTimeout) {
-    clearTimeoutWithController(controller, showTimeout)
+    clearTimeout(showTimeout)
     showTimeout = null
   }
 
-  hideTimeout = scheduleTimeout(
-    controller,
-    () => {
-      hideTooltip()
-    },
-    config.hideDelay,
-  )
+  hideTimeout = setTimeout(() => hideTooltip(), config.hideDelay)
 }
 
-function handleFocusIn(e: Event, controller?: CleanupController): void {
+function handleFocusIn(e: Event): void {
   const target = e.target
   if (!(target instanceof Element)) return
 
   const trigger = target.closest('[data-tooltip]') as HTMLElement | null
-  if (trigger) showTooltip(trigger, controller)
+  if (trigger) showTooltip(trigger)
 }
 
 function handleFocusOut(): void {
   hideTooltip()
 }
 
-export function setupRichTooltips(controller?: CleanupController): void {
-  const mouseEnterHandler = (e: Event): void => handleMouseEnter(e, controller)
-  const mouseLeaveHandler = (): void => handleMouseLeave(controller)
-  const focusInHandler = (e: Event): void => handleFocusIn(e, controller)
+/**
+ * Setup document-level tooltip event delegation.
+ * Call once at app initialization.
+ */
+export function setupRichTooltips(): void {
+  createTooltipElement()
 
-  if (controller) {
-    controller.addEventListener(document, 'mouseenter', mouseEnterHandler, {
-      capture: true,
-    })
-    controller.addEventListener(document, 'mouseleave', mouseLeaveHandler, {
-      capture: true,
-    })
-    controller.addEventListener(document, 'focusin', focusInHandler)
-    controller.addEventListener(document, 'focusout', handleFocusOut)
-  } else {
-    document.addEventListener('mouseenter', mouseEnterHandler, {
-      capture: true,
-    })
-    document.addEventListener('mouseleave', mouseLeaveHandler, {
-      capture: true,
-    })
-    document.addEventListener('focusin', focusInHandler)
-    document.addEventListener('focusout', handleFocusOut)
-  }
-
-  const scrollHandler = (): void => {
-    if (currentTrigger) {
-      const tooltip = document.getElementById(TOOLTIP_ID)
-      if (tooltip) positionTooltip(tooltip, currentTrigger)
-    }
-  }
-
-  if (controller) {
-    controller.addEventListener(window, 'scroll', scrollHandler, {
-      passive: true,
-    })
-  } else {
-    window.addEventListener('scroll', scrollHandler, { passive: true })
-  }
-
-  controller?.onCleanup(() => {
-    clearTimeouts(controller)
+  // Hide tooltip immediately on click/tap to prevent sticky tooltips after selection
+  const pointerDownHandler = (): void => {
+    clearTimeouts()
     hideTooltip()
-    const tooltip = document.getElementById(TOOLTIP_ID)
-    tooltip?.remove()
-  })
+  }
+
+  document.addEventListener('mouseenter', handleMouseEnter, { capture: true })
+  document.addEventListener('mouseleave', handleMouseLeave, { capture: true })
+  document.addEventListener('focusin', handleFocusIn)
+  document.addEventListener('focusout', handleFocusOut)
+  document.addEventListener('pointerdown', pointerDownHandler)
+
+  window.addEventListener(
+    'scroll',
+    () => {
+      if (currentTrigger) {
+        const tooltip = document.getElementById(TOOLTIP_ID)
+        if (tooltip) positionTooltip(tooltip, currentTrigger)
+      }
+    },
+    { passive: true },
+  )
+}
+
+/**
+ * Svelte action for tooltips.
+ * Usage: <button use:tooltip={'Click to submit'}>Submit</button>
+ * Or with rich content: <button use:tooltip={`**Bold** text\n- List item`}>Info</button>
+ */
+export function tooltip(node: HTMLElement, content: string) {
+  node.dataset.tooltip = content
+
+  return {
+    update(newContent: string) {
+      node.dataset.tooltip = newContent
+    },
+    destroy() {
+      delete node.dataset.tooltip
+      if (currentTrigger === node) {
+        hideTooltip()
+      }
+    },
+  }
 }

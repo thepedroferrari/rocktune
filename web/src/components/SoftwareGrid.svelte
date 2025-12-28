@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { app, getFiltered, toggleSoftware, isSelected } from '$lib/state.svelte'
+  import { app, getFiltered, toggleSoftware } from '$lib/state.svelte'
   import type { PackageKey } from '$lib/types'
   import SoftwareCard from './SoftwareCard.svelte'
 
@@ -13,6 +13,7 @@
 
   // Reactive filtered list - will update when app.filter, app.search, or app.software changes
   let filtered = $derived(getFiltered())
+  let selectedSet = $derived(app.selected)
 
   function handleToggle(key: PackageKey) {
     toggleSoftware(key)
@@ -28,7 +29,7 @@
     <SoftwareCard
       {key}
       {pkg}
-      selected={isSelected(key)}
+      selected={selectedSet.has(key)}
       delay={index * ANIMATION_DELAY_MS}
       onToggle={handleToggle}
     />

@@ -1,9 +1,5 @@
 import { z } from 'zod'
-import { CATEGORIES, CPU_TYPES, GPU_TYPES, PERIPHERAL_TYPES, PROFILE_VERSION } from './types.ts'
-
-// =============================================================================
-// Branded String Schemas - Zod brands for nominal typing
-// =============================================================================
+import { CATEGORIES, CPU_TYPES, GPU_TYPES, PERIPHERAL_TYPES, PROFILE_VERSION } from './lib/types'
 
 /**
  * Package key schema - branded string for catalog keys
@@ -23,13 +19,12 @@ export const PackageKeySchema = z
 export const WingetIdSchema = z
   .string()
   .min(1, 'Winget ID is required')
-  .regex(/^[\w.-]+$/, 'Winget ID must contain only alphanumeric characters, dots, and hyphens')
+  .regex(
+    /^[\w.+-]+$/,
+    'Winget ID must contain only alphanumeric characters, dots, hyphens, and plus signs',
+  )
   .describe('Winget package identifier (e.g., Valve.Steam)')
   .brand<'WingetId'>()
-
-// =============================================================================
-// Enum Schemas with Descriptions
-// =============================================================================
 
 export const CategorySchema = z
   .enum(CATEGORIES)
@@ -51,10 +46,6 @@ export const PeripheralTypeSchema = z
     PERIPHERAL_TYPES.STEELSERIES,
   ])
   .describe('Peripheral manufacturer for software recommendations')
-
-// =============================================================================
-// Transform Schemas - Parse and normalize data
-// =============================================================================
 
 /**
  * Trimmed non-empty string - removes whitespace and validates
@@ -92,10 +83,6 @@ const DescriptionSchema = z
   .optional()
   .describe('Brief description of the software package')
 
-// =============================================================================
-// Software Package Schema - Enhanced with transforms and refinements
-// =============================================================================
-
 export const SoftwarePackageSchema = z
   .object({
     id: WingetIdSchema,
@@ -107,10 +94,6 @@ export const SoftwarePackageSchema = z
     selected: z.boolean().default(false).describe('Default selection state'),
   })
   .describe('Software package definition for the arsenal catalog')
-
-// =============================================================================
-// Catalog Schema - With preprocessing for normalization
-// =============================================================================
 
 /**
  * Software catalog schema with preprocessing
@@ -131,10 +114,6 @@ export const SoftwareCatalogSchema = z
   )
   .describe('Complete software catalog with package definitions')
 
-// =============================================================================
-// Hardware Profile Schema - With array refinements
-// =============================================================================
-
 export const HardwareProfileSchema = z
   .object({
     cpu: CpuTypeSchema,
@@ -147,10 +126,6 @@ export const HardwareProfileSchema = z
       .describe('Selected peripheral manufacturers'),
   })
   .describe('Hardware configuration for optimization targeting')
-
-// =============================================================================
-// Saved Profile Schema - With date transform
-// =============================================================================
 
 /**
  * Date schema that transforms string to Date object

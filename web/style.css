@@ -1732,9 +1732,33 @@
        perspective: 1200px;
        perspective-origin: center center;
 
+       /* Cap at ~3 rows with scrollbar */
+       max-height: 540px;
+       overflow-y: auto;
+       overflow-x: hidden;
+       scrollbar-gutter: stable;
+
+       &::-webkit-scrollbar {
+         width: 6px;
+       }
+
+       &::-webkit-scrollbar-track {
+         background: var(--bg-tertiary);
+       }
+
+       &::-webkit-scrollbar-thumb {
+         background: var(--border-light);
+         border-radius: 3px;
+
+         &:hover {
+           background: var(--accent);
+         }
+       }
+
        &.list-view {
          grid-template-columns: 1fr;
          gap: var(--space-xs);
+         max-height: 480px; /* Shorter for list items */
 
          & .software-card {
            aspect-ratio: unset;
@@ -2881,10 +2905,6 @@
        .driver-grid,
        .driver-cards {
          grid-template-columns: 1fr;
-       }
-
-       .driver-card--monitor {
-         grid-column: span 1;
        }
 
        .step {

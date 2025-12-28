@@ -1,12 +1,3 @@
-/**
- * Spring physics animation utilities
- * ES2022+ features: private class fields, static blocks
- */
-
-// =============================================================================
-// Math Utilities - Pure functions with const assertions
-// =============================================================================
-
 /** Round to specified precision (default 3 decimal places) */
 export const round = (value: number, precision = 3): number => parseFloat(value.toFixed(precision))
 
@@ -22,14 +13,6 @@ export const adjust = (
   toMin: number,
   toMax: number,
 ): number => round(toMin + ((toMax - toMin) * (value - fromMin)) / (fromMax - fromMin))
-
-/** Linear interpolation between two values */
-export const lerp = (start: number, end: number, t: number): number =>
-  start + (end - start) * clamp(t, 0, 1)
-
-// =============================================================================
-// Types
-// =============================================================================
 
 export interface SpringConfig {
   readonly stiffness?: number
@@ -54,10 +37,6 @@ export const SPRING_PRESETS = {
   STIFF: { stiffness: 0.2, damping: 0.4 } as const,
 } as const satisfies Record<string, SpringConfig>
 
-// =============================================================================
-// Spring Class - Physics-based animation with ES2022 private fields
-// =============================================================================
-
 export class Spring {
   // ES2022 Private class fields - true encapsulation
   #target: SpringValue
@@ -79,10 +58,6 @@ export class Spring {
     this.#stiffness = config.stiffness ?? SPRING_PRESETS.INTERACTIVE.stiffness
     this.#damping = config.damping ?? SPRING_PRESETS.INTERACTIVE.damping
   }
-
-  // ---------------------------------------------------------------------------
-  // Public getters - readonly access to internal state
-  // ---------------------------------------------------------------------------
 
   get target(): Readonly<SpringValue> {
     return this.#target
@@ -111,10 +86,6 @@ export class Spring {
   set damping(value: number) {
     this.#damping = value
   }
-
-  // ---------------------------------------------------------------------------
-  // Animation control methods
-  // ---------------------------------------------------------------------------
 
   /**
    * Set new target value
@@ -145,7 +116,7 @@ export class Spring {
         const newVelocity =
           ((this.#velocity[key] ?? 0) + delta * this.#stiffness) * (1 - this.#damping)
         this.#velocity[key] = newVelocity
-        ;(this.#current as Record<string, number>)[key] = currentVal + newVelocity
+        ;(this.#current as unknown as Record<string, number>)[key] = currentVal + newVelocity
       }
     }
 

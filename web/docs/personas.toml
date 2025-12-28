@@ -8,15 +8,15 @@ source = "rocktune.pedroferrari.com"
 philosophy = "gaming-first, script-first, transparent"
 
 [[persona]]
-id = "competitive_gamer"
-display_name = "Competitive Gamer"
-card_badge = "EPIC"
+id = "pro_gamer"
+display_name = "Pro Gamer"
+card_badge = "PRO_GAMER"
 card_icon = "bolt"
 # UI copy (short + punchy)
 card_blurb = "For ranked FPS. Latency first. Minimal overhead."
 # Behavior knobs
-risk = "medium"
-intensity = 0.70
+risk = "low"
+intensity = 0.90
 mindset = "ranked / tournament"
 primary_goals = [
   "lower perceived input latency",
@@ -81,11 +81,11 @@ constraints = [
 [[persona]]
 id = "gamer"
 display_name = "Gamer"
-card_badge = "RECOMMENDED"
+card_badge = "GAMER"
 card_icon = "scales"
 card_blurb = "For most players. Smooth, stable, no drama."
 risk = "low"
-intensity = 0.40
+intensity = 0.50
 mindset = "daily driver / single-player + multiplayer"
 primary_goals = [
   "reduce stutter + hitching",
@@ -150,11 +150,11 @@ constraints = [
 [[persona]]
 id = "streamer"
 display_name = "Streamer"
-card_badge = "RARE"
+card_badge = "STREAMER"
 card_icon = "cast"
 card_blurb = "For creators. Clean captures, smooth frametimes."
 risk = "low"
-intensity = 0.55
+intensity = 0.40
 mindset = "capture-first"
 primary_goals = [
   "smooth capture + stable frametimes",
@@ -219,11 +219,11 @@ constraints = [
 [[persona]]
 id = "benchmarker"
 display_name = "Benchmarker"
-card_badge = "LEGENDARY"
+card_badge = "BENCHMARKER"
 card_icon = "diamond"
 card_blurb = "For benchmarkers. Max control. Measure everything."
 risk = "high"
-intensity = 0.90
+intensity = 1.0
 mindset = "data / experimentation"
 primary_goals = [
   "reproducible before/after runs",

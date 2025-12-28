@@ -15,6 +15,16 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
+    target: 'esnext',
+    minify: 'esbuild',
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['svelte', 'zod'],
+        },
+      },
+    },
   },
   server: {
     port: 9010,

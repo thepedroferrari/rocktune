@@ -1,7 +1,3 @@
-// =============================================================================
-// Branded Types - Nominal typing for compile-time safety
-// =============================================================================
-
 declare const __brand: unique symbol
 type Brand<T, B> = T & { readonly [__brand]: B }
 
@@ -25,28 +21,6 @@ export type PresetId = Brand<string, 'PresetId'>
 export type PositiveInt = Brand<number, 'PositiveInt'>
 /** Non-empty string type */
 export type NonEmptyString = Brand<string, 'NonEmptyString'>
-
-// Type constructors - zero runtime cost, compile-time safety
-export const asPackageKey = (key: string): PackageKey => key as PackageKey
-export const asWingetId = (id: string): WingetId => id as WingetId
-export const asAnimationFrameId = (id: number): AnimationFrameId => id as AnimationFrameId
-export const asTimeoutId = (id: number): TimeoutId => id as TimeoutId
-export const asListenerId = (): ListenerId => Symbol('listener') as ListenerId
-export const asHtmlId = (id: string): HtmlId => id as HtmlId
-export const asCssClassName = (name: string): CssClassName => name as CssClassName
-export const asPresetId = (id: string): PresetId => id as PresetId
-export const asPositiveInt = (n: number): PositiveInt => {
-  if (n <= 0 || !Number.isInteger(n)) throw new RangeError('Must be a positive integer')
-  return n as PositiveInt
-}
-export const asNonEmptyString = (s: string): NonEmptyString => {
-  if (s.length === 0) throw new RangeError('String must be non-empty')
-  return s as NonEmptyString
-}
-
-// =============================================================================
-// Template Literal Types - Compile-time string validation
-// =============================================================================
 
 /** CSS variable name type: --variable-name */
 export type CssVarName = `--${string}`
@@ -90,10 +64,6 @@ export type AppEventName =
 
 /** ISO date string type */
 export type ISODateString = `${number}-${number}-${number}T${number}:${number}:${number}${string}`
-
-// =============================================================================
-// Utility Types - Advanced TypeScript patterns
-// =============================================================================
 
 /** Make specific keys required */
 export type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] }
@@ -237,7 +207,12 @@ export type ViewMode = (typeof VIEW_MODES)[keyof typeof VIEW_MODES]
 
 export const FILTER_ALL = 'all' as const
 export const FILTER_SELECTED = 'selected' as const
-export type FilterValue = Category | typeof FILTER_ALL | typeof FILTER_SELECTED
+export const FILTER_RECOMMENDED = 'recommended' as const
+export type FilterValue =
+  | Category
+  | typeof FILTER_ALL
+  | typeof FILTER_SELECTED
+  | typeof FILTER_RECOMMENDED
 
 export function isFilterAll(filter: FilterValue): filter is typeof FILTER_ALL {
   return filter === FILTER_ALL
@@ -245,6 +220,10 @@ export function isFilterAll(filter: FilterValue): filter is typeof FILTER_ALL {
 
 export function isFilterSelected(filter: FilterValue): filter is typeof FILTER_SELECTED {
   return filter === FILTER_SELECTED
+}
+
+export function isFilterRecommended(filter: FilterValue): filter is typeof FILTER_RECOMMENDED {
+  return filter === FILTER_RECOMMENDED
 }
 
 export const OPTIMIZATION_TIERS = {
@@ -355,19 +334,11 @@ export interface AppState {
   readonly currentView: ViewMode
 }
 
-export interface MutableAppState {
-  software: Record<string, SoftwarePackage>
-  selectedSoftware: Set<string>
-  currentFilter: FilterValue
-  searchTerm: string
-  currentView: ViewMode
-}
-
 export const PRESET_TYPES = {
-  OVERKILL: 'overkill',
-  COMPETITIVE: 'competitive',
-  STREAMING: 'streaming',
-  BALANCED: 'balanced',
+  BENCHMARKER: 'benchmarker',
+  PRO_GAMER: 'pro_gamer',
+  STREAMER: 'streamer',
+  GAMER: 'gamer',
 } as const satisfies Record<string, string>
 
 export type PresetType = (typeof PRESET_TYPES)[keyof typeof PRESET_TYPES]
