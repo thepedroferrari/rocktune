@@ -292,6 +292,38 @@ const SAFE_POWER: readonly OptimizationDef[] = [
 ✓ More thorough than power plan alone`,
     defaultChecked: false,
   },
+  {
+    key: OPTIMIZATION_KEYS.MIN_PROCESSOR_STATE,
+    tier: OPTIMIZATION_TIERS.SAFE,
+    category: 'power',
+    label: 'Min Processor State 5%',
+    hint: 'Allow CPU to downclock when idle',
+    tooltip: `**Min Processor State 5%** — thermal headroom
+
+- Sets minimum CPU state to 5%
+- Allows proper C-state entry
+- Better thermal behavior for boost
+
+✓ Essential for AMD X3D efficiency
+✓ Improves boost headroom`,
+    defaultChecked: false,
+  },
+  {
+    key: OPTIMIZATION_KEYS.HIBERNATION_DISABLE,
+    tier: OPTIMIZATION_TIERS.SAFE,
+    category: 'power',
+    label: 'Hibernation Off',
+    hint: 'Free disk, cleaner state',
+    tooltip: `**Hibernation Off** — disable hiberfil.sys
+
+- Removes hibernation file (several GB)
+- Cleaner shutdown/boot cycle
+- Works with fast startup disable
+
+✓ Frees disk space
+✓ Prevents resume issues`,
+    defaultChecked: false,
+  },
 ]
 
 /** Safe Network optimizations */
@@ -327,6 +359,38 @@ const SAFE_NETWORK: readonly OptimizationDef[] = [
 ✓ Critical for competitive FPS games
 ✓ May increase bandwidth slightly`,
     defaultChecked: true,
+  },
+  {
+    key: OPTIMIZATION_KEYS.RSS_ENABLE,
+    tier: OPTIMIZATION_TIERS.SAFE,
+    category: 'network',
+    label: 'RSS Enable',
+    hint: 'Spread network load across CPUs',
+    tooltip: `**RSS Enable** — Receive Side Scaling
+
+- Distributes network traffic across CPU cores
+- Reduces single-core bottleneck
+- Better performance on high-speed networks
+
+✓ Enabled by default on most adapters
+✓ Verify with Get-NetAdapterRss`,
+    defaultChecked: false,
+  },
+  {
+    key: OPTIMIZATION_KEYS.ADAPTER_POWER,
+    tier: OPTIMIZATION_TIERS.SAFE,
+    category: 'network',
+    label: 'Adapter Power Off',
+    hint: 'Disable NIC power saving',
+    tooltip: `**Adapter Power Off** — network never sleeps
+
+- Disables network adapter power management
+- Prevents wake-on-LAN overhead
+- Keeps adapter at full speed
+
+✓ Better for gaming/streaming
+✓ Minimal power impact on desktop`,
+    defaultChecked: false,
   },
 ]
 
@@ -416,6 +480,22 @@ const SAFE_DISPLAY: readonly OptimizationDef[] = [
 ✓ Disable if you don't use Game Bar clips`,
     defaultChecked: true,
   },
+  {
+    key: OPTIMIZATION_KEYS.GAME_MODE,
+    tier: OPTIMIZATION_TIERS.SAFE,
+    category: 'display',
+    label: 'Game Mode On',
+    hint: 'Enable Windows Game Mode',
+    tooltip: `**Game Mode On** — Windows gaming priority
+
+- Prioritizes game processes for CPU/GPU
+- Reduces background task interference
+- Works with X3D V-Cache optimizer
+
+✓ Essential for AMD X3D CPUs
+✓ Minimal downside for other systems`,
+    defaultChecked: false,
+  },
 ]
 
 /** Safe Privacy optimizations */
@@ -482,6 +562,102 @@ const SAFE_PRIVACY: readonly OptimizationDef[] = [
 
 ✓ Only if you have Razer devices
 ✓ Synapse still works for lighting/macros`,
+    defaultChecked: false,
+  },
+  {
+    key: OPTIMIZATION_KEYS.DELIVERY_OPT,
+    tier: OPTIMIZATION_TIERS.SAFE,
+    category: 'privacy',
+    label: 'Delivery Optimization Off',
+    hint: 'Stop P2P Windows Update',
+    tooltip: `**Delivery Optimization Off** — disable P2P updates
+
+- Stops Windows from sharing updates P2P
+- Reduces background upload bandwidth
+- Downloads only from Microsoft
+
+✓ Saves upload bandwidth
+✓ No impact on update speed`,
+    defaultChecked: false,
+  },
+  {
+    key: OPTIMIZATION_KEYS.WER_DISABLE,
+    tier: OPTIMIZATION_TIERS.SAFE,
+    category: 'privacy',
+    label: 'Error Reporting Off',
+    hint: 'Stop crash reports',
+    tooltip: `**Error Reporting Off** — disable WER
+
+- Stops Windows Error Reporting service
+- No crash dumps sent to Microsoft
+- Frees resources on crashes
+
+✓ Privacy improvement
+✓ Faster crash recovery`,
+    defaultChecked: false,
+  },
+  {
+    key: OPTIMIZATION_KEYS.WIFI_SENSE,
+    tier: OPTIMIZATION_TIERS.SAFE,
+    category: 'privacy',
+    label: 'WiFi Sense Off',
+    hint: 'Stop network sharing',
+    tooltip: `**WiFi Sense Off** — disable auto-connect
+
+- Stops automatic hotspot connections
+- Disables suggested open network joins
+- No credential sharing
+
+✓ Privacy and security improvement
+✓ No downside for home networks`,
+    defaultChecked: false,
+  },
+  {
+    key: OPTIMIZATION_KEYS.SPOTLIGHT_DISABLE,
+    tier: OPTIMIZATION_TIERS.SAFE,
+    category: 'privacy',
+    label: 'Spotlight Off',
+    hint: 'No lock screen ads',
+    tooltip: `**Spotlight Off** — disable Windows Spotlight
+
+- Removes Bing images from lock screen
+- Stops fun facts and tips
+- Cleaner lock screen experience
+
+✓ Reduces background downloads
+✓ Faster lock screen load`,
+    defaultChecked: false,
+  },
+  {
+    key: OPTIMIZATION_KEYS.FEEDBACK_DISABLE,
+    tier: OPTIMIZATION_TIERS.SAFE,
+    category: 'privacy',
+    label: 'Feedback Off',
+    hint: 'Stop Windows prompts',
+    tooltip: `**Feedback Off** — disable feedback prompts
+
+- Stops "Rate your experience" popups
+- Disables feedback frequency
+- No more interruptions
+
+✓ Quality-of-life improvement
+✓ No downside`,
+    defaultChecked: false,
+  },
+  {
+    key: OPTIMIZATION_KEYS.CLIPBOARD_SYNC,
+    tier: OPTIMIZATION_TIERS.SAFE,
+    category: 'privacy',
+    label: 'Clipboard Sync Off',
+    hint: 'Local clipboard only',
+    tooltip: `**Clipboard Sync Off** — disable cloud clipboard
+
+- Stops clipboard sync to Microsoft cloud
+- Disables clipboard history feature
+- Local clipboard only
+
+✓ Privacy improvement
+✓ Prevents accidental data sync`,
     defaultChecked: false,
   },
 ]
@@ -714,6 +890,102 @@ const CAUTION_OPTIMIZATIONS: readonly OptimizationDef[] = [
 
 ⚠ Security trade-off
 ⚠ Only for offline/trusted games`,
+    defaultChecked: false,
+  },
+  {
+    key: OPTIMIZATION_KEYS.MMCSS_GAMING,
+    tier: OPTIMIZATION_TIERS.CAUTION,
+    category: 'system',
+    label: 'MMCSS Gaming',
+    hint: 'GPU/CPU priority for games',
+    tooltip: `**MMCSS Gaming** — Multimedia Class Scheduler Service
+
+- Sets GPU Priority to 8 (highest)
+- Sets CPU Priority to 6
+- Scheduling Category = High
+
+⚠ May affect streaming/capture apps
+⚠ Test with your specific games`,
+    defaultChecked: false,
+  },
+  {
+    key: OPTIMIZATION_KEYS.SCHEDULER_OPT,
+    tier: OPTIMIZATION_TIERS.CAUTION,
+    category: 'system',
+    label: 'Scheduler Optimization',
+    hint: 'Win32PrioritySeparation tuning',
+    tooltip: `**Scheduler Optimization** — process scheduling
+
+- Sets Win32PrioritySeparation to 26
+- Optimizes foreground process priority
+- Better frame time consistency
+
+⚠ May affect background tasks
+⚠ Benchmark before and after`,
+    defaultChecked: false,
+  },
+  {
+    key: OPTIMIZATION_KEYS.CORE_PARKING,
+    tier: OPTIMIZATION_TIERS.CAUTION,
+    category: 'power',
+    label: 'Core Parking Off',
+    hint: 'Keep all cores active',
+    tooltip: `**Core Parking Off** — disable CPU sleep
+
+- Keeps all CPU cores active
+- Prevents core unparking latency
+- 100% min processor state equivalent
+
+⚠ Higher idle power consumption
+⚠ May hurt AMD X3D efficiency`,
+    defaultChecked: false,
+  },
+  {
+    key: OPTIMIZATION_KEYS.TIMER_REGISTRY,
+    tier: OPTIMIZATION_TIERS.CAUTION,
+    category: 'system',
+    label: 'Timer Registry',
+    hint: 'GlobalTimerResolutionRequests',
+    tooltip: `**Timer Registry** — system timer settings
+
+- Enables GlobalTimerResolutionRequests
+- Sets SystemResponsiveness to 0
+- Complements timer-tool.ps1
+
+⚠ May increase power usage
+⚠ Test with timer-tool.ps1`,
+    defaultChecked: false,
+  },
+  {
+    key: OPTIMIZATION_KEYS.RSC_DISABLE,
+    tier: OPTIMIZATION_TIERS.CAUTION,
+    category: 'network',
+    label: 'RSC Off',
+    hint: 'Disable packet coalescing',
+    tooltip: `**RSC Off** — Receive Segment Coalescing
+
+- Disables packet batching in NIC
+- May reduce network latency
+- Increases CPU usage slightly
+
+⚠ Not all adapters support this
+⚠ Benchmark network performance`,
+    defaultChecked: false,
+  },
+  {
+    key: OPTIMIZATION_KEYS.SYSMAIN_DISABLE,
+    tier: OPTIMIZATION_TIERS.CAUTION,
+    category: 'system',
+    label: 'SysMain Off',
+    hint: 'Disable Superfetch',
+    tooltip: `**SysMain Off** — disable Superfetch
+
+- Stops memory prefetching service
+- Frees RAM for games
+- May slow app launches
+
+⚠ Reduces app launch speed
+⚠ Better for gaming-only PCs`,
     defaultChecked: false,
   },
 ]
@@ -985,6 +1257,7 @@ export const PROFILE_OPTIMIZATIONS: Record<ProfileId, readonly OptimizationKey[]
     'usb_power',
     'pcie_power',
     'audio_enhancements',
+    'game_mode', // Windows Game Mode - safe, no downside
   ],
 
   // Gamer: Conservative safe set, stability over maximum performance
@@ -1004,6 +1277,9 @@ export const PROFILE_OPTIMIZATIONS: Record<ProfileId, readonly OptimizationKey[]
     'audio_enhancements',
     'timer', // Safe, significant FPS benefit
     'end_task', // QoL, no downside
+    'game_mode', // Windows Game Mode - safe
+    'delivery_opt', // Disable P2P updates - frees bandwidth
+    'feedback_disable', // No Windows feedback prompts
   ],
 
   // Streamer: Capture-safe optimizations (NO gamedvr - needed for capture)
@@ -1019,6 +1295,10 @@ export const PROFILE_OPTIMIZATIONS: Record<ProfileId, readonly OptimizationKey[]
     'edge_debloat',
     'copilot_disable',
     'audio_enhancements',
+    'game_mode', // Windows Game Mode - safe
+    'delivery_opt', // Disable P2P updates - frees bandwidth for streaming
+    'feedback_disable', // No interruptions during stream
+    'timer', // Better frame pacing for stream output
     // Note: gamedvr NOT included - streamers need capture
   ],
 
@@ -1052,6 +1332,15 @@ export const PROFILE_OPTIMIZATIONS: Record<ProfileId, readonly OptimizationKey[]
     'interrupt_affinity',
     'keyboard_response', // Essential for competitive
     'end_task', // QoL, no downside
+    // New PS module parity additions
+    'game_mode', // Windows Game Mode - safe
+    'mmcss_gaming', // MMCSS GPU/CPU priority - competitive edge
+    'scheduler_opt', // Win32PrioritySeparation - input latency
+    'timer_registry', // GlobalTimerResolutionRequests - frame pacing
+    'min_processor_state', // 5% min processor state - better boost
+    'delivery_opt', // Disable P2P updates - frees bandwidth
+    'feedback_disable', // No prompts during gaming
+    'rss_enable', // Network performance - RSS enabled
     // Note: hags removed (mixed results, benchmarker only)
   ],
 
@@ -1085,6 +1374,18 @@ export const PROFILE_OPTIMIZATIONS: Record<ProfileId, readonly OptimizationKey[]
     'edge_debloat',
     'copilot_disable',
     'audio_enhancements',
+    // New PS module parity - Safe tier
+    'game_mode',
+    'min_processor_state',
+    'hibernation_disable',
+    'rss_enable',
+    'adapter_power',
+    'delivery_opt',
+    'wer_disable',
+    'wifi_sense',
+    'spotlight_disable',
+    'feedback_disable',
+    'clipboard_sync',
     // Caution tier
     'msi_mode',
     'hpet',
@@ -1097,6 +1398,13 @@ export const PROFILE_OPTIMIZATIONS: Record<ProfileId, readonly OptimizationKey[]
     'qos_gaming',
     'network_throttling',
     'interrupt_affinity',
+    // New PS module parity - Caution tier
+    'mmcss_gaming',
+    'scheduler_opt',
+    'core_parking',
+    'timer_registry',
+    'rsc_disable',
+    'sysmain_disable',
     // Risky tier (selected)
     'privacy_tier1',
     'privacy_tier2',
@@ -1111,51 +1419,7 @@ export const PROFILE_OPTIMIZATIONS: Record<ProfileId, readonly OptimizationKey[]
   ],
 } as const
 
-/** Gate definitions for confirmation dialogs */
-export const OPTIMIZATION_GATES = {
-  /** Optimizations requiring double confirmation before applying */
-  doubleConfirm: new Set<OptimizationKey>([
-    'msi_mode',
-    'hpet',
-    'hags',
-    'fso_disable',
-    'ultimate_perf',
-    'services_trim',
-    'disk_cleanup',
-    'wpbt_disable',
-    'qos_gaming',
-    'network_throttling',
-    'interrupt_affinity',
-    'privacy_tier1',
-    'privacy_tier2',
-    'privacy_tier3',
-    'bloatware',
-    'ipv4_prefer',
-    'teredo_disable',
-    'native_nvme',
-    'smt_disable',
-    'audio_exclusive',
-    'tcp_optimizer',
-  ]),
-
-  /** Optimizations requiring manual opt-in (never auto-selected) */
-  manualOptIn: new Set<OptimizationKey>(['process_mitigation', 'core_isolation_off']),
-
-  /** UI phrase for acceptance */
-  acceptPhrase: 'I ACCEPT THE RISK',
-} as const
-
 /** Get optimizations for a profile */
 export function getOptimizationsForProfile(profile: ProfileId): readonly OptimizationKey[] {
   return PROFILE_OPTIMIZATIONS[profile] ?? []
-}
-
-/** Check if optimization requires double confirmation */
-export function requiresDoubleConfirm(key: OptimizationKey): boolean {
-  return OPTIMIZATION_GATES.doubleConfirm.has(key)
-}
-
-/** Check if optimization is manual opt-in only */
-export function isManualOptInOnly(key: OptimizationKey): boolean {
-  return OPTIMIZATION_GATES.manualOptIn.has(key)
 }

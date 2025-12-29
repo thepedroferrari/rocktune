@@ -242,7 +242,6 @@ const SAFE_OPTIMIZATIONS = {
   EXPLORER_SPEED: 'explorer_speed',
   TEMP_PURGE: 'temp_purge',
   RAZER_BLOCK: 'razer_block',
-  // New WinUtil-inspired + Gaming optimizations
   RESTORE_POINT: 'restore_point',
   CLASSIC_MENU: 'classic_menu',
   STORAGE_SENSE: 'storage_sense',
@@ -255,6 +254,17 @@ const SAFE_OPTIMIZATIONS = {
   MOUSE_ACCEL: 'mouse_accel',
   USB_SUSPEND: 'usb_suspend',
   KEYBOARD_RESPONSE: 'keyboard_response',
+  GAME_MODE: 'game_mode',
+  MIN_PROCESSOR_STATE: 'min_processor_state',
+  HIBERNATION_DISABLE: 'hibernation_disable',
+  RSS_ENABLE: 'rss_enable',
+  ADAPTER_POWER: 'adapter_power',
+  DELIVERY_OPT: 'delivery_opt',
+  WER_DISABLE: 'wer_disable',
+  WIFI_SENSE: 'wifi_sense',
+  SPOTLIGHT_DISABLE: 'spotlight_disable',
+  FEEDBACK_DISABLE: 'feedback_disable',
+  CLIPBOARD_SYNC: 'clipboard_sync',
 } as const
 
 const CAUTION_OPTIMIZATIONS = {
@@ -272,6 +282,13 @@ const CAUTION_OPTIMIZATIONS = {
   NETWORK_THROTTLING: 'network_throttling',
   INTERRUPT_AFFINITY: 'interrupt_affinity',
   PROCESS_MITIGATION: 'process_mitigation',
+  // PS Module parity - Caution tier
+  MMCSS_GAMING: 'mmcss_gaming',
+  SCHEDULER_OPT: 'scheduler_opt',
+  CORE_PARKING: 'core_parking',
+  TIMER_REGISTRY: 'timer_registry',
+  RSC_DISABLE: 'rsc_disable',
+  SYSMAIN_DISABLE: 'sysmain_disable',
 } as const
 
 const RISKY_OPTIMIZATIONS = {
@@ -419,7 +436,7 @@ export const SIMPLE_ICONS_CDN = 'https://cdn.simpleicons.org' as const
 export type DeepReadonly<T> = T extends (infer U)[]
   ? readonly DeepReadonly<U>[]
   : T extends object
-    ? { readonly [K in keyof T]: DeepReadonly<T[K]> }
-    : T
+  ? { readonly [K in keyof T]: DeepReadonly<T[K]> }
+  : T
 
 export type Prettify<T> = { [K in keyof T]: T[K] } & {}

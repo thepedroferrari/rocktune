@@ -212,6 +212,14 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
     lines.push('')
   }
 
+  // Audio optimizations
+  const audioOpts = generateAudioOpts(selected)
+  if (audioOpts.length > 0) {
+    lines.push('# Audio')
+    lines.push(...audioOpts)
+    lines.push('')
+  }
+
   // Software installs
   if (allPackagesArray.length > 0) {
     lines.push('Write-Step "Arsenal (winget)"')
@@ -257,6 +265,27 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
 
 function generateSystemOpts(selected: Set<string>): string[] {
   const lines: string[] = []
+
+  // pagefile - Fixed page file (4GB for 32GB+ RAM, 8GB for 16GB)
+  if (selected.has('pagefile')) {
+    lines.push('# Configure fixed page file')
+    lines.push(
+      '$ram = [math]::Round((Get-CimInstance Win32_PhysicalMemory | Measure-Object Capacity -Sum).Sum/1GB)',
+    )
+    lines.push('if ($ram -ge 16) {')
+    lines.push('    $size = if ($ram -ge 32) { 4096 } else { 8192 }')
+    lines.push('    $cs = Get-WmiObject Win32_ComputerSystem -EnableAllPrivileges')
+    lines.push('    $cs.AutomaticManagedPagefile = $false; $cs.Put() | Out-Null')
+    lines.push(
+      '    $pf = Get-WmiObject -Query "Select * From Win32_PageFileSetting Where Name=\'C:\\pagefile.sys\'"',
+    )
+    lines.push(
+      '    if ($pf) { $pf.InitialSize = $size; $pf.MaximumSize = $size; $pf.Put() | Out-Null }',
+    )
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: PowerShell variable syntax
+    lines.push('    Write-OK "Page file set to ${size}MB fixed"')
+    lines.push('}')
+  }
 
   if (selected.has('mouse_accel')) {
     lines.push('# Disable mouse acceleration')
@@ -306,6 +335,63 @@ function generateSystemOpts(selected: Set<string>): string[] {
     lines.push('Write-OK "Visual effects set to performance"')
   }
 
+  // explorer_speed - Disable auto folder type detection
+  if (selected.has('explorer_speed')) {
+    lines.push('# Disable Explorer auto folder-type detection')
+    lines.push(
+      'Set-Reg "HKCU:\\Software\\Classes\\Local Settings\\Software\\Microsoft\\Windows\\Shell\\Bags\\AllFolders\\Shell" "FolderType" "NotSpecified" "String"',
+    )
+    lines.push('Write-OK "Explorer speed optimized"')
+  }
+
+  // temp_purge - Clear temp folders
+  if (selected.has('temp_purge')) {
+    lines.push('# Purge temp folders')
+    lines.push('Remove-Item "$env:TEMP\\*" -Recurse -Force -EA SilentlyContinue')
+    lines.push('Remove-Item "$env:WINDIR\\Temp\\*" -Recurse -Force -EA SilentlyContinue')
+    lines.push('Write-OK "Temp folders purged"')
+  }
+
+  // storage_sense - Disable Storage Sense
+  if (selected.has('storage_sense')) {
+    lines.push('# Disable Storage Sense')
+    lines.push(
+      'Set-Reg "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\StorageSense\\Parameters\\StoragePolicy" "01" 0',
+    )
+    lines.push('Write-OK "Storage Sense disabled"')
+  }
+
+  // explorer_cleanup - Remove Home/Gallery from Explorer
+  if (selected.has('explorer_cleanup')) {
+    lines.push('# Remove Explorer clutter (Home/Gallery)')
+    lines.push(
+      'Remove-Item "HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Desktop\\NameSpace\\{f874310e-b6b7-47dc-bc84-b9e6b38f5903}" -Force -EA SilentlyContinue',
+    )
+    lines.push(
+      'Remove-Item "HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Desktop\\NameSpace\\{e88865ea-0e1c-4e20-9aa6-edcd0212c87c}" -Force -EA SilentlyContinue',
+    )
+    lines.push('Write-OK "Explorer clutter removed"')
+  }
+
+  // notifications_off - Disable notifications
+  if (selected.has('notifications_off')) {
+    lines.push('# Disable notifications')
+    lines.push(
+      'Set-Reg "HKCU:\\Software\\Policies\\Microsoft\\Windows\\Explorer" "DisableNotificationCenter" 1',
+    )
+    lines.push(
+      'Set-Reg "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\PushNotifications" "ToastEnabled" 0',
+    )
+    lines.push('Write-OK "Notifications disabled"')
+  }
+
+  // ps7_telemetry - Disable PowerShell 7 telemetry
+  if (selected.has('ps7_telemetry')) {
+    lines.push('# Disable PowerShell 7 telemetry')
+    lines.push('[Environment]::SetEnvironmentVariable("POWERSHELL_TELEMETRY_OPTOUT", "1", "Machine")')
+    lines.push('Write-OK "PS7 telemetry disabled"')
+  }
+
   return lines
 }
 
@@ -351,6 +437,151 @@ function generatePerformanceOpts(selected: Set<string>, hardware: HardwareProfil
     lines.push('Write-OK "Run timer-tool.ps1 before gaming for 0.5ms timer"')
   }
 
+  // msi_mode - Enable MSI mode for GPU/network
+  if (selected.has('msi_mode')) {
+    lines.push('# Enable MSI mode for GPU')
+    lines.push(
+      '$gpu = Get-PnpDevice -Class Display | Where-Object {$_.Status -eq "OK"} | Select-Object -First 1',
+    )
+    lines.push('if ($gpu) {')
+    lines.push(
+      '    $msiPath = "HKLM:\\SYSTEM\\CurrentControlSet\\Enum\\$($gpu.InstanceId)\\Device Parameters\\Interrupt Management\\MessageSignaledInterruptProperties"',
+    )
+    lines.push(
+      '    if (Test-Path $msiPath) { Set-Reg $msiPath "MSISupported" 1; Write-OK "MSI mode enabled for GPU" }',
+    )
+    lines.push('}')
+  }
+
+  // hpet - Disable HPET
+  if (selected.has('hpet')) {
+    lines.push('# Disable HPET')
+    lines.push('bcdedit /set useplatformclock false 2>$null')
+    lines.push('bcdedit /set disabledynamictick yes 2>$null')
+    lines.push('Write-OK "HPET disabled (reboot required)"')
+  }
+
+  // multiplane_overlay - Disable MPO
+  if (selected.has('multiplane_overlay')) {
+    lines.push('# Disable Multiplane Overlay')
+    lines.push('Set-Reg "HKLM:\\SOFTWARE\\Microsoft\\Windows\\Dwm" "OverlayTestMode" 5')
+    lines.push('Write-OK "Multiplane Overlay disabled"')
+  }
+
+  // process_mitigation - Disable mitigations
+  if (selected.has('process_mitigation')) {
+    lines.push('# Disable process mitigations (benchmarking)')
+    lines.push(
+      'Set-Reg "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\kernel" "KernelShadowStacksForceDisabled" 1',
+    )
+    lines.push('Write-OK "Process mitigations disabled (security reduced)"')
+  }
+
+  // interrupt_affinity - GPU interrupt to CPU 0
+  if (selected.has('interrupt_affinity')) {
+    lines.push('# Configure GPU interrupt affinity')
+    lines.push(
+      '$gpu = Get-PnpDevice -Class Display | Where-Object {$_.Status -eq "OK"} | Select-Object -First 1',
+    )
+    lines.push('if ($gpu) {')
+    lines.push(
+      '    $affPath = "HKLM:\\SYSTEM\\CurrentControlSet\\Enum\\$($gpu.InstanceId)\\Device Parameters\\Interrupt Management\\Affinity Policy"',
+    )
+    lines.push('    if (-not (Test-Path $affPath)) { New-Item -Path $affPath -Force | Out-Null }')
+    lines.push('    Set-Reg $affPath "DevicePolicy" 3')
+    lines.push('    Set-Reg $affPath "AssignmentSetOverride" 1')
+    lines.push('    Write-OK "GPU interrupt affinity set to CPU 0"')
+    lines.push('}')
+  }
+
+  // core_isolation_off - Disable VBS/HVCI
+  if (selected.has('core_isolation_off')) {
+    lines.push('# Disable Core Isolation (VBS/HVCI)')
+    lines.push(
+      'Set-Reg "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\DeviceGuard" "EnableVirtualizationBasedSecurity" 0',
+    )
+    lines.push(
+      'Set-Reg "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\DeviceGuard\\Scenarios\\HypervisorEnforcedCodeIntegrity" "Enabled" 0',
+    )
+    lines.push('Write-OK "Core Isolation disabled (security reduced, reboot required)"')
+  }
+
+  // native_nvme - Enable Native NVMe I/O
+  if (selected.has('native_nvme')) {
+    lines.push('# Enable Native NVMe I/O (Win11 24H2+)')
+    lines.push('$build = [int](Get-CimInstance Win32_OperatingSystem).BuildNumber')
+    lines.push('if ($build -ge 26100) {')
+    lines.push(
+      '    $nvmePath = "HKLM:\\SYSTEM\\CurrentControlSet\\Policies\\Microsoft\\FeatureManagement\\Overrides"',
+    )
+    lines.push('    if (-not (Test-Path $nvmePath)) { New-Item -Path $nvmePath -Force | Out-Null }')
+    lines.push('    Set-Reg $nvmePath "1176759950" 1')
+    lines.push('    Write-OK "Native NVMe enabled (reboot required)"')
+    lines.push('} else { Write-Fail "Native NVMe requires Win11 24H2+" }')
+  }
+
+  // smt_disable - Disable hyperthreading
+  if (selected.has('smt_disable')) {
+    lines.push('# Disable SMT/Hyperthreading')
+    lines.push(
+      '$cores = (Get-CimInstance Win32_Processor).NumberOfCores; bcdedit /set numproc $cores 2>$null',
+    )
+    lines.push('Write-OK "SMT disabled (reboot required)"')
+  }
+
+  // mmcss_gaming - MMCSS Gaming Tweaks
+  if (selected.has('mmcss_gaming')) {
+    lines.push('# MMCSS Gaming Tweaks')
+    lines.push(
+      '$mmcss = "HKLM:\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile\\Tasks\\Games"',
+    )
+    lines.push('Set-Reg $mmcss "GPU Priority" 8')
+    lines.push('Set-Reg $mmcss "Priority" 6')
+    lines.push('Set-Reg $mmcss "Scheduling Category" "High" "String"')
+    lines.push('Set-Reg $mmcss "SFIO Priority" "High" "String"')
+    lines.push('Write-OK "MMCSS gaming priority configured"')
+  }
+
+  // scheduler_opt - Scheduler Optimization
+  if (selected.has('scheduler_opt')) {
+    lines.push('# Scheduler Optimization')
+    lines.push(
+      'Set-Reg "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\PriorityControl" "Win32PrioritySeparation" 26',
+    )
+    lines.push(
+      'Set-Reg "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\PriorityControl" "IRQ8Priority" 1',
+    )
+    lines.push('Write-OK "Scheduler optimized for gaming"')
+  }
+
+  // game_mode - Enable Game Mode
+  if (selected.has('game_mode')) {
+    lines.push('# Enable Game Mode')
+    lines.push('Set-Reg "HKCU:\\Software\\Microsoft\\GameBar" "AllowAutoGameMode" 1')
+    lines.push('Set-Reg "HKCU:\\Software\\Microsoft\\GameBar" "AutoGameModeEnabled" 1')
+    lines.push('Write-OK "Game Mode enabled"')
+  }
+
+  // timer_registry - Timer Resolution Registry
+  if (selected.has('timer_registry')) {
+    lines.push('# Timer Resolution Registry')
+    lines.push(
+      'Set-Reg "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\kernel" "GlobalTimerResolutionRequests" 1',
+    )
+    lines.push(
+      'Set-Reg "HKLM:\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile" "SystemResponsiveness" 0',
+    )
+    lines.push('Write-OK "Timer resolution registry configured"')
+  }
+
+  // sysmain_disable - Disable SysMain (Superfetch)
+  if (selected.has('sysmain_disable')) {
+    lines.push('# Disable SysMain (Superfetch)')
+    lines.push('Stop-Service SysMain -Force -EA SilentlyContinue')
+    lines.push('Set-Service SysMain -StartupType Disabled -EA SilentlyContinue')
+    lines.push('Write-OK "SysMain/Superfetch disabled"')
+  }
+
   return lines
 }
 
@@ -378,6 +609,39 @@ function generatePowerOpts(selected: Set<string>): string[] {
       'Set-Reg "HKLM:\\SYSTEM\\CurrentControlSet\\Services\\USB\\DisableSelectiveSuspend" "DisableSelectiveSuspend" 1',
     )
     lines.push('Write-OK "USB selective suspend disabled"')
+  }
+
+  // pcie_power - Disable PCIe ASPM
+  if (selected.has('pcie_power')) {
+    lines.push('# Disable PCIe link state power management')
+    lines.push(
+      'powercfg /setacvalueindex scheme_current sub_pciexpress ee12f906-d166-476a-8f3a-af931b6e9d31 0',
+    )
+    lines.push('powercfg /setactive scheme_current')
+    lines.push('Write-OK "PCIe power saving disabled"')
+  }
+
+  // core_parking - Disable Core Parking
+  if (selected.has('core_parking')) {
+    lines.push('# Disable Core Parking')
+    lines.push('powercfg /setacvalueindex scheme_current sub_processor CPMINCORES 100')
+    lines.push('powercfg /setactive scheme_current')
+    lines.push('Write-OK "Core parking disabled"')
+  }
+
+  // min_processor_state - Set minimum processor state to 5%
+  if (selected.has('min_processor_state')) {
+    lines.push('# Set minimum processor state to 5%')
+    lines.push('powercfg /setacvalueindex scheme_current sub_processor PROCTHROTTLEMIN 5')
+    lines.push('powercfg /setactive scheme_current')
+    lines.push('Write-OK "Min processor state set to 5%"')
+  }
+
+  // hibernation_disable - Disable Hibernation
+  if (selected.has('hibernation_disable')) {
+    lines.push('# Disable Hibernation')
+    lines.push('powercfg /hibernate off')
+    lines.push('Write-OK "Hibernation disabled"')
   }
 
   return lines
@@ -419,6 +683,58 @@ function generateNetworkOpts(selected: Set<string>, dnsProvider: string): string
       'Set-Reg "HKLM:\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile" "NetworkThrottlingIndex" 0xffffffff',
     )
     lines.push('Write-OK "Network throttling disabled"')
+  }
+
+  // qos_gaming - Enable QoS for gaming
+  if (selected.has('qos_gaming')) {
+    lines.push('# Configure QoS for gaming')
+    lines.push('Set-Reg "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\Psched" "NonBestEffortLimit" 0')
+    lines.push('Write-OK "QoS gaming configured"')
+  }
+
+  // ipv4_prefer - Prefer IPv4 over IPv6
+  if (selected.has('ipv4_prefer')) {
+    lines.push('# Prefer IPv4 over IPv6')
+    lines.push(
+      'Set-Reg "HKLM:\\SYSTEM\\CurrentControlSet\\Services\\Tcpip6\\Parameters" "DisabledComponents" 32',
+    )
+    lines.push('Write-OK "IPv4 preferred over IPv6"')
+  }
+
+  // teredo_disable - Disable Teredo
+  if (selected.has('teredo_disable')) {
+    lines.push('# Disable Teredo')
+    lines.push('netsh interface teredo set state disabled 2>$null')
+    lines.push('Write-OK "Teredo disabled"')
+  }
+
+  // rss_enable - Enable Receive Side Scaling
+  if (selected.has('rss_enable')) {
+    lines.push('# Enable Receive Side Scaling')
+    lines.push('Get-NetAdapter | Where-Object {$_.Status -eq "Up"} | ForEach-Object {')
+    lines.push('    Enable-NetAdapterRss -Name $_.Name -EA SilentlyContinue')
+    lines.push('}')
+    lines.push('Write-OK "RSS enabled on active adapters"')
+  }
+
+  // rsc_disable - Disable Receive Segment Coalescing
+  if (selected.has('rsc_disable')) {
+    lines.push('# Disable Receive Segment Coalescing')
+    lines.push('Get-NetAdapter | Where-Object {$_.Status -eq "Up"} | ForEach-Object {')
+    lines.push('    Disable-NetAdapterRsc -Name $_.Name -EA SilentlyContinue')
+    lines.push('}')
+    lines.push('Write-OK "RSC disabled on active adapters"')
+  }
+
+  // adapter_power - Disable network adapter power saving
+  if (selected.has('adapter_power')) {
+    lines.push('# Disable network adapter power saving')
+    lines.push('Get-NetAdapter | Where-Object {$_.Status -eq "Up"} | ForEach-Object {')
+    lines.push(
+      '    Set-NetAdapterPowerManagement -Name $_.Name -WakeOnMagicPacket Disabled -WakeOnPattern Disabled -EA SilentlyContinue',
+    )
+    lines.push('}')
+    lines.push('Write-OK "Network adapter power saving disabled"')
   }
 
   return lines
@@ -476,6 +792,136 @@ function generatePrivacyOpts(selected: Set<string>): string[] {
     )
     lines.push('}')
     lines.push('Write-OK "Bloatware removed"')
+  }
+
+  // privacy_tier3 - Aggressive privacy (breaks Xbox)
+  if (selected.has('privacy_tier3')) {
+    lines.push('# Privacy Tier 3 (Aggressive - breaks Game Pass)')
+    lines.push('$xboxSvc = @("XblAuthManager","XblGameSave","XboxGipSvc","XboxNetApiSvc")')
+    lines.push(
+      'foreach ($s in $xboxSvc) { Stop-Service $s -Force -EA SilentlyContinue; Set-Service $s -StartupType Disabled -EA SilentlyContinue }',
+    )
+    lines.push('Write-OK "Xbox services disabled (Game Pass broken)"')
+  }
+
+  // edge_debloat - Edge policy debloat
+  if (selected.has('edge_debloat')) {
+    lines.push('# Edge debloat')
+    lines.push('Set-Reg "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Edge" "HideFirstRunExperience" 1')
+    lines.push('Set-Reg "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Edge" "EdgeShoppingAssistantEnabled" 0')
+    lines.push('Set-Reg "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Edge" "WebWidgetAllowed" 0')
+    lines.push('Write-OK "Edge debloated"')
+  }
+
+  // razer_block - Block Razer auto-install
+  if (selected.has('razer_block')) {
+    lines.push('# Block Razer auto-install')
+    lines.push(
+      'Get-Service | Where-Object {$_.Name -like "Razer*"} | Stop-Service -Force -EA SilentlyContinue',
+    )
+    lines.push(
+      'Get-Service | Where-Object {$_.Name -like "Razer*"} | Set-Service -StartupType Disabled -EA SilentlyContinue',
+    )
+    lines.push('Write-OK "Razer services blocked"')
+  }
+
+  // wpbt_disable - Block OEM BIOS software injection
+  if (selected.has('wpbt_disable')) {
+    lines.push('# Disable WPBT')
+    lines.push(
+      'Set-Reg "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Session Manager" "DisableWpbtExecution" 1',
+    )
+    lines.push('Write-OK "WPBT disabled (blocks OEM bloatware)"')
+  }
+
+  // services_trim - Trim non-essential services
+  if (selected.has('services_trim')) {
+    lines.push('# Trim services')
+    lines.push('$trimSvc = @("DiagTrack","dmwappushservice","lfsvc","RetailDemo","Fax","SharedAccess")')
+    lines.push(
+      'foreach ($s in $trimSvc) { Set-Service $s -StartupType Manual -EA SilentlyContinue; Stop-Service $s -Force -EA SilentlyContinue }',
+    )
+    lines.push('Write-OK "Services trimmed"')
+  }
+
+  // disk_cleanup - Deep disk cleanup
+  if (selected.has('disk_cleanup')) {
+    lines.push('# Deep disk cleanup')
+    lines.push('Start-Process "cleanmgr.exe" -ArgumentList "/sagerun:100" -Wait -WindowStyle Hidden')
+    lines.push('Write-OK "Disk cleanup complete"')
+  }
+
+  // delivery_opt - Disable Delivery Optimization P2P
+  if (selected.has('delivery_opt')) {
+    lines.push('# Disable Delivery Optimization P2P')
+    lines.push(
+      'Set-Reg "HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\DeliveryOptimization\\Config" "DODownloadMode" 0',
+    )
+    lines.push('Write-OK "Delivery Optimization P2P disabled"')
+  }
+
+  // wer_disable - Disable Windows Error Reporting
+  if (selected.has('wer_disable')) {
+    lines.push('# Disable Windows Error Reporting')
+    lines.push('Set-Reg "HKLM:\\SOFTWARE\\Microsoft\\Windows\\Windows Error Reporting" "Disabled" 1')
+    lines.push('Stop-Service WerSvc -Force -EA SilentlyContinue')
+    lines.push('Set-Service WerSvc -StartupType Disabled -EA SilentlyContinue')
+    lines.push('Write-OK "Windows Error Reporting disabled"')
+  }
+
+  // wifi_sense - Disable WiFi Sense
+  if (selected.has('wifi_sense')) {
+    lines.push('# Disable WiFi Sense')
+    lines.push(
+      'Set-Reg "HKLM:\\SOFTWARE\\Microsoft\\WcmSvc\\wifinetworkmanager\\config" "AutoConnectAllowedOEM" 0',
+    )
+    lines.push('Write-OK "WiFi Sense disabled"')
+  }
+
+  // spotlight_disable - Disable Windows Spotlight
+  if (selected.has('spotlight_disable')) {
+    lines.push('# Disable Windows Spotlight')
+    lines.push(
+      'Set-Reg "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager" "RotatingLockScreenEnabled" 0',
+    )
+    lines.push(
+      'Set-Reg "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager" "RotatingLockScreenOverlayEnabled" 0',
+    )
+    lines.push('Write-OK "Windows Spotlight disabled"')
+  }
+
+  // feedback_disable - Disable Windows Feedback prompts
+  if (selected.has('feedback_disable')) {
+    lines.push('# Disable Windows Feedback prompts')
+    lines.push('Set-Reg "HKCU:\\Software\\Microsoft\\Siuf\\Rules" "NumberOfSIUFInPeriod" 0')
+    lines.push('Write-OK "Windows Feedback prompts disabled"')
+  }
+
+  // clipboard_sync - Disable Cloud Clipboard sync
+  if (selected.has('clipboard_sync')) {
+    lines.push('# Disable Cloud Clipboard sync')
+    lines.push('Set-Reg "HKCU:\\Software\\Microsoft\\Clipboard" "EnableClipboardHistory" 0')
+    lines.push('Write-OK "Cloud Clipboard sync disabled"')
+  }
+
+  return lines
+}
+
+function generateAudioOpts(selected: Set<string>): string[] {
+  const lines: string[] = []
+
+  // audio_enhancements - Disable audio enhancements
+  if (selected.has('audio_enhancements')) {
+    lines.push('# Disable audio enhancements')
+    lines.push('Set-Reg "HKCU:\\Software\\Microsoft\\Multimedia\\Audio" "UserDuckingPreference" 3')
+    lines.push('Write-OK "Audio ducking disabled"')
+  }
+
+  // audio_exclusive - Enable WASAPI exclusive mode
+  if (selected.has('audio_exclusive')) {
+    lines.push('# Configure audio exclusive mode (disable system sounds)')
+    lines.push('Set-Reg "HKCU:\\AppEvents\\Schemes" "(Default)" ".None" "String"')
+    lines.push('Write-OK "System sounds disabled for exclusive mode"')
   }
 
   return lines
