@@ -167,9 +167,18 @@
     text-align: center;
     padding: var(--space-2xl);
     color: var(--text-hint);
-    font-size: 0.875rem;
+    font-size: var(--text-sm);
     border-top: 1px solid var(--border);
     margin-top: var(--space-3xl);
+
+    & p {
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-sm);
+      flex-wrap: wrap;
+    }
 
     & a {
       color: var(--text-secondary);
@@ -180,6 +189,10 @@
         color: var(--accent);
         text-shadow: 0 0 8px color-mix(in oklch, var(--accent) 40%, transparent);
       }
+    }
+
+    & .footer-divider {
+      color: var(--border);
     }
   }
 

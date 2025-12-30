@@ -113,19 +113,22 @@
 
     /* Manifesto - the philosophy statement */
     .manifesto {
-      margin: 0 0 var(--space-lg) 0;
-      font-size: var(--text-sm);
-      line-height: 1.6;
-      color: var(--text-secondary);
+      margin: 0 0 var(--space-xl) 0;
+      padding: var(--space-md) var(--space-lg);
+      font-size: var(--text-base);
+      line-height: 1.7;
+      color: var(--text-primary);
       text-align: center;
+      background: oklch(0.12 0.015 160);
+      border-inline-start: 3px solid var(--safe-50);
     }
 
     .manifesto-emphasis {
       display: block;
-      margin-block-start: var(--space-xs);
+      margin-block-start: var(--space-sm);
       font-family: var(--font-mono);
-      font-size: var(--text-xs);
-      font-weight: 500;
+      font-size: var(--text-sm);
+      font-weight: 600;
       letter-spacing: var(--tracking-wide);
       color: var(--safe);
       text-transform: uppercase;
@@ -137,31 +140,32 @@
       align-items: center;
       justify-content: center;
       flex-wrap: wrap;
-      gap: var(--space-sm);
-      margin-block-start: var(--space-md);
-      padding: var(--space-sm) 0;
+      gap: var(--space-md);
+      margin-block-start: var(--space-lg);
+      padding: var(--space-md) 0;
+      border-block-start: 1px solid var(--safe-20);
     }
 
     .trust-item {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: var(--space-xs);
       font-family: var(--font-mono);
-      font-size: var(--text-xs);
+      font-size: var(--text-sm);
       font-weight: 500;
       letter-spacing: var(--tracking-wide);
-      color: var(--text-muted);
+      color: var(--text-secondary);
       text-transform: uppercase;
     }
 
     .trust-icon {
-      inline-size: 14px;
-      block-size: 14px;
-      stroke: var(--safe-60);
+      inline-size: 18px;
+      block-size: 18px;
+      stroke: var(--safe);
     }
 
     .trust-divider {
-      color: var(--safe-30);
+      color: var(--safe-40);
     }
 
     .actions {
