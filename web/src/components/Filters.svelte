@@ -2,7 +2,6 @@
   import {
     app,
     setFilter,
-    setSearch,
     getCategoryCounts,
     getSelectedCount,
     clearSelection,
@@ -18,19 +17,12 @@
     FILTER_RECOMMENDED,
   } from '$lib/types'
 
-  const SEARCH_DEBOUNCE_MS = 150
-
   // Props for recommended filter (from presets)
   interface Props {
     recommendedPreset?: RecommendedPreset | null
   }
 
   let { recommendedPreset = null }: Props = $props()
-
-  // Sync search value with store (derive from store, update via debounced setter)
-  let searchTimeout: ReturnType<typeof setTimeout> | null = null
-  let localSearchInput = $state(app.search)
-  let isTyping = $state(false)
 
   // Derived
   let counts = $derived(getCategoryCounts())
@@ -55,16 +47,6 @@
     }
   })
 
-  function handleSearchInput() {
-    isTyping = true
-    // Debounce search
-    if (searchTimeout) clearTimeout(searchTimeout)
-    searchTimeout = setTimeout(() => {
-      setSearch(localSearchInput.trim())
-      isTyping = false
-    }, SEARCH_DEBOUNCE_MS)
-  }
-
   function handleFilterClick(filter: FilterValue) {
     setFilter(filter)
   }
@@ -72,20 +54,6 @@
   function handleClearAll() {
     clearSelection()
   }
-
-  // Cleanup timeout on unmount
-  $effect(() => {
-    return () => {
-      if (searchTimeout) clearTimeout(searchTimeout)
-    }
-  })
-
-  $effect(() => {
-    if (isTyping) return
-    if (localSearchInput !== app.search) {
-      localSearchInput = app.search
-    }
-  })
 </script>
 
 <!-- Search bar -->
@@ -100,8 +68,7 @@
       type="search"
       class="search-input"
       placeholder="Search arsenal..."
-      bind:value={localSearchInput}
-      oninput={handleSearchInput}
+      bind:value={app.search}
       aria-label="Search software packages"
     />
   </div>

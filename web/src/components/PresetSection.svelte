@@ -36,7 +36,8 @@
     }
 
     setActivePreset(preset)
-    setSelection(getDefaultSelection())
+    const mergedSelection = new Set<PackageKey>([...getDefaultSelection(), ...config.software])
+    setSelection(Array.from(mergedSelection))
     setRecommendedPackages(config.software)
     setFilter(FILTER_RECOMMENDED)
     applyOptimizations(config.opts)
