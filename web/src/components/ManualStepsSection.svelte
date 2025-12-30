@@ -26,6 +26,15 @@
     type DiagnosticTool,
     type VideoResource,
   } from "$lib/manual-steps";
+  import {
+    isCompleted,
+    toggleItem,
+    getSectionProgress,
+    resetSection,
+    resetAll,
+    createItemId,
+    getProgressData,
+  } from "$lib/progress.svelte";
 
   /**
    * Get YouTube thumbnail URL from video ID
@@ -75,6 +84,40 @@
 
   function collapseAll() {
     expandedGroups = new Set();
+  }
+
+  // Track progress data reactively (triggers re-render on changes)
+  let progressData = $derived(getProgressData());
+
+  // Get progress for a section
+  function getProgress(sectionId: string, items: readonly unknown[]) {
+    // Access progressData to create reactive dependency
+    const _ = progressData.lastUpdated;
+    return getSectionProgress(sectionId, items.length);
+  }
+
+  // Handle checkbox change
+  function handleCheckbox(sectionId: string, itemId: string) {
+    toggleItem(sectionId, itemId);
+  }
+
+  // Check if item is done (reactive)
+  function isDone(sectionId: string, itemId: string): boolean {
+    // Access progressData to create reactive dependency
+    const _ = progressData.lastUpdated;
+    return isCompleted(sectionId, itemId);
+  }
+
+  // Handle reset for a section
+  function handleResetSection(sectionId: string) {
+    resetSection(sectionId);
+  }
+
+  // Handle reset all
+  function handleResetAll() {
+    if (confirm("Reset all progress? This cannot be undone.")) {
+      resetAll();
+    }
   }
 
   // Type for all possible item types
@@ -239,7 +282,36 @@
         {#if isExpanded}
           <div class="manual-steps__group-content">
             {#each group.sections as section (section.id)}
+              {@const progress = getProgress(section.id, section.items)}
               <div class="manual-steps__section">
+                <div class="manual-steps__section-header">
+                  <h4 class="manual-steps__section-title">{section.title}</h4>
+                  <div class="manual-steps__progress">
+                    <div class="manual-steps__progress-bar">
+                      <div
+                        class="manual-steps__progress-fill"
+                        style:width="{progress.percent}%"
+                        class:complete={progress.percent === 100}
+                      ></div>
+                    </div>
+                    <span class="manual-steps__progress-text">
+                      {progress.completed}/{progress.total}
+                    </span>
+                  </div>
+                  {#if progress.completed > 0}
+                    <button
+                      type="button"
+                      class="manual-steps__reset-btn"
+                      title="Reset section progress"
+                      onclick={() => handleResetSection(section.id)}
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                        <path d="M3 3v5h5" />
+                      </svg>
+                    </button>
+                  {/if}
+                </div>
                 {#if section.description}
                   <p class="manual-steps__section-desc">{section.description}</p>
                 {/if}
@@ -255,8 +327,18 @@
 
                 <ul class="manual-steps__items">
                   {#each section.items as item}
-                    <li class="manual-steps__item">
-                      <span class="manual-steps__checkbox"></span>
+                    {@const itemId = createItemId(item as unknown as Record<string, unknown>)}
+                    {@const itemDone = isDone(section.id, itemId)}
+                    <li class="manual-steps__item" class:completed={itemDone}>
+                      <label class="manual-steps__checkbox-label">
+                        <input
+                          type="checkbox"
+                          class="manual-steps__checkbox-input"
+                          checked={itemDone}
+                          onchange={() => handleCheckbox(section.id, itemId)}
+                        />
+                        <span class="manual-steps__checkbox-custom"></span>
+                      </label>
                       <div class="manual-steps__item-content">
                         {#if isManualStepItem(item)}
                           <div class="manual-steps__item-main">
