@@ -84,55 +84,13 @@
     <span class="corner corner--bl"></span>
     <span class="corner corner--br"></span>
 
-    <div class="transparency-header">
-      <span class="header-line"></span>
-      <span class="header-text">[ TRANSPARENCY ]</span>
-      <span class="header-line"></span>
-    </div>
+    <!-- Manifesto -->
+    <p class="manifesto">
+      Unlike typical optimizers, this is a PowerShell script you can read.
+      <span class="manifesto-emphasis">No installer. No bundled crapware. Just code.</span>
+    </p>
 
-    <div class="transparency-grid">
-      <div class="transparency-item">
-        <svg class="item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-        </svg>
-        <div class="item-text">
-          <span class="item-title">Open Source</span>
-          <span class="item-desc">Audit every line on GitHub</span>
-        </div>
-      </div>
-      <div class="transparency-item">
-        <svg class="item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-          <circle cx="12" cy="12" r="3" />
-        </svg>
-        <div class="item-text">
-          <span class="item-title">Preview First</span>
-          <span class="item-desc">Read before you run</span>
-        </div>
-      </div>
-      <div class="transparency-item">
-        <svg class="item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <circle cx="12" cy="12" r="10" />
-          <line x1="12" y1="8" x2="12" y2="12" />
-          <line x1="12" y1="16" x2="12.01" y2="16" />
-        </svg>
-        <div class="item-text">
-          <span class="item-title">No Tracking</span>
-          <span class="item-desc">Zero data collected</span>
-        </div>
-      </div>
-      <div class="transparency-item">
-        <svg class="item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <rect x="3" y="11" width="18" height="11" rx="2" />
-          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-        </svg>
-        <div class="item-text">
-          <span class="item-title">Self-Contained</span>
-          <span class="item-desc">No hidden downloads</span>
-        </div>
-      </div>
-    </div>
-
+    <!-- Actions first -->
     <div class="actions">
       <button
         type="button"
@@ -163,6 +121,40 @@
         </span>
         <span class="scanlines"></span>
       </button>
+    </div>
+
+    <!-- Trust strip -->
+    <div class="trust-strip">
+      <span class="trust-item">
+        <svg class="trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        </svg>
+        Open Source
+      </span>
+      <span class="trust-divider">·</span>
+      <span class="trust-item">
+        <svg class="trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+          <circle cx="12" cy="12" r="3" />
+        </svg>
+        Preview First
+      </span>
+      <span class="trust-divider">·</span>
+      <span class="trust-item">
+        <svg class="trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10" />
+          <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+        </svg>
+        No Tracking
+      </span>
+      <span class="trust-divider">·</span>
+      <span class="trust-item">
+        <svg class="trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="11" width="18" height="11" rx="2" />
+          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+        </svg>
+        Self-Contained
+      </span>
     </div>
 
     {#if checksum}
@@ -249,8 +241,6 @@
         <span class="provenance-commit">{__BUILD_COMMIT__}</span>
         <span class="provenance-date">{__BUILD_DATE__}</span>
       </a>
-      <span class="provenance-divider">·</span>
-      <span class="provenance-notice">No data collected</span>
     </div>
   </div>
 </section>

@@ -160,7 +160,7 @@
           </p>
           <p class="terminal-subhead">
             <span class="terminal-subhead-line">
-              Force Windows to run games first.
+              Cut the lag. Every millisecond counts.
             </span>
             <span class="terminal-subhead-micro">
               No installer. No black box. Preview anytime.
