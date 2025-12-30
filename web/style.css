@@ -9,10 +9,12 @@
 
    
    @import './src/styles/buttons.css' layer(components);
+   @import './src/components/cyber-toggle/cyber-toggle.styles.css' layer(components);
 
-   
+    
    @import './src/components/holographic-header/holographic-header.styles.css' layer(components);
    @import './src/components/software-card/software-card.styles.css' layer(components);
+   @import './src/components/software-grid/software-grid.styles.css' layer(components);
    @import './src/components/summary/summary.styles.css' layer(components);
    @import './src/components/filters/filters.styles.css' layer(components);
    @import './src/components/drivers/drivers.styles.css' layer(components);
@@ -20,6 +22,7 @@
    @import './src/components/code-viewer/code-viewer.styles.css' layer(components);
    @import './src/components/audit/audit.styles.css' layer(components);
    @import './src/components/profiles/profiles.styles.css' layer(components);
+   @import './src/components/optimizations/optimizations.styles.css' layer(components);
    @import './src/components/unified-nav/unified-nav.styles.css' layer(components);
    @import './src/components/preview-modal/preview-modal.styles.css' layer(components);
    @import './src/components/forge/forge.styles.css' layer(components);
@@ -1587,97 +1590,6 @@
 
 
 
-     .software-grid {
-       display: grid;
-       grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-       gap: var(--space-md);
-       perspective: 1200px;
-       perspective-origin: center center;
-
-       
-       max-height: 540px;
-       overflow-y: auto;
-       overflow-x: hidden;
-       scrollbar-gutter: stable;
-
-       &::-webkit-scrollbar {
-         width: 6px;
-       }
-
-       &::-webkit-scrollbar-track {
-         background: var(--bg-tertiary);
-       }
-
-       &::-webkit-scrollbar-thumb {
-         background: var(--border-light);
-         border-radius: 3px;
-
-         &:hover {
-           background: var(--accent);
-         }
-       }
-
-       &.list-view {
-         grid-template-columns: 1fr;
-         gap: var(--space-xs);
-         max-height: 480px; 
-
-         & .software-card {
-           aspect-ratio: unset;
-           height: auto;
-         }
-
-         & .software-card-inner {
-           position: relative;
-         }
-
-         & .software-card-front {
-           position: relative;
-           flex-direction: row;
-           justify-content: flex-start;
-           padding: var(--space-sm) var(--space-md);
-           gap: var(--space-md);
-           opacity: 1 !important;
-         }
-
-         & .software-card-back {
-           display: none;
-         }
-
-         & .software-card .logo {
-           width: 32px;
-           height: 32px;
-           margin: 0;
-         }
-
-         & .software-card .name {
-           font-size: 0.875rem;
-           text-align: left;
-           flex: 1;
-         }
-
-         & .software-card .list-desc {
-           display: block;
-           color: var(--text-hint);
-           font-size: 0.75rem;
-           flex: 2;
-         }
-
-         & .software-card .list-category {
-           display: block;
-           font-size: 0.65rem;
-           text-transform: uppercase;
-           letter-spacing: 0.05em;
-           color: var(--text-hint);
-           width: 80px;
-           text-align: right;
-         }
-       }
-     }
-
-
-
-
      .btn-secondary {
        display: flex;
        align-items: center;
@@ -1787,120 +1699,6 @@
      }
 
 
-     .wizard-toggle {
-       display: flex;
-       align-items: center;
-       gap: var(--space-sm);
-       padding: var(--space-sm) var(--space-md);
-       background: color-mix(in oklch, var(--bg-tertiary) 80%, transparent);
-       border: 1px solid var(--border);
-       border-radius: 0;
-       clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
-       text-align: right;
-     }
-
-     .toggle-label {
-       display: flex;
-       flex-direction: column;
-       align-items: flex-end;
-       gap: 2px;
-
-       & strong {
-         font-size: 0.8rem;
-       }
-     }
-
-     .toggle-hint {
-       font-size: 0.75rem;
-       color: var(--text-secondary);
-     }
-
-
-     .wizard-modal {
-       position: fixed;
-       top: 50%;
-       left: 50%;
-       transform: translate(-50%, -50%);
-       max-width: 500px;
-       width: 90vw;
-       padding: 0;
-       background: var(--bg-secondary);
-       border: 1px solid color-mix(in oklch, var(--accent) 30%, var(--border-light));
-       border-top: 3px solid var(--accent);
-       border-radius: 0;
-       clip-path: var(--clip-cyber-md);
-       box-shadow:
-         0 25px 60px color-mix(in oklch, oklch(0 0 0) 60%, transparent),
-         0 0 30px color-mix(in oklch, var(--accent) 15%, transparent);
-
-       &::backdrop {
-         background: color-mix(in oklch, oklch(0 0 0) 75%, transparent);
-         backdrop-filter: blur(6px);
-       }
-     }
-
-     .wizard-content {
-       padding: var(--space-xl);
-
-       & h3 {
-         font-family: var(--font-ui);
-         margin: 0 0 var(--space-md);
-         font-size: 1.3rem;
-         font-weight: 700;
-       }
-     }
-
-     .wizard-risk {
-       margin-bottom: var(--space-lg);
-     }
-
-     .wizard-description {
-       color: var(--text-secondary);
-       margin-bottom: var(--space-lg);
-       line-height: 1.6;
-     }
-
-     .wizard-details {
-       background: var(--bg-primary);
-       border-radius: var(--radius);
-       padding: var(--space-md);
-       margin-bottom: var(--space-lg);
-
-       & h4 {
-         font-size: 0.85rem;
-         color: var(--text-hint);
-         margin-bottom: var(--space-sm);
-       }
-
-       & ul {
-         margin: 0;
-         padding-left: var(--space-lg);
-         font-size: 0.85rem;
-         color: var(--text-secondary);
-       }
-
-       & li {
-         margin: var(--space-xs) 0;
-       }
-
-       & code {
-         background: color-mix(in oklch, var(--accent) 10%, transparent);
-         padding: 0.1rem 0.3rem;
-         border-radius: 3px;
-         font-size: 0.8rem;
-       }
-     }
-
-     .wizard-actions {
-       display: flex;
-       gap: var(--space-md);
-
-       & button {
-         flex: 1;
-       }
-     }
-
-
      .step--forge {
        --step-accent: var(--cyber-yellow);
 
@@ -1986,26 +1784,9 @@
          grid-template-columns: 1fr;
        }
 
-       .software-grid {
-         grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-       }
      }
 
      @media (max-width: 600px) {
-       .software-grid {
-         grid-template-columns: repeat(3, 1fr);
-         gap: var(--space-sm);
-       }
-
-       .software-card .logo {
-         width: 36px;
-         height: 36px;
-       }
-
-       .software-card .name {
-         font-size: 0.7rem;
-       }
-
        .label-hint {
          display: none;
        }
