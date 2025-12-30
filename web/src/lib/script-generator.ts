@@ -495,8 +495,29 @@ function generatePerformanceOpts(selected: Set<string>, hardware: HardwareProfil
   }
 
   if (selected.has('timer')) {
-    lines.push('# Note: Timer resolution requires timer-tool.ps1 running before games')
-    lines.push('Write-OK "Run timer-tool.ps1 before gaming for 0.5ms timer"')
+    lines.push('')
+    lines.push('# ╔═══════════════════════════════════════════════════════════════╗')
+    lines.push('# ║  TIMER RESOLUTION (0.5ms) - MANUAL STEP REQUIRED              ║')
+    lines.push('# ╚═══════════════════════════════════════════════════════════════╝')
+    lines.push('#')
+    lines.push('# This optimization requires running timer-tool.ps1 BEFORE launching games.')
+    lines.push('# Keep it running during gameplay for smooth frame pacing.')
+    lines.push('#')
+    lines.push('# Download: https://github.com/thepedroferrari/windows-gaming-settings/blob/master/timer-tool.ps1')
+    lines.push('#')
+    lines.push('# Usage:')
+    lines.push('#   .\\timer-tool.ps1                        # Basic - run before gaming')
+    lines.push('#   .\\timer-tool.ps1 -GameProcess "dota2"   # Auto-exit when game closes')
+    lines.push('#   .\\timer-tool.ps1 -GameProcess "cs2"     # Works with any process name')
+    lines.push('#')
+    lines.push('# Why: Windows default timer is 15.6ms. This sets it to 0.5ms for')
+    lines.push('#      smoother frame pacing and reduced micro-stutters.')
+    lines.push('')
+    lines.push('Write-Host ""')
+    lines.push('Write-Host "  [!] MANUAL STEP: Timer Resolution" -ForegroundColor Yellow')
+    lines.push('Write-Host "      Download and run timer-tool.ps1 before gaming" -ForegroundColor Yellow')
+    lines.push('Write-Host "      https://github.com/thepedroferrari/windows-gaming-settings" -ForegroundColor Cyan')
+    lines.push('Write-Host ""')
   }
 
   // msi_mode - Enable MSI mode for GPU/network
