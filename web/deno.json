@@ -10,7 +10,8 @@
     "purge:report": "deno run -A ./scripts/purgecss.ts",
     "check": "deno run -A npm:svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "deno run -A npm:svelte-check --tsconfig ./tsconfig.json --watch",
-    "validate": "deno task lint && deno task check && deno task build",
+    "knip": "deno run -A npm:knip --include exports,files",
+    "validate": "deno task lint && deno task check && deno task knip && deno task build",
     "catalog:audit": "deno run --allow-read --unstable-sloppy-imports ./scripts/audit-catalog.ts",
     "build:sprite": "deno run --allow-read --allow-write ./scripts/build-sprite.ts",
     "test": "deno test --allow-read ./src"
