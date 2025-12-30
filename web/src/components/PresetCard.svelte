@@ -17,12 +17,14 @@
     SPRING_PRESETS,
   } from "../utils/spring";
   import type { PresetType } from "$lib/types";
+  import type { TierBreakdown } from "$lib/presets";
 
   interface Props {
     preset: PresetType;
     label: string;
     subtitle?: string;
     description?: string;
+    bestFor?: string;
     rarity?: "legendary" | "epic" | "rare" | "uncommon" | "common";
     intensity?: number;
     riskLevel?: "low" | "medium" | "high";
@@ -31,6 +33,7 @@
     traits?: readonly string[];
     softwareCount: number;
     optimizationCount?: number;
+    tierBreakdown?: TierBreakdown;
     active?: boolean;
     onSelect: (preset: PresetType) => void;
   }
@@ -40,6 +43,7 @@
     label,
     subtitle = "",
     description = "",
+    bestFor = "",
     rarity = "common",
     intensity = 50,
     riskLevel = "low",
@@ -48,6 +52,7 @@
     traits = [],
     softwareCount,
     optimizationCount = 0,
+    tierBreakdown,
     active = false,
     onSelect,
   }: Props = $props();
@@ -265,26 +270,15 @@
       </div>
 
       <div class="preset-card__body">
-        {#if subtitle}
-          <div class="preset-card__subtitle">
-            <span class="subtitle-label">Mode</span>
-            <span class="subtitle-value">{subtitle}</span>
+        {#if bestFor}
+          <div class="preset-card__best-for">
+            <span class="best-for-label">Best for</span>
+            <span class="best-for-value">{bestFor}</span>
           </div>
         {/if}
 
         {#if description}
           <p class="preset-card__desc">{description}</p>
-        {/if}
-
-        {#if traits.length}
-          <div class="preset-card__traits">
-            <span class="traits-label">Guardrails</span>
-            <ul class="traits-list">
-              {#each traits as trait (trait)}
-                <li>{trait}</li>
-              {/each}
-            </ul>
-          </div>
         {/if}
       </div>
 
@@ -308,8 +302,20 @@
           </div>
         {/if}
         <div class="stat-row">
-          <span class="stat-label">Optimizations</span>
-          <span class="stat-value">{optimizationCount}</span>
+          <span class="stat-label">Tweaks</span>
+          {#if tierBreakdown}
+            <span class="stat-value stat-value--breakdown">
+              <span class="tier-count tier-count--safe" title="Safe">{tierBreakdown.safe}</span>
+              {#if tierBreakdown.caution > 0}
+                <span class="tier-count tier-count--caution" title="Caution">{tierBreakdown.caution}</span>
+              {/if}
+              {#if tierBreakdown.risky > 0}
+                <span class="tier-count tier-count--risky" title="Risky">{tierBreakdown.risky}</span>
+              {/if}
+            </span>
+          {:else}
+            <span class="stat-value">{optimizationCount}</span>
+          {/if}
         </div>
         <div class="stat-row">
           <span class="stat-label">Software</span>

@@ -9,7 +9,7 @@
   import PresetCard from "./PresetCard.svelte";
   import type { PresetType } from "$lib/types";
   import type { PresetConfig } from "$lib/presets";
-  import { PRESET_META, PRESET_ORDER, PRESETS } from "$lib/presets";
+  import { PRESET_META, PRESET_ORDER, PRESETS, getPresetTierBreakdown } from "$lib/presets";
 
   interface Props {
     activePreset?: PresetType | null;
@@ -28,11 +28,13 @@
     {#each PRESET_ORDER as preset (preset)}
       {@const meta = PRESET_META[preset]}
       {@const config = PRESETS[preset]}
+      {@const tierBreakdown = getPresetTierBreakdown(preset)}
       <PresetCard
         {preset}
         label={meta.label}
         subtitle={meta.subtitle}
         description={meta.description}
+        bestFor={meta.bestFor}
         traits={meta.traits}
         rarity={meta.rarity}
         intensity={meta.intensity}
@@ -41,6 +43,7 @@
         latencyLabel={meta.latencyLabel}
         softwareCount={config.software.length}
         optimizationCount={config.opts.length}
+        {tierBreakdown}
         active={activePreset === preset}
         onSelect={handleSelect}
       />
