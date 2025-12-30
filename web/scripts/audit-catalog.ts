@@ -1,6 +1,6 @@
 import { existsSync } from 'https://deno.land/std@0.220.0/fs/mod.ts'
-import { formatZodErrors, isParseSuccess, safeParseCatalog } from '../src/schemas.ts'
 import { MONITOR_TO_PACKAGE, PERIPHERAL_TO_PACKAGE } from '../src/lib/script-generator.ts'
+import { formatZodErrors, isParseSuccess, safeParseCatalog } from '../src/schemas.ts'
 
 type CatalogEntry = {
   readonly id: string
