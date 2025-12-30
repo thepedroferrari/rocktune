@@ -2,6 +2,25 @@ import { defineConfig } from 'npm:vite@5'
 import { svelte } from 'npm:@sveltejs/vite-plugin-svelte@4'
 import { vitePreprocess } from 'npm:@sveltejs/vite-plugin-svelte@4'
 
+// Get git commit info at build time
+function getGitInfo() {
+  try {
+    const commitCmd = new Deno.Command('git', { args: ['rev-parse', '--short', 'HEAD'] })
+    const commitResult = commitCmd.outputSync()
+    const commit = new TextDecoder().decode(commitResult.stdout).trim()
+
+    const dateCmd = new Deno.Command('git', { args: ['log', '-1', '--format=%cd', '--date=short'] })
+    const dateResult = dateCmd.outputSync()
+    const date = new TextDecoder().decode(dateResult.stdout).trim()
+
+    return { commit, date }
+  } catch {
+    return { commit: 'dev', date: new Date().toISOString().split('T')[0] }
+  }
+}
+
+const gitInfo = getGitInfo()
+
 export default defineConfig({
   plugins: [
     svelte({
@@ -33,5 +52,9 @@ export default defineConfig({
     alias: {
       '$lib': '/src/lib',
     },
+  },
+  define: {
+    __BUILD_COMMIT__: JSON.stringify(gitInfo.commit),
+    __BUILD_DATE__: JSON.stringify(gitInfo.date),
   },
 })
