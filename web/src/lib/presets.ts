@@ -77,10 +77,15 @@ function toIntensity(value: number): number {
   return Math.round(value)
 }
 
+function toPackageKey(value: unknown): PackageKey {
+  return PackageKeySchema.parse(value) as unknown as PackageKey
+}
+
 function toPresetConfig(persona: PersonaRaw): PresetConfig {
+  const software = persona.recommended_software.map((item) => toPackageKey(item.key))
   return {
     opts: getOptimizationsForProfile(persona.id),
-    software: persona.recommended_software.map((item) => item.key),
+    software,
   }
 }
 

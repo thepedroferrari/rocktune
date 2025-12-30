@@ -96,10 +96,3 @@ export function isPreflightVisible(check: PreflightCheck, cpu: CpuType, gpu: Gpu
       return false
   }
 }
-
-/**
- * Get visible preflight checks for hardware selection
- */
-export function getVisiblePreflightChecks(cpu: CpuType, gpu: GpuType): PreflightCheck[] {
-  return PREFLIGHT_CHECKS.filter((check) => isPreflightVisible(check, cpu, gpu))
-}

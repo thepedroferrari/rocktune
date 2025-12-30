@@ -100,10 +100,8 @@ export const CATEGORIES = [
 
 export type Category = (typeof CATEGORIES)[number]
 
-const CATEGORY_VALUES: readonly string[] = CATEGORIES
-
-export function isCategory(value: unknown): value is Category {
-  return typeof value === 'string' && CATEGORY_VALUES.includes(value)
+function isStringEnumValue<T extends string>(values: readonly T[], value: unknown): value is T {
+  return typeof value === 'string' && values.includes(value as T)
 }
 
 export interface SoftwarePackage {
@@ -130,7 +128,7 @@ export const CPU_TYPES = {
 
 export type CpuType = (typeof CPU_TYPES)[keyof typeof CPU_TYPES]
 
-const CPU_TYPE_VALUES = Object.values(CPU_TYPES)
+const CPU_TYPE_VALUES = Object.values(CPU_TYPES) as CpuType[]
 
 export const GPU_TYPES = {
   NVIDIA: 'nvidia',
@@ -140,7 +138,7 @@ export const GPU_TYPES = {
 
 export type GpuType = (typeof GPU_TYPES)[keyof typeof GPU_TYPES]
 
-const GPU_TYPE_VALUES = Object.values(GPU_TYPES)
+const GPU_TYPE_VALUES = Object.values(GPU_TYPES) as GpuType[]
 
 export const PERIPHERAL_TYPES = {
   LOGITECH: 'logitech',
@@ -153,7 +151,7 @@ export const PERIPHERAL_TYPES = {
 
 export type PeripheralType = (typeof PERIPHERAL_TYPES)[keyof typeof PERIPHERAL_TYPES]
 
-const PERIPHERAL_TYPE_VALUES = Object.values(PERIPHERAL_TYPES)
+const PERIPHERAL_TYPE_VALUES = Object.values(PERIPHERAL_TYPES) as PeripheralType[]
 
 export const MONITOR_SOFTWARE_TYPES = {
   DELL: 'dell',
@@ -164,7 +162,7 @@ export const MONITOR_SOFTWARE_TYPES = {
 export type MonitorSoftwareType =
   (typeof MONITOR_SOFTWARE_TYPES)[keyof typeof MONITOR_SOFTWARE_TYPES]
 
-const MONITOR_SOFTWARE_VALUES = Object.values(MONITOR_SOFTWARE_TYPES)
+const MONITOR_SOFTWARE_VALUES = Object.values(MONITOR_SOFTWARE_TYPES) as MonitorSoftwareType[]
 
 export interface HardwareProfile {
   readonly cpu: CpuType
@@ -174,19 +172,19 @@ export interface HardwareProfile {
 }
 
 export function isCpuType(value: unknown): value is CpuType {
-  return typeof value === 'string' && CPU_TYPE_VALUES.includes(value)
+  return isStringEnumValue(CPU_TYPE_VALUES, value)
 }
 
 export function isGpuType(value: unknown): value is GpuType {
-  return typeof value === 'string' && GPU_TYPE_VALUES.includes(value)
+  return isStringEnumValue(GPU_TYPE_VALUES, value)
 }
 
 export function isPeripheralType(value: unknown): value is PeripheralType {
-  return typeof value === 'string' && PERIPHERAL_TYPE_VALUES.includes(value)
+  return isStringEnumValue(PERIPHERAL_TYPE_VALUES, value)
 }
 
 export function isMonitorSoftwareType(value: unknown): value is MonitorSoftwareType {
-  return typeof value === 'string' && MONITOR_SOFTWARE_VALUES.includes(value)
+  return isStringEnumValue(MONITOR_SOFTWARE_VALUES, value)
 }
 
 export const VIEW_MODES = {
@@ -318,22 +316,10 @@ export type SafeOptimization = (typeof SAFE_OPTIMIZATIONS)[keyof typeof SAFE_OPT
 export type CautionOptimization = (typeof CAUTION_OPTIMIZATIONS)[keyof typeof CAUTION_OPTIMIZATIONS]
 export type RiskyOptimization = (typeof RISKY_OPTIMIZATIONS)[keyof typeof RISKY_OPTIMIZATIONS]
 
-const SAFE_OPTIMIZATION_VALUES = Object.values(SAFE_OPTIMIZATIONS)
-const CAUTION_OPTIMIZATION_VALUES = Object.values(CAUTION_OPTIMIZATIONS)
-const OPTIMIZATION_KEY_VALUES = Object.values(OPTIMIZATION_KEYS)
-
-export function getOptimizationTier(key: OptimizationKey): OptimizationTier {
-  if (SAFE_OPTIMIZATION_VALUES.includes(key)) {
-    return OPTIMIZATION_TIERS.SAFE
-  }
-  if (CAUTION_OPTIMIZATION_VALUES.includes(key)) {
-    return OPTIMIZATION_TIERS.CAUTION
-  }
-  return OPTIMIZATION_TIERS.RISKY
-}
+const OPTIMIZATION_KEY_VALUES = Object.values(OPTIMIZATION_KEYS) as OptimizationKey[]
 
 export function isOptimizationKey(value: unknown): value is OptimizationKey {
-  return typeof value === 'string' && OPTIMIZATION_KEY_VALUES.includes(value)
+  return isStringEnumValue(OPTIMIZATION_KEY_VALUES, value)
 }
 
 export interface AppState {
@@ -344,7 +330,7 @@ export interface AppState {
   readonly currentView: ViewMode
 }
 
-export const PRESET_TYPES = {
+const PRESET_TYPES = {
   BENCHMARKER: 'benchmarker',
   PRO_GAMER: 'pro_gamer',
   STREAMER: 'streamer',
@@ -353,17 +339,12 @@ export const PRESET_TYPES = {
 
 export type PresetType = (typeof PRESET_TYPES)[keyof typeof PRESET_TYPES]
 
-const PRESET_TYPE_VALUES = Object.values(PRESET_TYPES)
+const PRESET_TYPE_VALUES = Object.values(PRESET_TYPES) as PresetType[]
 
 export function isPresetType(value: unknown): value is PresetType {
-  return typeof value === 'string' && PRESET_TYPE_VALUES.includes(value)
+  return isStringEnumValue(PRESET_TYPE_VALUES, value)
 }
 
-const PACKAGE_KEY_PATTERN = /^[a-z0-9._-]+$/
-
-export function isPackageKeyValue(value: unknown): value is PackageKey {
-  return typeof value === 'string' && value.length > 0 && PACKAGE_KEY_PATTERN.test(value)
-}
 export interface Preset {
   readonly name: PresetType
   readonly hardware: Partial<HardwareProfile>
@@ -382,7 +363,6 @@ export interface SavedProfile {
 }
 
 export const SCRIPT_FILENAME = 'rocktune-setup.ps1' as const
-export const GUIDE_FILENAME = 'POST-SETUP-GUIDE.html' as const
 
 export interface ScriptConfig {
   readonly generated: string
@@ -390,21 +370,6 @@ export interface ScriptConfig {
   readonly optimizations: readonly OptimizationKey[]
   readonly packages: readonly WingetId[]
 }
-
-export const CATEGORY_ICONS = {
-  launcher: '🎮',
-  gaming: '🎯',
-  streaming: '📺',
-  monitoring: '📊',
-  browser: '🌐',
-  media: '🎵',
-  utility: '🔧',
-  rgb: '💡',
-  dev: '💻',
-  runtime: '⚙️',
-  benchmark: '📈',
-  default: '📦',
-} as const satisfies Record<Category | 'default', string>
 
 export const CATEGORY_SVG_ICONS = {
   launcher:
@@ -436,7 +401,7 @@ export const SIMPLE_ICONS_CDN = 'https://cdn.simpleicons.org' as const
 export type DeepReadonly<T> = T extends (infer U)[]
   ? readonly DeepReadonly<U>[]
   : T extends object
-  ? { readonly [K in keyof T]: DeepReadonly<T[K]> }
-  : T
+    ? { readonly [K in keyof T]: DeepReadonly<T[K]> }
+    : T
 
 export type Prettify<T> = { [K in keyof T]: T[K] } & {}

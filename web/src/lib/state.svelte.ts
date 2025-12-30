@@ -57,6 +57,23 @@ export interface UIState {
   wizardMode: boolean
 }
 
+interface AppStore {
+  software: SoftwareCatalog
+  selected: Set<PackageKey>
+  filter: FilterValue
+  search: string
+  view: ViewMode
+  recommendedPackages: Set<PackageKey>
+  activePreset: PresetType | null
+  hardware: HardwareProfile
+  optimizations: Set<OptimizationKey>
+  peripherals: Set<PeripheralType>
+  monitorSoftware: Set<MonitorSoftwareType>
+  script: ScriptState
+  ui: UIState
+  optimizationCount: number
+}
+
 /** Default hardware configuration */
 const DEFAULT_HARDWARE: HardwareProfile = {
   cpu: CPU_TYPES.AMD_X3D,
@@ -85,7 +102,7 @@ const DEFAULT_ACTIVE_PRESET: PresetType | null = null
 const DEFAULT_FILTER: FilterValue = FILTER_ALL
 const DEFAULT_VIEW: ViewMode = VIEW_MODES.GRID
 
-export const app = $state({
+export const app: AppStore = $state({
   /** Software catalog loaded from catalog.json */
   software: DEFAULT_CATALOG,
 
@@ -142,11 +159,6 @@ export function getSelectedCount(): number {
 /** Total packages in catalog */
 export function getTotalCount(): number {
   return Object.keys(app.software).length
-}
-
-/** Whether any packages are selected */
-export function getHasSelection(): boolean {
-  return app.selected.size > 0
 }
 
 /** Filtered and searched software list */
@@ -265,13 +277,6 @@ export function setFilter(filter: FilterValue): void {
 }
 
 /**
- * Set the search term
- */
-export function setSearch(term: string): void {
-  app.search = term
-}
-
-/**
  * Set the view mode
  */
 export function setView(view: ViewMode): void {
@@ -314,13 +319,6 @@ export function setGpu(gpu: GpuType): void {
   app.hardware = { ...app.hardware, gpu }
 }
 
-/**
- * Set full hardware profile
- */
-export function setHardware(hardware: Partial<HardwareProfile>): void {
-  app.hardware = { ...app.hardware, ...hardware }
-}
-
 // ============================================================================
 // Optimization State Management
 // ============================================================================
@@ -349,21 +347,6 @@ export function toggleOptimization(key: OptimizationKey): boolean {
 export function setOptimizations(keys: readonly OptimizationKey[]): void {
   app.optimizations = new Set(keys)
   app.optimizationCount = app.optimizations.size
-}
-
-/**
- * Clear all optimizations
- */
-export function clearOptimizations(): void {
-  app.optimizations = new Set()
-  app.optimizationCount = 0
-}
-
-/**
- * Check if an optimization is enabled
- */
-export function hasOptimization(key: OptimizationKey): boolean {
-  return app.optimizations.has(key)
 }
 
 /**
@@ -400,13 +383,6 @@ export function setPeripherals(types: readonly PeripheralType[]): void {
   app.peripherals = new Set(types)
 }
 
-/**
- * Clear all peripheral selections
- */
-export function clearPeripherals(): void {
-  app.peripherals = new Set()
-}
-
 // ============================================================================
 // Monitor Software State Management
 // ============================================================================
@@ -434,29 +410,10 @@ export function setMonitorSoftware(types: readonly MonitorSoftwareType[]): void 
   app.monitorSoftware = new Set(types)
 }
 
-/**
- * Clear all monitor software selections
- */
-export function clearMonitorSoftware(): void {
-  app.monitorSoftware = new Set()
-}
-
 // ============================================================================
 // Script State Management
 // ============================================================================
 
-/**
- * Update the generated script (stores previous for diff)
- */
-export function setGeneratedScript(script: string): void {
-  app.script.previous = app.script.generated || app.script.previous
-  app.script.generated = script
-  app.script.edited = null // Reset edits on new generation
-}
-
-/**
- * Set the script view mode
- */
 export function setScriptMode(mode: ScriptMode): void {
   app.script.mode = mode
 }
@@ -466,27 +423,6 @@ export function setScriptMode(mode: ScriptMode): void {
  */
 export function setEditedScript(script: string | null): void {
   app.script.edited = script
-}
-
-/**
- * Get the active script (edited or generated)
- */
-export function getActiveScript(): string {
-  return app.script.edited ?? app.script.generated
-}
-
-/**
- * Check if script has been edited
- */
-export function hasEditedScript(): boolean {
-  return app.script.edited !== null
-}
-
-/**
- * Reset script state
- */
-export function resetScript(): void {
-  app.script = { ...DEFAULT_SCRIPT }
 }
 
 // ============================================================================
@@ -508,27 +444,6 @@ export function closePreviewModal(): void {
 }
 
 /**
- * Toggle the preview modal
- */
-export function togglePreviewModal(): void {
-  app.ui.previewModalOpen = !app.ui.previewModalOpen
-}
-
-/**
- * Open the audit panel
- */
-export function openAuditPanel(): void {
-  app.ui.auditPanelOpen = true
-}
-
-/**
- * Close the audit panel
- */
-export function closeAuditPanel(): void {
-  app.ui.auditPanelOpen = false
-}
-
-/**
  * Toggle the audit panel
  */
 export function toggleAuditPanel(): void {
@@ -536,17 +451,10 @@ export function toggleAuditPanel(): void {
 }
 
 /**
- * Set wizard mode
- */
-export function setWizardMode(enabled: boolean): void {
-  app.ui.wizardMode = enabled
-}
-
-/**
  * Toggle wizard mode
  */
 export function toggleWizardMode(): void {
-  app.ui.wizardMode = !app.ui.wizardMode
+  app.ui = { ...app.ui, wizardMode: !app.ui.wizardMode }
 }
 
 // ============================================================================
@@ -557,7 +465,7 @@ export function toggleWizardMode(): void {
  * Build SelectionState from current app state
  * Used for script generation
  */
-export function buildSelectionState(): SelectionState {
+function buildSelectionState(): SelectionState {
   // Build hardware profile with peripherals and monitor software from Sets
   const hardware: HardwareProfile = {
     cpu: app.hardware.cpu,

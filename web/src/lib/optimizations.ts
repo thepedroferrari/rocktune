@@ -1183,16 +1183,6 @@ export const OPTIMIZATIONS: readonly OptimizationDef[] = [
   ...RISKY_OPTIMIZATIONS,
 ] as const
 
-/** Get optimizations by tier */
-export function getOptimizationsByTier(tier: OptimizationTier): OptimizationDef[] {
-  return OPTIMIZATIONS.filter((opt) => opt.tier === tier)
-}
-
-/** Get optimizations by category */
-export function getOptimizationsByCategory(category: OptimizationCategory): OptimizationDef[] {
-  return OPTIMIZATIONS.filter((opt) => opt.category === category)
-}
-
 /** Get optimizations by tier and category */
 export function getOptimizationsByTierAndCategory(
   tier: OptimizationTier,
@@ -1201,19 +1191,9 @@ export function getOptimizationsByTierAndCategory(
   return OPTIMIZATIONS.filter((opt) => opt.tier === tier && opt.category === category)
 }
 
-/** Get all unique categories */
-export function getCategories(): OptimizationCategory[] {
-  return [...new Set(OPTIMIZATIONS.map((opt) => opt.category))]
-}
-
 /** Get categories for a specific tier */
 export function getCategoriesForTier(tier: OptimizationTier): OptimizationCategory[] {
   return [...new Set(OPTIMIZATIONS.filter((opt) => opt.tier === tier).map((opt) => opt.category))]
-}
-
-/** Find optimization by key */
-export function findOptimization(key: OptimizationKey): OptimizationDef | undefined {
-  return OPTIMIZATIONS.find((opt) => opt.key === key)
 }
 
 /** Get default enabled optimizations */
@@ -1236,18 +1216,12 @@ export const PROFILE_IDS = [
 
 export type ProfileId = (typeof PROFILE_IDS)[number]
 
-const PROFILE_ID_VALUES: readonly string[] = PROFILE_IDS
-
-export function isProfileId(value: unknown): value is ProfileId {
-  return typeof value === 'string' && PROFILE_ID_VALUES.includes(value)
-}
-
 /**
  * Profile → Optimization matrix
  * Defines which optimizations are enabled by default for each profile.
  * minimal_default is the internal baseline (not a visible preset).
  */
-export const PROFILE_OPTIMIZATIONS: Record<ProfileId, readonly OptimizationKey[]> = {
+const PROFILE_OPTIMIZATIONS: Record<ProfileId, readonly OptimizationKey[]> = {
   // Internal baseline - safe essentials only
   minimal_default: [
     'pagefile',

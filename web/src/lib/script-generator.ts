@@ -5,7 +5,6 @@
  * Scripts work offline without network dependencies.
  */
 
-import { isPackageKey } from './types'
 import type {
   HardwareProfile,
   MonitorSoftwareType,
@@ -14,6 +13,7 @@ import type {
   PeripheralType,
   SoftwareCatalog,
 } from './types'
+import { isPackageKey } from './types'
 
 export type SelectionState = {
   hardware: HardwareProfile
@@ -105,7 +105,8 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
   lines.push(`    RockTune — Loadout generated ${timestamp}`)
   lines.push('.DESCRIPTION')
   lines.push(`    Core: ${hardware.cpu} + ${hardware.gpu}`)
-  lines.push('    Source: https://github.com/thepedroferrari/windows-gaming-settings')
+  lines.push(`    Build: ${__BUILD_COMMIT__} (${__BUILD_DATE__})`)
+  lines.push(`    Source: https://github.com/thepedroferrari/windows-gaming-settings/tree/${__BUILD_COMMIT__}`)
   lines.push('')
   lines.push('    Windows is the arena. RockTune is the upgrade bay.')
   lines.push('#>')
@@ -114,6 +115,7 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
   // Config JSON
   const config = {
     generated: timestamp,
+    build: __BUILD_COMMIT__,
     hardware: {
       cpu: hardware.cpu,
       gpu: hardware.gpu,
@@ -388,7 +390,9 @@ function generateSystemOpts(selected: Set<string>): string[] {
   // ps7_telemetry - Disable PowerShell 7 telemetry
   if (selected.has('ps7_telemetry')) {
     lines.push('# Disable PowerShell 7 telemetry')
-    lines.push('[Environment]::SetEnvironmentVariable("POWERSHELL_TELEMETRY_OPTOUT", "1", "Machine")')
+    lines.push(
+      '[Environment]::SetEnvironmentVariable("POWERSHELL_TELEMETRY_OPTOUT", "1", "Machine")',
+    )
     lines.push('Write-OK "PS7 telemetry disabled"')
   }
 
@@ -688,7 +692,9 @@ function generateNetworkOpts(selected: Set<string>, dnsProvider: string): string
   // qos_gaming - Enable QoS for gaming
   if (selected.has('qos_gaming')) {
     lines.push('# Configure QoS for gaming')
-    lines.push('Set-Reg "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\Psched" "NonBestEffortLimit" 0')
+    lines.push(
+      'Set-Reg "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\Psched" "NonBestEffortLimit" 0',
+    )
     lines.push('Write-OK "QoS gaming configured"')
   }
 
@@ -808,7 +814,9 @@ function generatePrivacyOpts(selected: Set<string>): string[] {
   if (selected.has('edge_debloat')) {
     lines.push('# Edge debloat')
     lines.push('Set-Reg "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Edge" "HideFirstRunExperience" 1')
-    lines.push('Set-Reg "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Edge" "EdgeShoppingAssistantEnabled" 0')
+    lines.push(
+      'Set-Reg "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Edge" "EdgeShoppingAssistantEnabled" 0',
+    )
     lines.push('Set-Reg "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Edge" "WebWidgetAllowed" 0')
     lines.push('Write-OK "Edge debloated"')
   }
@@ -837,7 +845,9 @@ function generatePrivacyOpts(selected: Set<string>): string[] {
   // services_trim - Trim non-essential services
   if (selected.has('services_trim')) {
     lines.push('# Trim services')
-    lines.push('$trimSvc = @("DiagTrack","dmwappushservice","lfsvc","RetailDemo","Fax","SharedAccess")')
+    lines.push(
+      '$trimSvc = @("DiagTrack","dmwappushservice","lfsvc","RetailDemo","Fax","SharedAccess")',
+    )
     lines.push(
       'foreach ($s in $trimSvc) { Set-Service $s -StartupType Manual -EA SilentlyContinue; Stop-Service $s -Force -EA SilentlyContinue }',
     )
@@ -847,7 +857,9 @@ function generatePrivacyOpts(selected: Set<string>): string[] {
   // disk_cleanup - Deep disk cleanup
   if (selected.has('disk_cleanup')) {
     lines.push('# Deep disk cleanup')
-    lines.push('Start-Process "cleanmgr.exe" -ArgumentList "/sagerun:100" -Wait -WindowStyle Hidden')
+    lines.push(
+      'Start-Process "cleanmgr.exe" -ArgumentList "/sagerun:100" -Wait -WindowStyle Hidden',
+    )
     lines.push('Write-OK "Disk cleanup complete"')
   }
 
@@ -863,7 +875,9 @@ function generatePrivacyOpts(selected: Set<string>): string[] {
   // wer_disable - Disable Windows Error Reporting
   if (selected.has('wer_disable')) {
     lines.push('# Disable Windows Error Reporting')
-    lines.push('Set-Reg "HKLM:\\SOFTWARE\\Microsoft\\Windows\\Windows Error Reporting" "Disabled" 1')
+    lines.push(
+      'Set-Reg "HKLM:\\SOFTWARE\\Microsoft\\Windows\\Windows Error Reporting" "Disabled" 1',
+    )
     lines.push('Stop-Service WerSvc -Force -EA SilentlyContinue')
     lines.push('Set-Service WerSvc -StartupType Disabled -EA SilentlyContinue')
     lines.push('Write-OK "Windows Error Reporting disabled"')
