@@ -140,6 +140,22 @@ export type GpuType = (typeof GPU_TYPES)[keyof typeof GPU_TYPES]
 
 const GPU_TYPE_VALUES = Object.values(GPU_TYPES) as GpuType[]
 
+export const DNS_PROVIDERS = {
+  CLOUDFLARE: 'cloudflare',
+  GOOGLE: 'google',
+  QUAD9: 'quad9',
+  OPENDNS: 'opendns',
+  ADGUARD: 'adguard',
+} as const satisfies Record<string, string>
+
+export type DnsProviderType = (typeof DNS_PROVIDERS)[keyof typeof DNS_PROVIDERS]
+
+const DNS_PROVIDER_VALUES = Object.values(DNS_PROVIDERS) as DnsProviderType[]
+
+export function isDnsProviderType(value: unknown): value is DnsProviderType {
+  return typeof value === 'string' && DNS_PROVIDER_VALUES.includes(value as DnsProviderType)
+}
+
 export const PERIPHERAL_TYPES = {
   LOGITECH: 'logitech',
   RAZER: 'razer',

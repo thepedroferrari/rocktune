@@ -659,6 +659,8 @@ function generateNetworkOpts(selected: Set<string>, dnsProvider: string): string
       cloudflare: ['1.1.1.1', '1.0.0.1'],
       google: ['8.8.8.8', '8.8.4.4'],
       quad9: ['9.9.9.9', '149.112.112.112'],
+      opendns: ['208.67.222.222', '208.67.220.220'],
+      adguard: ['94.140.14.14', '94.140.15.15'],
     }
     const [primary, secondary] = dnsServers[dnsProvider] || dnsServers.cloudflare
     lines.push(`# Set DNS to ${dnsProvider}`)

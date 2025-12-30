@@ -9,6 +9,7 @@ import { buildScript, type SelectionState } from './script-generator'
 import type {
   AppEventName,
   CpuType,
+  DnsProviderType,
   FilterValue,
   GpuType,
   HardwareProfile,
@@ -23,6 +24,7 @@ import type {
 } from './types'
 import {
   CPU_TYPES,
+  DNS_PROVIDERS,
   FILTER_ALL,
   GPU_TYPES,
   isFilterAll,
@@ -69,6 +71,7 @@ interface AppStore {
   optimizations: Set<OptimizationKey>
   peripherals: Set<PeripheralType>
   monitorSoftware: Set<MonitorSoftwareType>
+  dnsProvider: DnsProviderType
   script: ScriptState
   ui: UIState
   optimizationCount: number
@@ -101,6 +104,7 @@ const DEFAULT_CATALOG: SoftwareCatalog = {}
 const DEFAULT_ACTIVE_PRESET: PresetType | null = null
 const DEFAULT_FILTER: FilterValue = FILTER_ALL
 const DEFAULT_VIEW: ViewMode = VIEW_MODES.GRID
+const DEFAULT_DNS_PROVIDER: DnsProviderType = DNS_PROVIDERS.CLOUDFLARE
 
 export const app: AppStore = $state({
   /** Software catalog loaded from catalog.json */
@@ -135,6 +139,9 @@ export const app: AppStore = $state({
 
   /** Selected monitor software brands */
   monitorSoftware: new Set<MonitorSoftwareType>(),
+
+  /** DNS provider for network optimization */
+  dnsProvider: DEFAULT_DNS_PROVIDER,
 
   /** Script generation and preview state */
   script: { ...DEFAULT_SCRIPT },
@@ -319,6 +326,13 @@ export function setGpu(gpu: GpuType): void {
   app.hardware = { ...app.hardware, gpu }
 }
 
+/**
+ * Set DNS provider
+ */
+export function setDnsProvider(provider: DnsProviderType): void {
+  app.dnsProvider = provider
+}
+
 // ============================================================================
 // Optimization State Management
 // ============================================================================
@@ -498,5 +512,8 @@ export function generateCurrentScript(): string {
   }
 
   const selection = buildSelectionState()
-  return buildScript(selection, { catalog: app.software })
+  return buildScript(selection, {
+    catalog: app.software,
+    dnsProvider: app.dnsProvider,
+  })
 }

@@ -332,15 +332,17 @@ const SAFE_NETWORK: readonly OptimizationDef[] = [
     key: OPTIMIZATION_KEYS.DNS,
     tier: OPTIMIZATION_TIERS.SAFE,
     category: 'network',
-    label: 'Cloudflare DNS',
-    hint: '1.1.1.1 — faster lookups',
-    tooltip: `**Cloudflare DNS** — faster DNS resolution
+    label: 'Custom DNS',
+    hint: 'Faster, more reliable DNS lookups',
+    tooltip: `**Custom DNS** — faster DNS resolution
 
-- Sets DNS to 1.1.1.1 and 1.0.0.1
-- Faster than most ISP DNS servers
-- Privacy-focused, no logging
+- **Cloudflare** (1.1.1.1) — fastest, privacy-first
+- **Google** (8.8.8.8) — reliable, widely used
+- **Quad9** (9.9.9.9) — blocks malware domains
+- **OpenDNS** (208.67.222.222) — Cisco, very stable
+- **AdGuard** (94.140.14.14) — blocks ads at DNS level
 
-✓ Reduces initial connection time
+✓ Faster than most ISP DNS servers
 ✓ Works with all games and services`,
     defaultChecked: true,
   },

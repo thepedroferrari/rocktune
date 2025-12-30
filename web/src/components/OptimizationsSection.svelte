@@ -12,8 +12,9 @@
     getCategoriesForTier,
     type OptimizationCategory,
   } from '$lib/optimizations'
-  import { OPTIMIZATION_TIERS, type OptimizationTier } from '$lib/types'
+  import { OPTIMIZATION_TIERS, OPTIMIZATION_KEYS, type OptimizationTier } from '$lib/types'
   import OptimizationCheckbox from './OptimizationCheckbox.svelte'
+  import DnsProviderSelector from './DnsProviderSelector.svelte'
 
   /** Category display names */
   const CATEGORY_LABELS: Record<OptimizationCategory, string> = {
@@ -125,6 +126,9 @@
             </legend>
             {#each opts as opt (opt.key)}
               <OptimizationCheckbox {opt} />
+              {#if opt.key === OPTIMIZATION_KEYS.DNS && app.optimizations.has(OPTIMIZATION_KEYS.DNS)}
+                <DnsProviderSelector />
+              {/if}
             {/each}
           </fieldset>
         {/if}
