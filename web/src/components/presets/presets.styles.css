@@ -416,26 +416,6 @@
     text-wrap: balance;
     overflow-wrap: anywhere;
   }
-  .preset-card__subtitle {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    font-size: 0.55rem;
-    color: rgba(255, 255, 255, 0.55);
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    font-weight: 600;
-    z-index: 2;
-    position: relative;
-    text-align: left;
-  }
-  .preset-card__subtitle .subtitle-label {
-    color: var(--card-glow);
-    font-weight: 700;
-  }
-  .preset-card__subtitle .subtitle-value {
-    color: rgba(255, 255, 255, 0.7);
-  }
   .preset-card__desc {
     font-size: 0.72rem;
     font-weight: 500;
@@ -450,45 +430,6 @@
     z-index: 2;
     position: relative;
     text-wrap: pretty;
-  }
-  .preset-card__traits {
-    display: grid;
-    gap: 0.35rem;
-    padding: 0.45rem 0.5rem 0.4rem;
-    background: rgba(0, 0, 0, 0.25);
-    border-radius: 4px;
-    border: 1px solid rgba(255, 255, 255, 0.06);
-  }
-  .traits-label {
-    font-size: 0.55rem;
-    text-transform: uppercase;
-    letter-spacing: 0.14em;
-    color: var(--card-glow);
-    font-weight: 700;
-  }
-  .traits-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: grid;
-    gap: 0.25rem;
-  }
-  .traits-list li {
-    display: flex;
-    align-items: center;
-    gap: 0.35rem;
-    font-size: 0.6rem;
-    color: rgba(255, 255, 255, 0.78);
-    letter-spacing: 0.02em;
-  }
-  .traits-list li::before {
-    content: "";
-    width: 6px;
-    height: 6px;
-    border-radius: 2px;
-    background: linear-gradient(135deg, var(--card-glow) 0%, transparent 100%);
-    box-shadow: 0 0 6px color-mix(in oklch, var(--card-glow) 50%, transparent);
-    flex-shrink: 0;
   }
   .preset-card__best-for {
     display: flex;
@@ -740,9 +681,6 @@
     .preset-card__desc {
       font-size: 0.65rem;
     }
-    .traits-list li {
-      font-size: 0.58rem;
-    }
   }
   @container presets (width <=900px) {
     .presets {
@@ -764,19 +702,9 @@
       font-size: 0.85rem;
       letter-spacing: 0.06em;
     }
-    .preset-card__subtitle {
-      font-size: 0.5rem;
-      letter-spacing: 0.1em;
-    }
     .preset-card__desc {
       font-size: 0.65rem;
       padding: 0.35rem;
-    }
-    .preset-card__traits {
-      padding: 0.35rem;
-    }
-    .traits-list li {
-      font-size: 0.55rem;
     }
     .preset-card__stats {
       padding: 0.35rem 0.4rem;
