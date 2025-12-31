@@ -48,6 +48,13 @@
     font-size: 0.875rem;
   }
 
+  .step-desc .trust-hint {
+    display: block;
+    margin-top: 0.25rem;
+    color: var(--text-hint);
+    font-size: 0.75rem;
+  }
+
   .step-header {
     display: flex;
     justify-content: space-between;

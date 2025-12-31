@@ -167,7 +167,8 @@
       <div class="step-header__left">
         <h2><span class="step-num">4</span> Arsenal</h2>
         <p class="step-desc">
-          All packages installed via <abbr title="Windows Package Manager">winget</abbr>
+          All packages installed via <abbr title="Windows Package Manager">winget</abbr> — Microsoft's official package manager.
+          <span class="trust-hint">Pulled from verified sources. Preview exact commands in the Forge.</span>
         </p>
       </div>
       <div class="step-header__right">
