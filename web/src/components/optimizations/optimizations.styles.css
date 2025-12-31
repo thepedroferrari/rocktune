@@ -274,12 +274,10 @@
     left: 12px;
     right: 0;
     height: 2px;
-    background: linear-gradient(
-      90deg,
-      var(--placard-red) 0%,
-      color-mix(in oklch, var(--placard-red) 50%, transparent) 70%,
-      transparent 100%
-    );
+    background: linear-gradient(90deg,
+        var(--placard-red) 0%,
+        color-mix(in oklch, var(--placard-red) 50%, transparent) 70%,
+        transparent 100%);
     z-index: 2;
   }
 
@@ -300,12 +298,10 @@
   }
 
   .ludicrous-unlock-btn:hover::after {
-    background: linear-gradient(
-      90deg,
-      color-mix(in oklch, var(--placard-red) 100%, oklch(1 0 0)) 0%,
-      var(--placard-red) 60%,
-      transparent 100%
-    );
+    background: linear-gradient(90deg,
+        color-mix(in oklch, var(--placard-red) 100%, oklch(1 0 0)) 0%,
+        var(--placard-red) 60%,
+        transparent 100%);
   }
 
   /* Focus state for accessibility */
@@ -386,6 +382,7 @@
    * ========================================================================== */
 
   @media (prefers-reduced-motion: reduce) {
+
     .ludicrous-unlock-btn,
     .ludicrous-unlock-btn:hover,
     .unlock-icon,
@@ -539,9 +536,12 @@
   }
 
   @keyframes skull-pulse {
-    0%, 100% {
+
+    0%,
+    100% {
       filter: drop-shadow(0 0 12px var(--placard-glow));
     }
+
     50% {
       filter: drop-shadow(0 0 20px var(--placard-red)) drop-shadow(0 0 30px var(--placard-glow));
     }
@@ -590,7 +590,7 @@
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 1px;
-    background: var(--placard-border);
+    padding: var(--space-md);
   }
 
   .placard-opt-cell {
@@ -667,9 +667,12 @@
   }
 
   @keyframes corner-pulse {
-    0%, 100% {
+
+    0%,
+    100% {
       box-shadow: 0 0 4px var(--placard-red);
     }
+
     50% {
       box-shadow: 0 0 10px var(--placard-red), 0 0 15px var(--placard-glow);
     }
@@ -717,7 +720,7 @@
     display: flex;
     justify-content: center;
     gap: var(--space-xl);
-      position: relative;
+    position: relative;
   }
 
   .placard-footer-v2 mark {
@@ -760,11 +763,11 @@
   }
 
   .placard-block h3 {
-      margin: 0;
+    margin: 0;
     font-family: var(--font-mono);
-      font-size: 0.7rem;
+    font-size: 0.7rem;
     font-weight: 800;
-      text-transform: uppercase;
+    text-transform: uppercase;
     color: var(--placard-red);
     letter-spacing: 0.2em;
     display: flex;
@@ -780,8 +783,8 @@
   }
 
   .placard-list {
-      margin: 0;
-      display: grid;
+    margin: 0;
+    display: grid;
     gap: var(--space-sm);
   }
 
@@ -820,7 +823,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-      position: relative;
+    position: relative;
   }
 
   .placard-footer-status {
@@ -1067,7 +1070,7 @@
   }
 
   .ludicrous-dialog-header h3 {
-      margin: 0;
+    margin: 0;
     font-family: var(--font-display);
     font-size: 1.4rem;
     font-weight: 900;
@@ -1134,16 +1137,16 @@
     background: oklch(1 0 0 / 0.03);
     padding: var(--space-sm) var(--space-md);
     border: 1px solid oklch(1 0 0 / 0.05);
-      display: flex;
+    display: flex;
     justify-content: space-between;
-      align-items: center;
+    align-items: center;
   }
 
   .cve-list a {
     color: var(--placard-red);
-      font-family: var(--font-mono);
+    font-family: var(--font-mono);
     font-weight: 800;
-      text-decoration: none;
+    text-decoration: none;
     font-size: 0.9rem;
   }
 
@@ -1155,20 +1158,20 @@
 
   .attack-vectors ul,
   .only-for ul {
-      list-style: none;
+    list-style: none;
     padding: 0;
     margin: 0;
     display: grid;
     gap: var(--space-sm);
-    }
+  }
 
   .attack-vectors li,
   .only-for li {
-      position: relative;
+    position: relative;
     padding-left: 1.5rem;
     font-size: 0.9rem;
     color: oklch(1 0 0 / 0.85);
-    }
+  }
 
   .attack-vectors li::before {
     content: '';
@@ -1208,14 +1211,14 @@
   .research-links span {
     font-family: var(--font-mono);
     font-size: 0.65rem;
-      text-transform: uppercase;
+    text-transform: uppercase;
     color: oklch(1 0 0 / 0.4);
   }
 
   .research-links a {
     color: oklch(1 0 0 / 0.7);
     text-decoration: underline;
-      font-size: 0.85rem;
+    font-size: 0.85rem;
   }
 
   .ludicrous-dialog-footer {
@@ -1283,12 +1286,10 @@
     left: 6px;
     right: 0;
     height: 2px;
-    background: linear-gradient(
-      90deg,
-      var(--placard-red) 0%,
-      color-mix(in oklch, var(--placard-red) 60%, transparent) 60%,
-      transparent 100%
-    );
+    background: linear-gradient(90deg,
+        var(--placard-red) 0%,
+        color-mix(in oklch, var(--placard-red) 60%, transparent) 60%,
+        transparent 100%);
   }
 
   /* Scanline overlay */
@@ -1312,12 +1313,10 @@
   }
 
   .btn-danger:hover::before {
-    background: linear-gradient(
-      90deg,
-      color-mix(in oklch, var(--placard-red) 100%, oklch(0.8 0.2 25)) 0%,
-      var(--placard-red) 50%,
-      transparent 100%
-    );
+    background: linear-gradient(90deg,
+        color-mix(in oklch, var(--placard-red) 100%, oklch(0.8 0.2 25)) 0%,
+        var(--placard-red) 50%,
+        transparent 100%);
   }
 
   .btn-danger:hover::after {
@@ -1428,11 +1427,12 @@
     background: color-mix(in oklch, var(--caution) 5%, transparent);
     border-top: 1px solid oklch(0.2 0.02 85 / 0.3);
     display: flex;
-    gap: var(--space-md);
+    flex-direction: column;
+    gap: var(--space-sm);
   }
 
   .restore-point-dialog-footer button {
-    flex: 1;
+    width: 100%;
     min-height: 44px;
     padding: var(--space-sm) var(--space-lg);
     font-family: var(--font-display);
@@ -1443,7 +1443,6 @@
     cursor: pointer;
     transition: all 0.15s ease;
     position: relative;
-    white-space: nowrap;
   }
 
   /* Caution Button - Yellow/Amber style */

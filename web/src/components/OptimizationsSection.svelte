@@ -436,11 +436,11 @@
     </div>
 
     <div class="restore-point-dialog-footer">
-      <button type="button" class="btn-caution" onclick={confirmRestorePointDisable}>
-        I know the risks, disable restore point
-      </button>
       <button type="button" class="btn-secondary" onclick={closeRestorePointModal}>
         Keep restore point ON
+      </button>
+      <button type="button" class="btn-caution" onclick={confirmRestorePointDisable}>
+        I know the risks, disable restore point
       </button>
     </div>
   </dialog>
