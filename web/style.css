@@ -1868,7 +1868,7 @@
        font-size: 0.8rem;
        font-weight: 400;
        line-height: 1.55;
-       color: var(--text-secondary);
+       color: oklch(0.78 0.02 285);
        box-shadow:
          0 12px 40px color-mix(in oklch, oklch(0 0 0) 60%, transparent),
          0 0 1px color-mix(in oklch, oklch(1 0 0) 10%, transparent),
@@ -1999,7 +1999,7 @@
          .tt-desc {
            margin: 0;
            font-size: 0.75rem;
-           color: var(--text-secondary);
+           color: oklch(0.72 0.02 285);
            line-height: 1.4;
          }
 
@@ -2025,15 +2025,14 @@
            text-transform: uppercase;
            letter-spacing: 0.1em;
            margin-bottom: var(--space-xs);
-           opacity: 0.5;
          }
 
          .tt-pros .tt-column-label {
-           color: var(--safe);
+           color: oklch(0.8 0.15 175);
          }
 
          .tt-cons .tt-column-label {
-           color: var(--risky);
+           color: oklch(0.75 0.18 10);
          }
 
          ul {
@@ -2048,7 +2047,7 @@
            margin: 0.25em 0;
            font-size: 0.75rem;
            line-height: 1.4;
-           color: var(--text-secondary);
+           color: oklch(0.82 0.02 285);
 
            &::before {
              content: '›';
@@ -2059,11 +2058,11 @@
          }
 
          .tt-pros li::before {
-           color: var(--safe);
+           color: oklch(0.8 0.15 175);
          }
 
          .tt-cons li::before {
-           color: var(--risky);
+           color: oklch(0.75 0.18 10);
          }
 
          strong {
