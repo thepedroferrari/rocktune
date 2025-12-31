@@ -216,6 +216,7 @@
     <div class="back">
       <span class="back-name">{pkg.name}</span>
       <span class="back-desc">{pkg.desc ?? 'No description available.'}</span>
+      <code class="back-winget" title="winget install --id &quot;{pkg.id}&quot;">{pkg.id}</code>
       <span class="back-category">{pkg.category}</span>
       <span class="back-action">
         {#if selected}
