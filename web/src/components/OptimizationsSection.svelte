@@ -174,8 +174,8 @@
       {#each getCategoriesForTier(tier) as category}
         {@const opts = getOptimizationsByTierAndCategory(tier, category)}
         {#if opts.length > 0}
-          <fieldset class="tier-{tier}-field">
-            <legend>
+          <fieldset class="control-fieldset tier-{tier}-field">
+            <legend class="control-legend">
               <span class="tier tier-{tier}">{TIER_LABELS[tier]}</span>
               {CATEGORY_LABELS[category]}
             </legend>

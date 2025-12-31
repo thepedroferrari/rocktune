@@ -89,7 +89,7 @@
   }
 </script>
 
-<header class="holo-console">
+<header class="site-header holo-console">
   <div class="holo-grid-bg"></div>
   <div class="holo-scanlines"></div>
   <div class="holo-content">

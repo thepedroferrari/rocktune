@@ -15,8 +15,8 @@
   }
 </script>
 
-<fieldset>
-  <legend>
+<fieldset class="control-fieldset">
+  <legend class="control-legend">
     <span class="legend-badge legend-badge--hardware">GPU</span>
     <svg
       class="legend-icon"

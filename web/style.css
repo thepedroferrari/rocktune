@@ -1130,7 +1130,7 @@
      }
 
 
-     fieldset {
+     .control-fieldset {
        --control-accent: var(--accent);
        --control-glow: color-mix(in oklch, var(--accent) 50%, transparent);
        --control-glow-soft: color-mix(in oklch, var(--accent) 20%, transparent);
@@ -1441,7 +1441,7 @@
        }
      }
 
-    legend {
+    .control-legend {
       font-family: var(--font-ui);
       font-weight: 600;
       font-size: 0.85rem;
