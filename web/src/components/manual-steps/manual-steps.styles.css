@@ -149,17 +149,31 @@
       flex-shrink: 0;
     }
 
-    .manual-steps__group-title {
+    .manual-steps__group-heading {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
       flex: 1;
+      min-width: 0;
     }
 
-    .manual-steps__group-count {
-      padding: 0.15rem 0.5rem;
+    .manual-steps__group-title {
+      line-height: var(--leading-tight);
+    }
+
+    .manual-steps__group-subtitle {
+      display: none;
       font-size: var(--text-xs);
-      font-weight: 700;
+      font-weight: 500;
       color: var(--text-dim);
-      background: var(--bg-base);
-      border-radius: 999px;
+      line-height: var(--leading-snug);
+    }
+
+    .manual-steps__group-progress {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-xs);
+      flex-shrink: 0;
     }
 
     .manual-steps__chevron {
@@ -171,6 +185,14 @@
 
     .manual-steps__group[open] .manual-steps__chevron {
       transform: rotate(180deg);
+    }
+
+    .manual-steps__group[open] .manual-steps__group-header {
+      align-items: flex-start;
+    }
+
+    .manual-steps__group[open] .manual-steps__group-subtitle {
+      display: block;
     }
 
     /* Group Content */
@@ -206,55 +228,34 @@
     .manual-steps__progress {
       display: flex;
       align-items: center;
-      gap: var(--space-sm);
+      gap: var(--space-xs);
       margin-inline-start: auto;
     }
 
-    /* Native progress element */
+    /* Native progress element - base styles only, pseudo-elements outside @scope */
     .manual-steps__progress-meter {
-      width: 80px;
-      height: 6px;
+      inline-size: 80px;
+      block-size: 6px;
       appearance: none;
       -webkit-appearance: none;
       -moz-appearance: none;
       border: none;
       border-radius: 3px;
       overflow: hidden;
-      background: var(--bg-base);
+      background: var(--bg-primary);
     }
 
-    /* WebKit (Chrome, Safari, Edge) */
-    .manual-steps__progress-meter::-webkit-progress-bar {
-      background: var(--bg-base);
-      border-radius: 3px;
-    }
-
-    .manual-steps__progress-meter::-webkit-progress-value {
-      background: var(--cyber-cyan);
-      border-radius: 3px;
-      transition: width var(--duration-normal) ease;
-    }
-
-    /* Firefox */
-    .manual-steps__progress-meter::-moz-progress-bar {
-      background: var(--cyber-cyan);
-      border-radius: 3px;
-    }
-
-    /* Complete state (green) */
-    .manual-steps__progress-meter.complete::-webkit-progress-value {
-      background: var(--safe);
-    }
-
-    .manual-steps__progress-meter.complete::-moz-progress-bar {
-      background: var(--safe);
+    .manual-steps__progress-meter--group {
+      inline-size: clamp(72px, 18vw, 140px);
     }
 
     .manual-steps__progress-text {
       font-family: var(--font-mono);
       font-size: var(--text-xs);
       color: var(--text-dim);
-      min-width: 3ch;
+      min-width: 4ch;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
     }
 
     .manual-steps__reset-btn {
@@ -281,6 +282,12 @@
         border-color: var(--caution);
         background: color-mix(in oklch, var(--caution) 10%, transparent);
       }
+    }
+
+    .manual-steps__section-reset {
+      display: flex;
+      justify-content: flex-end;
+      margin-block-end: var(--space-sm);
     }
 
     .manual-steps__section-desc {
@@ -319,16 +326,13 @@
     }
 
     .manual-steps__item {
-      display: flex;
-      gap: var(--space-sm);
-      align-items: flex-start;
-      padding: var(--space-sm);
-      background: var(--bg-base);
+      background: var(--bg-primary);
       border-radius: 6px;
       border: 1px solid var(--border);
       transition: border-color var(--duration-fast) ease, opacity var(--duration-normal) ease;
 
-      &:hover {
+      /* Hover only when label (clickable area) is hovered */
+      &:has(.manual-steps__item-label:hover) {
         border-color: var(--text-dim);
       }
 
@@ -350,12 +354,13 @@
       }
     }
 
-    /* Item label - wraps entire item for full-area click */
+    /* Item label - fills entire li, is the clickable area */
     .manual-steps__item-label {
       display: flex;
       gap: var(--space-sm);
       align-items: flex-start;
       width: 100%;
+      padding: var(--space-sm);
       cursor: pointer;
     }
 
@@ -392,7 +397,7 @@
       margin-block-start: 2px;
       border: 2px solid var(--border);
       border-radius: 4px;
-      background: var(--bg-base);
+      background: var(--bg-primary);
       transition: all var(--duration-fast) ease;
 
       &::after {
@@ -595,7 +600,7 @@
       gap: var(--space-sm);
       margin-block-end: var(--space-sm);
       padding: var(--space-sm);
-      background: var(--bg-base);
+      background: var(--bg-primary);
       border: 1px solid var(--border);
       border-radius: 6px;
     }
@@ -741,7 +746,7 @@
       flex-shrink: 0;
       aspect-ratio: 16 / 9;
       overflow: hidden;
-      background: var(--bg-base);
+      background: var(--bg-primary);
 
       & img {
         width: 100%;
@@ -880,5 +885,30 @@
         color: #c62828;
       }
     }
+  }
+
+  /* Progress bar pseudo-elements - must be outside @scope for browser compat */
+  .manual-steps__progress-meter::-webkit-progress-bar {
+    background: var(--bg-primary);
+    border-radius: 3px;
+  }
+
+  .manual-steps__progress-meter::-webkit-progress-value {
+    background: var(--cyber-cyan);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+  }
+
+  .manual-steps__progress-meter::-moz-progress-bar {
+    background: var(--cyber-cyan);
+    border-radius: 3px;
+  }
+
+  .manual-steps__progress-meter.complete::-webkit-progress-value {
+    background: var(--safe);
+  }
+
+  .manual-steps__progress-meter.complete::-moz-progress-bar {
+    background: var(--safe);
   }
 }

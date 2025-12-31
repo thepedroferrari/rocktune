@@ -29,7 +29,6 @@
   import {
     isCompleted,
     toggleItem,
-    getSectionProgress,
     resetSection,
     resetAll,
     createItemId,
@@ -89,13 +88,6 @@
   // Track progress data reactively (triggers re-render on changes)
   let progressData = $derived(getProgressData());
 
-  // Get progress for a section
-  function getProgress(sectionId: string, items: readonly unknown[]) {
-    // Access progressData to create reactive dependency
-    const _ = progressData.lastUpdated;
-    return getSectionProgress(sectionId, items.length);
-  }
-
   // Handle checkbox change
   function handleCheckbox(sectionId: string, itemId: string) {
     toggleItem(sectionId, itemId);
@@ -132,6 +124,53 @@
     | GameLaunchItem
     | StreamingTroubleshootItem
     | DiagnosticTool;
+
+  function getItemId(item: AnyItem): string {
+    return item.id ?? createItemId(item as unknown as Record<string, unknown>);
+  }
+
+  function getProgressForItems(sectionId: string, items: readonly AnyItem[]) {
+    const total = items.length;
+    const completed = items.reduce((count, item) => {
+      return count + (isCompleted(sectionId, getItemId(item)) ? 1 : 0);
+    }, 0);
+
+    return {
+      completed,
+      total,
+      percent: total > 0 ? Math.round((completed / total) * 100) : 0,
+    };
+  }
+
+  // Get progress for a section
+  function getProgress(sectionId: string, items: readonly AnyItem[]) {
+    // Access progressData to create reactive dependency
+    const _ = progressData.lastUpdated;
+    return getProgressForItems(sectionId, items);
+  }
+
+  // Get progress for a group (sum of visible sections)
+  function getGroupProgress(sections: readonly ManualStepSection[]) {
+    // Access progressData to create reactive dependency
+    const _ = progressData.lastUpdated;
+    let completed = 0;
+    let total = 0;
+
+    for (const section of sections) {
+      const sectionProgress = getProgressForItems(
+        section.id,
+        section.items as readonly AnyItem[],
+      );
+      completed += sectionProgress.completed;
+      total += sectionProgress.total;
+    }
+
+    return {
+      completed,
+      total,
+      percent: total > 0 ? Math.round((completed / total) * 100) : 0,
+    };
+  }
 
   // Type guards for rendering
   function isManualStepItem(item: AnyItem): item is ManualStepItem {
@@ -300,10 +339,11 @@
 
   <div class="manual-steps__groups">
     {#each filteredGroups as group (group.id)}
-      {@const itemCount = group.sections.reduce(
-        (sum, s) => sum + s.items.length,
-        0,
-      )}
+      {@const groupProgress = getGroupProgress(group.sections)}
+      {@const isSingleSectionGroup = group.sections.length === 1}
+      {@const groupSubtitle = isSingleSectionGroup
+        ? group.sections[0]?.description ?? group.sections[0]?.title
+        : undefined}
 
       <details
         class="manual-steps__group"
@@ -329,8 +369,23 @@
           >
             <path d={getGroupIcon(group.id)} />
           </svg>
-          <span class="manual-steps__group-title">{group.title}</span>
-          <span class="manual-steps__group-count">{itemCount}</span>
+          <div class="manual-steps__group-heading">
+            <span class="manual-steps__group-title">{group.title}</span>
+            {#if groupSubtitle}
+              <span class="manual-steps__group-subtitle">{groupSubtitle}</span>
+            {/if}
+          </div>
+          <div class="manual-steps__group-progress">
+            <progress
+              class="manual-steps__progress-meter manual-steps__progress-meter--group"
+              class:complete={groupProgress.percent === 100}
+              value={groupProgress.completed}
+              max={groupProgress.total}
+            ></progress>
+            <span class="manual-steps__progress-text">
+              {groupProgress.completed}/{groupProgress.total}
+            </span>
+          </div>
           <svg
             class="manual-steps__chevron"
             viewBox="0 0 24 24"
@@ -344,22 +399,42 @@
 
         <div class="manual-steps__group-content">
           {#each group.sections as section (section.id)}
-            {@const progress = getProgress(section.id, section.items)}
+            {@const progress = getProgress(
+              section.id,
+              section.items as readonly AnyItem[],
+            )}
             <div class="manual-steps__section">
-              <div class="manual-steps__section-header">
-                <h4 class="manual-steps__section-title">{section.title}</h4>
-                <div class="manual-steps__progress">
-                  <progress
-                    class="manual-steps__progress-meter"
-                    class:complete={progress.percent === 100}
-                    value={progress.completed}
-                    max={progress.total}
-                  ></progress>
-                  <span class="manual-steps__progress-text">
-                    {progress.completed}/{progress.total}
-                  </span>
+              {#if !isSingleSectionGroup}
+                <div class="manual-steps__section-header">
+                  <h4 class="manual-steps__section-title">{section.title}</h4>
+                  <div class="manual-steps__progress">
+                    <span class="manual-steps__progress-text">
+                      {progress.completed}/{progress.total}
+                    </span>
+                    {#if progress.completed > 0}
+                      <button
+                        type="button"
+                        class="manual-steps__reset-btn"
+                        title="Reset section progress"
+                        onclick={() => handleResetSection(section.id)}
+                      >
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                        >
+                          <path
+                            d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"
+                          />
+                          <path d="M3 3v5h5" />
+                        </svg>
+                      </button>
+                    {/if}
+                  </div>
                 </div>
-                {#if progress.completed > 0}
+              {:else if progress.completed > 0}
+                <div class="manual-steps__section-reset">
                   <button
                     type="button"
                     class="manual-steps__reset-btn"
@@ -378,9 +453,9 @@
                       <path d="M3 3v5h5" />
                     </svg>
                   </button>
-                {/if}
-              </div>
-              {#if section.description}
+                </div>
+              {/if}
+              {#if section.description && !isSingleSectionGroup}
                 <p class="manual-steps__section-desc">{section.description}</p>
               {/if}
               {#if section.location}
@@ -401,9 +476,7 @@
 
               <ul class="manual-steps__items">
                 {#each section.items as item}
-                  {@const itemId = createItemId(
-                    item as unknown as Record<string, unknown>,
-                  )}
+                  {@const itemId = getItemId(item as AnyItem)}
                   {@const itemDone = isDone(section.id, itemId)}
                   <li class="manual-steps__item" class:completed={itemDone}>
                     <label class="manual-steps__item-label">

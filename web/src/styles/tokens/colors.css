@@ -86,6 +86,14 @@
   --neon-yellow-glow: oklch(0.85 0.22 100 / 50%);
 
   
+  --cyber-cyan: var(--neon-cyan);
+  --cyber-cyan-dim: var(--neon-cyan-dim);
+  --cyber-cyan-glow: var(--neon-cyan-glow);
+
+  --cyber-magenta: var(--neon-magenta);
+  --cyber-magenta-dim: var(--neon-magenta-dim);
+  --cyber-magenta-glow: var(--neon-magenta-glow);
+
   --cyber-yellow: oklch(0.92 0.19 102);
   --cyber-yellow-dim: oklch(0.75 0.16 102);
   --cyber-yellow-glow: oklch(0.85 0.2 102 / 50%);
