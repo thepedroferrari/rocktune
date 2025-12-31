@@ -76,7 +76,7 @@
   oncancel={handleCancel}
   onkeydown={handleKeydown}
 >
-  <div class="header">
+  <header class="header">
     <h3><span class="header-icon">◢</span> SCRIPT PREVIEW</h3>
     <button type="button" class="close" aria-label="Close" onclick={handleClose}>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -84,7 +84,7 @@
         <line x1="6" y1="6" x2="18" y2="18" />
       </svg>
     </button>
-  </div>
+  </header>
 
   <div class="body">
     <CodeViewer
@@ -98,14 +98,14 @@
     />
   </div>
 
-  <div class="footer">
+  <footer class="footer">
     <span class="label">To run:</span>
-    <code>Right-click</code>
+    <kbd>Right-click</kbd>
     <span class="arrow">→</span>
-    <code>Run with PowerShell</code>
+    <kbd>Run with PowerShell</kbd>
     <span class="arrow">→</span>
-    <code>Yes</code>
-  </div>
+    <kbd>Yes</kbd>
+  </footer>
 </dialog>
 
 <!-- Styles are in preview-modal.styles.css (layer: components) -->

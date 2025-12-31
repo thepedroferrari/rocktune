@@ -225,66 +225,42 @@
           <section class="placard-block">
             <h3>Before You Flip</h3>
             <dl class="placard-list">
-              <div class="placard-item">
-                <dt>01</dt>
-                <dd>Create a restore point or full image backup</dd>
-              </div>
-              <div class="placard-item">
-                <dt>02</dt>
-                <dd>Disconnect internet, Bluetooth, and external storage</dd>
-              </div>
-              <div class="placard-item">
-                <dt>03</dt>
-                <dd>Use a clean, dedicated benchmark user or install</dd>
-              </div>
-              <div class="placard-item">
-                <dt>04</dt>
-                <dd>Have recovery media ready (USB)</dd>
-              </div>
+              <dt>01</dt>
+              <dd>Create a restore point or full image backup</dd>
+              <dt>02</dt>
+              <dd>Disconnect internet, Bluetooth, and external storage</dd>
+              <dt>03</dt>
+              <dd>Use a clean, dedicated benchmark user or install</dd>
+              <dt>04</dt>
+              <dd>Have recovery media ready (USB)</dd>
             </dl>
           </section>
 
           <section class="placard-block">
             <h3>Rules While Enabled</h3>
             <dl class="placard-list">
-              <div class="placard-item">
-                <dt>A</dt>
-                <dd>No browsing, email, chat, or logins</dd>
-              </div>
-              <div class="placard-item">
-                <dt>B</dt>
-                <dd>No mods, overlays, or third-party executables</dd>
-              </div>
-              <div class="placard-item">
-                <dt>C</dt>
-                <dd>Run only the benchmark, then exit</dd>
-              </div>
-              <div class="placard-item">
-                <dt>D</dt>
-                <dd>Monitor temps and stability; stop on errors</dd>
-              </div>
+              <dt>A</dt>
+              <dd>No browsing, email, chat, or logins</dd>
+              <dt>B</dt>
+              <dd>No mods, overlays, or third-party executables</dd>
+              <dt>C</dt>
+              <dd>Run only the benchmark, then exit</dd>
+              <dt>D</dt>
+              <dd>Monitor temps and stability; stop on errors</dd>
             </dl>
           </section>
 
           <section class="placard-block">
             <h3>Rollback Plan</h3>
             <dl class="placard-list">
-              <div class="placard-item">
-                <dt>REC</dt>
-                <dd>Re-enable mitigations immediately after testing</dd>
-              </div>
-              <div class="placard-item">
-                <dt>REB</dt>
-                <dd>Reboot and verify VBS/HVCI status</dd>
-              </div>
-              <div class="placard-item">
-                <dt>UPD</dt>
-                <dd>Run Windows Update before daily use</dd>
-              </div>
-              <div class="placard-item">
-                <dt>RST</dt>
-                <dd>If anything looks off, restore from backup</dd>
-              </div>
+              <dt>REC</dt>
+              <dd>Re-enable mitigations immediately after testing</dd>
+              <dt>REB</dt>
+              <dd>Reboot and verify VBS/HVCI status</dd>
+              <dt>UPD</dt>
+              <dd>Run Windows Update before daily use</dd>
+              <dt>RST</dt>
+              <dd>If anything looks off, restore from backup</dd>
             </dl>
           </section>
         </div>
@@ -308,7 +284,7 @@
     {:else}
       <!-- Show unlock button before acknowledgment -->
       <div class="ludicrous-locked">
-        <div class="ludicrous-warning-card">
+        <article class="ludicrous-warning-card">
           <div class="ludicrous-warning-copy">
             <span class="warning-eyebrow">Restricted Section</span>
             <h3>Dangerous Options Locked</h3>
@@ -328,7 +304,7 @@
             <span class="unlock-text">Reveal Dangerous Options</span>
             <span class="unlock-hint">Disable CPU security mitigations (not recommended)</span>
           </button>
-        </div>
+        </article>
       </div>
     {/if}
   </div>
@@ -339,12 +315,12 @@
     class="ludicrous-dialog"
     aria-labelledby="ludicrous-dialog-title"
   >
-    <div class="ludicrous-dialog-header">
+    <header class="ludicrous-dialog-header">
       <svg class="danger-icon" viewBox="0 0 24 24" width="32" height="32" fill="currentColor">
         <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
       </svg>
       <h3 id="ludicrous-dialog-title">Warning: Dangerous Optimizations</h3>
-    </div>
+    </header>
 
     <div class="ludicrous-dialog-body">
       <p class="danger-intro">
@@ -352,7 +328,7 @@
         Anyone who knows you have these disabled can attack your computer.
       </p>
 
-      <div class="cve-section">
+      <section class="cve-section">
         <h4>CVEs You Will Be Vulnerable To:</h4>
         <ul class="cve-list">
           <li>
@@ -368,9 +344,9 @@
             <span class="cve-name">(Meltdown)</span> — Rogue data cache load
           </li>
         </ul>
-      </div>
+      </section>
 
-      <div class="attack-vectors">
+      <section class="attack-vectors">
         <h4>How You Can Be Attacked:</h4>
         <ul>
           <li><strong>Any website</strong> can read your passwords from memory</li>
@@ -378,9 +354,9 @@
           <li><strong>Any game with mods</strong> can take full control</li>
           <li><strong>Anti-cheat bypasses</strong> become trivial</li>
         </ul>
-      </div>
+      </section>
 
-      <div class="only-for">
+      <section class="only-for">
         <h4>Only Use These If:</h4>
         <ul>
           <li>This is a dedicated, <strong>completely offline</strong> benchmarking PC</li>
@@ -388,7 +364,7 @@
           <li>You will <strong>never</strong> run untrusted executables</li>
           <li>You understand <strong>you are responsible</strong> for the consequences</li>
         </ul>
-      </div>
+      </section>
 
       <div class="research-links">
         <span>Research before proceeding:</span>
@@ -397,14 +373,14 @@
       </div>
     </div>
 
-    <div class="ludicrous-dialog-footer">
+    <footer class="ludicrous-dialog-footer">
       <button type="button" class="btn-secondary" onclick={closeLudicrousModal}>
         Cancel (Stay Safe)
       </button>
       <button type="button" class="btn-danger" onclick={confirmLudicrous}>
         I Understand the Risks
       </button>
-    </div>
+    </footer>
   </dialog>
 
   <!-- Restore Point Acknowledgment Dialog -->
@@ -413,12 +389,12 @@
     class="restore-point-dialog"
     aria-labelledby="restore-point-dialog-title"
   >
-    <div class="restore-point-dialog-header">
+    <header class="restore-point-dialog-header">
       <svg class="warning-icon" viewBox="0 0 24 24" width="32" height="32" fill="currentColor">
         <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
       </svg>
       <h3 id="restore-point-dialog-title">Disabling Restore Point?</h3>
-    </div>
+    </header>
 
     <div class="restore-point-dialog-body">
       <p class="restore-point-intro">
@@ -435,13 +411,13 @@
       </p>
     </div>
 
-    <div class="restore-point-dialog-footer">
+    <footer class="restore-point-dialog-footer">
       <button type="button" class="btn-secondary" onclick={closeRestorePointModal}>
         Keep restore point ON
       </button>
       <button type="button" class="btn-caution" onclick={confirmRestorePointDisable}>
         I know the risks, disable restore point
       </button>
-    </div>
+    </footer>
   </dialog>
 </section>

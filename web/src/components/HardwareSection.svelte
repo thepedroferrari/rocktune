@@ -43,7 +43,7 @@
   </div>
 
   <div id="hardware-help" popover class="hardware-help-panel">
-    <div class="help-section">
+    <section class="help-section">
       <h4>How to find your CPU</h4>
       <p>
         Press <kbd>Win</kbd> + <kbd>Pause</kbd> or search
@@ -57,8 +57,8 @@
         X3D chips have extra cache for gaming — if yours ends in "X3D", select
         the first option!
       </p>
-    </div>
-    <div class="help-section">
+    </section>
+    <section class="help-section">
       <h4>How to find your GPU</h4>
       <p>
         Press <kbd>Win</kbd> + <kbd>X</kbd> →
@@ -70,7 +70,7 @@
         <strong>Advanced display</strong>
       </p>
       <p class="tip">GeForce = NVIDIA, Radeon = AMD, Arc = Intel</p>
-    </div>
+    </section>
   </div>
 
   <div class="core-grid">

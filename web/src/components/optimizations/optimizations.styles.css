@@ -785,16 +785,13 @@
   .placard-list {
     margin: 0;
     display: grid;
-    gap: var(--space-sm);
-  }
-
-  .placard-item {
-    display: grid;
     grid-template-columns: 32px 1fr;
     align-items: start;
-    gap: var(--space-sm);
+    row-gap: var(--space-sm);
+    column-gap: var(--space-sm);
 
     & dt {
+      grid-column: 1;
       font-family: var(--font-mono);
       font-size: 0.65rem;
       font-weight: 900;
@@ -808,6 +805,7 @@
     }
 
     & dd {
+      grid-column: 2;
       margin: 0;
       font-size: 0.85rem;
       line-height: 1.4;

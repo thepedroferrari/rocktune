@@ -206,7 +206,7 @@
 </script>
 
 <div class="code-viewer">
-  <div class="toolbar">
+  <header class="toolbar">
     <button
       type="button"
       class="tab"
@@ -259,7 +259,7 @@
     {/if}
 
     <div class="pill">{pillLabel}</div>
-  </div>
+  </header>
 
   <div class="body">
     <!-- Current View -->
@@ -294,7 +294,7 @@
     ></textarea>
   </div>
 
-  <div class="footer">
+  <footer class="footer">
     <div class="stats">
       <span>{lines} lines</span>
       <span>{sizeKb} KB</span>
@@ -310,5 +310,5 @@
         </button>
       </div>
     {/if}
-  </div>
+  </footer>
 </div>

@@ -704,11 +704,12 @@
   }
 
   .preset-card__stats {
-    display: flex;
-    flex-direction: column;
-    gap: 0.15rem;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 0.15rem 0.5rem;
     padding: 0.35rem 0.4rem;
-    margin-top: 0;
+    margin: 0;
     background: rgba(0, 0, 0, 0.4);
     border-radius: 5px;
     border: 1px solid rgba(255, 255, 255, 0.06);
@@ -717,14 +718,7 @@
     flex: 1;
   }
 
-  .stat-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  
+  /* Definition term (label) */
   .stat-label {
     font-size: var(--text-xs, 0.6rem);
     text-transform: uppercase;
@@ -733,6 +727,7 @@
     font-weight: 600;
   }
 
+  /* Definition description (value) */
   .stat-value {
     font-size: var(--text-sm, 0.75rem);
     font-weight: 700;
@@ -740,6 +735,7 @@
     font-family: var(--font-mono);
     text-shadow: 0 0 8px color-mix(in oklch, var(--card-glow) 40%, transparent);
     text-align: right;
+    margin: 0;
   }
 
   

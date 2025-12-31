@@ -70,9 +70,9 @@
 
   <!-- Panel content -->
   <div class="audit-content">
-    <div class="audit-header">
+    <header class="audit-header">
       <h3>Script Preview</h3>
-    </div>
+    </header>
 
     <CodeViewer
       script={activeScript}

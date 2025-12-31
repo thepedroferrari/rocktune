@@ -22,8 +22,8 @@
   }
 </script>
 
-<div class="dns-selector">
-  <span class="dns-label">DNS Provider:</span>
+<fieldset class="dns-selector">
+  <legend class="dns-label">DNS Provider:</legend>
   <div class="dns-options">
     {#each DNS_OPTIONS as option (option.value)}
       <label class="dns-option" class:selected={app.dnsProvider === option.value}>
@@ -39,7 +39,7 @@
       </label>
     {/each}
   </div>
-</div>
+</fieldset>
 
 <style>
   .dns-selector {

@@ -57,7 +57,7 @@
 </script>
 
 <!-- Search bar -->
-<div class="software-toolbar">
+<search class="software-toolbar">
   <div class="search-wrap">
     <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <circle cx="11" cy="11" r="8" />
@@ -72,7 +72,7 @@
       aria-label="Search software packages"
     />
   </div>
-</div>
+</search>
 
 <!-- Filter Bar -->
 <div class="filter-bar">

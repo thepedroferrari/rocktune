@@ -90,21 +90,19 @@
 </script>
 
 <header class="site-header holo-console">
-  <div class="holo-grid-bg"></div>
-  <div class="holo-scanlines"></div>
   <div class="holo-content">
     <div class="holo-title-lockup">
       <h1 class="holo-logo" data-text="ROCKTUNE">ROCKTUNE</h1>
     </div>
-    <div class="cyber-terminal">
-      <!-- Corner accents -->
-      <div class="terminal-corner terminal-corner--tl"></div>
-      <div class="terminal-corner terminal-corner--tr"></div>
-      <div class="terminal-corner terminal-corner--bl"></div>
-      <div class="terminal-corner terminal-corner--br"></div>
+    <article class="cyber-terminal">
+      <!-- Corner accents (decorative) -->
+      <div class="terminal-corner terminal-corner--tl" aria-hidden="true"></div>
+      <div class="terminal-corner terminal-corner--tr" aria-hidden="true"></div>
+      <div class="terminal-corner terminal-corner--bl" aria-hidden="true"></div>
+      <div class="terminal-corner terminal-corner--br" aria-hidden="true"></div>
 
       <!-- Cyberpunk header bar -->
-      <div class="terminal-header">
+      <header class="terminal-header">
         <div class="header-left">
           <span class="header-bracket">◢</span>
           <span class="header-label">SYS://ROCKTUNE</span>
@@ -121,12 +119,12 @@
           </span>
           <span class="header-bracket">◣</span>
         </div>
-      </div>
+      </header>
 
       <!-- Terminal screen with noise overlay -->
-      <div class="terminal-screen">
-        <div class="screen-noise"></div>
-        <div class="screen-scanline"></div>
+      <section class="terminal-screen">
+        <div class="screen-noise" aria-hidden="true"></div>
+        <div class="screen-scanline" aria-hidden="true"></div>
 
         <!-- Glitchy boot sequence -->
         <div class="terminal-boot">
@@ -198,10 +196,10 @@
             </span>
           </div>
         </div>
-      </div>
-    </div>
+      </section>
+    </article>
 
-    <div class="holo-actions">
+    <nav class="holo-actions" aria-label="Quick actions">
       <div class="holo-action">
         <button
           type="button"
@@ -272,7 +270,7 @@
         </a>
         <span class="holo-action-helper">Build a loadout.</span>
       </div>
-    </div>
+    </nav>
 
     <p class="trust-strip">
       <a

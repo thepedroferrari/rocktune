@@ -34,27 +34,41 @@
       background: var(--holo-bg);
       border-block-end: 1px solid color-mix(in oklch, var(--holo-primary) 20%, transparent);
       isolation: isolate;
+
+      /* Holographic grid background (was .holo-grid-bg div) */
+      &::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(var(--holo-grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--holo-grid) 1px, transparent 1px);
+        background-size: 40px 40px;
+        background-position: center top;
+        transform: perspective(1000px) rotateX(60deg) scale(2);
+        transform-origin: center top;
+        opacity: 0.3;
+        z-index: -2;
+        mask-image: radial-gradient(ellipse at center top, black 40%, transparent 80%);
+        animation: grid-scroll 20s linear infinite;
+      }
+
+      /* Scanlines overlay (was .holo-scanlines div) */
+      &::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          to bottom,
+          transparent 50%,
+          color-mix(in oklch, var(--holo-primary) 2%, transparent) 50%
+        );
+        background-size: 100% 4px;
+        pointer-events: none;
+        z-index: -1;
+        mask-image: linear-gradient(to bottom, transparent, black 20%, black 80%, transparent);
+      }
     }
-  }
-
-  
-
-  
-
-  .holo-grid-bg {
-    position: absolute;
-    inset: 0;
-    background-image:
-      linear-gradient(var(--holo-grid) 1px, transparent 1px),
-      linear-gradient(90deg, var(--holo-grid) 1px, transparent 1px);
-    background-size: 40px 40px;
-    background-position: center top;
-    transform: perspective(1000px) rotateX(60deg) scale(2);
-    transform-origin: center top;
-    opacity: 0.3;
-    z-index: -2;
-    mask-image: radial-gradient(ellipse at center top, black 40%, transparent 80%);
-    animation: grid-scroll 20s linear infinite;
   }
 
   @keyframes grid-scroll {
@@ -65,20 +79,6 @@
     100% {
       background-position: center 80px;
     }
-  }
-
-  .holo-scanlines {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      to bottom,
-      transparent 50%,
-      color-mix(in oklch, var(--holo-primary) 2%, transparent) 50%
-    );
-    background-size: 100% 4px;
-    pointer-events: none;
-    z-index: -1;
-    mask-image: linear-gradient(to bottom, transparent, black 20%, black 80%, transparent);
   }
 
   

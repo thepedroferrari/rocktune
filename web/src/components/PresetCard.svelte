@@ -288,45 +288,34 @@
       </div>
 
       <!-- Stats (label left, value right) -->
-      <div class="preset-card__stats">
+      <dl class="preset-card__stats">
         {#if overheadLabel}
-          <div class="stat-row">
-            <span class="stat-label">Overhead</span>
-            <span class="stat-value">{overheadLabel}</span>
-          </div>
+          <dt class="stat-label">Overhead</dt>
+          <dd class="stat-value">{overheadLabel}</dd>
         {/if}
         {#if latencyLabel}
-          <div class="stat-row">
-            <span class="stat-label">Latency</span>
-            <span class="stat-value">{latencyLabel}</span>
-          </div>
+          <dt class="stat-label">Latency</dt>
+          <dd class="stat-value">{latencyLabel}</dd>
         {/if}
-        <div class="stat-row">
-          <span class="stat-label">Tweaks</span>
-          {#if tierBreakdown}
-            <span class="stat-value stat-value--breakdown">
-              <span class="tier-count tier-count--safe" title="Safe">{tierBreakdown.safe}</span>
-              {#if tierBreakdown.caution > 0}
-                <span class="tier-count tier-count--caution" title="Caution">{tierBreakdown.caution}</span>
-              {/if}
-              {#if tierBreakdown.risky > 0}
-                <span class="tier-count tier-count--risky" title="Risky">{tierBreakdown.risky}</span>
-              {/if}
-            </span>
-          {:else}
-            <span class="stat-value">{optimizationCount}</span>
-          {/if}
-        </div>
-        <div class="stat-row">
-          <span class="stat-label">Software</span>
-          <span class="stat-value">{softwareCount}</span>
-        </div>
-        <div class="stat-row">
-          <span class="stat-label">Risk</span>
-          <span class="stat-value stat-value--risk-{riskLevel}">{riskText}</span
-          >
-        </div>
-      </div>
+        <dt class="stat-label">Tweaks</dt>
+        {#if tierBreakdown}
+          <dd class="stat-value stat-value--breakdown">
+            <span class="tier-count tier-count--safe" title="Safe">{tierBreakdown.safe}</span>
+            {#if tierBreakdown.caution > 0}
+              <span class="tier-count tier-count--caution" title="Caution">{tierBreakdown.caution}</span>
+            {/if}
+            {#if tierBreakdown.risky > 0}
+              <span class="tier-count tier-count--risky" title="Risky">{tierBreakdown.risky}</span>
+            {/if}
+          </dd>
+        {:else}
+          <dd class="stat-value">{optimizationCount}</dd>
+        {/if}
+        <dt class="stat-label">Software</dt>
+        <dd class="stat-value">{softwareCount}</dd>
+        <dt class="stat-label">Risk</dt>
+        <dd class="stat-value stat-value--risk-{riskLevel}">{riskText}</dd>
+      </dl>
     </div>
 
     <!-- Holographic layers -->

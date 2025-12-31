@@ -73,7 +73,7 @@
         </div>
         <div class="peripheral-column">
           <p class="peripheral-title">Manual Download</p>
-          <div class="peripheral-links peripheral-links--expanded">
+          <nav class="peripheral-links peripheral-links--expanded" aria-label="Peripheral driver downloads">
             {#each PERIPHERAL_LINKS as link (link.url)}
               <a
                 class="peripheral-link"
@@ -85,7 +85,7 @@
                 <span class="peripheral-link-action">↗</span>
               </a>
             {/each}
-          </div>
+          </nav>
         </div>
       </div>
     </fieldset>
@@ -127,7 +127,7 @@
         </div>
         <div class="peripheral-column">
           <p class="peripheral-title">Manual Download</p>
-          <div class="peripheral-links">
+          <nav class="peripheral-links" aria-label="Monitor software downloads">
             {#each MONITOR_LINKS as link (link.url)}
               <a
                 class="peripheral-link"
@@ -139,7 +139,7 @@
                 <span class="peripheral-link-action">↗</span>
               </a>
             {/each}
-          </div>
+          </nav>
         </div>
       </div>
     </fieldset>

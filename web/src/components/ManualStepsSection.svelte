@@ -286,8 +286,8 @@
   }
 </script>
 
-<div class="manual-steps">
-  <div class="manual-steps__header">
+<section class="manual-steps">
+  <header class="manual-steps__header">
     <div class="manual-steps__title-row">
       <h3 class="manual-steps__title">
         <svg
@@ -335,7 +335,7 @@
         Print
       </button>
     </div>
-  </div>
+  </header>
 
   <div class="manual-steps__groups">
     {#each filteredGroups as group (group.id)}
@@ -732,6 +732,6 @@
       </details>
     {/each}
   </div>
-</div>
+</section>
 
 <!-- Styles are in manual-steps.styles.css -->

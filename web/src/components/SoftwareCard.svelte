@@ -172,11 +172,11 @@
   {/each}
 
   <div class="inner">
-    <div class="scanlines"></div>
-    <div class="corner corner--tl"></div>
-    <div class="corner corner--tr"></div>
-    <div class="corner corner--bl"></div>
-    <div class="corner corner--br"></div>
+    <div class="scanlines" aria-hidden="true"></div>
+    <div class="corner corner--tl" aria-hidden="true"></div>
+    <div class="corner corner--tr" aria-hidden="true"></div>
+    <div class="corner corner--bl" aria-hidden="true"></div>
+    <div class="corner corner--br" aria-hidden="true"></div>
 
     {#snippet logoIcon()}
       {#if logoType === 'sprite'}
@@ -205,9 +205,9 @@
     {/snippet}
 
     <div class="front">
-      <div class="logo">
+      <figure class="logo">
         {@render logoIcon()}
-      </div>
+      </figure>
       <span class="name">{pkg.name}</span>
       <span class="list-desc">{shortDesc}</span>
       <span class="list-category">{pkg.category}</span>

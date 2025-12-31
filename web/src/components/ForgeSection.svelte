@@ -78,10 +78,10 @@
       <h2><span class="step-num">5</span> Forge Script</h2>
       <p class="step-desc">Your personalized loadout is ready</p>
     </div>
-    <div class="status">
+    <output class="status">
       <span class="indicator"></span>
       <span class="text">SYSTEM READY</span>
-    </div>
+    </output>
   </div>
 
   <Summary />
@@ -184,14 +184,14 @@
     </div>
 
     {#if checksum}
-      <div class="verification-block">
-        <div class="hash-header">
+      <section class="verification-block">
+        <header class="hash-header">
           <svg class="hash-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
             <path d="m9 12 2 2 4-4" />
           </svg>
           <span class="hash-label">SHA-256 Checksum</span>
-        </div>
+        </header>
 
         <div class="hash-display">
           <code class="hash-value" title={checksum}>{checksum}</code>
@@ -233,7 +233,7 @@
         </div>
 
         {#if showVerifyTip}
-          <div class="verify-panel">
+          <article class="verify-panel">
             <div class="verify-step">
               <span class="step-num">1</span>
               <div class="step-content">
@@ -249,12 +249,12 @@
               </div>
             </div>
             <p class="verify-result">If they match exactly, your file is authentic and unmodified.</p>
-          </div>
+          </article>
         {/if}
-      </div>
+      </section>
     {/if}
 
-    <div class="provenance">
+    <footer class="provenance">
       <a
         href="https://github.com/thepedroferrari/windows-gaming-settings/tree/{__BUILD_COMMIT__}"
         target="_blank"
@@ -267,7 +267,7 @@
         <span class="provenance-commit">{__BUILD_COMMIT__}</span>
         <span class="provenance-date">{__BUILD_DATE__}</span>
       </a>
-    </div>
+    </footer>
   </div>
 </section>
 

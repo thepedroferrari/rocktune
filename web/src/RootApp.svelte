@@ -142,12 +142,12 @@
   <!-- Step 0: Presets / Quick Start -->
   <section id="quick-start" class="step step--quickstart">
     <div class="quickstart-header">
-      <div class="quickstart-accent quickstart-accent--left"></div>
+      <div class="quickstart-accent quickstart-accent--left" aria-hidden="true"></div>
       <div class="quickstart-title-wrap">
         <h2 class="quickstart-title">Quick Start</h2>
         <p class="quickstart-subtitle">Choose a preset or build your own loadout below</p>
       </div>
-      <div class="quickstart-accent quickstart-accent--right"></div>
+      <div class="quickstart-accent quickstart-accent--right" aria-hidden="true"></div>
     </div>
     <PresetSection />
   </section>
@@ -205,12 +205,12 @@
     </div>
 
     {#if loading}
-      <div class="loading-state">Loading software catalog...</div>
+      <output class="loading-state" aria-busy="true">Loading software catalog...</output>
     {:else if error}
-      <div class="error-state">
+      <output class="error-state" role="alert">
         <p>{error}</p>
         <button type="button" onclick={hydrateCatalog}>Retry</button>
-      </div>
+      </output>
     {:else}
       <Filters {recommendedPreset} />
       <SoftwareGrid />
