@@ -139,7 +139,8 @@ function Write-OK { param([string]$M) $script:SuccessCount++; Write-Host "  [OK]
 function Write-Fail { param([string]$M) $script:FailCount++; Write-Host "  [FAIL] $M" -ForegroundColor Red }
 function Write-Warn { param([string]$M) $script:WarningCount++; Write-Host "  [!] $M" -ForegroundColor Yellow }
 function Set-Reg {
-    param([string]$Path, [string]$Name, $Value, [string]$Type = "DWORD")
+    param([string]$Path, [string]$Name, $Value, [string]$Type = "DWORD", [switch]$PassThru)
+    $success = $false
     try {
         if (-not (Test-Path $Path)) { New-Item -Path $Path -Force | Out-Null }
         $existing = Get-ItemProperty -Path $Path -Name $Name -EA SilentlyContinue
@@ -148,8 +149,9 @@ function Set-Reg {
         } else {
             Set-ItemProperty -Path $Path -Name $Name -Value $Value -EA Stop
         }
-        return $true
-    } catch { return $false }
+        $success = $true
+    } catch { $success = $false }
+    if ($PassThru) { return $success }
 }
 `
 
@@ -335,9 +337,15 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
       const packageId = escapePsDoubleQuoted(entry.pkg.id)
       lines.push(`    Write-Host "  Installing ${packageName}..." -NoNewline`)
       lines.push(
-        `    winget install --id "${packageId}" --silent --accept-package-agreements --accept-source-agreements 2>$null`,
+        `    $installOutput = winget install --id "${packageId}" --silent --accept-package-agreements --accept-source-agreements 2>&1`,
       )
-      lines.push('    if ($LASTEXITCODE -eq 0) { Write-OK "" } else { Write-Fail "" }')
+      lines.push('    if ($LASTEXITCODE -eq 0) { Write-OK "" }')
+      lines.push(
+        '    elseif ($installOutput -match "No available upgrade found|No newer package versions are available|already installed") { Write-OK "Already installed" }',
+      )
+      lines.push(
+        '    else { Write-Fail ""; $installOutput | ForEach-Object { Write-Host "    $_" -ForegroundColor DarkGray } }',
+      )
     }
 
     lines.push('}')
@@ -391,20 +399,19 @@ function generateSystemOpts(selected: Set<string>): string[] {
     lines.push('    $cs = Get-WmiObject Win32_ComputerSystem -EnableAllPrivileges')
     lines.push('    $cs.AutomaticManagedPagefile = $false; $cs.Put() | Out-Null')
     lines.push(
-      '    $pf = Get-WmiObject -Query "Select * From Win32_PageFileSetting Where Name=\'C:\\pagefile.sys\'"',
+      '    $pf = Get-WmiObject -Query "Select * From Win32_PageFileSetting Where Name=\'C:\\\\pagefile.sys\'" -EA SilentlyContinue',
     )
-    lines.push(
-      '    if ($pf) { $pf.InitialSize = $size; $pf.MaximumSize = $size; $pf.Put() | Out-Null }',
-    )
-
-    lines.push('    Write-OK "Page file set to ' + '$' + '{size}MB fixed"')
+    lines.push('    if ($pf) {')
+    lines.push('        $pf.InitialSize = $size; $pf.MaximumSize = $size; $pf.Put() | Out-Null')
+    lines.push('        Write-OK "Page file set to ' + '$' + '{size}MB fixed"')
+    lines.push('    } else { Write-Warn "Page file setting not found" }')
     lines.push('}')
   }
 
   if (selected.has('mouse_accel')) {
     lines.push('# Disable mouse acceleration')
     lines.push(
-      'if (Set-Reg "HKCU:\\Control Panel\\Mouse" "MouseSpeed" 0) { Write-OK "Mouse acceleration disabled" }',
+      'if (Set-Reg "HKCU:\\Control Panel\\Mouse" "MouseSpeed" 0 -PassThru) { Write-OK "Mouse acceleration disabled" }',
     )
     lines.push('Set-Reg "HKCU:\\Control Panel\\Mouse" "MouseThreshold1" 0')
     lines.push('Set-Reg "HKCU:\\Control Panel\\Mouse" "MouseThreshold2" 0')
@@ -413,7 +420,7 @@ function generateSystemOpts(selected: Set<string>): string[] {
   if (selected.has('keyboard_response')) {
     lines.push('# Faster keyboard response')
     lines.push(
-      'if (Set-Reg "HKCU:\\Control Panel\\Keyboard" "KeyboardDelay" 0) { Write-OK "Keyboard delay minimized" }',
+      'if (Set-Reg "HKCU:\\Control Panel\\Keyboard" "KeyboardDelay" 0 -PassThru) { Write-OK "Keyboard delay minimized" }',
     )
     lines.push('Set-Reg "HKCU:\\Control Panel\\Keyboard" "KeyboardSpeed" 31')
   }
@@ -421,7 +428,7 @@ function generateSystemOpts(selected: Set<string>): string[] {
   if (selected.has('fastboot')) {
     lines.push('# Disable fast startup')
     lines.push(
-      'if (Set-Reg "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Power" "HiberbootEnabled" 0) { Write-OK "Fast startup disabled" }',
+      'if (Set-Reg "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Power" "HiberbootEnabled" 0 -PassThru) { Write-OK "Fast startup disabled" }',
     )
   }
 
@@ -437,7 +444,7 @@ function generateSystemOpts(selected: Set<string>): string[] {
   if (selected.has('end_task')) {
     lines.push('# Enable End Task in taskbar')
     lines.push(
-      'if (Set-Reg "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced\\TaskbarDeveloperSettings" "TaskbarEndTask" 1) { Write-OK "End Task enabled in taskbar" }',
+      'if (Set-Reg "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced\\TaskbarDeveloperSettings" "TaskbarEndTask" 1 -PassThru) { Write-OK "End Task enabled in taskbar" }',
     )
   }
 
@@ -577,7 +584,7 @@ function generatePerformanceOpts(selected: Set<string>, hardware: HardwareProfil
   if (selected.has('hags')) {
     lines.push('# Enable Hardware Accelerated GPU Scheduling')
     lines.push(
-      'if (Set-Reg "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\GraphicsDrivers" "HwSchMode" 2) { Write-OK "HAGS enabled" }',
+      'if (Set-Reg "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\GraphicsDrivers" "HwSchMode" 2 -PassThru) { Write-OK "HAGS enabled" }',
     )
   }
 
@@ -840,13 +847,17 @@ function generatePowerOpts(selected: Set<string>): string[] {
     lines.push('$plans = powercfg -list | Select-String "Ultimate Performance"')
     lines.push('if ($plans) {')
     lines.push('    $guid = $plans.Line -replace ".*([a-f0-9-]{36}).*", \'$1\'')
-    lines.push('    powercfg -setactive $guid')
-    lines.push('    Write-OK "Ultimate Performance enabled"')
-    lines.push('} else { Write-Fail "Could not enable Ultimate Performance" }')
+    lines.push('    powercfg -setactive $guid 2>$null')
+    lines.push(
+      '    if ($LASTEXITCODE -eq 0) { Write-OK "Ultimate Performance enabled" } else { Write-Warn "Could not activate Ultimate Performance" }',
+    )
+    lines.push('} else { Write-Warn "Ultimate Performance plan not available" }')
   } else if (selected.has('power_plan')) {
     lines.push('# Set High Performance power plan')
-    lines.push('powercfg -setactive 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c')
-    lines.push('Write-OK "High Performance power plan enabled"')
+    lines.push('powercfg -setactive 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c 2>$null')
+    lines.push(
+      'if ($LASTEXITCODE -eq 0) { Write-OK "High Performance power plan enabled" } else { Write-Warn "High Performance plan not available" }',
+    )
   }
 
   if (selected.has('usb_power') || selected.has('usb_suspend')) {
@@ -860,30 +871,38 @@ function generatePowerOpts(selected: Set<string>): string[] {
   if (selected.has('pcie_power')) {
     lines.push('# Disable PCIe link state power management')
     lines.push(
-      'powercfg /setacvalueindex scheme_current sub_pciexpress ee12f906-d166-476a-8f3a-af931b6e9d31 0',
+      'powercfg /setacvalueindex scheme_current sub_pciexpress ee12f906-d166-476a-8f3a-af931b6e9d31 0 2>$null',
     )
-    lines.push('powercfg /setactive scheme_current')
-    lines.push('Write-OK "PCIe power saving disabled"')
+    lines.push('if ($LASTEXITCODE -eq 0) {')
+    lines.push('    powercfg /setactive scheme_current 2>$null')
+    lines.push('    Write-OK "PCIe power saving disabled"')
+    lines.push('} else { Write-Warn "PCIe power setting not supported" }')
   }
 
   if (selected.has('core_parking')) {
     lines.push('# Disable Core Parking')
-    lines.push('powercfg /setacvalueindex scheme_current sub_processor CPMINCORES 100')
-    lines.push('powercfg /setactive scheme_current')
-    lines.push('Write-OK "Core parking disabled"')
+    lines.push('powercfg /setacvalueindex scheme_current sub_processor CPMINCORES 100 2>$null')
+    lines.push('if ($LASTEXITCODE -eq 0) {')
+    lines.push('    powercfg /setactive scheme_current 2>$null')
+    lines.push('    Write-OK "Core parking disabled"')
+    lines.push('} else { Write-Warn "Core parking setting not supported" }')
   }
 
   if (selected.has('min_processor_state')) {
     lines.push('# Set minimum processor state to 5%')
-    lines.push('powercfg /setacvalueindex scheme_current sub_processor PROCTHROTTLEMIN 5')
-    lines.push('powercfg /setactive scheme_current')
-    lines.push('Write-OK "Min processor state set to 5%"')
+    lines.push('powercfg /setacvalueindex scheme_current sub_processor PROCTHROTTLEMIN 5 2>$null')
+    lines.push('if ($LASTEXITCODE -eq 0) {')
+    lines.push('    powercfg /setactive scheme_current 2>$null')
+    lines.push('    Write-OK "Min processor state set to 5%"')
+    lines.push('} else { Write-Warn "Min processor state setting not supported" }')
   }
 
   if (selected.has('hibernation_disable')) {
     lines.push('# Disable Hibernation')
-    lines.push('powercfg /hibernate off')
-    lines.push('Write-OK "Hibernation disabled"')
+    lines.push('powercfg /hibernate off 2>$null')
+    lines.push(
+      'if ($LASTEXITCODE -eq 0) { Write-OK "Hibernation disabled" } else { Write-Warn "Could not disable hibernation" }',
+    )
   }
 
   if (selected.has('power_throttle_off')) {
