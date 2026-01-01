@@ -74,20 +74,95 @@
     setView(view)
   }
 
+  // RTFB-501: localStorage cache for offline resilience (AlgoExpert: O(1) lookup)
+  const CATALOG_CACHE_KEY = 'rocktune_catalog_cache'
+  const CATALOG_CACHE_VERSION = '1.0'
+  const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000
+
+  interface CatalogCache {
+    version: string
+    timestamp: string
+    catalog: SoftwareCatalog
+  }
+
+  function getCachedCatalog(): SoftwareCatalog | null {
+    try {
+      const cached = localStorage.getItem(CATALOG_CACHE_KEY)
+      if (!cached) return null
+
+      const data: unknown = JSON.parse(cached)
+      // Type guard pattern (Matt Pocock)
+      if (
+        typeof data === 'object' &&
+        data !== null &&
+        'version' in data &&
+        'timestamp' in data &&
+        'catalog' in data
+      ) {
+        const cache = data as CatalogCache
+        const age = Date.now() - new Date(cache.timestamp).getTime()
+
+        if (age < SEVEN_DAYS_MS && cache.version === CATALOG_CACHE_VERSION) {
+          return cache.catalog
+        }
+      }
+      return null
+    } catch {
+      return null
+    }
+  }
+
+  function saveCatalogCache(catalog: SoftwareCatalog): void {
+    try {
+      const cache: CatalogCache = {
+        version: CATALOG_CACHE_VERSION,
+        timestamp: new Date().toISOString(),
+        catalog,
+      }
+      localStorage.setItem(CATALOG_CACHE_KEY, JSON.stringify(cache))
+    } catch {
+      // Fail silently (quota exceeded, private browsing)
+    }
+  }
+
   async function loadCatalog(): Promise<SoftwareCatalog> {
-    const response = await fetch('/catalog.json')
-    if (!response.ok) {
-      throw new Error(`Failed to load catalog: HTTP ${response.status}`)
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 10000)
+
+    try {
+      const response = await fetch('/catalog.json', { signal: controller.signal })
+      clearTimeout(timeoutId)
+
+      if (!response.ok) {
+        // Friendly error codes (not raw HTTP status)
+        if (response.status === 404) throw new Error('CATALOG_NOT_FOUND')
+        if (response.status >= 500) throw new Error('SERVER_ERROR')
+        throw new Error('NETWORK_ERROR')
+      }
+
+      const rawData: unknown = await response.json()
+      const result = safeParseCatalog(rawData)
+
+      if (!isParseSuccess(result)) {
+        throw new Error('INVALID_FORMAT')
+      }
+
+      // Save successful fetch to cache
+      saveCatalogCache(result.data)
+      return result.data
+    } catch (err) {
+      clearTimeout(timeoutId)
+
+      if (err instanceof Error && err.name === 'AbortError') {
+        throw new Error('TIMEOUT')
+      }
+
+      if (!navigator.onLine) {
+        throw new Error('OFFLINE')
+      }
+
+      throw err
     }
-
-    const rawData: unknown = await response.json()
-    const result = safeParseCatalog(rawData)
-
-    if (!isParseSuccess(result)) {
-      throw new Error(`Invalid catalog format: ${formatZodErrors(result.error)}`)
-    }
-
-    return result.data
   }
 
   async function hydrateCatalog() {
@@ -102,8 +177,54 @@
       const defaults = getDefaultOptimizations()
       setOptimizations(defaults)
     } catch (e) {
-      error = e instanceof Error ? e.message : 'Failed to load catalog'
-      console.error('[RockTune] Catalog load error:', error)
+      // RTFB-501: User-friendly errors + cache fallback
+      const cached = getCachedCatalog()
+
+      if (e instanceof Error) {
+        switch (e.message) {
+          case 'OFFLINE':
+            error = cached
+              ? '📡 You're offline. Using cached catalog.'
+              : '📡 No internet connection. Please connect and try again.'
+            break
+
+          case 'TIMEOUT':
+            error = cached
+              ? '⏱️ Catalog is taking too long. Using cached version.'
+              : '⏱️ Connection timeout. Check your internet and try again.'
+            break
+
+          case 'CATALOG_NOT_FOUND':
+            error = '🔍 Catalog not found. Try reloading the page.'
+            break
+
+          case 'SERVER_ERROR':
+            error = cached
+              ? '🚨 Server error. Using cached catalog.'
+              : '🚨 Server error. Please try again in a few minutes.'
+            break
+
+          case 'INVALID_FORMAT':
+            error = '⚠️ Catalog format error. Please reload the page.'
+            break
+
+          default:
+            error = cached
+              ? '⚡ Connection failed. Using cached catalog.'
+              : '⚡ Failed to load catalog. Please try again.'
+        }
+
+        // Apply cached catalog if available
+        if (cached) {
+          setSoftware(cached)
+          const defaults = getDefaultOptimizations()
+          setOptimizations(defaults)
+        }
+      } else {
+        error = 'Unknown error loading catalog.'
+      }
+
+      console.error('[RockTune] Catalog load error:', error, e)
     } finally {
       loading = false
     }
@@ -212,6 +333,23 @@
     {:else}
       <Filters {recommendedPreset} />
       <SoftwareGrid />
+
+      <!-- RTFB-301: Wizard Next button -->
+      <div class="wizard-next-container">
+        <a
+          href="#generate"
+          class="wizard-next-btn"
+          onclick={(e) => {
+            e.preventDefault();
+            document.getElementById('generate')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }}
+        >
+          <span class="wizard-next-text">Next: Forge Script</span>
+          <svg class="wizard-next-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </a>
+      </div>
     {/if}
   </section>
 

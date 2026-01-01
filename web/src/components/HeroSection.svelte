@@ -76,6 +76,55 @@
         <p class="tagline-primary">Download more FPS.</p>
         <p class="tagline-secondary">Yes, really.</p>
       </div>
+
+      <!-- RTFB-101: Provenance chips for trust (above fold) -->
+      <div class="provenance-bar" role="group" aria-label="Project information">
+        <a
+          href="https://github.com/thepedroferrari/rocktune/tree/{__BUILD_COMMIT__}"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="proof-chip"
+          title="Built from commit {__BUILD_COMMIT__} on {__BUILD_DATE__}"
+        >
+          <svg class="chip-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+          </svg>
+          <span class="chip-label">Build: {__BUILD_COMMIT__.substring(0, 7)}</span>
+        </a>
+
+        <a
+          href="https://github.com/thepedroferrari/rocktune/blob/master/LICENSE"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="proof-chip"
+          title="MIT License - Free to use, modify, and distribute"
+        >
+          <svg class="chip-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M9 4l-2 2H5v2h14V6h-2l-2-2H9zm10 4H5v12h14V8z"/>
+          </svg>
+          <span class="chip-label">MIT License</span>
+        </a>
+
+        <span class="proof-chip proof-chip--static" title="No installer - just a readable PowerShell script">
+          <svg class="chip-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11zM8 15.01l1.41 1.41L11 14.84V19h2v-4.16l1.59 1.59L16 15.01 12.01 11 8 15.01z"/>
+          </svg>
+          <span class="chip-label">Script only</span>
+        </span>
+
+        <a
+          href="https://github.com/thepedroferrari/rocktune"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="proof-chip"
+          title="Open source on GitHub - inspect the code"
+        >
+          <svg class="chip-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+          </svg>
+          <span class="chip-label">Open source</span>
+        </a>
+      </div>
     </div>
 
     
@@ -340,7 +389,98 @@
     animation: fadeSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.55s both;
   }
 
-  
+  /* RTFB-101: Provenance Bar (Cyberpunk/Codrops style) */
+  .provenance-bar {
+    display: flex;
+    gap: var(--space-xs);
+    margin-top: var(--space-md);
+    flex-wrap: wrap;
+    justify-content: center;
+    animation: fadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.65s both;
+  }
+
+  .proof-chip {
+    --chip-bg: oklch(0.15 0.02 285 / 0.4);
+    --chip-border: oklch(0.35 0.04 285);
+    --chip-text: oklch(0.7 0.04 285);
+    --chip-glow: oklch(0.55 0.1 195 / 0);
+
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2xs);
+    padding: var(--space-xs) var(--space-sm);
+    background: var(--chip-bg);
+    border: 1px solid var(--chip-border);
+    color: var(--chip-text);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-decoration: none;
+    letter-spacing: 0.02em;
+    border-radius: 4px;
+
+    /* Cyber clip-path corners (Kevin Powell technique) */
+    clip-path: polygon(
+      0 0,
+      calc(100% - 6px) 0,
+      100% 6px,
+      100% 100%,
+      6px 100%,
+      0 calc(100% - 6px)
+    );
+
+    /* Spring physics transition (Codrops style) */
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    cursor: pointer;
+  }
+
+  .proof-chip--static {
+    cursor: default;
+  }
+
+  .chip-icon {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    opacity: 0.7;
+    transition: opacity 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .chip-label {
+    line-height: 1;
+  }
+
+  /* Neon glow on hover (Kevin Powell + Codrops technique) */
+  .proof-chip:where(a):hover,
+  .proof-chip:where(a):focus-visible {
+    --chip-bg: oklch(0.18 0.04 195 / 0.5);
+    --chip-border: oklch(0.55 0.12 195);
+    --chip-text: oklch(0.85 0.08 195);
+    --chip-glow: oklch(0.7 0.2 195 / 0.4);
+
+    box-shadow:
+      0 0 20px var(--chip-glow),
+      0 4px 12px oklch(0 0 0 / 0.3);
+    transform: translateY(-2px) scale(1.02);
+  }
+
+  .proof-chip:where(a):hover .chip-icon,
+  .proof-chip:where(a):focus-visible .chip-icon {
+    opacity: 1;
+  }
+
+  .proof-chip:where(a):active {
+    transform: translateY(0) scale(1);
+    transition-duration: 0.1s;
+  }
+
+  /* Keyboard focus ring (accessibility) */
+  .proof-chip:focus-visible {
+    outline: 2px solid var(--fold-cyan);
+    outline-offset: 2px;
+  }
+
+
   .hero-cta {
     grid-area: cta;
     text-align: center;
@@ -724,9 +864,25 @@
     .stats-panel {
       clip-path: var(--clip-cyber-sm);
     }
+
+    /* RTFB-101: Mobile-friendly provenance chips */
+    .provenance-bar {
+      gap: var(--space-2xs);
+      margin-top: var(--space-sm);
+    }
+
+    .proof-chip {
+      font-size: 0.7rem;
+      padding: var(--space-2xs) var(--space-xs);
+    }
+
+    .chip-icon {
+      width: 12px;
+      height: 12px;
+    }
   }
 
-  
+
   @media (prefers-contrast: more) {
     .hero-fold {
       --fold-ink: oklch(0.98 0.01 285);
