@@ -300,13 +300,13 @@
         <dt class="stat-label">Tweaks</dt>
         {#if tierBreakdown}
           <dd class="stat-value stat-value--breakdown">
-            <span class="tier-count tier-count--safe" title="Safe">{tierBreakdown.safe}</span>
-            {#if tierBreakdown.caution > 0}
-              <span class="tier-count tier-count--caution" title="Caution">{tierBreakdown.caution}</span>
-            {/if}
             {#if tierBreakdown.risky > 0}
               <span class="tier-count tier-count--risky" title="Risky">{tierBreakdown.risky}</span>
             {/if}
+            {#if tierBreakdown.caution > 0}
+              <span class="tier-count tier-count--caution" title="Caution">{tierBreakdown.caution}</span>
+            {/if}
+            <span class="tier-count tier-count--safe" title="Safe">{tierBreakdown.safe}</span>
           </dd>
         {:else}
           <dd class="stat-value">{optimizationCount}</dd>
