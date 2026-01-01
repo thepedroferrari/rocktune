@@ -127,7 +127,9 @@ $script:SuccessCount = 0
 $script:FailCount = 0
 $script:WarningCount = 0
 
-function Write-Banner { Write-Host ${ASCII_BANNER.trim()} -ForegroundColor Magenta }
+$script:Banner = ${ASCII_BANNER.trim()}
+
+function Write-Banner { Write-Host $script:Banner -ForegroundColor Magenta }
 function Write-Step { param([string]$M) $script:StepCount++; Write-Host ""; Write-Host "[$script:StepCount/$script:StepTotal] $M" -ForegroundColor Cyan }
 function Write-OK { param([string]$M) $script:SuccessCount++; Write-Host "  [OK] $M" -ForegroundColor Green }
 function Write-Fail { param([string]$M) $script:FailCount++; Write-Host "  [FAIL] $M" -ForegroundColor Red }
@@ -222,7 +224,8 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
   }
   lines.push(`$Config = @'`)
   lines.push(JSON.stringify(config, null, 2))
-  lines.push(`'@ | ConvertFrom-Json`)
+  lines.push(`'@`)
+  lines.push(`$Config = $Config | ConvertFrom-Json`)
   lines.push('')
 
   lines.push(HELPER_FUNCTIONS.trim())
@@ -1196,7 +1199,9 @@ $script:PassCount = 0
 $script:FailCount = 0
 $script:SkipCount = 0
 
-function Write-Banner { Write-Host ${VERIFICATION_BANNER.trim()} -ForegroundColor Cyan }
+$script:Banner = ${VERIFICATION_BANNER.trim()}
+
+function Write-Banner { Write-Host $script:Banner -ForegroundColor Cyan }
 function Write-Pass { param([string]$M) $script:PassCount++; Write-Host "  [PASS] $M" -ForegroundColor Green }
 function Write-Fail { param([string]$M) $script:FailCount++; Write-Host "  [FAIL] $M" -ForegroundColor Red }
 function Write-Skip { param([string]$M) $script:SkipCount++; Write-Host "  [SKIP] $M" -ForegroundColor DarkGray }
