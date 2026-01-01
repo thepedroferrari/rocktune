@@ -53,6 +53,33 @@ Restart-Computer
 
 ---
 
+## 📏 Benchmarking (Proof Mode)
+
+This repo includes a benchmark launcher that installs and opens a free, repeatable test stack so you can show before/after FPS and frametime evidence without relying on a specific game.
+
+**Why this exists:**
+- Consistent workload (Unigine Superposition) avoids per-game variance.
+- Frametime captures (CapFrameX) show 1%/0.1% lows, not just average FPS.
+- DPC/ISR latency checks (LatencyMon) help explain stutter sources.
+- No system changes are applied by the benchmark script; it only installs and launches tools after consent.
+
+**Run locally:**
+```powershell
+.\benchmark-setup.ps1
+```
+
+**Run from the hosted URL:**
+```powershell
+irm https://rocktune.pedroferrari.com/benchmark.ps1 | iex
+```
+
+**Notes:**
+- The hosted script is a direct copy of `benchmark-setup.ps1` for transparency.
+- The script prompts for explicit consent before any install via winget.
+- Follow the printed checklist for consistent runs (3 passes, discard first, average the rest).
+
+---
+
 ## ✨ Features
 
 - **Micro-Stutter Elimination** - 90%+ reduction via timer resolution fixes

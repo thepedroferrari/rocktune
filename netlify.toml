@@ -41,6 +41,11 @@ deno task build
   [headers.values]
     Cache-Control = "public, max-age=3600"
 
+[[headers]]
+  for = "/benchmark.ps1"
+  [headers.values]
+    Cache-Control = "no-store"
+
 # Security headers
 [[headers]]
   for = "/*"
