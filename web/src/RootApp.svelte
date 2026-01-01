@@ -218,10 +218,7 @@
 
   <ForgeSection />
 
-
-  <section id="manual-guide" class="step step--manual-guide">
-    <ManualStepsSection />
-  </section>
+  <ManualStepsSection />
 </main>
 
 
