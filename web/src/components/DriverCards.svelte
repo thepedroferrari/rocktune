@@ -6,7 +6,7 @@
   import { app } from '$lib/state.svelte'
   import { DRIVER_CARDS, isDriverCardVisible } from '$lib/hardware'
 
-  // Derived: visible driver cards based on current hardware selection
+  
   let visibleCards = $derived(
     DRIVER_CARDS.filter((card) => isDriverCardVisible(card, app.hardware.cpu, app.hardware.gpu))
   )

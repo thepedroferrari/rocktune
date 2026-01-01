@@ -70,7 +70,7 @@
     ludicrousDialog?.close()
   }
 
-  // Restore Point Modal Handlers
+  
   function openRestorePointModal() {
     restorePointDialog?.showModal()
   }
@@ -89,9 +89,9 @@
    * Intercept toggle for restore_point - show modal if trying to disable without acknowledgment
    */
   function handleBeforeToggle(key: OptimizationKey, isCurrentlyChecked: boolean): boolean {
-    // Only intercept restore_point when trying to DISABLE it
+    
     if (key === OPTIMIZATION_KEYS.RESTORE_POINT && isCurrentlyChecked) {
-      // If not yet acknowledged, show modal and block toggle
+      
       if (!app.ui.restorePointAcknowledged) {
         openRestorePointModal()
         return false
@@ -145,7 +145,7 @@
     </div>
   </div>
 
-  <!-- Wizard Modal (placeholder - will be a separate component) -->
+  
   <dialog id="wizard-modal" class="wizard-modal">
     <div class="wizard-content">
       <h3 id="wizard-title">Optimization Name</h3>
@@ -191,25 +191,25 @@
     {/each}
   </div>
 
-  <!-- LUDICROUS Tier Section -->
+  
   <div class="ludicrous-section">
     {#if app.ui.ludicrousAcknowledged}
-      <!-- Unified LUDICROUS Placard V2 -->
+      
       <article class="ludicrous-placard-v2">
         <header class="placard-header-grid">
           <div class="placard-header-left">
-            <!-- Stylized skull icon with glow animation -->
+            
             <svg class="placard-skull-icon" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <!-- Skull outline -->
+              
               <path d="M32 4C18 4 8 16 8 28c0 8 4 15 10 19v9c0 2 2 4 4 4h20c2 0 4-2 4-4v-9c6-4 10-11 10-19 0-12-10-24-24-24z" fill="currentColor" opacity="0.15"/>
               <path d="M32 4C18 4 8 16 8 28c0 8 4 15 10 19v9c0 2 2 4 4 4h20c2 0 4-2 4-4v-9c6-4 10-11 10-19 0-12-10-24-24-24z" stroke="currentColor" stroke-width="2" fill="none"/>
-              <!-- Left eye socket -->
+              
               <ellipse cx="22" cy="28" rx="6" ry="7" fill="currentColor"/>
-              <!-- Right eye socket -->
+              
               <ellipse cx="42" cy="28" rx="6" ry="7" fill="currentColor"/>
-              <!-- Nose cavity -->
+              
               <path d="M32 36l-4 8h8l-4-8z" fill="currentColor"/>
-              <!-- Teeth marks -->
+              
               <path d="M22 52v4M27 52v4M32 52v4M37 52v4M42 52v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             </svg>
           </div>
@@ -282,7 +282,7 @@
         </footer>
       </article>
     {:else}
-      <!-- Show unlock button before acknowledgment -->
+      
       <div class="ludicrous-locked">
         <article class="ludicrous-warning-card">
           <div class="ludicrous-warning-copy">
@@ -309,7 +309,7 @@
     {/if}
   </div>
 
-  <!-- LUDICROUS Acknowledgment Dialog - uses native <dialog> -->
+  
   <dialog
     bind:this={ludicrousDialog}
     class="ludicrous-dialog"
@@ -383,7 +383,7 @@
     </footer>
   </dialog>
 
-  <!-- Restore Point Acknowledgment Dialog -->
+  
   <dialog
     bind:this={restorePointDialog}
     class="restore-point-dialog"

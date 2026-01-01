@@ -29,7 +29,7 @@
   let activeStep = $state(0);
 
   onMount(() => {
-    // Set up intersection observer for active section tracking
+    
     const sections = NAV_LINKS.map((link) => {
       const id = link.href.replace("#", "");
       return document.getElementById(id);
@@ -64,7 +64,7 @@
   });
 
   function handleClick(event: MouseEvent, link: NavLink) {
-    // Smooth scroll to section
+    
     const target = document.querySelector(link.href);
     if (target) {
       event.preventDefault();
@@ -127,4 +127,4 @@
   </div>
 </nav>
 
-<!-- Styles are in unified-nav.styles.css (layer: components) -->
+

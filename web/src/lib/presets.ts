@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import personasDoc from '../../docs/personas.json'
 import { PackageKeySchema } from '../schemas'
-import { getOptimizationsForProfile, PROFILE_IDS, OPTIMIZATIONS } from './optimizations'
+import { getOptimizationsForProfile, OPTIMIZATIONS, PROFILE_IDS } from './optimizations'
 import {
   isPresetType,
   OPTIMIZATION_TIERS,

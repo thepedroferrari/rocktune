@@ -102,14 +102,12 @@ function parseRichContent(raw: string): string {
     }
 
     if (trimmed.startsWith('⚠️') || trimmed.startsWith('⚠')) {
-      // Strip the warning emoji, CSS ::before will add icon
       const text = trimmed.replace(/^⚠️?\s*/, '')
       parts.push(`<p class="tt-warn">${formatInline(text)}</p>`)
       continue
     }
 
     if (trimmed.startsWith('✓') || trimmed.startsWith('✔')) {
-      // Strip the checkmark, CSS ::before will add icon
       const text = trimmed.replace(/^[✓✔]\s*/, '')
       parts.push(`<p class="tt-ok">${formatInline(text)}</p>`)
       continue
@@ -165,10 +163,8 @@ function positionTooltip(tooltip: HTMLElement, trigger: HTMLElement): void {
   let top = triggerRect.bottom + config.offset
   let left = triggerRect.left
 
-  // Center the tooltip under the trigger if possible
   const centeredLeft = triggerRect.left + triggerRect.width / 2 - tooltipRect.width / 2
 
-  // Use centered position if it fits
   if (centeredLeft >= 16 && centeredLeft + tooltipRect.width <= viewportWidth - 16) {
     left = centeredLeft
   } else if (left + tooltipRect.width > viewportWidth - 16) {
@@ -198,15 +194,12 @@ function showTooltipFor(trigger: HTMLElement, content: TooltipContent): void {
 
   if (!content) return
 
-  // Clear previous classes
   tooltip.classList.remove('tt-rich', 'tt-structured')
 
   if (isStructuredTooltip(content)) {
-    // Structured tooltip with pros/cons grid
     tooltip.innerHTML = renderStructuredTooltip(content)
     tooltip.classList.add('tt-structured')
   } else {
-    // Legacy string format
     const isRich = content.includes('\n') || content.includes('**') || content.includes('- ')
 
     if (isRich) {
@@ -235,10 +228,6 @@ function hideTooltipElement(): void {
     tooltip.setAttribute('aria-hidden', 'true')
   }
 }
-
-// ============================================================================
-// Self-contained Svelte Action
-// ============================================================================
 
 /**
  * Svelte action for tooltips - SELF-CONTAINED
@@ -302,19 +291,16 @@ export function tooltip(node: HTMLElement, content: TooltipContent) {
   }
 
   function handlePointerDown() {
-    // Hide immediately on click to prevent sticky tooltips
     clearTimeouts()
     hide()
   }
 
-  // Set up event listeners
   node.addEventListener('mouseenter', handleMouseEnter)
   node.addEventListener('mouseleave', handleMouseLeave)
   node.addEventListener('focusin', handleFocusIn)
   node.addEventListener('focusout', handleFocusOut)
   node.addEventListener('pointerdown', handlePointerDown)
 
-  // Also set data-tooltip for CSS fallback (stringify if object)
   node.dataset.tooltip = typeof content === 'string' ? content : JSON.stringify(content)
 
   return {
@@ -330,7 +316,6 @@ export function tooltip(node: HTMLElement, content: TooltipContent) {
       clearTimeouts()
       hide()
 
-      // Clean up event listeners
       node.removeEventListener('mouseenter', handleMouseEnter)
       node.removeEventListener('mouseleave', handleMouseLeave)
       node.removeEventListener('focusin', handleFocusIn)

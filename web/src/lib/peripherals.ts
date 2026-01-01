@@ -45,7 +45,6 @@ export const MONITOR_OPTIONS: readonly MonitorOption[] = [
 
 /** Manual download links for peripheral software */
 export const PERIPHERAL_LINKS: readonly PeripheralLink[] = [
-  // Major Brands
   {
     title: 'Logitech G HUB',
     url: 'https://www.logitechg.com/en-us/innovation/g-hub.html',
@@ -64,7 +63,7 @@ export const PERIPHERAL_LINKS: readonly PeripheralLink[] = [
     url: 'https://hyperxgaming.com/ngenuitydl',
     category: 'major',
   },
-  // Gaming Mice
+
   {
     title: 'Glorious Core',
     url: 'https://www.gloriousgaming.com/pages/software',
@@ -89,7 +88,7 @@ export const PERIPHERAL_LINKS: readonly PeripheralLink[] = [
     category: 'mice',
   },
   { title: 'Vaxee', url: 'https://vaxee.co/support', category: 'mice' },
-  // Keyboards
+
   {
     title: 'Wooting Wootility',
     url: 'https://wooting.io/wootility',
@@ -104,7 +103,7 @@ export const PERIPHERAL_LINKS: readonly PeripheralLink[] = [
   { title: 'Ducky', url: 'https://www.duckychannel.com.tw/en/Support', category: 'keyboards' },
   { title: 'NuPhy', url: 'https://nuphy.com/pages/software', category: 'keyboards' },
   { title: 'Akko', url: 'https://en.akkogear.com/support/', category: 'keyboards' },
-  // Controllers
+
   { title: '8BitDo', url: 'https://support.8bitdo.com/', category: 'controllers' },
   {
     title: 'Xbox Accessories',
@@ -116,7 +115,7 @@ export const PERIPHERAL_LINKS: readonly PeripheralLink[] = [
     url: 'https://www.playstation.com/en-us/support/hardware/dualsense/',
     category: 'controllers',
   },
-  // Audio
+
   { title: 'Audeze HQ', url: 'https://www.audeze.com/pages/software', category: 'audio' },
   {
     title: 'Beyerdynamic',

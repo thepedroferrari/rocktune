@@ -32,7 +32,6 @@ function loadFromStorage(): ProgressData {
 
     const data = JSON.parse(stored) as ProgressData
 
-    // Version check - reset if outdated
     if (data.version !== STORAGE_VERSION) {
       return getDefaultData()
     }
@@ -49,15 +48,11 @@ function saveToStorage(data: ProgressData): void {
   try {
     data.lastUpdated = new Date().toISOString()
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
-  } catch {
-    // localStorage full or unavailable - silently fail
-  }
+  } catch {}
 }
 
-// Reactive state
 let progressData = $state<ProgressData>(getDefaultData())
 
-// Initialize from localStorage on module load
 if (typeof window !== 'undefined') {
   progressData = loadFromStorage()
 }
@@ -176,12 +171,10 @@ export function getProgressData(): ProgressData {
  * Prefers explicit `id` field, falls back to deriving from content
  */
 export function createItemId(item: Record<string, unknown>): string {
-  // Prefer explicit ID (semantic, stable, collision-free)
   if (typeof item.id === 'string') {
     return item.id
   }
 
-  // Fallback: derive from first matching property (legacy behavior)
   const keys = [
     'setting',
     'step',
@@ -199,7 +192,6 @@ export function createItemId(item: Record<string, unknown>): string {
     }
   }
 
-  // Last resort: hash of stringified item
   return hashCode(JSON.stringify(item))
 }
 
@@ -216,7 +208,7 @@ function hashCode(str: string): string {
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i)
     hash = (hash << 5) - hash + char
-    hash = hash & hash // Convert to 32bit integer
+    hash = hash & hash
   }
   return Math.abs(hash).toString(36)
 }

@@ -30,7 +30,7 @@
   let copied = $state(false);
   let showVerifyTip = $state(false);
 
-  // Reactively compute checksum when script changes
+  
   $effect(() => {
     const script = app.script.edited ?? generateCurrentScript();
     if (script.trim()) {
@@ -47,14 +47,14 @@
   }
 
   function handleDownload() {
-    // Use edited script if available, otherwise use reactively generated script
+    
     const script = app.script.edited ?? generateCurrentScript();
     if (!script.trim()) return;
     downloadText(script, SCRIPT_FILENAME);
   }
 
   function handleDownloadVerify() {
-    // Generate verification script from current selections
+    
     const selection: SelectionState = {
       hardware: app.hardware,
       optimizations: Array.from(app.optimizations),
@@ -96,15 +96,15 @@
   <PreflightChecks />
   <ProfileActions />
 
-  <!-- Transparency Section -->
+  
   <section class="transparency-zone" id="download">
-    <!-- Decorative corners -->
+    
     <span class="corner corner--tl"></span>
     <span class="corner corner--tr"></span>
     <span class="corner corner--bl"></span>
     <span class="corner corner--br"></span>
 
-    <!-- Manifesto -->
+    
     <p class="manifesto">
       Unlike typical optimizers, this is a PowerShell script you can read.
       <span class="manifesto-emphasis"
@@ -112,7 +112,7 @@
       >
     </p>
 
-    <!-- Actions first -->
+    
     <div class="actions">
       <button
         type="button"
@@ -176,7 +176,7 @@
       </button>
     </div>
 
-    <!-- Trust strip -->
+    
     <div class="trust-strip">
       <span class="trust-item">
         <svg
@@ -357,4 +357,4 @@
   </section>
 </section>
 
-<!-- Styles are in forge.styles.css (layer: components) -->
+

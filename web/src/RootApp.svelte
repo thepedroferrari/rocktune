@@ -29,10 +29,10 @@
     OPTIMIZATION_KEYS.DEP_OFF,
   ] as const
 
-  // Navigation
+  
   import UnifiedNav from './components/UnifiedNav.svelte'
 
-  // Section components
+  
   import HeroSection from './components/HeroSection.svelte'
   import PresetSection from './components/PresetSection.svelte'
   import HardwareSection from './components/HardwareSection.svelte'
@@ -41,20 +41,20 @@
   import ForgeSection from './components/ForgeSection.svelte'
   import ManualStepsSection from './components/ManualStepsSection.svelte'
 
-  // Arsenal section components
+  
   import SoftwareGrid from './components/SoftwareGrid.svelte'
   import Filters from './components/Filters.svelte'
 
-  // Global UI components
+  
   import PreviewModal from './components/PreviewModal.svelte'
   import AuditPanel from './components/AuditPanel.svelte'
   import SRAnnounce from './components/SRAnnounce.svelte'
 
-  // Loading state
+  
   let loading = $state(true)
   let error = $state<string | null>(null)
 
-  // Derived counts for display
+  
   let selectedCount = $derived(getSelectedCount())
   let totalCount = $derived(getTotalCount())
   let recommendedPreset = $derived(getRecommendedPreset(app.activePreset))
@@ -98,7 +98,7 @@
       const catalog = await loadCatalog()
       setSoftware(catalog)
 
-      // Initialize default optimizations
+      
       const defaults = getDefaultOptimizations()
       setOptimizations(defaults)
     } catch (e) {
@@ -114,13 +114,13 @@
   })
 </script>
 
-<!-- Accessibility -->
+
 <SRAnnounce />
 
-<!-- Fixed Navigation -->
+
 <UnifiedNav />
 
-<!-- Danger Zone Banner - shown when LUDICROUS items selected -->
+
 {#if showDangerBanner}
   <div class="danger-banner" role="alert">
     <svg class="danger-banner__icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -132,12 +132,12 @@
   </div>
 {/if}
 
-<!-- Hero Header -->
+
 <HeroSection />
 
-<!-- Main Content -->
+
 <main class="container" id="main-content">
-  <!-- Step 0: Presets / Quick Start -->
+  
   <section id="quick-start" class="step step--quickstart">
     <div class="quickstart-header">
       <div class="quickstart-accent quickstart-accent--left" aria-hidden="true"></div>
@@ -150,16 +150,16 @@
     <PresetSection />
   </section>
 
-  <!-- Step 1: Hardware -->
+  
   <HardwareSection />
 
-  <!-- Step 2: Peripherals -->
+  
   <PeripheralsSection />
 
-  <!-- Step 3: Optimizations -->
+  
   <OptimizationsSection />
 
-  <!-- Step 4: Arsenal (Software Grid) -->
+  
   <section id="software" class="step step--arsenal">
     <div class="step-header">
       <div class="step-header__left">
@@ -215,17 +215,17 @@
     {/if}
   </section>
 
-  <!-- Step 5: Forge Script -->
+  
   <ForgeSection />
 
-  <!-- Step 6: Manual Guide -->
+  
   <section id="manual-guide" class="step step--manual-guide">
     <ManualStepsSection />
   </section>
 </main>
 
-<!-- Global UI Components -->
+
 <PreviewModal />
 <AuditPanel />
 
-<!-- Styles are in layout.css (layer: layout) and filters.styles.css (layer: components) -->
+

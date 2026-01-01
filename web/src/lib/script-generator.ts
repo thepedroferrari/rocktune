@@ -5,17 +5,17 @@
  * Scripts work offline without network dependencies.
  */
 
+import { OPTIMIZATIONS } from './optimizations'
 import type {
   HardwareProfile,
   MonitorSoftwareType,
   OptimizationKey,
+  OptimizationTier,
   PackageKey,
   PeripheralType,
   SoftwareCatalog,
-  OptimizationTier,
 } from './types'
 import { isPackageKey, OPTIMIZATION_KEYS, OPTIMIZATION_TIERS } from './types'
-import { OPTIMIZATIONS } from './optimizations'
 
 /** LUDICROUS optimization keys for danger zone detection */
 const LUDICROUS_KEYS: readonly OptimizationKey[] = [
@@ -155,7 +155,6 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
   const { catalog, dnsProvider = DEFAULT_DNS_PROVIDER } = options
   const selected = new Set(optimizations)
 
-  // Collect all packages including peripherals and monitor software
   const allPackages = new Set(packages)
 
   for (const peripheral of hardware.peripherals) {
@@ -177,10 +176,8 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
 
   const lines: string[] = []
 
-  // Check if any LUDICROUS optimizations are selected
   const hasLudicrous = LUDICROUS_KEYS.some((key) => selected.has(key))
 
-  // Header
   lines.push('#Requires -RunAsAdministrator')
   if (hasLudicrous) {
     lines.push('# ╔═══════════════════════════════════════════════════════════════════════╗')
@@ -195,9 +192,7 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
   lines.push('.DESCRIPTION')
   lines.push(`    Core: ${hardware.cpu} + ${hardware.gpu}`)
   lines.push(`    Build: ${__BUILD_COMMIT__} (${__BUILD_DATE__})`)
-  lines.push(
-    `    Source: https://github.com/thepedroferrari/rocktune/tree/${__BUILD_COMMIT__}`,
-  )
+  lines.push(`    Source: https://github.com/thepedroferrari/rocktune/tree/${__BUILD_COMMIT__}`)
   if (hasLudicrous) {
     lines.push('')
     lines.push('    ⚠️  DANGER ZONE: CPU security mitigations are DISABLED in this script.')
@@ -208,7 +203,6 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
   lines.push('#>')
   lines.push('')
 
-  // Config JSON
   const riskProfile = calculateRiskProfile(selected)
   const restorePointRequired = hasNonSafeOptimizations(selected)
 
@@ -231,25 +225,21 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
   lines.push(`'@ | ConvertFrom-Json`)
   lines.push('')
 
-  // Helper functions
   lines.push(HELPER_FUNCTIONS.trim())
   lines.push('')
 
-  // Count total steps for progress indicator
   let stepCount = 0
   if (selected.has('restore_point')) stepCount++
-  stepCount++ // Upgrades
-  if (allPackagesArray.length > 0) stepCount++ // Arsenal
-  stepCount++ // Complete
+  stepCount++
+  if (allPackagesArray.length > 0) stepCount++
+  stepCount++
 
-  // Clear screen and header with banner
   lines.push('Clear-Host')
   lines.push(`$script:StepTotal = ${stepCount}`)
   lines.push('Write-Banner')
   lines.push('Write-Host ""')
   lines.push('')
 
-  // System info
   lines.push('$cpu = (Get-CimInstance Win32_Processor).Name')
   lines.push(
     '$gpu = (Get-CimInstance Win32_VideoController | Where-Object {$_.Status -eq "OK"} | Select-Object -First 1).Name',
@@ -259,11 +249,10 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
   )
   lines.push('Write-Host "  CPU: $cpu" -ForegroundColor White')
   lines.push('Write-Host "  GPU: $gpu" -ForegroundColor White')
-  // biome-ignore lint/suspicious/noTemplateCurlyInString: PowerShell variable syntax, not JS template
-  lines.push('Write-Host "  RAM: ${ram}GB" -ForegroundColor White')
+
+  lines.push(`Write-Host "  RAM: ${ram}GB" -ForegroundColor White`)
   lines.push('')
 
-  // Pre-flight restore point
   if (selected.has('restore_point')) {
     lines.push('Write-Step "Pre-flight: System Restore Point"')
     lines.push('try {')
@@ -277,11 +266,9 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
     lines.push('')
   }
 
-  // Optimizations
   lines.push('Write-Step "Upgrades"')
   lines.push('')
 
-  // System optimizations
   const systemOpts = generateSystemOpts(selected)
   if (systemOpts.length > 0) {
     lines.push('# System')
@@ -289,7 +276,6 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
     lines.push('')
   }
 
-  // Performance optimizations
   const perfOpts = generatePerformanceOpts(selected, hardware)
   if (perfOpts.length > 0) {
     lines.push('# Performance')
@@ -297,7 +283,6 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
     lines.push('')
   }
 
-  // Power optimizations
   const powerOpts = generatePowerOpts(selected)
   if (powerOpts.length > 0) {
     lines.push('# Power')
@@ -305,7 +290,6 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
     lines.push('')
   }
 
-  // Network optimizations
   const networkOpts = generateNetworkOpts(selected, dnsProvider)
   if (networkOpts.length > 0) {
     lines.push('# Network')
@@ -313,7 +297,6 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
     lines.push('')
   }
 
-  // Privacy optimizations
   const privacyOpts = generatePrivacyOpts(selected)
   if (privacyOpts.length > 0) {
     lines.push('# Privacy')
@@ -321,7 +304,6 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
     lines.push('')
   }
 
-  // Audio optimizations
   const audioOpts = generateAudioOpts(selected)
   if (audioOpts.length > 0) {
     lines.push('# Audio')
@@ -329,7 +311,6 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
     lines.push('')
   }
 
-  // Software installs
   if (allPackagesArray.length > 0) {
     lines.push('Write-Step "Arsenal (winget)"')
     lines.push('$wingetPath = Get-Command winget -EA SilentlyContinue')
@@ -354,7 +335,6 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
     lines.push('')
   }
 
-  // Missing packages note
   if (missingPackages.length > 0) {
     lines.push('# Missing software mappings:')
     for (const missing of missingPackages) {
@@ -363,7 +343,6 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
     lines.push('')
   }
 
-  // Footer with summary
   lines.push('Write-Step "Complete"')
   lines.push('Write-Host ""')
   lines.push('Write-Host "  ╔════════════════════════════════════════╗" -ForegroundColor White')
@@ -393,7 +372,6 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
 function generateSystemOpts(selected: Set<string>): string[] {
   const lines: string[] = []
 
-  // pagefile - Fixed page file (4GB for 32GB+ RAM, 8GB for 16GB)
   if (selected.has('pagefile')) {
     lines.push('# Configure fixed page file')
     lines.push(
@@ -409,8 +387,8 @@ function generateSystemOpts(selected: Set<string>): string[] {
     lines.push(
       '    if ($pf) { $pf.InitialSize = $size; $pf.MaximumSize = $size; $pf.Put() | Out-Null }',
     )
-    // biome-ignore lint/suspicious/noTemplateCurlyInString: PowerShell variable syntax
-    lines.push('    Write-OK "Page file set to ${size}MB fixed"')
+
+    lines.push(`    Write-OK "Page file set to ${size}MB fixed"`)
     lines.push('}')
   }
 
@@ -462,7 +440,6 @@ function generateSystemOpts(selected: Set<string>): string[] {
     lines.push('Write-OK "Visual effects set to performance"')
   }
 
-  // explorer_speed - Disable auto folder type detection
   if (selected.has('explorer_speed')) {
     lines.push('# Disable Explorer auto folder-type detection')
     lines.push(
@@ -471,7 +448,6 @@ function generateSystemOpts(selected: Set<string>): string[] {
     lines.push('Write-OK "Explorer speed optimized"')
   }
 
-  // temp_purge - Clear temp folders
   if (selected.has('temp_purge')) {
     lines.push('# Purge temp folders')
     lines.push('Remove-Item "$env:TEMP\\*" -Recurse -Force -EA SilentlyContinue')
@@ -479,7 +455,6 @@ function generateSystemOpts(selected: Set<string>): string[] {
     lines.push('Write-OK "Temp folders purged"')
   }
 
-  // storage_sense - Disable Storage Sense
   if (selected.has('storage_sense')) {
     lines.push('# Disable Storage Sense')
     lines.push(
@@ -488,7 +463,6 @@ function generateSystemOpts(selected: Set<string>): string[] {
     lines.push('Write-OK "Storage Sense disabled"')
   }
 
-  // explorer_cleanup - Remove Home/Gallery from Explorer
   if (selected.has('explorer_cleanup')) {
     lines.push('# Remove Explorer clutter (Home/Gallery)')
     lines.push(
@@ -500,7 +474,6 @@ function generateSystemOpts(selected: Set<string>): string[] {
     lines.push('Write-OK "Explorer clutter removed"')
   }
 
-  // notifications_off - Disable notifications
   if (selected.has('notifications_off')) {
     lines.push('# Disable notifications')
     lines.push(
@@ -512,7 +485,6 @@ function generateSystemOpts(selected: Set<string>): string[] {
     lines.push('Write-OK "Notifications disabled"')
   }
 
-  // ps7_telemetry - Disable PowerShell 7 telemetry
   if (selected.has('ps7_telemetry')) {
     lines.push('# Disable PowerShell 7 telemetry')
     lines.push(
@@ -521,7 +493,6 @@ function generateSystemOpts(selected: Set<string>): string[] {
     lines.push('Write-OK "PS7 telemetry disabled"')
   }
 
-  // accessibility_shortcuts - Disable Sticky Keys, Filter Keys, Toggle Keys
   if (selected.has('accessibility_shortcuts')) {
     lines.push('# Disable accessibility shortcuts (Sticky/Filter/Toggle Keys)')
     lines.push('Set-Reg "HKCU:\\Control Panel\\Accessibility\\StickyKeys" "Flags" "506" "String"')
@@ -533,7 +504,6 @@ function generateSystemOpts(selected: Set<string>): string[] {
     lines.push('Write-OK "Accessibility shortcuts disabled (no more Sticky Keys popup)"')
   }
 
-  // services_search_off - Set Windows Search to Manual
   if (selected.has('services_search_off')) {
     lines.push('# Disable Windows Search indexing')
     lines.push('Stop-Service WSearch -Force -EA SilentlyContinue')
@@ -541,7 +511,6 @@ function generateSystemOpts(selected: Set<string>): string[] {
     lines.push('Write-OK "Windows Search set to Manual (stops disk indexing)"')
   }
 
-  // input_buffer - Increase mouse/keyboard buffer size
   if (selected.has('input_buffer')) {
     lines.push('# Increase input buffer size (for high polling rate devices)')
     lines.push(
@@ -553,7 +522,6 @@ function generateSystemOpts(selected: Set<string>): string[] {
     lines.push('Write-OK "Input buffer size increased (prevents drops at 8000Hz)"')
   }
 
-  // filesystem_perf - NTFS performance optimizations
   if (selected.has('filesystem_perf')) {
     lines.push('# NTFS filesystem performance optimizations')
     lines.push('fsutil behavior set disablelastaccess 1 >$null 2>&1')
@@ -564,7 +532,6 @@ function generateSystemOpts(selected: Set<string>): string[] {
     lines.push('Write-OK "Filesystem performance optimized"')
   }
 
-  // dwm_perf - DWM compositor optimizations
   if (selected.has('dwm_perf')) {
     lines.push('# DWM compositor performance optimizations')
     lines.push('Set-Reg "HKCU:\\Software\\Microsoft\\Windows\\DWM" "AccentColorInactive" 1')
@@ -622,9 +589,7 @@ function generatePerformanceOpts(selected: Set<string>, hardware: HardwareProfil
     lines.push('# This optimization requires running timer-tool.ps1 BEFORE launching games.')
     lines.push('# Keep it running during gameplay for smooth frame pacing.')
     lines.push('#')
-    lines.push(
-      '# Download: https://github.com/thepedroferrari/rocktune/blob/master/timer-tool.ps1',
-    )
+    lines.push('# Download: https://github.com/thepedroferrari/rocktune/blob/master/timer-tool.ps1')
     lines.push('#')
     lines.push('# Usage:')
     lines.push('#   .\\timer-tool.ps1                        # Basic - run before gaming')
@@ -645,7 +610,6 @@ function generatePerformanceOpts(selected: Set<string>, hardware: HardwareProfil
     lines.push('Write-Host ""')
   }
 
-  // msi_mode - Enable MSI mode for GPU/network
   if (selected.has('msi_mode')) {
     lines.push('# Enable MSI mode for GPU')
     lines.push(
@@ -661,7 +625,6 @@ function generatePerformanceOpts(selected: Set<string>, hardware: HardwareProfil
     lines.push('}')
   }
 
-  // hpet - Disable HPET
   if (selected.has('hpet')) {
     lines.push('# Disable HPET')
     lines.push('bcdedit /set useplatformclock false 2>$null')
@@ -669,14 +632,12 @@ function generatePerformanceOpts(selected: Set<string>, hardware: HardwareProfil
     lines.push('Write-OK "HPET disabled (reboot required)"')
   }
 
-  // multiplane_overlay - Disable MPO
   if (selected.has('multiplane_overlay')) {
     lines.push('# Disable Multiplane Overlay')
     lines.push('Set-Reg "HKLM:\\SOFTWARE\\Microsoft\\Windows\\Dwm" "OverlayTestMode" 5')
     lines.push('Write-OK "Multiplane Overlay disabled"')
   }
 
-  // process_mitigation - Disable mitigations
   if (selected.has('process_mitigation')) {
     lines.push('# Disable process mitigations (benchmarking)')
     lines.push(
@@ -685,7 +646,6 @@ function generatePerformanceOpts(selected: Set<string>, hardware: HardwareProfil
     lines.push('Write-OK "Process mitigations disabled (security reduced)"')
   }
 
-  // interrupt_affinity - GPU interrupt to CPU 0
   if (selected.has('interrupt_affinity')) {
     lines.push('# Configure GPU interrupt affinity')
     lines.push(
@@ -702,7 +662,6 @@ function generatePerformanceOpts(selected: Set<string>, hardware: HardwareProfil
     lines.push('}')
   }
 
-  // core_isolation_off - Disable VBS/HVCI (LUDICROUS TIER)
   if (selected.has('core_isolation_off')) {
     lines.push('# ⚠️ LUDICROUS: Disable Core Isolation (VBS/HVCI)')
     lines.push('Write-Host "  [!!] DANGER: Disabling Core Isolation" -ForegroundColor Red')
@@ -715,7 +674,6 @@ function generatePerformanceOpts(selected: Set<string>, hardware: HardwareProfil
     lines.push('Write-OK "Core Isolation disabled (SECURITY REDUCED, reboot required)"')
   }
 
-  // spectre_meltdown_off - Disable Spectre/Meltdown mitigations (LUDICROUS TIER)
   if (selected.has('spectre_meltdown_off')) {
     lines.push('# ⚠️ LUDICROUS: Disable Spectre/Meltdown Mitigations')
     lines.push('Write-Host ""')
@@ -747,7 +705,6 @@ function generatePerformanceOpts(selected: Set<string>, hardware: HardwareProfil
     lines.push('Write-OK "Spectre/Meltdown mitigations DISABLED (reboot required)"')
   }
 
-  // kernel_mitigations_off - Disable kernel exploit protections (LUDICROUS TIER)
   if (selected.has('kernel_mitigations_off')) {
     lines.push('# ⚠️ LUDICROUS: Disable Kernel Mitigations')
     lines.push(
@@ -764,7 +721,6 @@ function generatePerformanceOpts(selected: Set<string>, hardware: HardwareProfil
     lines.push('Write-OK "Kernel mitigations DISABLED (SECURITY REDUCED, reboot required)"')
   }
 
-  // dep_off - Disable Data Execution Prevention (LUDICROUS TIER)
   if (selected.has('dep_off')) {
     lines.push('# ⚠️ LUDICROUS: Disable DEP (Data Execution Prevention)')
     lines.push(
@@ -775,7 +731,6 @@ function generatePerformanceOpts(selected: Set<string>, hardware: HardwareProfil
     lines.push('Write-Host "  [!!] Re-enable with: bcdedit /set nx OptIn" -ForegroundColor Yellow')
   }
 
-  // native_nvme - Enable Native NVMe I/O
   if (selected.has('native_nvme')) {
     lines.push('# Enable Native NVMe I/O (Win11 24H2+)')
     lines.push('$build = [int](Get-CimInstance Win32_OperatingSystem).BuildNumber')
@@ -789,7 +744,6 @@ function generatePerformanceOpts(selected: Set<string>, hardware: HardwareProfil
     lines.push('} else { Write-Fail "Native NVMe requires Win11 24H2+" }')
   }
 
-  // smt_disable - Disable hyperthreading
   if (selected.has('smt_disable')) {
     lines.push('# Disable SMT/Hyperthreading')
     lines.push(
@@ -798,7 +752,6 @@ function generatePerformanceOpts(selected: Set<string>, hardware: HardwareProfil
     lines.push('Write-OK "SMT disabled (reboot required)"')
   }
 
-  // mmcss_gaming - MMCSS Gaming Tweaks
   if (selected.has('mmcss_gaming')) {
     lines.push('# MMCSS Gaming Tweaks')
     lines.push(
@@ -811,7 +764,6 @@ function generatePerformanceOpts(selected: Set<string>, hardware: HardwareProfil
     lines.push('Write-OK "MMCSS gaming priority configured"')
   }
 
-  // scheduler_opt - Scheduler Optimization
   if (selected.has('scheduler_opt')) {
     lines.push('# Scheduler Optimization')
     lines.push(
@@ -823,7 +775,6 @@ function generatePerformanceOpts(selected: Set<string>, hardware: HardwareProfil
     lines.push('Write-OK "Scheduler optimized for gaming"')
   }
 
-  // game_mode - Enable Game Mode
   if (selected.has('game_mode')) {
     lines.push('# Enable Game Mode')
     lines.push('Set-Reg "HKCU:\\Software\\Microsoft\\GameBar" "AllowAutoGameMode" 1')
@@ -831,7 +782,6 @@ function generatePerformanceOpts(selected: Set<string>, hardware: HardwareProfil
     lines.push('Write-OK "Game Mode enabled"')
   }
 
-  // timer_registry - Timer Resolution Registry
   if (selected.has('timer_registry')) {
     lines.push('# Timer Resolution Registry')
     lines.push(
@@ -843,7 +793,6 @@ function generatePerformanceOpts(selected: Set<string>, hardware: HardwareProfil
     lines.push('Write-OK "Timer resolution registry configured"')
   }
 
-  // sysmain_disable - Disable SysMain (Superfetch)
   if (selected.has('sysmain_disable')) {
     lines.push('# Disable SysMain (Superfetch)')
     lines.push('Stop-Service SysMain -Force -EA SilentlyContinue')
@@ -851,7 +800,6 @@ function generatePerformanceOpts(selected: Set<string>, hardware: HardwareProfil
     lines.push('Write-OK "SysMain/Superfetch disabled"')
   }
 
-  // memory_gaming - Keep kernel in RAM, optimize memory for gaming
   if (selected.has('memory_gaming')) {
     lines.push('# Memory gaming mode')
     lines.push(
@@ -863,7 +811,6 @@ function generatePerformanceOpts(selected: Set<string>, hardware: HardwareProfil
     lines.push('Write-OK "Memory gaming mode enabled (kernel stays in RAM)"')
   }
 
-  // priority_boost_off - Disable dynamic priority boost
   if (selected.has('priority_boost_off')) {
     lines.push('# Disable priority boost')
     lines.push(
@@ -901,7 +848,6 @@ function generatePowerOpts(selected: Set<string>): string[] {
     lines.push('Write-OK "USB selective suspend disabled"')
   }
 
-  // pcie_power - Disable PCIe ASPM
   if (selected.has('pcie_power')) {
     lines.push('# Disable PCIe link state power management')
     lines.push(
@@ -911,7 +857,6 @@ function generatePowerOpts(selected: Set<string>): string[] {
     lines.push('Write-OK "PCIe power saving disabled"')
   }
 
-  // core_parking - Disable Core Parking
   if (selected.has('core_parking')) {
     lines.push('# Disable Core Parking')
     lines.push('powercfg /setacvalueindex scheme_current sub_processor CPMINCORES 100')
@@ -919,7 +864,6 @@ function generatePowerOpts(selected: Set<string>): string[] {
     lines.push('Write-OK "Core parking disabled"')
   }
 
-  // min_processor_state - Set minimum processor state to 5%
   if (selected.has('min_processor_state')) {
     lines.push('# Set minimum processor state to 5%')
     lines.push('powercfg /setacvalueindex scheme_current sub_processor PROCTHROTTLEMIN 5')
@@ -927,14 +871,12 @@ function generatePowerOpts(selected: Set<string>): string[] {
     lines.push('Write-OK "Min processor state set to 5%"')
   }
 
-  // hibernation_disable - Disable Hibernation
   if (selected.has('hibernation_disable')) {
     lines.push('# Disable Hibernation')
     lines.push('powercfg /hibernate off')
     lines.push('Write-OK "Hibernation disabled"')
   }
 
-  // power_throttle_off - Disable Windows power throttling
   if (selected.has('power_throttle_off')) {
     lines.push('# Disable power throttling')
     lines.push(
@@ -989,7 +931,6 @@ function generateNetworkOpts(selected: Set<string>, dnsProvider: string): string
     lines.push('Write-OK "Network throttling disabled"')
   }
 
-  // qos_gaming - Enable QoS for gaming
   if (selected.has('qos_gaming')) {
     lines.push('# Configure QoS for gaming')
     lines.push(
@@ -998,7 +939,6 @@ function generateNetworkOpts(selected: Set<string>, dnsProvider: string): string
     lines.push('Write-OK "QoS gaming configured"')
   }
 
-  // ipv4_prefer - Prefer IPv4 over IPv6
   if (selected.has('ipv4_prefer')) {
     lines.push('# Prefer IPv4 over IPv6')
     lines.push(
@@ -1007,14 +947,12 @@ function generateNetworkOpts(selected: Set<string>, dnsProvider: string): string
     lines.push('Write-OK "IPv4 preferred over IPv6"')
   }
 
-  // teredo_disable - Disable Teredo
   if (selected.has('teredo_disable')) {
     lines.push('# Disable Teredo')
     lines.push('netsh interface teredo set state disabled 2>$null')
     lines.push('Write-OK "Teredo disabled"')
   }
 
-  // rss_enable - Enable Receive Side Scaling
   if (selected.has('rss_enable')) {
     lines.push('# Enable Receive Side Scaling')
     lines.push('Get-NetAdapter | Where-Object {$_.Status -eq "Up"} | ForEach-Object {')
@@ -1023,7 +961,6 @@ function generateNetworkOpts(selected: Set<string>, dnsProvider: string): string
     lines.push('Write-OK "RSS enabled on active adapters"')
   }
 
-  // rsc_disable - Disable Receive Segment Coalescing
   if (selected.has('rsc_disable')) {
     lines.push('# Disable Receive Segment Coalescing')
     lines.push('Get-NetAdapter | Where-Object {$_.Status -eq "Up"} | ForEach-Object {')
@@ -1032,7 +969,6 @@ function generateNetworkOpts(selected: Set<string>, dnsProvider: string): string
     lines.push('Write-OK "RSC disabled on active adapters"')
   }
 
-  // adapter_power - Disable network adapter power saving
   if (selected.has('adapter_power')) {
     lines.push('# Disable network adapter power saving')
     lines.push('Get-NetAdapter | Where-Object {$_.Status -eq "Up"} | ForEach-Object {')
@@ -1100,7 +1036,6 @@ function generatePrivacyOpts(selected: Set<string>): string[] {
     lines.push('Write-OK "Bloatware removed"')
   }
 
-  // privacy_tier3 - Aggressive privacy (breaks Xbox)
   if (selected.has('privacy_tier3')) {
     lines.push('# Privacy Tier 3 (Aggressive - breaks Game Pass)')
     lines.push('$xboxSvc = @("XblAuthManager","XblGameSave","XboxGipSvc","XboxNetApiSvc")')
@@ -1110,7 +1045,6 @@ function generatePrivacyOpts(selected: Set<string>): string[] {
     lines.push('Write-OK "Xbox services disabled (Game Pass broken)"')
   }
 
-  // edge_debloat - Edge policy debloat
   if (selected.has('edge_debloat')) {
     lines.push('# Edge debloat')
     lines.push('Set-Reg "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Edge" "HideFirstRunExperience" 1')
@@ -1121,7 +1055,6 @@ function generatePrivacyOpts(selected: Set<string>): string[] {
     lines.push('Write-OK "Edge debloated"')
   }
 
-  // razer_block - Block Razer auto-install
   if (selected.has('razer_block')) {
     lines.push('# Block Razer auto-install')
     lines.push(
@@ -1133,7 +1066,6 @@ function generatePrivacyOpts(selected: Set<string>): string[] {
     lines.push('Write-OK "Razer services blocked"')
   }
 
-  // wpbt_disable - Block OEM BIOS software injection
   if (selected.has('wpbt_disable')) {
     lines.push('# Disable WPBT')
     lines.push(
@@ -1142,7 +1074,6 @@ function generatePrivacyOpts(selected: Set<string>): string[] {
     lines.push('Write-OK "WPBT disabled (blocks OEM bloatware)"')
   }
 
-  // services_trim - Trim non-essential services
   if (selected.has('services_trim')) {
     lines.push('# Trim services')
     lines.push(
@@ -1154,7 +1085,6 @@ function generatePrivacyOpts(selected: Set<string>): string[] {
     lines.push('Write-OK "Services trimmed"')
   }
 
-  // disk_cleanup - Deep disk cleanup
   if (selected.has('disk_cleanup')) {
     lines.push('# Deep disk cleanup')
     lines.push(
@@ -1163,7 +1093,6 @@ function generatePrivacyOpts(selected: Set<string>): string[] {
     lines.push('Write-OK "Disk cleanup complete"')
   }
 
-  // delivery_opt - Disable Delivery Optimization P2P
   if (selected.has('delivery_opt')) {
     lines.push('# Disable Delivery Optimization P2P')
     lines.push(
@@ -1172,7 +1101,6 @@ function generatePrivacyOpts(selected: Set<string>): string[] {
     lines.push('Write-OK "Delivery Optimization P2P disabled"')
   }
 
-  // wer_disable - Disable Windows Error Reporting
   if (selected.has('wer_disable')) {
     lines.push('# Disable Windows Error Reporting')
     lines.push(
@@ -1183,7 +1111,6 @@ function generatePrivacyOpts(selected: Set<string>): string[] {
     lines.push('Write-OK "Windows Error Reporting disabled"')
   }
 
-  // wifi_sense - Disable WiFi Sense
   if (selected.has('wifi_sense')) {
     lines.push('# Disable WiFi Sense')
     lines.push(
@@ -1192,7 +1119,6 @@ function generatePrivacyOpts(selected: Set<string>): string[] {
     lines.push('Write-OK "WiFi Sense disabled"')
   }
 
-  // spotlight_disable - Disable Windows Spotlight
   if (selected.has('spotlight_disable')) {
     lines.push('# Disable Windows Spotlight')
     lines.push(
@@ -1204,14 +1130,12 @@ function generatePrivacyOpts(selected: Set<string>): string[] {
     lines.push('Write-OK "Windows Spotlight disabled"')
   }
 
-  // feedback_disable - Disable Windows Feedback prompts
   if (selected.has('feedback_disable')) {
     lines.push('# Disable Windows Feedback prompts')
     lines.push('Set-Reg "HKCU:\\Software\\Microsoft\\Siuf\\Rules" "NumberOfSIUFInPeriod" 0')
     lines.push('Write-OK "Windows Feedback prompts disabled"')
   }
 
-  // clipboard_sync - Disable Cloud Clipboard sync
   if (selected.has('clipboard_sync')) {
     lines.push('# Disable Cloud Clipboard sync')
     lines.push('Set-Reg "HKCU:\\Software\\Microsoft\\Clipboard" "EnableClipboardHistory" 0')
@@ -1224,28 +1148,24 @@ function generatePrivacyOpts(selected: Set<string>): string[] {
 function generateAudioOpts(selected: Set<string>): string[] {
   const lines: string[] = []
 
-  // audio_enhancements - Disable audio enhancements
   if (selected.has('audio_enhancements')) {
     lines.push('# Disable audio enhancements')
     lines.push('Set-Reg "HKCU:\\Software\\Microsoft\\Multimedia\\Audio" "UserDuckingPreference" 3')
     lines.push('Write-OK "Audio ducking disabled"')
   }
 
-  // audio_exclusive - Enable WASAPI exclusive mode
   if (selected.has('audio_exclusive')) {
     lines.push('# Configure audio exclusive mode (disable system sounds)')
     lines.push('Set-Reg "HKCU:\\AppEvents\\Schemes" "(Default)" ".None" "String"')
     lines.push('Write-OK "System sounds disabled for exclusive mode"')
   }
 
-  // audio_communications - Disable volume ducking during Discord/Teams calls
   if (selected.has('audio_communications')) {
     lines.push('# Disable volume ducking during communications')
     lines.push('Set-Reg "HKCU:\\Software\\Microsoft\\Multimedia\\Audio" "UserDuckingPreference" 3')
     lines.push('Write-OK "Volume ducking disabled (full volume during calls)"')
   }
 
-  // audio_system_sounds - Mute all Windows sounds
   if (selected.has('audio_system_sounds')) {
     lines.push('# Disable all Windows system sounds')
     lines.push('Set-Reg "HKCU:\\AppEvents\\Schemes" "(Default)" ".None" "String"')
@@ -1258,10 +1178,6 @@ function generateAudioOpts(selected: Set<string>): string[] {
 
   return lines
 }
-
-// =============================================================================
-// Verification Script Generator
-// =============================================================================
 
 const VERIFICATION_BANNER = `
 @'
@@ -1304,7 +1220,6 @@ export function buildVerificationScript(selection: SelectionState): string {
 
   const lines: string[] = []
 
-  // Header
   lines.push('<#')
   lines.push('.SYNOPSIS')
   lines.push(`    RockTune Verification Script - Generated ${timestamp}`)
@@ -1314,17 +1229,14 @@ export function buildVerificationScript(selection: SelectionState): string {
   lines.push('#>')
   lines.push('')
 
-  // Helper functions
   lines.push(VERIFICATION_HELPERS.trim())
   lines.push('')
 
-  // Banner
   lines.push('Clear-Host')
   lines.push('Write-Banner')
   lines.push('Write-Host ""')
   lines.push('')
 
-  // System section
   lines.push('Write-Section "System Settings"')
 
   if (selected.has('mouse_accel')) {
@@ -1357,7 +1269,6 @@ export function buildVerificationScript(selection: SelectionState): string {
     )
   }
 
-  // Performance section
   lines.push('')
   lines.push('Write-Section "Performance Settings"')
 
@@ -1385,7 +1296,6 @@ export function buildVerificationScript(selection: SelectionState): string {
     )
   }
 
-  // Power section
   lines.push('')
   lines.push('Write-Section "Power Settings"')
 
@@ -1403,7 +1313,6 @@ export function buildVerificationScript(selection: SelectionState): string {
     )
   }
 
-  // Network section
   lines.push('')
   lines.push('Write-Section "Network Settings"')
 
@@ -1427,7 +1336,6 @@ export function buildVerificationScript(selection: SelectionState): string {
     )
   }
 
-  // Privacy section
   lines.push('')
   lines.push('Write-Section "Privacy Settings"')
 
@@ -1455,7 +1363,6 @@ export function buildVerificationScript(selection: SelectionState): string {
     )
   }
 
-  // Summary
   lines.push('')
   lines.push('Write-Host ""')
   lines.push('Write-Host "  ╔════════════════════════════════════════╗" -ForegroundColor White')

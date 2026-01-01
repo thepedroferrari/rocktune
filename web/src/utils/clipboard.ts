@@ -6,17 +6,13 @@
  * Copy text to clipboard with fallback for older browsers
  */
 export async function copyToClipboard(text: string): Promise<boolean> {
-  // Modern clipboard API
   if (navigator.clipboard?.writeText) {
     try {
       await navigator.clipboard.writeText(text)
       return true
-    } catch {
-      // Fall through to legacy method
-    }
+    } catch {}
   }
 
-  // Legacy fallback
   const textarea = document.createElement('textarea')
   textarea.value = text
   textarea.style.position = 'fixed'

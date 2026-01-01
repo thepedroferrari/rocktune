@@ -19,11 +19,11 @@
   import type { ScriptMode } from '$lib/state.svelte'
   import CodeViewer from './CodeViewer.svelte'
 
-  // Reactive: auto-regenerate script when any selection changes
+  
   let generatedScript = $derived(generateCurrentScript())
   let activeScript = $derived(app.script.edited ?? generatedScript)
 
-  // Visibility state - show after scrolling past hero
+  
   let isVisible = $state(false)
 
   onMount(() => {
@@ -48,14 +48,14 @@
   }
 </script>
 
-<!-- Right-side drawer panel - uses audit.styles.css -->
+
 <aside
   class="audit-panel"
   class:visible={isVisible}
   class:open={app.ui.auditPanelOpen}
   aria-label="Script preview panel"
 >
-  <!-- Toggle button (tab) positioned on left edge -->
+  
   <button
     type="button"
     class="audit-toggle"
@@ -68,7 +68,7 @@
     </svg>
   </button>
 
-  <!-- Panel content -->
+  
   <div class="audit-content">
     <header class="audit-header">
       <h3>Script Preview</h3>

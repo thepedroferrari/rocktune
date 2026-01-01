@@ -16,7 +16,6 @@ export function downloadText(content: string, filename: string): void {
   link.click()
   link.remove()
 
-  // Revoke the object URL after a short delay
   window.setTimeout(() => URL.revokeObjectURL(url), 100)
 }
 

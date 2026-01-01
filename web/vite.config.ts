@@ -1,8 +1,8 @@
-// Versions managed via deno.json import map
+
 import { defineConfig } from 'vite'
 import { svelte, vitePreprocess } from '@sveltejs/vite-plugin-svelte'
 
-// Get git commit info at build time
+
 function getGitInfo() {
   try {
     const commitCmd = new Deno.Command('git', { args: ['rev-parse', '--short', 'HEAD'] })

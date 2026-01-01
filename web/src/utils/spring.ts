@@ -22,7 +22,7 @@ export interface SpringConfig {
 export interface SpringValue {
   x: number
   y: number
-  o?: number // opacity
+  o?: number
 }
 
 type SpringAxis = 'x' | 'y' | 'o'
@@ -34,7 +34,6 @@ function toSpringVector(value: SpringValue): SpringVector {
   return { x: value.x, y: value.y, o: value.o ?? 0 }
 }
 
-// Default spring configurations for common use cases
 export const SPRING_PRESETS = {
   /** Snappy interaction response */
   INTERACTIVE: { stiffness: 0.066, damping: 0.25 } as const,
@@ -47,16 +46,13 @@ export const SPRING_PRESETS = {
 } as const satisfies Record<string, SpringConfig>
 
 export class Spring {
-  // ES2022 Private class fields - true encapsulation
   #target: SpringVector
   #current: SpringVector
   #velocity: SpringVector
   #stiffness: number
   #damping: number
 
-  // ES2022 Static initialization block
   static {
-    // Freeze the prototype to prevent runtime modifications
     Object.freeze(Spring.prototype)
   }
 

@@ -26,10 +26,10 @@
   const PROFILE_BADGES = PRESET_ORDER.map((id) => {
     const meta = PRESET_META[id];
     const hueMap: Record<string, number> = {
-      epic: 300,      // purple - pro_gamer
-      uncommon: 160,  // green - gamer
-      rare: 240,      // blue - streamer
-      legendary: 85,  // gold - benchmarker
+      epic: 300,      
+      uncommon: 160,  
+      rare: 240,      
+      legendary: 85,  
     };
     return {
       id,
@@ -49,22 +49,22 @@
   function selectAndScroll(presetId: PresetType) {
     const config = PRESETS[presetId];
 
-    // Apply preset (mirrors PresetSection.handlePresetSelect)
+    
     setActivePreset(presetId);
     setSelection(getDefaultSelection());
     setRecommendedPackages(config.software);
     setFilter(FILTER_RECOMMENDED);
     setOptimizations(config.opts);
 
-    // Scroll to quick-start section
+    
     document.getElementById('quick-start')?.scrollIntoView({ behavior: 'smooth' });
   }
 </script>
 
 <header class="hero-fold">
-  <!-- Grid Layout: 'title card' / 'cta cta' -->
+  
   <div class="hero-content">
-    <!-- Title Area -->
+    
     <div class="hero-title">
       <h1 class="hero-logo">ROCKTUNE</h1>
 
@@ -78,10 +78,10 @@
       </div>
     </div>
 
-    <!-- Stats Panel -->
+    
     <aside class="hero-card">
       <div class="stats-panel">
-        <!-- Corner accents -->
+        
         <div class="panel-corner panel-corner--tl"></div>
         <div class="panel-corner panel-corner--br"></div>
 
@@ -141,7 +141,7 @@
       </div>
     </aside>
 
-    <!-- CTA Area (full width) -->
+    
     <div class="hero-cta">
       <p class="profile-prompt">WHO ARE YOU?</p>
       <div class="profile-badges">
@@ -159,7 +159,7 @@
     </div>
   </div>
 
-  <!-- Scroll Affordance -->
+  
   <a href="#quick-start" class="scroll-indicator">
     <span class="scroll-text">CUSTOMIZE YOUR BUILD</span>
     <svg
@@ -176,9 +176,7 @@
 </header>
 
 <style>
-  /* ============================================================
-     TOKENS
-     ============================================================ */
+  
   .hero-fold {
     --fold-bg: oklch(0.13 0.02 285);
     --fold-ink: oklch(0.96 0.01 285);
@@ -195,7 +193,7 @@
     --fold-border: oklch(0.28 0.02 285);
     --fold-glass: oklch(0.14 0.02 285 / 0.8);
 
-    /* ROG-style aggressive clip-path */
+    
     --clip-rog: polygon(
       0 0,
       calc(100% - 20px) 0,
@@ -217,7 +215,7 @@
     overflow: hidden;
   }
 
-  /* Grid background */
+  
   .hero-fold::before {
     content: "";
     position: absolute;
@@ -232,7 +230,7 @@
     pointer-events: none;
   }
 
-  /* Scanning line effect */
+  
   .hero-fold::after {
     content: "";
     position: absolute;
@@ -258,9 +256,7 @@
     }
   }
 
-  /* ============================================================
-     LAYOUT - Grid Areas: 'title card' / 'cta cta'
-     ============================================================ */
+  
   .hero-content {
     display: grid;
     grid-template-columns: 1fr;
@@ -286,9 +282,7 @@
     }
   }
 
-  /* ============================================================
-     TITLE AREA
-     ============================================================ */
+  
   .hero-title {
     grid-area: title;
     display: flex;
@@ -346,9 +340,7 @@
     animation: fadeSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.55s both;
   }
 
-  /* ============================================================
-     CTA AREA (Full Width)
-     ============================================================ */
+  
   .hero-cta {
     grid-area: cta;
     text-align: center;
@@ -407,9 +399,7 @@
     transform: translateY(0) scale(1);
   }
 
-  /* ============================================================
-     TRUST LINE
-     ============================================================ */
+  
   .trust-line {
     font-family: var(--font-mono);
     font-size: 0.8rem;
@@ -431,9 +421,7 @@
     text-shadow: 0 0 10px var(--fold-accent-glow);
   }
 
-  /* ============================================================
-     STATS PANEL (Card Area)
-     ============================================================ */
+  
   .hero-card {
     grid-area: card;
     animation: panelSlideIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.4s both;
@@ -450,7 +438,7 @@
       0 0 60px oklch(0 0 0 / 0.2);
   }
 
-  /* Corner accent decorations */
+  
   .panel-corner {
     position: absolute;
     width: 40px;
@@ -562,7 +550,7 @@
     text-shadow: 0 0 12px var(--fold-accent-glow);
   }
 
-  /* Staggered stat animations */
+  
   .stat-line:nth-child(1) {
     animation: fadeSlideLeft 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.6s both;
   }
@@ -585,9 +573,7 @@
     animation: fadeSlideLeft 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.9s both;
   }
 
-  /* ============================================================
-     SCROLL INDICATOR
-     ============================================================ */
+  
   .scroll-indicator {
     display: flex;
     flex-direction: column;
@@ -632,9 +618,7 @@
     }
   }
 
-  /* ============================================================
-     ENTRANCE ANIMATIONS
-     ============================================================ */
+  
   @keyframes logoEntrance {
     from {
       opacity: 0;
@@ -681,9 +665,7 @@
     }
   }
 
-  /* ============================================================
-     REDUCED MOTION
-     ============================================================ */
+  
   @media (prefers-reduced-motion: reduce) {
     .hero-fold::after,
     .scroll-chevron {
@@ -718,9 +700,7 @@
     }
   }
 
-  /* ============================================================
-     MOBILE
-     ============================================================ */
+  
   @media (max-width: 899px) {
     .hero-fold {
       min-height: auto;
@@ -746,9 +726,7 @@
     }
   }
 
-  /* ============================================================
-     HIGH CONTRAST
-     ============================================================ */
+  
   @media (prefers-contrast: more) {
     .hero-fold {
       --fold-ink: oklch(0.98 0.01 285);

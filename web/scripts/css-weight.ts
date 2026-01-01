@@ -44,12 +44,7 @@ function addSelectorStats(
   })
 }
 
-function traverse(
-  node: postcss.Node,
-  file: string,
-  ancestors: string[],
-  records: SelectorStat[],
-) {
+function traverse(node: postcss.Node, file: string, ancestors: string[], records: SelectorStat[]) {
   if (node.type === 'rule') {
     const rule = node as postcss.Rule
     const declCount = rule.nodes?.filter((n) => n.type === 'decl').length ?? 0
@@ -63,7 +58,9 @@ function traverse(
 
   if ('nodes' in node && node.nodes) {
     const nextAncestors =
-      node.type === 'atrule' ? [...ancestors, `@${node.name} ${node.params ?? ''}`.trim()] : ancestors
+      node.type === 'atrule'
+        ? [...ancestors, `@${node.name} ${node.params ?? ''}`.trim()]
+        : ancestors
     for (const child of node.nodes) {
       traverse(child, file, nextAncestors, records)
     }

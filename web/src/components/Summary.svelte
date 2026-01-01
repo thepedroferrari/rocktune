@@ -8,7 +8,7 @@
   import { app, getSelectedCount } from '$lib/state.svelte'
   import type { CpuType, GpuType } from '$lib/types'
 
-  // Derived from centralized state
+  
   let softwareCount = $derived(getSelectedCount())
   let optimizationCount = $derived(app.optimizationCount)
 

@@ -8,19 +8,19 @@
 
   import { app } from '$lib/state.svelte'
 
-  // Track previous counts for announcements
+  
   let prevSelectedCount = $state(0)
   let prevOptCount = $state(0)
 
-  // Announcement message
+  
   let message = $state('')
 
-  // React to selection changes
+  
   $effect(() => {
     const currentSelected = app.selected.size
     const currentOpts = app.optimizations.size
 
-    // Announce software selection changes
+    
     if (currentSelected !== prevSelectedCount) {
       const diff = currentSelected - prevSelectedCount
       if (diff > 0) {
@@ -31,7 +31,7 @@
       prevSelectedCount = currentSelected
     }
 
-    // Announce optimization changes
+    
     if (currentOpts !== prevOptCount && prevOptCount > 0) {
       const diff = currentOpts - prevOptCount
       if (diff > 0) {
@@ -45,7 +45,7 @@
     }
   })
 
-  // Clear message after announcement
+  
   $effect(() => {
     if (message) {
       const timeout = setTimeout(() => {

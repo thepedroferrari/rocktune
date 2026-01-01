@@ -17,28 +17,28 @@
     FILTER_RECOMMENDED,
   } from '$lib/types'
 
-  // Props for recommended filter (from presets)
+  
   interface Props {
     recommendedPreset?: RecommendedPreset | null
   }
 
   let { recommendedPreset = null }: Props = $props()
 
-  // Derived
+  
   let counts = $derived(getCategoryCounts())
   let selectedCount = $derived(getSelectedCount())
   let activeFilter = $derived(app.filter)
 
-  // Filter categories to show (only those with packages)
+  
   let visibleCategories = $derived(
     CATEGORIES.filter((cat) => counts[cat] > 0)
   )
 
-  // Animation delay constants for staggered filter entrance
+  
   const FILTER_ANIMATION_DELAY_MS = 30
   let presetOffset = $derived(recommendedPreset ? 1 : 0)
 
-  // Sync recommended packages to store when preset changes
+  
   $effect(() => {
     if (recommendedPreset?.software) {
       setRecommendedPackages(recommendedPreset.software)
@@ -56,7 +56,7 @@
   }
 </script>
 
-<!-- Search bar -->
+
 <search class="software-toolbar">
   <div class="search-wrap">
     <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -74,7 +74,7 @@
   </div>
 </search>
 
-<!-- Filter Bar -->
+
 <div class="filter-bar">
   {#if recommendedPreset}
     <button

@@ -65,7 +65,7 @@
         return
       }
       applyProfile(result.data)
-      // Script auto-updates reactively via generateCurrentScript()
+      
     } catch (error) {
       console.error('[RockTune] Failed to load profile:', error)
       alert('Failed to load profile. Please check the file format.')
@@ -77,7 +77,7 @@
   }
 
   function applyProfile(profile: ValidatedProfile): void {
-    // Apply hardware
+    
     if (profile.hardware?.cpu && isCpuType(profile.hardware.cpu)) {
       setCpu(profile.hardware.cpu)
     }
@@ -85,21 +85,21 @@
       setGpu(profile.hardware.gpu)
     }
 
-    // Apply peripherals
+    
     const validPeripherals = (profile.hardware?.peripherals ?? []).filter(isPeripheralType)
     setPeripherals(validPeripherals)
 
-    // Apply monitor software
+    
     const validMonitorSoftware = (profile.hardware?.monitorSoftware ?? []).filter(
       isMonitorSoftwareType,
     )
     setMonitorSoftware(validMonitorSoftware)
 
-    // Apply optimizations
+    
     const validOptimizations = profile.optimizations.filter(isOptimizationKey)
     setOptimizations(validOptimizations)
 
-    // Apply software selection
+    
     const validSoftware = profile.software.filter((key): key is PackageKey =>
       isPackageKey(app.software, key),
     )
@@ -155,4 +155,4 @@
   </label>
 </div>
 
-<!-- Styles are in profiles.styles.css and forge.styles.css (layer: components) -->
+

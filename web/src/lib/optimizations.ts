@@ -5,9 +5,9 @@
  * Each optimization has a key, tier, category, label, hint, tooltip, and default state.
  */
 
+import type { StructuredTooltip } from '../utils/tooltips'
 import type { OptimizationKey, OptimizationTier } from './types'
 import { OPTIMIZATION_KEYS, OPTIMIZATION_TIERS } from './types'
-import type { StructuredTooltip } from '../utils/tooltips'
 
 /** Optimization category for grouping in UI */
 export type OptimizationCategory =
@@ -1258,13 +1258,6 @@ const RISKY_OPTIMIZATIONS: readonly OptimizationDef[] = [
   },
 ]
 
-// =============================================================================
-// LUDICROUS TIER - "You shouldn't, but here's the power"
-// =============================================================================
-// These optimizations have REAL, DOCUMENTED security vulnerabilities.
-// Not auto-enabled for ANY profile. EVER.
-// Requires explicit "I understand the risks" acknowledgment.
-// Each has CVE links so users can research the actual threats.
 const LUDICROUS_OPTIMIZATIONS: readonly OptimizationDef[] = [
   {
     key: OPTIMIZATION_KEYS.CORE_ISOLATION_OFF,
@@ -1384,10 +1377,6 @@ export function getDefaultOptimizations(): OptimizationKey[] {
   return OPTIMIZATIONS.filter((opt) => opt.defaultChecked).map((opt) => opt.key)
 }
 
-// =============================================================================
-// Profile → Optimization Matrix
-// =============================================================================
-
 /** Profile types for optimization matrix */
 export const PROFILE_IDS = [
   'minimal_default',
@@ -1405,7 +1394,6 @@ export type ProfileId = (typeof PROFILE_IDS)[number]
  * minimal_default is the internal baseline (not a visible preset).
  */
 const PROFILE_OPTIMIZATIONS: Record<ProfileId, readonly OptimizationKey[]> = {
-  // Internal baseline - safe essentials only
   minimal_default: [
     'pagefile',
     'fastboot',
@@ -1414,10 +1402,9 @@ const PROFILE_OPTIMIZATIONS: Record<ProfileId, readonly OptimizationKey[]> = {
     'usb_power',
     'pcie_power',
     'audio_enhancements',
-    'game_mode', // Windows Game Mode - safe, no downside
+    'game_mode',
   ],
 
-  // Gamer: Conservative safe set, stability over maximum performance
   gamer: [
     'pagefile',
     'fastboot',
@@ -1432,15 +1419,14 @@ const PROFILE_OPTIMIZATIONS: Record<ProfileId, readonly OptimizationKey[]> = {
     'edge_debloat',
     'copilot_disable',
     'audio_enhancements',
-    'audio_communications', // No volume ducking during Discord calls
-    'timer', // Safe, significant FPS benefit
-    'end_task', // QoL, no downside
-    'game_mode', // Windows Game Mode - safe
-    'delivery_opt', // Disable P2P updates - frees bandwidth
-    'feedback_disable', // No Windows feedback prompts
+    'audio_communications',
+    'timer',
+    'end_task',
+    'game_mode',
+    'delivery_opt',
+    'feedback_disable',
   ],
 
-  // Streamer: Capture-safe optimizations (NO gamedvr - needed for capture)
   streamer: [
     'pagefile',
     'fastboot',
@@ -1453,15 +1439,13 @@ const PROFILE_OPTIMIZATIONS: Record<ProfileId, readonly OptimizationKey[]> = {
     'edge_debloat',
     'copilot_disable',
     'audio_enhancements',
-    'audio_communications', // No volume ducking during Discord calls
-    'game_mode', // Windows Game Mode - safe
-    'delivery_opt', // Disable P2P updates - frees bandwidth for streaming
-    'feedback_disable', // No interruptions during stream
-    'timer', // Better frame pacing for stream output
-    // Note: gamedvr NOT included - streamers need capture
+    'audio_communications',
+    'game_mode',
+    'delivery_opt',
+    'feedback_disable',
+    'timer',
   ],
 
-  // Pro Gamer: Aggressive latency + fps focused for competitive gaming
   pro_gamer: [
     'pagefile',
     'fastboot',
@@ -1481,35 +1465,32 @@ const PROFILE_OPTIMIZATIONS: Record<ProfileId, readonly OptimizationKey[]> = {
     'edge_debloat',
     'copilot_disable',
     'audio_enhancements',
-    'audio_communications', // No volume ducking during Discord calls
-    'audio_system_sounds', // Mute Windows sounds - zero interruptions
-    'accessibility_shortcuts', // ESSENTIAL: No Sticky Keys popup mid-clutch
+    'audio_communications',
+    'audio_system_sounds',
+    'accessibility_shortcuts',
     'msi_mode',
     'fso_disable',
     'ultimate_perf',
     'services_trim',
-    'services_search_off', // Stop disk indexing spikes
+    'services_search_off',
     'wpbt_disable',
     'qos_gaming',
     'network_throttling',
     'interrupt_affinity',
-    'keyboard_response', // Essential for competitive
-    'end_task', // QoL, no downside
-    // New PS module parity additions
-    'game_mode', // Windows Game Mode - safe
-    'mmcss_gaming', // MMCSS GPU/CPU priority - competitive edge
-    'scheduler_opt', // Win32PrioritySeparation - input latency
-    'timer_registry', // GlobalTimerResolutionRequests - frame pacing
-    'min_processor_state', // 5% min processor state - better boost
-    'delivery_opt', // Disable P2P updates - frees bandwidth
-    'feedback_disable', // No prompts during gaming
-    'rss_enable', // Network performance - RSS enabled
-    // Note: hags removed (mixed results, benchmarker only)
+    'keyboard_response',
+    'end_task',
+
+    'game_mode',
+    'mmcss_gaming',
+    'scheduler_opt',
+    'timer_registry',
+    'min_processor_state',
+    'delivery_opt',
+    'feedback_disable',
+    'rss_enable',
   ],
 
-  // Benchmarker: Maximum control - all safe + caution + most risky
   benchmarker: [
-    // Safe tier
     'pagefile',
     'fastboot',
     'timer',
@@ -1530,7 +1511,7 @@ const PROFILE_OPTIMIZATIONS: Record<ProfileId, readonly OptimizationKey[]> = {
     'nagle',
     'mouse_accel',
     'keyboard_response',
-    'accessibility_shortcuts', // Disable Sticky/Filter/Toggle Keys
+    'accessibility_shortcuts',
     'display_perf',
     'multiplane_overlay',
     'gamedvr',
@@ -1538,9 +1519,9 @@ const PROFILE_OPTIMIZATIONS: Record<ProfileId, readonly OptimizationKey[]> = {
     'edge_debloat',
     'copilot_disable',
     'audio_enhancements',
-    'audio_communications', // No volume ducking during calls
-    'audio_system_sounds', // Mute Windows sounds
-    // New PS module parity - Safe tier
+    'audio_communications',
+    'audio_system_sounds',
+
     'game_mode',
     'min_processor_state',
     'hibernation_disable',
@@ -1552,27 +1533,27 @@ const PROFILE_OPTIMIZATIONS: Record<ProfileId, readonly OptimizationKey[]> = {
     'spotlight_disable',
     'feedback_disable',
     'clipboard_sync',
-    // Caution tier
+
     'msi_mode',
     'hpet',
     'hags',
     'fso_disable',
     'ultimate_perf',
     'services_trim',
-    'services_search_off', // Stop disk indexing
+    'services_search_off',
     'disk_cleanup',
     'wpbt_disable',
     'qos_gaming',
     'network_throttling',
     'interrupt_affinity',
-    // New PS module parity - Caution tier
+
     'mmcss_gaming',
     'scheduler_opt',
     'core_parking',
     'timer_registry',
     'rsc_disable',
     'sysmain_disable',
-    // Risky tier (selected)
+
     'privacy_tier1',
     'privacy_tier2',
     'privacy_tier3',

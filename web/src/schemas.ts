@@ -119,7 +119,7 @@ const SoftwareCatalogSchema = z
   .preprocess(
     (data) => {
       if (typeof data !== 'object' || data === null) return data
-      // Filter null/undefined entries and normalize keys
+
       return Object.fromEntries(
         Object.entries(data as Record<string, unknown>)
           .filter(([, v]) => v != null)

@@ -50,17 +50,17 @@
     return `https://www.youtube.com/watch?v=${videoId}`;
   }
 
-  // Track which groups are expanded
+  
   let expandedGroups = $state<Set<string>>(new Set(["windows", "preflight"]));
 
-  // Get filtered sections based on current persona and GPU
+  
   let filteredGroups = $derived.by(() => {
     const persona = app.activePreset ?? "gamer";
     const gpu = app.hardware.gpu;
     return getFilteredSectionGroups(persona, gpu);
   });
 
-  // Count total items
+  
   let totalItems = $derived.by(() => {
     const persona = app.activePreset ?? "gamer";
     const gpu = app.hardware.gpu;
@@ -85,34 +85,34 @@
     expandedGroups = new Set();
   }
 
-  // Track progress data reactively (triggers re-render on changes)
+  
   let progressData = $derived(getProgressData());
 
-  // Handle checkbox change
+  
   function handleCheckbox(sectionId: string, itemId: string) {
     toggleItem(sectionId, itemId);
   }
 
-  // Check if item is done (reactive)
+  
   function isDone(sectionId: string, itemId: string): boolean {
-    // Access progressData to create reactive dependency
+    
     const _ = progressData.lastUpdated;
     return isCompleted(sectionId, itemId);
   }
 
-  // Handle reset for a section
+  
   function handleResetSection(sectionId: string) {
     resetSection(sectionId);
   }
 
-  // Handle reset all
+  
   function handleResetAll() {
     if (confirm("Reset all progress? This cannot be undone.")) {
       resetAll();
     }
   }
 
-  // Type for all possible item types
+  
   type AnyItem =
     | ManualStepItem
     | SettingItem
@@ -142,16 +142,16 @@
     };
   }
 
-  // Get progress for a section
+  
   function getProgress(sectionId: string, items: readonly AnyItem[]) {
-    // Access progressData to create reactive dependency
+    
     const _ = progressData.lastUpdated;
     return getProgressForItems(sectionId, items);
   }
 
-  // Get progress for a group (sum of visible sections)
+  
   function getGroupProgress(sections: readonly ManualStepSection[]) {
-    // Access progressData to create reactive dependency
+    
     const _ = progressData.lastUpdated;
     let completed = 0;
     let total = 0;
@@ -172,7 +172,7 @@
     };
   }
 
-  // Type guards for rendering
+  
   function isManualStepItem(item: AnyItem): item is ManualStepItem {
     return "step" in item && "check" in item && "why" in item;
   }
@@ -226,7 +226,7 @@
     return "tool" in item && "use" in item;
   }
 
-  // Copy to clipboard with feedback
+  
   let copiedId = $state<string | null>(null);
 
   async function copyLaunchOptions(launchOptions: string, gameId: string) {
@@ -237,7 +237,7 @@
         copiedId = null;
       }, 2000);
     } catch {
-      // Fallback for older browsers
+      
       const textarea = document.createElement("textarea");
       textarea.value = launchOptions;
       document.body.appendChild(textarea);
@@ -251,7 +251,7 @@
     }
   }
 
-  // Icon map
+  
   function getGroupIcon(groupId: string): string {
     switch (groupId) {
       case "windows":
@@ -679,7 +679,7 @@
             </div>
           {/each}
 
-          <!-- Video Resources -->
+          
           {#if group.videos && group.videos.length > 0}
             <div class="manual-steps__videos">
               <h4 class="manual-steps__videos-title">
@@ -734,4 +734,4 @@
   </div>
 </section>
 
-<!-- Styles are in manual-steps.styles.css -->
+

@@ -5,12 +5,8 @@
  * are essential for optimal gaming performance.
  */
 
-import type { PresetType, GpuType } from './types'
+import type { GpuType, PresetType } from './types'
 import { GPU_TYPES } from './types'
-
-// -----------------------------------------------------------------------------
-// Types
-// -----------------------------------------------------------------------------
 
 export interface ManualStepItem {
   readonly id: string
@@ -89,7 +85,7 @@ export interface VideoResource {
   readonly id: string
   readonly title: string
   readonly creator: string
-  readonly videoId: string // YouTube video ID
+  readonly videoId: string
   readonly description?: string
 }
 
@@ -113,10 +109,6 @@ export interface ManualStepSection {
     | readonly StreamingTroubleshootItem[]
     | readonly DiagnosticTool[]
 }
-
-// -----------------------------------------------------------------------------
-// Windows Display Settings
-// -----------------------------------------------------------------------------
 
 export const WINDOWS_DISPLAY_ALL: ManualStepSection = {
   id: 'windows-display',
@@ -170,10 +162,6 @@ export const WINDOWS_DISPLAY_PRO: ManualStepSection = {
     },
   ] as const,
 } as const
-
-// -----------------------------------------------------------------------------
-// NVIDIA Control Panel Settings
-// -----------------------------------------------------------------------------
 
 export const NVIDIA_GAMER: ManualStepSection = {
   id: 'nvidia-gamer',
@@ -380,10 +368,6 @@ export const NVIDIA_BENCHMARKER: ManualStepSection = {
   ] as const,
 } as const
 
-// -----------------------------------------------------------------------------
-// AMD Adrenalin Settings
-// -----------------------------------------------------------------------------
-
 export const AMD_GAMER: ManualStepSection = {
   id: 'amd-gamer',
   title: 'AMD Adrenalin Settings',
@@ -505,10 +489,6 @@ export const AMD_STREAMER: ManualStepSection = {
   ] as const,
 } as const
 
-// -----------------------------------------------------------------------------
-// BIOS Settings
-// -----------------------------------------------------------------------------
-
 export const BIOS_ALL: ManualStepSection = {
   id: 'bios-all',
   title: 'BIOS Settings',
@@ -598,10 +578,6 @@ export const BIOS_INTEL: ManualStepSection = {
     },
   ] as const,
 } as const
-
-// -----------------------------------------------------------------------------
-// Software Settings - Discord
-// -----------------------------------------------------------------------------
 
 export const DISCORD_GAMER: ManualStepSection = {
   id: 'discord-gamer',
@@ -703,10 +679,6 @@ export const DISCORD_STREAMER: ManualStepSection = {
   ] as const,
 } as const
 
-// -----------------------------------------------------------------------------
-// Software Settings - Steam
-// -----------------------------------------------------------------------------
-
 export const STEAM_GAMER: ManualStepSection = {
   id: 'steam-gamer',
   title: 'Steam',
@@ -780,10 +752,6 @@ export const STEAM_PRO_GAMER: ManualStepSection = {
   ] as const,
 } as const
 
-// -----------------------------------------------------------------------------
-// Software Settings - Browsers
-// -----------------------------------------------------------------------------
-
 export const BROWSERS_ALL: ManualStepSection = {
   id: 'browsers-all',
   title: 'Browser Settings',
@@ -833,10 +801,6 @@ export const BROWSERS_ALL: ManualStepSection = {
   ] as const,
 } as const
 
-// -----------------------------------------------------------------------------
-// Software Settings - RGB
-// -----------------------------------------------------------------------------
-
 export const RGB_PRO_GAMER: ManualStepSection = {
   id: 'rgb-pro-gamer',
   title: 'RGB Software',
@@ -885,10 +849,6 @@ export const RGB_GAMER: ManualStepSection = {
     },
   ] as const,
 } as const
-
-// -----------------------------------------------------------------------------
-// Pre-Flight Checklist
-// -----------------------------------------------------------------------------
 
 export const PREFLIGHT_ALL: ManualStepSection = {
   id: 'preflight-all',
@@ -978,10 +938,6 @@ export const PREFLIGHT_PRO: ManualStepSection = {
     },
   ] as const,
 } as const
-
-// -----------------------------------------------------------------------------
-// Troubleshooting - Hard-to-diagnose issues
-// -----------------------------------------------------------------------------
 
 export const TROUBLESHOOTING_WIFI_BLUETOOTH: ManualStepSection = {
   id: 'troubleshooting-wifi-bt',
@@ -1190,10 +1146,6 @@ export const TROUBLESHOOTING_CRASHES: ManualStepSection = {
   ] as const,
 } as const
 
-// -----------------------------------------------------------------------------
-// Peripheral Settings
-// -----------------------------------------------------------------------------
-
 export const PERIPHERAL_MOUSE_ALL: ManualStepSection = {
   id: 'peripheral-mouse-all',
   title: 'Mouse Settings',
@@ -1374,10 +1326,6 @@ export const PERIPHERAL_AUDIO_PRO: ManualStepSection = {
   ] as const,
 } as const
 
-// -----------------------------------------------------------------------------
-// Network Adapter Settings
-// -----------------------------------------------------------------------------
-
 export const NETWORK_ADAPTER_ALL: ManualStepSection = {
   id: 'network-adapter-all',
   title: 'Network Adapter Settings',
@@ -1456,10 +1404,6 @@ export const NETWORK_ADAPTER_PRO: ManualStepSection = {
     },
   ] as const,
 } as const
-
-// -----------------------------------------------------------------------------
-// Game Launch Options
-// -----------------------------------------------------------------------------
 
 export const GAME_LAUNCH_FPS: ManualStepSection = {
   id: 'game-launch-fps',
@@ -1566,10 +1510,6 @@ export const GAME_LAUNCH_MOBA: ManualStepSection = {
     },
   ] as const,
 } as const
-
-// -----------------------------------------------------------------------------
-// OBS/Streaming Settings (Streamer-only)
-// -----------------------------------------------------------------------------
 
 export const OBS_OUTPUT: ManualStepSection = {
   id: 'obs-output',
@@ -1774,10 +1714,6 @@ export const OBS_TROUBLESHOOTING: ManualStepSection = {
   ] as const,
 } as const
 
-// -----------------------------------------------------------------------------
-// Diagnostic Tools
-// -----------------------------------------------------------------------------
-
 export const DIAGNOSTIC_TOOLS_PERFORMANCE: ManualStepSection = {
   id: 'diagnostic-performance',
   title: 'Performance Diagnostics',
@@ -1897,10 +1833,6 @@ export const DIAGNOSTIC_TOOLS_CRASHES: ManualStepSection = {
   ] as const,
 } as const
 
-// -----------------------------------------------------------------------------
-// Section Groups for UI
-// -----------------------------------------------------------------------------
-
 export type SectionCategory =
   | 'windows'
   | 'gpu'
@@ -1921,10 +1853,6 @@ export interface SectionGroup {
   readonly sections: readonly ManualStepSection[]
   readonly videos?: readonly VideoResource[]
 }
-
-// -----------------------------------------------------------------------------
-// Video Resources
-// -----------------------------------------------------------------------------
 
 export const VIDEOS = {
   INTEL_SETTINGS: {
@@ -2057,10 +1985,6 @@ export const SECTION_GROUPS: readonly SectionGroup[] = [
   },
 ] as const
 
-// -----------------------------------------------------------------------------
-// Filter Functions
-// -----------------------------------------------------------------------------
-
 /**
  * Filter sections based on persona and GPU type
  * Intel GPUs don't have dedicated control panels, so GPU-specific sections are filtered out
@@ -2071,9 +1995,7 @@ export function filterSections(
   gpuType: GpuType,
 ): ManualStepSection[] {
   return sections.filter((section) => {
-    // Check hardware filter
     if (section.hardware) {
-      // Intel integrated GPUs don't have control panels like NVIDIA/AMD
       if (gpuType === GPU_TYPES.INTEL) {
         return false
       }
@@ -2082,7 +2004,6 @@ export function filterSections(
       }
     }
 
-    // Check persona filter
     if (section.personas && !section.personas.includes(persona)) {
       return false
     }

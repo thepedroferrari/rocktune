@@ -16,10 +16,10 @@
   } from '$lib/state.svelte'
   import CodeViewer from './CodeViewer.svelte'
 
-  // Bind to dialog element for showModal/close
+  
   let dialogEl: HTMLDialogElement | null = null
 
-  // Reactive: open/close modal based on state
+  
   $effect(() => {
     if (!dialogEl) return
 
@@ -64,7 +64,7 @@
     setEditedScript(content)
   }
 
-  // Active script is edited version if available, otherwise generated on-the-fly
+  
   let generatedScript = $derived(generateCurrentScript())
   let activeScript = $derived(app.script.edited ?? generatedScript)
 </script>
@@ -108,4 +108,4 @@
   </footer>
 </dialog>
 
-<!-- Styles are in preview-modal.styles.css (layer: components) -->
+

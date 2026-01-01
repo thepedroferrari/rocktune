@@ -41,7 +41,7 @@
     onEdit,
   }: Props = $props()
 
-  // Local state - activeMode derived from prop with local override capability
+  
   let localModeOverride = $state<ScriptMode | null>(null)
   let activeMode = $derived(localModeOverride ?? mode)
   let diffIndex = $state(0)
@@ -51,25 +51,25 @@
   let copyTimeout: ReturnType<typeof setTimeout> | null = null
   let diffPaneEl: HTMLDivElement | null = null
 
-  // Reset local override when prop changes
+  
   $effect(() => {
-    // When mode prop changes, clear local override
+    
     void mode
     localModeOverride = null
   })
 
-  // Initialize edit content when script changes
+  
   $effect(() => {
     if (!isEditing) {
       editContent = script
     }
   })
 
-  // Computed stats
+  
   let lines = $derived(script ? script.split('\n').length : 0)
   let sizeKb = $derived(script ? (new Blob([script]).size / 1024).toFixed(1) : '0.0')
 
-  // Computed diff
+  
   interface DiffLine {
     type: 'added' | 'removed' | 'unchanged'
     oldLineNum: number | null
@@ -86,7 +86,7 @@
 
     for (const part of changes) {
       const lines = part.value.split('\n')
-      // Remove trailing empty string from split
+      
       if (lines.length > 0 && lines[lines.length - 1] === '') {
         lines.pop()
       }
@@ -124,14 +124,14 @@
     return result
   })
 
-  // Diff targets (lines with changes)
+  
   let diffTargets = $derived(
     diffLines$
       .map((line, index) => ({ line, index }))
       .filter(({ line }) => line.type !== 'unchanged'),
   )
 
-  // Navigation visibility
+  
   let showNav = $derived(activeMode === 'diff' && diffTargets.length > 0)
 
   function setMode(newMode: ScriptMode) {
@@ -197,7 +197,7 @@
     downloadText(script, SCRIPT_FILENAME)
   }
 
-  // Cleanup
+  
   $effect(() => {
     return () => {
       if (copyTimeout) clearTimeout(copyTimeout)
@@ -262,10 +262,10 @@
   </header>
 
   <div class="body">
-    <!-- Current View -->
+    
     <pre class="pane" class:active={activeMode === 'current'}>{script || '// No script generated'}</pre>
 
-    <!-- Diff View -->
+    
     <div class="pane diff" class:active={activeMode === 'diff'} bind:this={diffPaneEl}>
       {#each diffLines$ as line, index (index)}
         <div
@@ -282,7 +282,7 @@
       {/each}
     </div>
 
-    <!-- Edit View -->
+    
     <textarea
       class="pane edit"
       class:active={activeMode === 'edit'}

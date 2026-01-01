@@ -15,7 +15,6 @@ if (!root) {
 
 const app = mount(RootApp, { target: root })
 
-// HMR support
 if (import.meta.hot) {
   import.meta.hot.dispose(() => {
     unmount(app)

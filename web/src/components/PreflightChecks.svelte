@@ -10,14 +10,14 @@
   import { PREFLIGHT_CHECKS, isPreflightVisible, type PreflightCheck } from '$lib/preflight'
   import { copyToClipboard } from '../utils/clipboard'
 
-  // Reactive: filter preflight checks based on hardware
+  
   let visibleChecks = $derived(
     PREFLIGHT_CHECKS.filter((check) =>
       isPreflightVisible(check, app.hardware.cpu, app.hardware.gpu),
     ),
   )
 
-  // Copy feedback state per card
+  
   let copyFeedback = $state<Record<string, string>>({})
 
   async function handleCopy(check: PreflightCheck) {
@@ -85,4 +85,4 @@
   </div>
 {/if}
 
-<!-- Styles are in preflight.styles.css (layer: components) -->
+

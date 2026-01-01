@@ -57,7 +57,7 @@
     onSelect,
   }: Props = $props();
 
-  // Risk label text
+  
   const riskLabels = {
     low: "Low",
     medium: "Medium",
@@ -73,7 +73,7 @@
       : riskLabels[riskLevel],
   );
 
-  // Spring physics state
+  
   let rotator: HTMLElement | undefined = $state();
   let springRotate = new Spring({ x: 0, y: 0 }, SPRING_PRESETS.INTERACTIVE);
   let springGlare = new Spring(
@@ -88,7 +88,7 @@
   let interacting = $state(false);
   let animationId: number | null = null;
 
-  // CSS custom properties for rendering
+  
   let pointerX = $state("50%");
   let pointerY = $state("50%");
   let pointerFromCenter = $state("0");
@@ -227,7 +227,7 @@
     onSelect(preset);
   }
 
-  // Cleanup animation on unmount
+  
   $effect(() => {
     return () => {
       if (animationId !== null) {
@@ -282,12 +282,12 @@
         {/if}
       </div>
 
-      <!-- Decorative intensity bar -->
+      
       <div class="preset-card__bar">
         <div class="bar-fill" style:--fill={`${intensity}%`}></div>
       </div>
 
-      <!-- Stats (label left, value right) -->
+      
       <dl class="preset-card__stats">
         {#if overheadLabel}
           <dt class="stat-label">Overhead</dt>
@@ -318,10 +318,10 @@
       </dl>
     </div>
 
-    <!-- Holographic layers -->
+    
     <div class="preset-card__shine"></div>
     <div class="preset-card__glare"></div>
   </div>
 </button>
 
-<!-- Styles are in presets.styles.css -->
+

@@ -34,7 +34,7 @@
   <p class="step-desc">Install companion software for your gaming gear</p>
 
   <div class="peripherals-grid">
-    <!-- Gear Section -->
+    
     <fieldset class="control-fieldset peripherals-fieldset peripherals-fieldset--gear">
       <legend class="control-legend">
         <span class="legend-badge legend-badge--peripherals">Gear</span>
@@ -90,7 +90,7 @@
       </div>
     </fieldset>
 
-    <!-- Monitors Section -->
+    
     <fieldset class="control-fieldset peripherals-fieldset peripherals-fieldset--monitors">
       <legend class="control-legend">
         <span class="legend-badge legend-badge--peripherals">Monitors</span>

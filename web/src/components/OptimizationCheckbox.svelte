@@ -21,11 +21,11 @@
 
   let { opt, onBeforeToggle }: Props = $props()
 
-  // Derived: is this optimization currently enabled
+  
   let isChecked = $derived(app.optimizations.has(opt.key))
 
   function handleChange() {
-    // If callback provided and returns false, don't toggle
+    
     if (onBeforeToggle && !onBeforeToggle(opt.key, isChecked)) {
       return
     }

@@ -235,7 +235,7 @@ export const OPTIMIZATION_TIERS = {
   SAFE: 'safe',
   CAUTION: 'caution',
   RISKY: 'risky',
-  LUDICROUS: 'ludicrous', // "You shouldn't, but here's the power"
+  LUDICROUS: 'ludicrous',
 } as const
 
 export type OptimizationTier = (typeof OPTIMIZATION_TIERS)[keyof typeof OPTIMIZATION_TIERS]
@@ -280,11 +280,11 @@ const SAFE_OPTIMIZATIONS = {
   SPOTLIGHT_DISABLE: 'spotlight_disable',
   FEEDBACK_DISABLE: 'feedback_disable',
   CLIPBOARD_SYNC: 'clipboard_sync',
-  // New GAP 16-17 optimizations
+
   ACCESSIBILITY_SHORTCUTS: 'accessibility_shortcuts',
   AUDIO_COMMUNICATIONS: 'audio_communications',
   AUDIO_SYSTEM_SOUNDS: 'audio_system_sounds',
-  // New competitive gaming optimizations
+
   INPUT_BUFFER: 'input_buffer',
   FILESYSTEM_PERF: 'filesystem_perf',
   DWM_PERF: 'dwm_perf',
@@ -299,22 +299,22 @@ const CAUTION_OPTIMIZATIONS = {
   ULTIMATE_PERF: 'ultimate_perf',
   SERVICES_TRIM: 'services_trim',
   DISK_CLEANUP: 'disk_cleanup',
-  // New gaming optimizations
+
   WPBT_DISABLE: 'wpbt_disable',
   QOS_GAMING: 'qos_gaming',
   NETWORK_THROTTLING: 'network_throttling',
   INTERRUPT_AFFINITY: 'interrupt_affinity',
   PROCESS_MITIGATION: 'process_mitigation',
-  // PS Module parity - Caution tier
+
   MMCSS_GAMING: 'mmcss_gaming',
   SCHEDULER_OPT: 'scheduler_opt',
   CORE_PARKING: 'core_parking',
   TIMER_REGISTRY: 'timer_registry',
   RSC_DISABLE: 'rsc_disable',
   SYSMAIN_DISABLE: 'sysmain_disable',
-  // New GAP 15 - Services
+
   SERVICES_SEARCH_OFF: 'services_search_off',
-  // New competitive gaming optimizations
+
   MEMORY_GAMING: 'memory_gaming',
   POWER_THROTTLE_OFF: 'power_throttle_off',
   PRIORITY_BOOST_OFF: 'priority_boost_off',
@@ -328,25 +328,18 @@ const RISKY_OPTIMIZATIONS = {
   IPV4_PREFER: 'ipv4_prefer',
   TEREDO_DISABLE: 'teredo_disable',
   NATIVE_NVME: 'native_nvme',
-  // New experimental/risky gaming optimizations
+
   SMT_DISABLE: 'smt_disable',
   AUDIO_EXCLUSIVE: 'audio_exclusive',
   TCP_OPTIMIZER: 'tcp_optimizer',
 } as const
 
-// =============================================================================
-// LUDICROUS TIER - "You shouldn't, but here's the power"
-// =============================================================================
-// These optimizations have REAL security implications or can brick your system.
-// Not auto-enabled for ANY profile. Requires explicit acknowledgment.
-// Each one has CVE links and scary-but-accurate warnings.
 const LUDICROUS_OPTIMIZATIONS = {
-  // Security mitigations that expose you to REAL vulnerabilities
-  SPECTRE_MELTDOWN_OFF: 'spectre_meltdown_off', // CVE-2017-5753, CVE-2017-5715, CVE-2017-5754
-  CORE_ISOLATION_OFF: 'core_isolation_off', // Disables VBS/HVCI - major security feature
-  // Extreme performance - may cause instability
-  KERNEL_MITIGATIONS_OFF: 'kernel_mitigations_off', // Disables all kernel exploit protections
-  DEP_OFF: 'dep_off', // Data Execution Prevention off - ancient exploits work again
+  SPECTRE_MELTDOWN_OFF: 'spectre_meltdown_off',
+  CORE_ISOLATION_OFF: 'core_isolation_off',
+
+  KERNEL_MITIGATIONS_OFF: 'kernel_mitigations_off',
+  DEP_OFF: 'dep_off',
 } as const
 
 export const OPTIMIZATION_KEYS = {

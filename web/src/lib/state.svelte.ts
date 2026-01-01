@@ -182,7 +182,6 @@ export function getFiltered(): [PackageKey, SoftwarePackage][] {
     const [key, pkg] = entry
     if (!isPackageKey(app.software, key)) return false
 
-    // Filter by category, selection, or recommended
     let matchesFilter: boolean
     if (isFilterAll(app.filter)) {
       matchesFilter = true
@@ -194,7 +193,6 @@ export function getFiltered(): [PackageKey, SoftwarePackage][] {
       matchesFilter = pkg.category === app.filter
     }
 
-    // Filter by search term
     const matchesSearch =
       !app.search ||
       pkg.name.toLowerCase().includes(searchLower) ||
@@ -232,7 +230,6 @@ export function toggleSoftware(key: PackageKey): boolean {
     app.selected.add(key)
   }
 
-  // Trigger reactivity by reassigning the Set
   app.selected = new Set(app.selected)
 
   emitAppEvent('software-selection-changed', { selected: Array.from(app.selected) })
@@ -261,7 +258,6 @@ export function setSelection(keys: readonly PackageKey[]): void {
 export function setSoftware(catalog: SoftwareCatalog): void {
   app.software = catalog
 
-  // Pre-select packages marked as selected in catalog
   const preSelected = new Set<PackageKey>()
   for (const [key, pkg] of Object.entries(catalog)) {
     if (!isPackageKey(catalog, key)) continue
@@ -339,10 +335,6 @@ export function setDnsProvider(provider: DnsProviderType): void {
   app.dnsProvider = provider
 }
 
-// ============================================================================
-// Optimization State Management
-// ============================================================================
-
 /**
  * Toggle an optimization on/off
  */
@@ -355,7 +347,6 @@ export function toggleOptimization(key: OptimizationKey): boolean {
     app.optimizations.add(key)
   }
 
-  // Trigger reactivity
   app.optimizations = new Set(app.optimizations)
   app.optimizationCount = app.optimizations.size
   return !wasEnabled
@@ -375,10 +366,6 @@ export function setOptimizations(keys: readonly OptimizationKey[]): void {
 export function getOptimizations(): OptimizationKey[] {
   return Array.from(app.optimizations)
 }
-
-// ============================================================================
-// Peripheral State Management
-// ============================================================================
 
 /**
  * Toggle a peripheral brand on/off
@@ -403,10 +390,6 @@ export function setPeripherals(types: readonly PeripheralType[]): void {
   app.peripherals = new Set(types)
 }
 
-// ============================================================================
-// Monitor Software State Management
-// ============================================================================
-
 /**
  * Toggle a monitor software brand on/off
  */
@@ -430,10 +413,6 @@ export function setMonitorSoftware(types: readonly MonitorSoftwareType[]): void 
   app.monitorSoftware = new Set(types)
 }
 
-// ============================================================================
-// Script State Management
-// ============================================================================
-
 export function setScriptMode(mode: ScriptMode): void {
   app.script.mode = mode
 }
@@ -444,10 +423,6 @@ export function setScriptMode(mode: ScriptMode): void {
 export function setEditedScript(script: string | null): void {
   app.script.edited = script
 }
-
-// ============================================================================
-// UI State Management
-// ============================================================================
 
 /**
  * Open the preview modal
@@ -507,16 +482,11 @@ export function isRestorePointAcknowledged(): boolean {
   return app.ui.restorePointAcknowledged
 }
 
-// ============================================================================
-// Reactive Script Generation
-// ============================================================================
-
 /**
  * Build SelectionState from current app state
  * Used for script generation
  */
 function buildSelectionState(): SelectionState {
-  // Build hardware profile with peripherals and monitor software from Sets
   const hardware: HardwareProfile = {
     cpu: app.hardware.cpu,
     gpu: app.hardware.gpu,
@@ -526,7 +496,6 @@ function buildSelectionState(): SelectionState {
 
   const packages = Array.from(app.selected)
 
-  // Find packages in selection that don't exist in catalog
   const missingPackages = packages.filter((key) => !(key in app.software))
 
   return {
@@ -542,7 +511,6 @@ function buildSelectionState(): SelectionState {
  * Call this in a $derived to get auto-updating script
  */
 export function generateCurrentScript(): string {
-  // Early return if no catalog loaded
   if (Object.keys(app.software).length === 0) {
     return ''
   }

@@ -12,12 +12,12 @@
 
   let { key, pkg, selected, onToggle, overlayPosition = 'right' }: Props = $props()
 
-  // Derived state
+  
   let ariaLabel = $derived(
     `${pkg.name}: ${pkg.desc ?? pkg.category}. Press Enter or Space to ${selected ? 'remove from' : 'add to'} selection.`
   )
 
-  // Icon type determination
+  
   type LogoType = 'sprite' | 'cdn' | 'emoji' | 'fallback'
   let logoType: LogoType = $derived.by(() => {
     if (pkg.icon) {
@@ -76,7 +76,7 @@
   onmouseenter={handleMouseEnter}
   onmouseleave={handleMouseLeave}
 >
-  <!-- Logo -->
+  
   <figure class="logo">
     {#if logoType === 'sprite'}
       <svg class="sprite-icon" role="img" aria-label={`${pkg.name} icon`}>
@@ -102,12 +102,12 @@
     {/if}
   </figure>
 
-  <!-- Name -->
+  
   <span class="name">{pkg.name}</span>
 
-  <!-- Expanded overlay (company card style - one continuous element) -->
+  
   <div class="card-overlay">
-    <!-- Left: logo + name -->
+    
     <div class="overlay-card">
       <figure class="overlay-logo">
         {#if logoType === 'sprite'}
@@ -131,7 +131,7 @@
       <span class="overlay-name">{pkg.name}</span>
     </div>
 
-    <!-- Right: info -->
+    
     <div class="overlay-info">
       <div class="overlay-header">
         <h3 class="overlay-title">{pkg.name}</h3>
@@ -142,7 +142,7 @@
       {/if}
     </div>
 
-    <!-- Bottom: winget + action -->
+    
     <div class="overlay-footer">
       <div class="overlay-winget" title="winget install --id &quot;{pkg.id}&quot;">
         <span class="overlay-winget-label">winget:</span>
@@ -171,7 +171,7 @@
     </div>
   </div>
 
-  <!-- Hidden for list view -->
+  
   <span class="list-desc">{pkg.desc ?? ''}</span>
   <span class="list-category">{pkg.category}</span>
 </div>

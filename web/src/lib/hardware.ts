@@ -165,7 +165,6 @@ export function isDriverCardVisible(card: DriverCard, cpu: CpuType, gpu: GpuType
   const matchesCpu = card.cpuTypes.length === 0 || card.cpuTypes.includes(cpu)
   const matchesGpu = card.gpuTypes.length === 0 || card.gpuTypes.includes(gpu)
 
-  // Card must match the relevant hardware type
   if (card.badge === 'cpu') return matchesCpu
   if (card.badge === 'gpu') return matchesGpu
 
