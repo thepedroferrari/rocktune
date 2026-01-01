@@ -917,7 +917,12 @@ $packages = @(
         DefaultPaths = @(
             "C:\Program Files\LatencyMon\LatencyMon.exe",
             "C:\Program Files\LatencyMon\LatMon.exe",
-            "C:\Program Files (x86)\LatencyMon\LatencyMon.exe"
+            "C:\Program Files (x86)\LatencyMon\LatencyMon.exe",
+            "C:\Program Files (x86)\LatencyMon\LatMon.exe",
+            "C:\Program Files\Resplendence\LatencyMon\LatencyMon.exe",
+            "C:\Program Files\Resplendence\LatencyMon\LatMon.exe",
+            "C:\Program Files (x86)\Resplendence\LatencyMon\LatencyMon.exe",
+            "C:\Program Files (x86)\Resplendence\LatencyMon\LatMon.exe"
         )
         Configure = @(
             "Run for 5 minutes while Superposition is running",
@@ -1000,7 +1005,20 @@ try {
 
         if ($package["Path"]) {
             Write-Note "Launching $($package.Name)..."
-            Start-Process -FilePath $package["Path"] | Out-Null
+            try {
+                $process = Start-Process -FilePath $package["Path"] -PassThru -ErrorAction Stop
+                Start-Sleep -Milliseconds 300
+                if ($process -and -not $process.HasExited) {
+                    Write-Ok "$($package.Name) launched (PID $($process.Id))."
+                } else {
+                    Write-Warn "$($package.Name) launched but exited immediately. Try starting it manually:"
+                    Write-Warn "  $($package["Path"])"
+                }
+            } catch {
+                Write-Warn "Failed to launch $($package.Name). Try starting it manually:"
+                Write-Warn "  $($package["Path"])"
+                Write-Warn "Error: $($_.Exception.Message)"
+            }
         } else {
             Write-Warn "Skipping launch for $($package.Name) (path not found)."
         }
