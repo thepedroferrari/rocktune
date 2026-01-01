@@ -19,6 +19,14 @@
     avoids silently writing unknown settings and keeps the process reproducible.
 
     Run this script in an elevated PowerShell (Run as Administrator).
+.USAGE
+    1) Right-click this file and select "Run as administrator".
+    2) Let the script install tools via winget if missing.
+    3) Follow the configuration checklist printed for each tool.
+    4) Run the benchmark before/after your changes and export results.
+
+    If double-clicking closes the window immediately, run:
+      powershell -ExecutionPolicy Bypass -File .\benchmark-setup.ps1
 .NOTES
     Requires Administrator because winget installation and app installs may
     require elevation on some systems. Also uses the Microsoft Store fallback
@@ -38,6 +46,12 @@ $ErrorActionPreference = "Stop"
 $script:HadFailures = $false
 
 function Write-Section {
+    <#
+    .SYNOPSIS
+        Writes a high-visibility section header to the console.
+    .DESCRIPTION
+        Used to separate major phases such as installs, configuration, and launch.
+    #>
     param(
         [Parameter(Mandatory=$true)]
         [string]$Title
@@ -48,6 +62,12 @@ function Write-Section {
 }
 
 function Write-Note {
+    <#
+    .SYNOPSIS
+        Writes informational messages in a consistent format.
+    .DESCRIPTION
+        These messages are non-fatal and describe what the script is doing.
+    #>
     param(
         [Parameter(Mandatory=$true)]
         [string]$Message
@@ -57,6 +77,12 @@ function Write-Note {
 }
 
 function Write-Warn {
+    <#
+    .SYNOPSIS
+        Writes warnings that do not stop execution.
+    .DESCRIPTION
+        Warnings indicate reduced automation or missing optional data.
+    #>
     param(
         [Parameter(Mandatory=$true)]
         [string]$Message
@@ -66,6 +92,12 @@ function Write-Warn {
 }
 
 function Write-Fail {
+    <#
+    .SYNOPSIS
+        Writes a failure message and marks the run as having errors.
+    .DESCRIPTION
+        The script will still continue to the exit prompt for transparency.
+    #>
     param(
         [Parameter(Mandatory=$true)]
         [string]$Message
@@ -76,6 +108,12 @@ function Write-Fail {
 }
 
 function Write-Ok {
+    <#
+    .SYNOPSIS
+        Writes a success message.
+    .DESCRIPTION
+        Used to confirm expected outcomes like successful installs.
+    #>
     param(
         [Parameter(Mandatory=$true)]
         [string]$Message
@@ -85,6 +123,13 @@ function Write-Ok {
 }
 
 function Wait-ForUserExit {
+    <#
+    .SYNOPSIS
+        Always waits for a user key press before exiting.
+    .DESCRIPTION
+        This keeps the console open for users who double-click the script
+        and would otherwise lose the output.
+    #>
     # Always pause so the user can read output, even on failure.
     Write-Host ""
     Write-Host "Press any key to exit..." -ForegroundColor Cyan
@@ -182,6 +227,13 @@ function Install-WingetIfMissing {
 # ----------------------------
 
 function Test-WingetPackageInstalled {
+    <#
+    .SYNOPSIS
+        Checks if a package is installed via winget list output.
+    .DESCRIPTION
+        Uses "winget list" and matches the package identifier in the output.
+        This works even when winget cannot reliably report install locations.
+    #>
     param(
         [Parameter(Mandatory=$true)]
         [string]$PackageId
@@ -200,6 +252,13 @@ function Test-WingetPackageInstalled {
 }
 
 function Install-WingetPackage {
+    <#
+    .SYNOPSIS
+        Installs a package by winget ID, with verification.
+    .DESCRIPTION
+        Some winget installers return non-zero exit codes even when successful.
+        This function re-checks install state to avoid false negatives.
+    #>
     param(
         [Parameter(Mandatory=$true)]
         [string]$PackageId,
@@ -232,6 +291,13 @@ function Install-WingetPackage {
 }
 
 function Get-RegistryInstallLocations {
+    <#
+    .SYNOPSIS
+        Finds install locations using registry uninstall entries.
+    .DESCRIPTION
+        This is a reliable fallback when installers register their paths.
+        It checks both 64-bit and 32-bit views to cover legacy installers.
+    #>
     param(
         [Parameter(Mandatory=$true)]
         [string]$DisplayNamePattern
@@ -265,7 +331,73 @@ function Get-RegistryInstallLocations {
     return $locations | Select-Object -Unique
 }
 
+function Get-WingetInstalledLocation {
+    <#
+    .SYNOPSIS
+        Attempts to read the installed location from winget JSON output.
+    .DESCRIPTION
+        Newer winget versions can output JSON for "winget list".
+        When present, the JSON may include an install location field.
+        This is not guaranteed across versions, so this is best-effort only.
+    .OUTPUTS
+        [string] Install location path or $null if not available.
+    #>
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$PackageId
+    )
+
+    try {
+        $jsonText = winget list --id $PackageId --source winget --accept-source-agreements --output json 2>&1
+        if ($LASTEXITCODE -ne 0) {
+            return $null
+        }
+
+        $data = $jsonText | ConvertFrom-Json -ErrorAction Stop
+    } catch {
+        return $null
+    }
+
+    $packages = @()
+    if ($data.Sources) {
+        foreach ($source in $data.Sources) {
+            if ($source.Packages) {
+                $packages += $source.Packages
+            }
+        }
+    } elseif ($data.Packages) {
+        $packages += $data.Packages
+    }
+
+    $match = $packages | Where-Object {
+        $_.PackageIdentifier -eq $PackageId -or $_.Id -eq $PackageId
+    } | Select-Object -First 1
+
+    if (-not $match) {
+        return $null
+    }
+
+    $locationProps = @("InstallLocation", "InstalledLocation", "Location", "InstallPath", "InstalledPath")
+    foreach ($prop in $locationProps) {
+        if ($match.PSObject.Properties.Name -contains $prop -and $match.$prop) {
+            return $match.$prop
+        }
+    }
+
+    return $null
+}
+
 function Resolve-ExecutablePath {
+    <#
+    .SYNOPSIS
+        Resolves the full path to a tool executable.
+    .DESCRIPTION
+        Uses a multi-step strategy:
+          1) Known default paths (fast and deterministic)
+          2) Winget JSON install location (best effort)
+          3) Registry uninstall entries (best effort)
+          4) Limited folder scan under known vendor roots
+    #>
     param(
         [Parameter(Mandatory=$true)]
         [string]$ExeName,
@@ -274,13 +406,17 @@ function Resolve-ExecutablePath {
         [string[]]$DefaultCandidates,
 
         [Parameter(Mandatory=$true)]
-        [string]$RegistryNamePattern
+        [string]$RegistryNamePattern,
+
+        [Parameter(Mandatory=$true)]
+        [string]$PackageId
     )
 
     # Winget does not reliably expose install paths for all packages, so we use:
     # 1) Known default paths (fast and predictable)
-    # 2) Registry uninstall entries (best effort)
-    # 3) Limited directory search under known vendor roots
+    # 2) Winget JSON install location (best effort)
+    # 3) Registry uninstall entries (best effort)
+    # 4) Limited directory search under known vendor roots
     #
     # This keeps the script deterministic while still finding installs that
     # do not use the defaults.
@@ -292,7 +428,26 @@ function Resolve-ExecutablePath {
         }
     }
 
-    # 2) Check install locations reported in the registry.
+    # 2) Check winget JSON install location (if supported by the local winget).
+    $wingetLocation = Get-WingetInstalledLocation -PackageId $PackageId
+    if ($wingetLocation -and (Test-Path $wingetLocation)) {
+        $wingetItem = Get-Item $wingetLocation -ErrorAction SilentlyContinue
+        if ($wingetItem -and -not $wingetItem.PSIsContainer) {
+            return $wingetLocation
+        }
+
+        $wingetExe = Join-Path $wingetLocation $ExeName
+        if (Test-Path $wingetExe) {
+            return $wingetExe
+        }
+
+        $wingetBinExe = Join-Path (Join-Path $wingetLocation "bin") $ExeName
+        if (Test-Path $wingetBinExe) {
+            return $wingetBinExe
+        }
+    }
+
+    # 3) Check install locations reported in the registry.
     $registryLocations = Get-RegistryInstallLocations -DisplayNamePattern $RegistryNamePattern
     foreach ($location in $registryLocations) {
         $exePath = Join-Path $location $ExeName
@@ -307,7 +462,7 @@ function Resolve-ExecutablePath {
         }
     }
 
-    # 3) Last resort: search a specific root if it exists.
+    # 4) Last resort: search a specific root if it exists.
     # This is intentionally limited to known vendor roots to avoid a full disk scan.
     foreach ($location in $registryLocations) {
         if (Test-Path $location) {
@@ -338,8 +493,15 @@ Write-Note "These tools were chosen because they are repeatable and measurable:"
 Write-Note "- CapFrameX: frametime capture and percentile lows (more honest than avg FPS alone)."
 Write-Note "- Superposition: fixed GPU workload with repeatable scoring."
 Write-Note "- LatencyMon: validates DPC/ISR latency to explain micro-stutter."
+Write-Note "Windows 10 and 11 use the same default install paths for these tools."
+Write-Note "The script targets 64-bit installs and still checks legacy locations for safety."
 
 $packages = @(
+    # Each package entry defines:
+    #   - Winget ID for installation
+    #   - Default executable paths for x64 installs
+    #   - Config checklist steps for repeatable results
+    #   - Whether to launch automatically when found
     @{
         Id = "CXWorld.CapFrameX"
         Name = "CapFrameX"
@@ -426,7 +588,8 @@ try {
     foreach ($package in $packages) {
         $path = Resolve-ExecutablePath -ExeName $package.ExeName `
             -DefaultCandidates $package.DefaultPaths `
-            -RegistryNamePattern $package.RegistryPattern
+            -RegistryNamePattern $package.RegistryPattern `
+            -PackageId $package.Id
 
         if ($path) {
             Write-Ok "$($package.Name) executable found at: $path"
