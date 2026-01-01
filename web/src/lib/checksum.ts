@@ -13,7 +13,10 @@ export type Sha256Options = {
   includeBom?: boolean
 }
 
-export async function generateSHA256(content: string, options: Sha256Options = {}): Promise<string> {
+export async function generateSHA256(
+  content: string,
+  options: Sha256Options = {},
+): Promise<string> {
   const payload = options.includeBom && !content.startsWith('\ufeff') ? `\ufeff${content}` : content
   const encoder = new TextEncoder()
   const data = encoder.encode(payload)

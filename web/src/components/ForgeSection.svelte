@@ -28,7 +28,6 @@
 
   let checksum = $state("");
   let copied = $state(false);
-  let showVerifyTip = $state(false);
 
 
   $effect(() => {
@@ -73,10 +72,6 @@
       setTimeout(() => (copied = false), 2000);
     }
   }
-
-  function toggleVerifyTip() {
-    showVerifyTip = !showVerifyTip;
-  }
 </script>
 
 <section id="generate" class="step step--forge">
@@ -99,6 +94,93 @@
   <PreflightChecks />
   <ProfileActions />
 
+  {#if checksum}
+    <section class="verification-hud">
+      <header class="verification-hud__header">
+        <svg
+          class="verification-hud__icon"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          <path d="m9 12 2 2 4-4" />
+        </svg>
+        <h3 class="verification-hud__title">VERIFY BEFORE YOU RUN</h3>
+      </header>
+
+      <div class="verification-hud__content">
+        <div class="hash-panel">
+          <span class="hash-panel__label">SHA-256 Checksum</span>
+          <code class="hash-panel__value" title={checksum}>{checksum}</code>
+          <button
+            type="button"
+            class="hash-panel__btn"
+            title={copied ? "Copied!" : "Copy SHA-256 hash"}
+            onclick={handleCopyHash}
+          >
+            {#if copied}
+              <svg
+                class="icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="m9 12 2 2 4-4" />
+              </svg>
+              Copied
+            {:else}
+              <svg
+                class="icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <rect x="9" y="9" width="13" height="13" rx="2" />
+                <path
+                  d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+                />
+              </svg>
+              Copy Hash
+            {/if}
+          </button>
+        </div>
+
+        <div class="verify-instructions">
+          <details class="verify-details">
+            <summary class="verify-summary">How to verify manually</summary>
+            <div class="verify-steps">
+              <div class="verify-step">
+                <span class="verify-step__num">1</span>
+                <div class="verify-step__content">
+                  <p class="verify-step__label">
+                    Run in PowerShell (same folder as download):
+                  </p>
+                  <code class="verify-step__command"
+                    >Get-FileHash .\rocktune-setup.ps1 -Algorithm SHA256 |
+                    Select-Object -ExpandProperty Hash</code
+                  >
+                </div>
+              </div>
+              <div class="verify-step">
+                <span class="verify-step__num">2</span>
+                <div class="verify-step__content">
+                  <p class="verify-step__label">Expected output:</p>
+                  <code class="verify-step__expected">{checksum}</code>
+                </div>
+              </div>
+              <p class="verify-result">
+                If they match exactly, your file is authentic and unmodified.
+              </p>
+            </div>
+          </details>
+        </div>
+      </div>
+    </section>
+  {/if}
 
   <section class="transparency-zone" id="download">
 
@@ -236,110 +318,6 @@
         Self-Contained
       </span>
     </div>
-
-    {#if checksum}
-      <section class="verification-block">
-        <header class="hash-header">
-          <svg
-            class="hash-icon"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.5"
-          >
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-            <path d="m9 12 2 2 4-4" />
-          </svg>
-          <span class="hash-label">SHA-256 Checksum</span>
-        </header>
-
-        <div class="hash-display">
-          <code class="hash-value" title={checksum}>{checksum}</code>
-          <div class="hash-actions">
-            <button
-              type="button"
-              class="hash-btn"
-              title={copied ? "Copied!" : "Copy hash"}
-              onclick={handleCopyHash}
-            >
-              {#if copied}
-                <svg
-                  class="icon"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <path d="m9 12 2 2 4-4" />
-                </svg>
-                Copied
-              {:else}
-                <svg
-                  class="icon"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <rect x="9" y="9" width="13" height="13" rx="2" />
-                  <path
-                    d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
-                  />
-                </svg>
-                Copy Hash
-              {/if}
-            </button>
-            <button
-              type="button"
-              class="hash-btn hash-btn--verify"
-              class:active={showVerifyTip}
-              title="How to verify"
-              onclick={toggleVerifyTip}
-            >
-              <svg
-                class="icon"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <circle cx="12" cy="12" r="10" />
-                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-                <line x1="12" y1="17" x2="12.01" y2="17" />
-              </svg>
-              How to Verify
-            </button>
-          </div>
-        </div>
-
-        {#if showVerifyTip}
-          <article class="verify-panel">
-            <div class="verify-step">
-              <span class="step-num">1</span>
-              <div class="step-content">
-                <p class="step-label">
-                  Run in PowerShell (same folder as download):
-                </p>
-                <code class="step-command"
-                  >Get-FileHash .\rocktune-setup.ps1 -Algorithm SHA256 |
-                  Select-Object -ExpandProperty Hash</code
-                >
-              </div>
-            </div>
-            <div class="verify-step">
-              <span class="step-num">2</span>
-              <div class="step-content">
-                <p class="step-label">Expected output:</p>
-                <code class="step-expected">{checksum}</code>
-              </div>
-            </div>
-            <p class="verify-result">
-              If they match exactly, your file is authentic and unmodified.
-            </p>
-          </article>
-        {/if}
-      </section>
-    {/if}
 
     <footer class="provenance">
       <a

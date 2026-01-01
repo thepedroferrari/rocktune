@@ -271,17 +271,15 @@
     <PresetSection />
   </section>
 
-
   <HardwareSection />
 
 
-  <PeripheralsSection />
+    <PeripheralsSection />
 
 
-  <OptimizationsSection />
+    <OptimizationsSection />
 
-
-  <section id="software" class="step step--arsenal">
+    <section id="software" class="step step--arsenal">
     <header class="step-banner">
       <div class="step-banner__marker">4</div>
       <div class="step-banner__content">
@@ -351,8 +349,7 @@
         </a>
       </div>
     {/if}
-  </section>
-
+    </section>
 
   <ForgeSection />
 
