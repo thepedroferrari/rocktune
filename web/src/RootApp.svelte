@@ -184,7 +184,7 @@
         switch (e.message) {
           case 'OFFLINE':
             error = cached
-              ? '📡 You're offline. Using cached catalog.'
+              ? '📡 You\'re offline. Using cached catalog.'
               : '📡 No internet connection. Please connect and try again.'
             break
 
