@@ -6,7 +6,7 @@
    * Sharp angles, neon glows, one bold message, instant understanding.
    */
 
-  import { PRESETS, PRESET_META, PRESET_ORDER } from '$lib/presets';
+  import { PRESETS, PRESET_META, PRESET_ORDER } from "$lib/presets";
   import {
     app,
     setActivePreset,
@@ -14,27 +14,21 @@
     setRecommendedPackages,
     setFilter,
     setOptimizations,
-  } from '$lib/state.svelte';
+  } from "$lib/state.svelte";
   import {
     isPackageKey,
     type PackageKey,
     type PresetType,
     FILTER_RECOMMENDED,
-  } from '$lib/types';
+  } from "$lib/types";
 
-  /** Profile badge data with OKLCH colors matching rarity */
+  /** Profile badge data - GAMER is the default/highlighted choice */
   const PROFILE_BADGES = PRESET_ORDER.map((id) => {
     const meta = PRESET_META[id];
-    const hueMap: Record<string, number> = {
-      epic: 300,      
-      uncommon: 160,  
-      rare: 240,      
-      legendary: 85,  
-    };
     return {
       id,
       label: meta.label.toUpperCase(),
-      hue: hueMap[meta.rarity] ?? 200,
+      isDefault: id === "gamer",
     };
   });
 
@@ -49,22 +43,42 @@
   function selectAndScroll(presetId: PresetType) {
     const config = PRESETS[presetId];
 
-    
     setActivePreset(presetId);
     setSelection(getDefaultSelection());
     setRecommendedPackages(config.software);
     setFilter(FILTER_RECOMMENDED);
     setOptimizations(config.opts);
 
-    
-    document.getElementById('quick-start')?.scrollIntoView({ behavior: 'smooth' });
+    document
+      .getElementById("quick-start")
+      ?.scrollIntoView({ behavior: "smooth" });
+  }
+
+  /** Check if user prefers reduced motion */
+  const prefersReducedMotion =
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /** 3D tilt effect on mouse move (Codrops-style) */
+  function handleBadgeMouseMove(event: MouseEvent) {
+    if (prefersReducedMotion) return;
+    const el = event.currentTarget as HTMLElement;
+    const rect = el.getBoundingClientRect();
+    const x = (event.clientX - rect.left) / rect.width - 0.5;
+    const y = (event.clientY - rect.top) / rect.height - 0.5;
+    el.style.transform = `perspective(800px) rotateY(${x * 15}deg) rotateX(${-y * 15}deg) translateY(-3px)`;
+  }
+
+  /** Reset tilt on mouse leave */
+  function handleBadgeMouseLeave(event: MouseEvent) {
+    if (prefersReducedMotion) return;
+    const el = event.currentTarget as HTMLElement;
+    el.style.transform = "";
   }
 </script>
 
 <header class="hero-fold">
-  
   <div class="hero-content">
-    
     <div class="hero-title">
       <h1 class="hero-logo">ROCKTUNE</h1>
 
@@ -86,10 +100,19 @@
           class="proof-chip"
           title="Built from commit {__BUILD_COMMIT__} on {__BUILD_DATE__}"
         >
-          <svg class="chip-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+          <svg
+            class="chip-icon"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <path
+              d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"
+            />
           </svg>
-          <span class="chip-label">Build: {__BUILD_COMMIT__.substring(0, 7)}</span>
+          <span class="chip-label"
+            >Build: {__BUILD_COMMIT__.substring(0, 7)}</span
+          >
         </a>
 
         <a
@@ -99,18 +122,16 @@
           class="proof-chip"
           title="MIT License - Free to use, modify, and distribute"
         >
-          <svg class="chip-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M9 4l-2 2H5v2h14V6h-2l-2-2H9zm10 4H5v12h14V8z"/>
+          <svg
+            class="chip-icon"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <path d="M9 4l-2 2H5v2h14V6h-2l-2-2H9zm10 4H5v12h14V8z" />
           </svg>
           <span class="chip-label">MIT License</span>
         </a>
-
-        <span class="proof-chip proof-chip--static" title="No installer - just a readable PowerShell script">
-          <svg class="chip-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11zM8 15.01l1.41 1.41L11 14.84V19h2v-4.16l1.59 1.59L16 15.01 12.01 11 8 15.01z"/>
-          </svg>
-          <span class="chip-label">Script only</span>
-        </span>
 
         <a
           href="https://github.com/thepedroferrari/rocktune"
@@ -119,18 +140,42 @@
           class="proof-chip"
           title="Open source on GitHub - inspect the code"
         >
-          <svg class="chip-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+          <svg
+            class="chip-icon"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <path
+              d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"
+            />
           </svg>
           <span class="chip-label">Open source</span>
+        </a>
+
+        <a
+          href="#verification-hud"
+          class="proof-chip"
+          title="SHA-256 checksum available for verification"
+        >
+          <svg
+            class="chip-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            aria-hidden="true"
+          >
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            <path d="m9 12 2 2 4-4" />
+          </svg>
+          <span class="chip-label">SHA-256</span>
         </a>
       </div>
     </div>
 
-    
     <aside class="hero-card">
       <div class="stats-panel">
-        
         <div class="panel-corner panel-corner--tl"></div>
         <div class="panel-corner panel-corner--br"></div>
 
@@ -142,12 +187,12 @@
           <div class="stat-line">
             <span class="stat-label">Network lag</span>
             <span class="stat-dots"></span>
-            <span class="stat-value">FIXED</span>
+            <span class="stat-value">OPTIMIZED</span>
           </div>
           <div class="stat-line">
             <span class="stat-label">Background noise</span>
             <span class="stat-dots"></span>
-            <span class="stat-value">GONE</span>
+            <span class="stat-value">REDUCED</span>
           </div>
           <div class="stat-line">
             <span class="stat-label">Windows tracking</span>
@@ -160,7 +205,7 @@
           <div class="stat-line stat-line--highlight">
             <span class="stat-label">Micro-stutters</span>
             <span class="stat-dots"></span>
-            <span class="stat-value stat-value--accent">GONE</span>
+            <span class="stat-value stat-value--accent">MINIMIZED</span>
           </div>
           <div class="stat-line stat-line--highlight">
             <span class="stat-label">Frame times</span>
@@ -175,22 +220,11 @@
         </div>
 
         <footer class="panel-footer">
-          <p class="trust-line">
-            Free ·
-            <a
-              href="https://github.com/thepedroferrari/rocktune"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Open source
-            </a>
-            · Reversible
-          </p>
+          <p class="trust-line">Free · Open source · Reversible · Secure</p>
         </footer>
       </div>
     </aside>
 
-    
     <div class="hero-cta">
       <p class="profile-prompt">WHO ARE YOU?</p>
       <div class="profile-badges">
@@ -198,8 +232,10 @@
           <button
             type="button"
             class="profile-badge"
-            style="--badge-hue: {badge.hue}"
+            class:profile-badge--default={badge.isDefault}
             onclick={() => selectAndScroll(badge.id)}
+            onmousemove={handleBadgeMouseMove}
+            onmouseleave={handleBadgeMouseLeave}
           >
             {badge.label}
           </button>
@@ -208,7 +244,6 @@
     </div>
   </div>
 
-  
   <a href="#quick-start" class="scroll-indicator">
     <span class="scroll-text">CUSTOMIZE YOUR BUILD</span>
     <svg
@@ -225,7 +260,6 @@
 </header>
 
 <style>
-  
   .hero-fold {
     --fold-bg: oklch(0.13 0.02 285);
     --fold-ink: oklch(0.96 0.01 285);
@@ -242,7 +276,6 @@
     --fold-border: oklch(0.28 0.02 285);
     --fold-glass: oklch(0.14 0.02 285 / 0.8);
 
-    
     --clip-rog: polygon(
       0 0,
       calc(100% - 20px) 0,
@@ -264,7 +297,6 @@
     overflow: hidden;
   }
 
-  
   .hero-fold::before {
     content: "";
     position: absolute;
@@ -279,7 +311,6 @@
     pointer-events: none;
   }
 
-  
   .hero-fold::after {
     content: "";
     position: absolute;
@@ -305,14 +336,13 @@
     }
   }
 
-  
   .hero-content {
     display: grid;
     grid-template-columns: 1fr;
     grid-template-areas:
-      'title'
-      'card'
-      'cta';
+      "title"
+      "card"
+      "cta";
     gap: var(--space-xl);
     max-width: 1200px;
     margin: 0 auto;
@@ -324,19 +354,18 @@
     .hero-content {
       grid-template-columns: 1fr 1fr;
       grid-template-areas:
-        'title card'
-        'cta   cta';
+        "title card"
+        "cta   cta";
       align-items: end;
       gap: var(--space-xl) var(--space-2xl);
     }
   }
 
-  
   .hero-title {
     grid-area: title;
     display: flex;
     flex-direction: column;
-    gap: var(--space-md);
+    align-self: center;
   }
 
   .hero-logo {
@@ -344,9 +373,9 @@
     font-size: clamp(3rem, 8vw, 5rem);
     font-weight: 900;
     letter-spacing: 0.06em;
-    color: var(--fold-accent);
-    margin: 0;
     line-height: 1;
+    color: var(--fold-accent);
+    margin-left: -2px;
     text-shadow:
       0 0 30px var(--fold-accent-glow),
       0 0 60px oklch(0.85 0.2 102 / 30%);
@@ -354,7 +383,7 @@
   }
 
   .hero-headline {
-    margin-top: var(--space-sm);
+    margin-top: -0.75em;
   }
 
   .headline-main {
@@ -362,14 +391,13 @@
     font-size: clamp(2rem, 5vw, 3.5rem);
     font-weight: 800;
     color: var(--fold-ink);
-    margin: 0;
     line-height: 1.1;
     letter-spacing: 0.02em;
     animation: fadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
   }
 
   .hero-tagline {
-    margin-top: var(--space-xs);
+    margin-top: var(--space-lg);
   }
 
   .tagline-primary {
@@ -480,66 +508,91 @@
     outline-offset: 2px;
   }
 
-
   .hero-cta {
     grid-area: cta;
     text-align: center;
-    padding-top: var(--space-lg);
+    padding-top: var(--space-2xl);
+    margin-top: var(--space-lg);
     border-top: 1px solid var(--fold-border);
     animation: fadeSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.65s both;
   }
 
   .profile-prompt {
     font-family: var(--font-display);
-    font-size: 1.25rem;
-    font-weight: 700;
-    letter-spacing: 0.15em;
-    color: oklch(0.75 0.02 285);
-    text-shadow:
-      0 0 30px oklch(0.95 0.01 285 / 0.6),
-      0 0 60px oklch(0.95 0.01 285 / 0.3);
+    font-size: 1.5rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    color: oklch(0.65 0.01 285);
+    text-shadow: 0 1px 0 oklch(0.2 0 285);
     margin: 0 0 var(--space-md);
     text-transform: uppercase;
   }
 
   .profile-badges {
     display: flex;
-    gap: var(--space-md);
+    gap: var(--space-xs);
     flex-wrap: wrap;
     justify-content: center;
   }
 
   .profile-badge {
-    padding: var(--space-md) var(--space-lg);
-    background: oklch(0.15 0.02 var(--badge-hue) / 0.3);
-    border: 1px solid oklch(0.4 0.04 var(--badge-hue));
-    color: oklch(0.75 0.08 var(--badge-hue));
+    /* Text-only style - no boxes */
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-xs) var(--space-sm);
+    background: none;
+    border: none;
+    color: oklch(0.55 0.03 102);
     font-family: var(--font-display);
-    font-size: 0.9rem;
+    font-size: 1.1rem;
     font-weight: 700;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
-    clip-path: var(--clip-cyber-xs);
     cursor: pointer;
+    transform-style: preserve-3d;
+    will-change: transform;
     transition:
-      background-color 0.15s ease,
-      box-shadow 0.15s ease,
-      transform 0.15s ease,
-      border-color 0.15s ease;
+      color 0.15s ease,
+      text-shadow 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+      transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
+  /* Cyberpunk separator - gradient line that glows from center */
+  .profile-badge:not(:first-child)::before {
+    content: "";
+    width: 1px;
+    height: 1em;
+    margin-right: var(--space-xs);
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      oklch(0.55 0.04 102 / 0.4) 20%,
+      oklch(0.62 0.06 102 / 0.55) 50%,
+      oklch(0.55 0.04 102 / 0.4) 80%,
+      transparent 100%
+    );
+    box-shadow: 0 0 4px oklch(0.6 0.08 102 / 0.25);
+  }
+
+  /* Hover state: yellow glow text */
   .profile-badge:hover {
-    background: oklch(0.18 0.04 var(--badge-hue) / 0.4);
-    border-color: oklch(0.5 0.08 var(--badge-hue));
-    box-shadow: 0 4px 20px oklch(0 0 0 / 0.3);
-    transform: translateY(-3px);
+    color: oklch(0.9 0.16 102);
+    text-shadow: 0 0 20px oklch(0.85 0.18 102 / 0.6);
+  }
+
+  /* Default badge: always glowing */
+  .profile-badge--default {
+    color: oklch(0.92 0.18 102);
+    text-shadow:
+      0 0 24px oklch(0.85 0.18 102 / 0.7),
+      0 0 40px oklch(0.85 0.18 102 / 0.3);
   }
 
   .profile-badge:active {
-    transform: translateY(0) scale(1);
+    transform: perspective(800px) translateY(0) scale(0.98) !important;
   }
 
-  
   .trust-line {
     font-family: var(--font-mono);
     font-size: 0.8rem;
@@ -561,7 +614,6 @@
     text-shadow: 0 0 10px var(--fold-accent-glow);
   }
 
-  
   .hero-card {
     grid-area: card;
     animation: panelSlideIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.4s both;
@@ -569,16 +621,33 @@
 
   .stats-panel {
     position: relative;
-    background: oklch(0.11 0.02 285 / 0.9);
+    background: linear-gradient(
+      135deg,
+      oklch(0.13 0.03 285 / 0.95) 0%,
+      oklch(0.11 0.02 200 / 0.9) 50%,
+      oklch(0.12 0.025 260 / 0.92) 100%
+    );
+    background-size: 200% 200%;
+    animation: holoShimmer 12s ease-in-out infinite;
     backdrop-filter: blur(12px);
     border: none;
     clip-path: var(--clip-rog);
     box-shadow:
       0 4px 30px oklch(0 0 0 / 0.4),
-      0 0 60px oklch(0 0 0 / 0.2);
+      0 0 60px oklch(0 0 0 / 0.2),
+      inset 0 1px 0 oklch(0.85 0.18 195 / 0.1);
   }
 
-  
+  @keyframes holoShimmer {
+    0%,
+    100% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+  }
+
   .panel-corner {
     position: absolute;
     width: 40px;
@@ -690,7 +759,6 @@
     text-shadow: 0 0 12px var(--fold-accent-glow);
   }
 
-  
   .stat-line:nth-child(1) {
     animation: fadeSlideLeft 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.6s both;
   }
@@ -713,7 +781,6 @@
     animation: fadeSlideLeft 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.9s both;
   }
 
-  
   .scroll-indicator {
     display: flex;
     flex-direction: column;
@@ -758,7 +825,6 @@
     }
   }
 
-  
   @keyframes logoEntrance {
     from {
       opacity: 0;
@@ -805,7 +871,6 @@
     }
   }
 
-  
   @media (prefers-reduced-motion: reduce) {
     .hero-fold::after,
     .scroll-chevron {
@@ -840,7 +905,6 @@
     }
   }
 
-  
   @media (max-width: 899px) {
     .hero-fold {
       min-height: auto;
@@ -851,14 +915,18 @@
       align-content: start;
     }
 
+    /* Loosen lockup on mobile to prevent overlap */
+    .hero-headline {
+      margin-top: -0.35em;
+    }
+
     .profile-badges {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
+      display: flex;
+      flex-wrap: wrap;
     }
 
     .profile-badge {
-      text-align: center;
-      justify-content: center;
+      font-size: 1rem;
     }
 
     .stats-panel {
@@ -882,7 +950,6 @@
     }
   }
 
-
   @media (prefers-contrast: more) {
     .hero-fold {
       --fold-ink: oklch(0.98 0.01 285);
@@ -892,7 +959,11 @@
     }
 
     .profile-badge {
-      border-width: 2px;
+      color: oklch(0.7 0.06 102);
+    }
+
+    .profile-badge--default {
+      color: oklch(0.98 0.2 102);
     }
   }
 </style>
