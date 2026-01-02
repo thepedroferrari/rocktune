@@ -124,7 +124,7 @@
     }
   }
 
-  /* RTFB-301: Wizard Next Button (Cyberpunk/Codrops style) */
+  
   .wizard-next-container {
     display: flex;
     justify-content: center;
@@ -153,7 +153,7 @@
     border-radius: 6px;
     cursor: pointer;
 
-    /* Cyber clip-path corners */
+    
     clip-path: polygon(0 0,
         calc(100% - 8px) 0,
         100% 8px,
@@ -161,7 +161,7 @@
         8px 100%,
         0 calc(100% - 8px));
 
-    /* Spring physics transition */
+    
     transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 
     &:hover,
@@ -193,7 +193,7 @@
     transform: translateY(2px);
   }
 
-  /* Mobile: Sticky floating action button */
+  
   @media (max-width: 768px) {
     .wizard-next-container {
       position: sticky;

@@ -1184,7 +1184,7 @@
     outline-offset: 2px;
   }
 
-  /* RTFB-401: Focus indicators for all optimization checkboxes (keyboard navigation) */
+  
   .upgrades-grid label:focus-within,
   .upgrades-grid label:has(:focus-visible) {
     --focus-color: var(--accent);

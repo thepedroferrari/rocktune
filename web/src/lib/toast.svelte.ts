@@ -37,7 +37,6 @@ export function showToast(
   const id = nextId++
   toasts = [...toasts, { id, type, message, duration }]
 
-  // Auto-dismiss
   setTimeout(() => {
     dismissToast(id)
   }, duration)
