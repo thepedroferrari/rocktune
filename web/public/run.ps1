@@ -253,6 +253,96 @@ function Set-Reg {
 }
 
 # ════════════════════════════════════════════════════════════════════════════
+# OPTIMIZATION DESCRIPTIONS (for interactive mode)
+# ════════════════════════════════════════════════════════════════════════════
+
+$OPT_DESCRIPTIONS = @{
+    # SAFE tier (1-45)
+    '1'  = @{ name='Page File'; tier='SAFE'; desc='Set fixed page file size based on RAM (4GB for 32GB+, 8GB for 16GB)' }
+    '2'  = @{ name='Fast Startup'; tier='SAFE'; desc='Disable Fast Boot for cleaner shutdowns and driver resets' }
+    '3'  = @{ name='Timer Resolution'; tier='SAFE'; desc='Manual step: Requires timer-tool.ps1 before gaming' }
+    '4'  = @{ name='Power Plan'; tier='SAFE'; desc='Enable High Performance power plan' }
+    '5'  = @{ name='USB Power'; tier='SAFE'; desc='Disable USB selective suspend (prevents device disconnects)' }
+    '6'  = @{ name='PCIe Power'; tier='SAFE'; desc='Disable PCIe power saving for GPU stability' }
+    '7'  = @{ name='DNS Provider'; tier='SAFE'; desc='Set DNS servers to selected provider' }
+    '8'  = @{ name='Nagle Algorithm'; tier='SAFE'; desc='Disable Nagle buffering for lower network latency' }
+    '9'  = @{ name='Audio Ducking'; tier='SAFE'; desc='Disable audio volume reduction during calls' }
+    '10' = @{ name='Game DVR'; tier='SAFE'; desc='Disable background game recording' }
+    '11' = @{ name='Background Apps'; tier='SAFE'; desc='Disable background app activity' }
+    '12' = @{ name='Edge Debloat'; tier='SAFE'; desc='Disable Edge shopping assistant and widgets' }
+    '13' = @{ name='Copilot'; tier='SAFE'; desc='Disable Windows Copilot' }
+    '14' = @{ name='Explorer Speed'; tier='SAFE'; desc='Optimize folder type detection for faster browsing' }
+    '15' = @{ name='Temp Purge'; tier='SAFE'; desc='Clear temporary folders' }
+    '16' = @{ name='Razer Block'; tier='SAFE'; desc='Stop and disable Razer background services' }
+    '17' = @{ name='Restore Point'; tier='SAFE'; desc='Create system restore point before changes' }
+    '18' = @{ name='Classic Menu'; tier='SAFE'; desc='Enable Windows 10 style context menu' }
+    '19' = @{ name='Storage Sense'; tier='SAFE'; desc='Disable automatic storage cleanup' }
+    '20' = @{ name='Visual Effects'; tier='SAFE'; desc='Set visual effects to performance mode' }
+    '21' = @{ name='End Task'; tier='SAFE'; desc='Enable End Task option in taskbar' }
+    '22' = @{ name='Explorer Cleanup'; tier='SAFE'; desc='Remove OneDrive and Gallery from Explorer' }
+    '23' = @{ name='Notifications'; tier='SAFE'; desc='Disable notification center and toasts' }
+    '24' = @{ name='PS7 Telemetry'; tier='SAFE'; desc='Disable PowerShell 7 telemetry' }
+    '25' = @{ name='Multiplane Overlay'; tier='SAFE'; desc='Disable DWM overlay for cleaner fullscreen' }
+    '26' = @{ name='Mouse Acceleration'; tier='SAFE'; desc='Disable mouse acceleration for raw input' }
+    '27' = @{ name='USB Suspend'; tier='SAFE'; desc='Disable USB selective suspend' }
+    '28' = @{ name='Keyboard Response'; tier='SAFE'; desc='Minimize keyboard delay and maximize repeat rate' }
+    '29' = @{ name='Game Mode'; tier='SAFE'; desc='Enable Windows Game Mode' }
+    '30' = @{ name='Min Processor'; tier='SAFE'; desc='Set minimum processor state to 5% (better thermals)' }
+    '31' = @{ name='Hibernation'; tier='SAFE'; desc='Disable hibernation (saves disk space)' }
+    '32' = @{ name='RSS'; tier='SAFE'; desc='Enable Receive Side Scaling for network' }
+    '33' = @{ name='Adapter Power'; tier='SAFE'; desc='Disable network adapter power saving' }
+    '34' = @{ name='Delivery Opt'; tier='SAFE'; desc='Disable P2P update delivery' }
+    '35' = @{ name='Error Reporting'; tier='SAFE'; desc='Disable Windows Error Reporting' }
+    '36' = @{ name='WiFi Sense'; tier='SAFE'; desc='Disable WiFi Sense auto-connect' }
+    '37' = @{ name='Spotlight'; tier='SAFE'; desc='Disable Windows Spotlight on lock screen' }
+    '38' = @{ name='Feedback'; tier='SAFE'; desc='Disable Windows feedback prompts' }
+    '39' = @{ name='Clipboard Sync'; tier='SAFE'; desc='Disable cloud clipboard sync' }
+    '40' = @{ name='Accessibility'; tier='SAFE'; desc='Disable Sticky Keys and other shortcuts' }
+    '41' = @{ name='Audio Comm'; tier='SAFE'; desc='Disable volume ducking during communications' }
+    '42' = @{ name='System Sounds'; tier='SAFE'; desc='Mute Windows system sounds' }
+    '43' = @{ name='Input Buffer'; tier='SAFE'; desc='Increase input buffer for high poll rate devices' }
+    '44' = @{ name='Filesystem'; tier='SAFE'; desc='Optimize NTFS settings (disable last access, 8.3 names)' }
+    '45' = @{ name='DWM Perf'; tier='SAFE'; desc='Optimize Desktop Window Manager settings' }
+
+    # CAUTION tier (50-72)
+    '50' = @{ name='MSI Mode'; tier='CAUTION'; desc='Enable Message Signaled Interrupts for GPU (lower DPC latency)' }
+    '51' = @{ name='HPET'; tier='CAUTION'; desc='Disable High Precision Event Timer (test before/after)' }
+    '52' = @{ name='Game Bar Overlay'; tier='CAUTION'; desc='Disable Game Bar overlays (keep core enabled)' }
+    '53' = @{ name='HAGS'; tier='CAUTION'; desc='Enable Hardware Accelerated GPU Scheduling' }
+    '54' = @{ name='FSO'; tier='CAUTION'; desc='Disable fullscreen optimizations globally' }
+    '55' = @{ name='Ultimate Perf'; tier='CAUTION'; desc='Enable Ultimate Performance power plan' }
+    '56' = @{ name='Services Trim'; tier='CAUTION'; desc='Set unnecessary services to manual startup' }
+    '57' = @{ name='Disk Cleanup'; tier='CAUTION'; desc='Run Windows disk cleanup utility' }
+    '58' = @{ name='WPBT'; tier='CAUTION'; desc='Disable WPBT (blocks OEM pre-installed software)' }
+    '59' = @{ name='QoS Gaming'; tier='CAUTION'; desc='Remove bandwidth reservations for gaming' }
+    '60' = @{ name='Network Throttle'; tier='CAUTION'; desc='Disable network throttling during multimedia' }
+    '61' = @{ name='GPU Affinity'; tier='CAUTION'; desc='Set GPU interrupt affinity to CPU 0' }
+    '62' = @{ name='Mitigations'; tier='CAUTION'; desc='Disable kernel shadow stacks (reduces security)' }
+    '63' = @{ name='MMCSS'; tier='CAUTION'; desc='Configure multimedia class scheduler for games' }
+    '64' = @{ name='Scheduler'; tier='CAUTION'; desc='Optimize thread scheduler for responsiveness' }
+    '65' = @{ name='Core Parking'; tier='CAUTION'; desc='Disable CPU core parking' }
+    '66' = @{ name='Timer Registry'; tier='CAUTION'; desc='Enable global timer resolution requests' }
+    '67' = @{ name='RSC'; tier='CAUTION'; desc='Disable Receive Segment Coalescing' }
+    '68' = @{ name='SysMain'; tier='CAUTION'; desc='Disable SysMain/Superfetch service' }
+    '69' = @{ name='Search'; tier='CAUTION'; desc='Set Windows Search to manual (stops indexing)' }
+    '70' = @{ name='Memory Gaming'; tier='CAUTION'; desc='Keep kernel in RAM (disable paging executive)' }
+    '71' = @{ name='Power Throttle'; tier='CAUTION'; desc='Disable CPU power throttling' }
+    '72' = @{ name='Priority Boost'; tier='CAUTION'; desc='Disable priority boost (consistent scheduling)' }
+
+    # RISKY tier (80-89)
+    '80' = @{ name='Privacy T1'; tier='RISKY'; desc='Disable advertising ID and tailored experiences' }
+    '81' = @{ name='Privacy T2'; tier='RISKY'; desc='Minimize diagnostic telemetry' }
+    '82' = @{ name='Privacy T3'; tier='RISKY'; desc='Disable Xbox services (breaks Game Pass!)' }
+    '83' = @{ name='Bloatware'; tier='RISKY'; desc='Remove pre-installed bloatware apps' }
+    '84' = @{ name='IPv4 Prefer'; tier='RISKY'; desc='Prefer IPv4 over IPv6' }
+    '85' = @{ name='Teredo'; tier='RISKY'; desc='Disable Teredo tunneling' }
+    '86' = @{ name='Native NVMe'; tier='RISKY'; desc='Enable native NVMe stack (Win11 24H2+)' }
+    '87' = @{ name='SMT'; tier='RISKY'; desc='Disable SMT/Hyperthreading (physical cores only)' }
+    '88' = @{ name='Audio Exclusive'; tier='RISKY'; desc='Configure audio for exclusive mode apps' }
+    '89' = @{ name='TCP Optimizer'; tier='RISKY'; desc='Apply TCP optimizations for gaming' }
+}
+
+# ════════════════════════════════════════════════════════════════════════════
 # OPTIMIZATION FUNCTIONS (by ID from share-registry.ts)
 # NOTE: LUDICROUS tier IDs (100-103) are intentionally NOT included
 # ════════════════════════════════════════════════════════════════════════════
@@ -720,50 +810,216 @@ Write-Host "    GPU: $gpu" -ForegroundColor Gray
 Write-Host "    RAM: ${ram}GB" -ForegroundColor Gray
 Write-Host ""
 
+# ════════════════════════════════════════════════════════════════════════════
+# INTERACTIVE APPROVAL MODE
+# ════════════════════════════════════════════════════════════════════════════
+
+function Get-TierColor {
+    param([string]$Tier)
+    switch ($Tier) {
+        'SAFE'    { 'Green' }
+        'CAUTION' { 'Yellow' }
+        'RISKY'   { 'Red' }
+        default   { 'Gray' }
+    }
+}
+
+function Show-OptimizationPrompt {
+    param([string]$Id, [int]$Current, [int]$Total)
+
+    $info = $OPT_DESCRIPTIONS[$Id]
+    if (-not $info) {
+        $info = @{ name="Unknown ($Id)"; tier='UNKNOWN'; desc='No description available' }
+    }
+
+    $tierColor = Get-TierColor $info.tier
+
+    Write-Host ""
+    Write-Host "  [$Current/$Total] " -NoNewline -ForegroundColor DarkGray
+    Write-Host $info.name -NoNewline -ForegroundColor White
+    Write-Host " [" -NoNewline -ForegroundColor DarkGray
+    Write-Host $info.tier -NoNewline -ForegroundColor $tierColor
+    Write-Host "]" -ForegroundColor DarkGray
+    Write-Host "  $($info.desc)" -ForegroundColor Gray
+    Write-Host ""
+    Write-Host "  Apply? [Y]es / [N]o / [A]ll remaining / [Q]uit: " -NoNewline -ForegroundColor Cyan
+}
+
 # Execute optimizations
 if ($optIds.Count -gt 0) {
     Write-Step "Upgrades"
+    Write-Host ""
+    Write-Host "  ╔════════════════════════════════════════════════════════════════╗" -ForegroundColor White
+    Write-Host "  ║  INTERACTIVE MODE - Review each optimization before applying   ║" -ForegroundColor White
+    Write-Host "  ╚════════════════════════════════════════════════════════════════╝" -ForegroundColor White
+    Write-Host ""
+    Write-Host "  This loadout contains $($optIds.Count) optimization(s)." -ForegroundColor Gray
+    Write-Host "  You will be prompted to approve each one." -ForegroundColor Gray
+    Write-Host ""
+    Write-Host "  Tier legend:" -ForegroundColor White
+    Write-Host "    SAFE    - " -NoNewline; Write-Host "Low risk, recommended for everyone" -ForegroundColor Green
+    Write-Host "    CAUTION - " -NoNewline; Write-Host "May affect some features, test after" -ForegroundColor Yellow
+    Write-Host "    RISKY   - " -NoNewline; Write-Host "May break features, know what you're doing" -ForegroundColor Red
+    Write-Host ""
+
+    $autoApprove = $false
+    $approvedIds = @()
+    $skippedIds = @()
+    $quit = $false
+    $current = 0
+    $total = $optIds.Count
 
     # Handle DNS separately if specified
     if ($dnsId -and $DNS_MAP[$dnsId] -and ($optIds -contains '7')) {
+        $current++
         $dns = $DNS_MAP[$dnsId]
-        Get-NetAdapter | Where-Object {$_.Status -eq "Up"} | Set-DnsClientServerAddress -ServerAddresses $dns.primary,$dns.secondary
-        Write-OK "DNS set to $($dns.name) ($($dns.primary), $($dns.secondary))"
+        if (-not $autoApprove) {
+            Write-Host ""
+            Write-Host "  [$current/$total] " -NoNewline -ForegroundColor DarkGray
+            Write-Host "DNS Provider" -NoNewline -ForegroundColor White
+            Write-Host " [" -NoNewline -ForegroundColor DarkGray
+            Write-Host "SAFE" -NoNewline -ForegroundColor Green
+            Write-Host "]" -ForegroundColor DarkGray
+            Write-Host "  Set DNS to $($dns.name) ($($dns.primary), $($dns.secondary))" -ForegroundColor Gray
+            Write-Host ""
+            Write-Host "  Apply? [Y]es / [N]o / [A]ll remaining / [Q]uit: " -NoNewline -ForegroundColor Cyan
+            $response = Read-Host
+        } else {
+            $response = 'y'
+        }
+
+        switch ($response.ToLower()) {
+            'a' { $autoApprove = $true; $response = 'y' }
+            'q' { $quit = $true }
+        }
+
+        if (-not $quit -and $response.ToLower() -eq 'y') {
+            Get-NetAdapter | Where-Object {$_.Status -eq "Up"} | Set-DnsClientServerAddress -ServerAddresses $dns.primary,$dns.secondary
+            Write-OK "DNS set to $($dns.name)"
+            $approvedIds += '7'
+        } else {
+            $skippedIds += '7'
+            if (-not $quit) { Write-Host "  [SKIP] DNS" -ForegroundColor DarkGray }
+        }
     }
 
     foreach ($id in $optIds) {
+        if ($quit) { break }
         if ($id -eq '7') { continue } # Skip DNS, handled above
-        if ($OPT_FUNCTIONS.ContainsKey($id)) {
+
+        $current++
+
+        if (-not $OPT_FUNCTIONS.ContainsKey($id)) {
+            Write-Warn "Unknown optimization ID: $id (skipped)"
+            continue
+        }
+
+        if (-not $autoApprove) {
+            Show-OptimizationPrompt -Id $id -Current $current -Total $total
+            $response = Read-Host
+        } else {
+            $response = 'y'
+        }
+
+        switch ($response.ToLower()) {
+            'a' { $autoApprove = $true; $response = 'y' }
+            'q' { $quit = $true }
+        }
+
+        if (-not $quit -and $response.ToLower() -eq 'y') {
             try {
                 & $OPT_FUNCTIONS[$id]
+                $approvedIds += $id
             } catch {
                 Write-Fail "Optimization $id failed: $($_.Exception.Message)"
             }
         } else {
-            Write-Warn "Unknown optimization ID: $id (skipped)"
+            $skippedIds += $id
+            if (-not $quit) {
+                $info = $OPT_DESCRIPTIONS[$id]
+                $name = if ($info) { $info.name } else { $id }
+                Write-Host "  [SKIP] $name" -ForegroundColor DarkGray
+            }
         }
     }
+
+    # Show approval summary
+    Write-Host ""
+    Write-Host "  ────────────────────────────────────────" -ForegroundColor DarkGray
+    Write-Host "  Applied: $($approvedIds.Count) | Skipped: $($skippedIds.Count)" -ForegroundColor Gray
+    if ($quit) { Write-Host "  (User quit early)" -ForegroundColor Yellow }
 }
 
 # Install packages
 if ($pkgKeys.Count -gt 0) {
     Write-Step "Arsenal (winget)"
+    Write-Host ""
+    Write-Host "  ╔════════════════════════════════════════════════════════════════╗" -ForegroundColor White
+    Write-Host "  ║  PACKAGE INSTALLATION - Review each software before install    ║" -ForegroundColor White
+    Write-Host "  ╚════════════════════════════════════════════════════════════════╝" -ForegroundColor White
+    Write-Host ""
+    Write-Host "  This loadout includes $($pkgKeys.Count) package(s) to install via winget." -ForegroundColor Gray
+    Write-Host ""
+
     $wingetPath = Get-Command winget -EA SilentlyContinue
     if (-not $wingetPath) {
         Write-Fail "winget not found. Install App Installer from Microsoft Store."
     } else {
+        $pkgAutoApprove = $false
+        $installedPkgs = @()
+        $skippedPkgs = @()
+        $pkgQuit = $false
+        $pkgCurrent = 0
+        $pkgTotal = $pkgKeys.Count
+
         foreach ($key in $pkgKeys) {
-            if ($PACKAGE_MAP.ContainsKey($key)) {
-                $pkg = $PACKAGE_MAP[$key]
+            if ($pkgQuit) { break }
+            $pkgCurrent++
+
+            if (-not $PACKAGE_MAP.ContainsKey($key)) {
+                Write-Warn "Unknown package: $key (skipped)"
+                continue
+            }
+
+            $pkg = $PACKAGE_MAP[$key]
+
+            if (-not $pkgAutoApprove) {
+                Write-Host ""
+                Write-Host "  [$pkgCurrent/$pkgTotal] " -NoNewline -ForegroundColor DarkGray
+                Write-Host $pkg.name -NoNewline -ForegroundColor White
+                Write-Host " [" -NoNewline -ForegroundColor DarkGray
+                Write-Host "SOFTWARE" -NoNewline -ForegroundColor Cyan
+                Write-Host "]" -ForegroundColor DarkGray
+                Write-Host "  winget: $($pkg.id)" -ForegroundColor Gray
+                Write-Host ""
+                Write-Host "  Install? [Y]es / [N]o / [A]ll remaining / [Q]uit: " -NoNewline -ForegroundColor Cyan
+                $pkgResponse = Read-Host
+            } else {
+                $pkgResponse = 'y'
+            }
+
+            switch ($pkgResponse.ToLower()) {
+                'a' { $pkgAutoApprove = $true; $pkgResponse = 'y' }
+                'q' { $pkgQuit = $true }
+            }
+
+            if (-not $pkgQuit -and $pkgResponse.ToLower() -eq 'y') {
                 Write-Host "  Installing $($pkg.name)..." -NoNewline
                 $installOutput = winget install --id "$($pkg.id)" --silent --accept-package-agreements --accept-source-agreements 2>&1
-                if ($LASTEXITCODE -eq 0) { Write-OK "" }
-                elseif ($installOutput -match "No available upgrade found|No newer package versions are available|already installed") { Write-OK "Already installed" }
+                if ($LASTEXITCODE -eq 0) { Write-OK ""; $installedPkgs += $key }
+                elseif ($installOutput -match "No available upgrade found|No newer package versions are available|already installed") { Write-OK "Already installed"; $installedPkgs += $key }
                 else { Write-Fail ""; $installOutput | ForEach-Object { Write-Host "    $_" -ForegroundColor DarkGray } }
             } else {
-                Write-Warn "Unknown package: $key (skipped)"
+                $skippedPkgs += $key
+                if (-not $pkgQuit) { Write-Host "  [SKIP] $($pkg.name)" -ForegroundColor DarkGray }
             }
         }
+
+        # Show package summary
+        Write-Host ""
+        Write-Host "  ────────────────────────────────────────" -ForegroundColor DarkGray
+        Write-Host "  Installed: $($installedPkgs.Count) | Skipped: $($skippedPkgs.Count)" -ForegroundColor Gray
+        if ($pkgQuit) { Write-Host "  (User quit early)" -ForegroundColor Yellow }
     }
 }
 

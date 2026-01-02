@@ -275,8 +275,12 @@
                 <span class="step-number">2</span>
                 <span>Paste the entire command and press <kbd>Enter</kbd></span>
               </div>
-              <div class="instruction-note">
-                The command sets a config variable, downloads the script, and runs it.
+              <div class="instruction-step">
+                <span class="step-number">3</span>
+                <span>Review each item: <kbd>Y</kbd>=Yes <kbd>N</kbd>=No <kbd>A</kbd>=All <kbd>Q</kbd>=Quit</span>
+              </div>
+              <div class="instruction-note instruction-note--safe">
+                Interactive mode — you approve each change before it runs.
               </div>
             </div>
             <div class="share-oneliner-box">
@@ -647,6 +651,12 @@
     font-size: var(--text-xs);
     color: var(--text-muted);
     font-style: italic;
+  }
+
+  .instruction-note--safe {
+    color: oklch(0.75 0.15 145);
+    font-style: normal;
+    font-weight: 500;
   }
 
   .share-oneliner-box {
