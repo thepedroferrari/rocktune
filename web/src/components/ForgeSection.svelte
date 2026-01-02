@@ -289,6 +289,56 @@
         {__BUILD_COMMIT__} · {__BUILD_DATE__}
       </a>
     </div>
+
+    <!-- Benchmarking Tips -->
+    <details class="benchmark-tips">
+      <summary class="benchmark-tips__summary">
+        <svg class="benchmark-tips__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 20V10"/>
+          <path d="M18 20V4"/>
+          <path d="M6 20v-4"/>
+        </svg>
+        Benchmarking Tips — Measure Before & After
+      </summary>
+      <div class="benchmark-tips__content">
+        <p class="benchmark-tips__intro">
+          To verify these optimizations actually help <em>your</em> system, benchmark before and after applying them.
+        </p>
+
+        <div class="benchmark-tips__grid">
+          <div class="benchmark-tip">
+            <span class="benchmark-tip__num">1</span>
+            <div class="benchmark-tip__body">
+              <strong>Before applying</strong>
+              <p>Run a benchmark in your main game using CapFrameX or RTSS. Note Average FPS, 1% low, and 0.1% low.</p>
+            </div>
+          </div>
+
+          <div class="benchmark-tip">
+            <span class="benchmark-tip__num">2</span>
+            <div class="benchmark-tip__body">
+              <strong>Apply & reboot</strong>
+              <p>Run the script as Admin, reboot, then run the same benchmark again.</p>
+            </div>
+          </div>
+
+          <div class="benchmark-tip">
+            <span class="benchmark-tip__num">3</span>
+            <div class="benchmark-tip__body">
+              <strong>Compare results</strong>
+              <p>Focus on 1% lows — that's where you'll see stutter reduction. Average FPS gains are typically modest.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="benchmark-tools">
+          <span class="benchmark-tools__label">Recommended tools:</span>
+          <a href="https://www.capframex.com/" target="_blank" rel="noopener" class="benchmark-tool">CapFrameX</a>
+          <a href="https://www.guru3d.com/download/rtss-rivatuner-statistics-server-download/" target="_blank" rel="noopener" class="benchmark-tool">RTSS</a>
+          <a href="https://www.resplendence.com/latencymon" target="_blank" rel="noopener" class="benchmark-tool">LatencyMon</a>
+        </div>
+      </div>
+    </details>
   </section>
 
   {#if checksum}

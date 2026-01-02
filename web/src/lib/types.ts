@@ -234,6 +234,60 @@ export const OPTIMIZATION_TIERS = {
 
 export type OptimizationTier = (typeof OPTIMIZATION_TIERS)[keyof typeof OPTIMIZATION_TIERS]
 
+/** Evidence confidence levels for optimization claims */
+export const EVIDENCE_LEVELS = {
+  HIGH: 'high',
+  MEDIUM: 'medium',
+  LOW: 'low',
+} as const
+
+export type EvidenceLevel = (typeof EVIDENCE_LEVELS)[keyof typeof EVIDENCE_LEVELS]
+
+/** Evidence metadata for optimization claims */
+export interface OptimizationEvidence {
+  /** Confidence level based on available research */
+  readonly level: EvidenceLevel
+  /** Optional reference URLs for claims */
+  readonly sources?: readonly string[]
+  /** Warning note for system-dependent optimizations */
+  readonly note?: string
+}
+
+/** Breaking changes that an optimization may cause */
+export interface BreakingChange {
+  /** What feature/functionality breaks */
+  readonly feature: string
+  /** Brief description of the impact */
+  readonly impact: string
+}
+
+/**
+ * Effectiveness ranking tiers (S-F tier list style)
+ * Used to communicate how useful each optimization is for gaming
+ */
+export const EFFECTIVENESS_RANKS = {
+  S: 'S', // Extremely useful - proven, measurable impact
+  A: 'A', // Useful - strong evidence, widely recommended
+  B: 'B', // Fairly useful - good for most gamers
+  C: 'C', // Potentially useful - depends on setup
+  D: 'D', // In certain cases - niche use cases
+  E: 'E', // Rarely useful - marginal or risky
+  F: 'F', // Not useful for gaming - just system preference
+} as const
+
+export type EffectivenessRank = (typeof EFFECTIVENESS_RANKS)[keyof typeof EFFECTIVENESS_RANKS]
+
+/** Human-readable label for each effectiveness rank */
+export const RANK_LABELS: Record<EffectivenessRank, string> = {
+  S: 'Extremely useful',
+  A: 'Useful',
+  B: 'Fairly useful',
+  C: 'Potentially useful',
+  D: 'In certain cases',
+  E: 'Rarely useful',
+  F: 'Not useful for gaming, just system preferences',
+} as const
+
 const SAFE_OPTIMIZATIONS = {
   PAGEFILE: 'pagefile',
   FASTBOOT: 'fastboot',

@@ -6,8 +6,15 @@
  */
 
 import type { StructuredTooltip } from '../utils/tooltips'
-import type { OptimizationKey, OptimizationTier } from './types'
-import { OPTIMIZATION_KEYS, OPTIMIZATION_TIERS } from './types'
+import type {
+  BreakingChange,
+  EffectivenessRank,
+  EvidenceLevel,
+  OptimizationEvidence,
+  OptimizationKey,
+  OptimizationTier,
+} from './types'
+import { EFFECTIVENESS_RANKS, EVIDENCE_LEVELS, OPTIMIZATION_KEYS, OPTIMIZATION_TIERS } from './types'
 
 /** Optimization category for grouping in UI */
 export type OptimizationCategory =
@@ -28,6 +35,12 @@ export interface OptimizationDef {
   readonly hint: string
   readonly tooltip: StructuredTooltip
   readonly defaultChecked: boolean
+  /** Effectiveness ranking (S-F tier) for UI display */
+  readonly rank: EffectivenessRank
+  /** Evidence supporting this optimization's effectiveness */
+  readonly evidence?: OptimizationEvidence
+  /** Features/functionality that may break when enabled */
+  readonly breakingChanges?: readonly BreakingChange[]
 }
 
 /** Safe System optimizations */
@@ -49,6 +62,7 @@ const SAFE_SYSTEM: readonly OptimizationDef[] = [
       cons: ['Uses fixed disk space', 'Manual adjustment if RAM changes'],
     },
     defaultChecked: true,
+    rank: EFFECTIVENESS_RANKS.A,
   },
   {
     key: OPTIMIZATION_KEYS.FASTBOOT,
@@ -67,6 +81,7 @@ const SAFE_SYSTEM: readonly OptimizationDef[] = [
       cons: ['Slightly longer boot time', 'No hibernation resume'],
     },
     defaultChecked: true,
+    rank: EFFECTIVENESS_RANKS.A,
   },
   {
     key: OPTIMIZATION_KEYS.TIMER,
@@ -81,6 +96,12 @@ const SAFE_SYSTEM: readonly OptimizationDef[] = [
       cons: ['Must run during gameplay', 'Slightly higher power usage'],
     },
     defaultChecked: true,
+    rank: EFFECTIVENESS_RANKS.S,
+    evidence: {
+      level: EVIDENCE_LEVELS.HIGH,
+      sources: ['https://forums.blurbusters.com/viewtopic.php?t=13842'],
+      note: '15ms→1ms is human-feelable; improves 1% lows by ~30%',
+    },
   },
   {
     key: OPTIMIZATION_KEYS.EXPLORER_SPEED,
@@ -99,6 +120,11 @@ const SAFE_SYSTEM: readonly OptimizationDef[] = [
       cons: ['Less automatic folder organization', 'Manual view settings needed'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.F,
+    evidence: {
+      level: EVIDENCE_LEVELS.LOW,
+      note: 'Improves File Explorer, not gaming FPS',
+    },
   },
   {
     key: OPTIMIZATION_KEYS.TEMP_PURGE,
@@ -117,6 +143,7 @@ const SAFE_SYSTEM: readonly OptimizationDef[] = [
       cons: ['Some apps may need to rebuild caches'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.F,
   },
   {
     key: OPTIMIZATION_KEYS.RESTORE_POINT,
@@ -135,6 +162,7 @@ const SAFE_SYSTEM: readonly OptimizationDef[] = [
       cons: [],
     },
     defaultChecked: true,
+    rank: EFFECTIVENESS_RANKS.A,
   },
   {
     key: OPTIMIZATION_KEYS.CLASSIC_MENU,
@@ -149,6 +177,7 @@ const SAFE_SYSTEM: readonly OptimizationDef[] = [
       cons: ['Loses Win11 menu styling', 'Personal preference'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.F,
   },
   {
     key: OPTIMIZATION_KEYS.STORAGE_SENSE,
@@ -163,6 +192,11 @@ const SAFE_SYSTEM: readonly OptimizationDef[] = [
       cons: ['May delete files you wanted', 'Runs in background'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.F,
+    evidence: {
+      level: EVIDENCE_LEVELS.LOW,
+      note: 'Housekeeping feature, not gaming performance',
+    },
   },
   {
     key: OPTIMIZATION_KEYS.END_TASK,
@@ -181,6 +215,7 @@ const SAFE_SYSTEM: readonly OptimizationDef[] = [
       cons: [],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.F,
   },
   {
     key: OPTIMIZATION_KEYS.EXPLORER_CLEANUP,
@@ -195,6 +230,7 @@ const SAFE_SYSTEM: readonly OptimizationDef[] = [
       cons: ['Hides some default items', 'Personal preference'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.F,
   },
   {
     key: OPTIMIZATION_KEYS.NOTIFICATIONS_OFF,
@@ -209,6 +245,7 @@ const SAFE_SYSTEM: readonly OptimizationDef[] = [
       cons: ['Miss Windows tips', 'Less feature discovery'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.F,
   },
   {
     key: OPTIMIZATION_KEYS.PS7_TELEMETRY,
@@ -223,6 +260,7 @@ const SAFE_SYSTEM: readonly OptimizationDef[] = [
       cons: ['Only affects PowerShell 7, not Windows PowerShell 5.1'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.F,
   },
   {
     key: OPTIMIZATION_KEYS.FILESYSTEM_PERF,
@@ -237,6 +275,7 @@ const SAFE_SYSTEM: readonly OptimizationDef[] = [
       cons: ['No last access timestamps', 'No 8.3 short filenames'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.F,
   },
   {
     key: OPTIMIZATION_KEYS.DWM_PERF,
@@ -251,6 +290,11 @@ const SAFE_SYSTEM: readonly OptimizationDef[] = [
       cons: ['Less fancy windows', 'No accent gradients'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.F,
+    evidence: {
+      level: EVIDENCE_LEVELS.LOW,
+      note: 'Minimal impact in fullscreen exclusive games',
+    },
   },
 ]
 
@@ -273,6 +317,7 @@ const SAFE_POWER: readonly OptimizationDef[] = [
       cons: ['Slightly higher idle power', 'USB/PCIe always powered'],
     },
     defaultChecked: true,
+    rank: EFFECTIVENESS_RANKS.S,
   },
   {
     key: OPTIMIZATION_KEYS.USB_POWER,
@@ -291,6 +336,7 @@ const SAFE_POWER: readonly OptimizationDef[] = [
       cons: [],
     },
     defaultChecked: true,
+    rank: EFFECTIVENESS_RANKS.S,
   },
   {
     key: OPTIMIZATION_KEYS.PCIE_POWER,
@@ -305,6 +351,7 @@ const SAFE_POWER: readonly OptimizationDef[] = [
       cons: ['Slightly higher idle power', 'More heat at idle'],
     },
     defaultChecked: true,
+    rank: EFFECTIVENESS_RANKS.S,
   },
   {
     key: OPTIMIZATION_KEYS.USB_SUSPEND,
@@ -323,6 +370,7 @@ const SAFE_POWER: readonly OptimizationDef[] = [
       cons: [],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.A,
   },
   {
     key: OPTIMIZATION_KEYS.MIN_PROCESSOR_STATE,
@@ -337,6 +385,7 @@ const SAFE_POWER: readonly OptimizationDef[] = [
       cons: ['Slightly slower wake from idle', 'CPU downclocks when idle'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.B,
   },
   {
     key: OPTIMIZATION_KEYS.HIBERNATION_DISABLE,
@@ -351,6 +400,7 @@ const SAFE_POWER: readonly OptimizationDef[] = [
       cons: ['No hibernation option', 'Must fully shutdown'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.A,
   },
 ]
 
@@ -369,6 +419,7 @@ const SAFE_NETWORK: readonly OptimizationDef[] = [
       cons: ['Requires DNS provider trust', 'May bypass ISP filtering'],
     },
     defaultChecked: true,
+    rank: EFFECTIVENESS_RANKS.A,
   },
   {
     key: OPTIMIZATION_KEYS.NAGLE,
@@ -383,6 +434,12 @@ const SAFE_NETWORK: readonly OptimizationDef[] = [
       cons: ['Slightly higher bandwidth usage', 'More packets sent'],
     },
     defaultChecked: true,
+    rank: EFFECTIVENESS_RANKS.S,
+    evidence: {
+      level: EVIDENCE_LEVELS.HIGH,
+      sources: ['https://brooker.co.za/blog/2024/05/09/nagle.html'],
+      note: 'TCP_NODELAY is standard practice for latency-sensitive apps',
+    },
   },
   {
     key: OPTIMIZATION_KEYS.RSS_ENABLE,
@@ -401,6 +458,7 @@ const SAFE_NETWORK: readonly OptimizationDef[] = [
       cons: [],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.A,
   },
   {
     key: OPTIMIZATION_KEYS.ADAPTER_POWER,
@@ -415,6 +473,7 @@ const SAFE_NETWORK: readonly OptimizationDef[] = [
       cons: [],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.A,
   },
 ]
 
@@ -433,6 +492,11 @@ const SAFE_INPUT: readonly OptimizationDef[] = [
       cons: ['May feel different initially', 'Preference-dependent'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.A,
+    evidence: {
+      level: EVIDENCE_LEVELS.HIGH,
+      note: 'Standard for competitive FPS; ensures consistent muscle memory',
+    },
   },
   {
     key: OPTIMIZATION_KEYS.KEYBOARD_RESPONSE,
@@ -447,6 +511,11 @@ const SAFE_INPUT: readonly OptimizationDef[] = [
       cons: ['Personal preference', 'May cause accidental repeats'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.F,
+    evidence: {
+      level: EVIDENCE_LEVELS.LOW,
+      note: 'Only affects key repeat rate, not initial keypress latency',
+    },
   },
   {
     key: OPTIMIZATION_KEYS.ACCESSIBILITY_SHORTCUTS,
@@ -461,6 +530,7 @@ const SAFE_INPUT: readonly OptimizationDef[] = [
       cons: ['Accessibility features disabled', 'Need manual re-enable if needed'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.A,
   },
   {
     key: OPTIMIZATION_KEYS.INPUT_BUFFER,
@@ -479,6 +549,7 @@ const SAFE_INPUT: readonly OptimizationDef[] = [
       cons: [],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.B,
   },
 ]
 
@@ -497,6 +568,7 @@ const SAFE_DISPLAY: readonly OptimizationDef[] = [
       cons: ['Less polished look', 'No transparency effects'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.B,
   },
   {
     key: OPTIMIZATION_KEYS.MULTIPLANE_OVERLAY,
@@ -511,6 +583,7 @@ const SAFE_DISPLAY: readonly OptimizationDef[] = [
       cons: ['Slight GPU overhead increase', 'Only needed if flickering'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.A,
   },
   {
     key: OPTIMIZATION_KEYS.GAMEDVR,
@@ -525,6 +598,11 @@ const SAFE_DISPLAY: readonly OptimizationDef[] = [
       cons: ['No instant replay feature', 'Cant use Game Bar clips'],
     },
     defaultChecked: true,
+    rank: EFFECTIVENESS_RANKS.S,
+    evidence: {
+      level: EVIDENCE_LEVELS.HIGH,
+      note: 'Measurable 1-3% FPS improvement; removes background encoding',
+    },
   },
   {
     key: OPTIMIZATION_KEYS.GAME_MODE,
@@ -543,6 +621,7 @@ const SAFE_DISPLAY: readonly OptimizationDef[] = [
       cons: ['Minimal impact on non-X3D', 'May affect background tasks'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.A,
   },
 ]
 
@@ -561,6 +640,7 @@ const SAFE_PRIVACY: readonly OptimizationDef[] = [
       cons: ['Some apps need exceptions', 'May affect notifications'],
     },
     defaultChecked: true,
+    rank: EFFECTIVENESS_RANKS.S,
   },
   {
     key: OPTIMIZATION_KEYS.EDGE_DEBLOAT,
@@ -575,6 +655,7 @@ const SAFE_PRIVACY: readonly OptimizationDef[] = [
       cons: ['Only useful if you use Edge', 'Loses some Edge features'],
     },
     defaultChecked: true,
+    rank: EFFECTIVENESS_RANKS.A,
   },
   {
     key: OPTIMIZATION_KEYS.COPILOT_DISABLE,
@@ -589,6 +670,7 @@ const SAFE_PRIVACY: readonly OptimizationDef[] = [
       cons: ['Lose AI assistant features', 'Manual re-enable needed'],
     },
     defaultChecked: true,
+    rank: EFFECTIVENESS_RANKS.A,
   },
   {
     key: OPTIMIZATION_KEYS.RAZER_BLOCK,
@@ -603,6 +685,7 @@ const SAFE_PRIVACY: readonly OptimizationDef[] = [
       cons: ['Only for Razer users', 'Some features may be affected'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.B,
   },
   {
     key: OPTIMIZATION_KEYS.DELIVERY_OPT,
@@ -617,6 +700,7 @@ const SAFE_PRIVACY: readonly OptimizationDef[] = [
       cons: ['Uses more Microsoft bandwidth', 'Slightly slower in some cases'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.B,
   },
   {
     key: OPTIMIZATION_KEYS.WER_DISABLE,
@@ -631,6 +715,7 @@ const SAFE_PRIVACY: readonly OptimizationDef[] = [
       cons: ['Microsoft cant diagnose issues', 'No automatic crash reports'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.B,
   },
   {
     key: OPTIMIZATION_KEYS.WIFI_SENSE,
@@ -649,6 +734,7 @@ const SAFE_PRIVACY: readonly OptimizationDef[] = [
       cons: ['No automatic network suggestions', 'Manual network selection'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.B,
   },
   {
     key: OPTIMIZATION_KEYS.SPOTLIGHT_DISABLE,
@@ -663,6 +749,7 @@ const SAFE_PRIVACY: readonly OptimizationDef[] = [
       cons: ['No pretty Bing images', 'Static lock screen'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.B,
   },
   {
     key: OPTIMIZATION_KEYS.FEEDBACK_DISABLE,
@@ -677,6 +764,7 @@ const SAFE_PRIVACY: readonly OptimizationDef[] = [
       cons: [],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.B,
   },
   {
     key: OPTIMIZATION_KEYS.CLIPBOARD_SYNC,
@@ -691,6 +779,7 @@ const SAFE_PRIVACY: readonly OptimizationDef[] = [
       cons: ['No cross-device clipboard', 'No clipboard history'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.B,
   },
 ]
 
@@ -709,6 +798,7 @@ const SAFE_AUDIO: readonly OptimizationDef[] = [
       cons: ['No virtual surround', 'No Windows audio effects'],
     },
     defaultChecked: true,
+    rank: EFFECTIVENESS_RANKS.S,
   },
   {
     key: OPTIMIZATION_KEYS.AUDIO_COMMUNICATIONS,
@@ -723,6 +813,7 @@ const SAFE_AUDIO: readonly OptimizationDef[] = [
       cons: ['May miss call notifications', 'Manual volume needed'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.A,
   },
   {
     key: OPTIMIZATION_KEYS.AUDIO_SYSTEM_SOUNDS,
@@ -737,6 +828,7 @@ const SAFE_AUDIO: readonly OptimizationDef[] = [
       cons: ['No audio feedback', 'May miss notifications'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.F,
   },
 ]
 
@@ -759,6 +851,12 @@ const CAUTION_OPTIMIZATIONS: readonly OptimizationDef[] = [
       cons: ['Some older hardware incompatible', 'Test with LatencyMon after enabling'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.C,
+    evidence: {
+      level: EVIDENCE_LEVELS.MEDIUM,
+      sources: ['https://www.overclock.net/threads/message-signaled-based-interrupt-msi-discussion-for-nvidia-gpus.1805762/'],
+      note: 'System-dependent; use LatencyMon to verify DPC reduction',
+    },
   },
   {
     key: OPTIMIZATION_KEYS.HPET,
@@ -781,6 +879,12 @@ const CAUTION_OPTIMIZATIONS: readonly OptimizationDef[] = [
       ],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.C,
+    evidence: {
+      level: EVIDENCE_LEVELS.MEDIUM,
+      sources: ['https://www.overclockers.at/articles/the-hpet-bug-what-it-is-and-what-it-isnt'],
+      note: 'Modern Windows uses TSC by default; unlikely to help on current systems',
+    },
   },
   {
     key: OPTIMIZATION_KEYS.GAME_BAR,
@@ -795,6 +899,7 @@ const CAUTION_OPTIMIZATIONS: readonly OptimizationDef[] = [
       cons: ['**Breaks X3D V-Cache optimizer**', 'Keep ON for 7800X3D/9800X3D', 'No quick capture'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.C,
   },
   {
     key: OPTIMIZATION_KEYS.HAGS,
@@ -809,6 +914,7 @@ const CAUTION_OPTIMIZATIONS: readonly OptimizationDef[] = [
       cons: ['Mixed results by GPU/game', 'Some older games worse', 'Test per-game'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.B,
   },
   {
     key: OPTIMIZATION_KEYS.FSO_DISABLE,
@@ -823,6 +929,7 @@ const CAUTION_OPTIMIZATIONS: readonly OptimizationDef[] = [
       cons: ['Alt-tab issues', 'Per-game setting may be better', 'Some games need it on'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.B,
   },
   {
     key: OPTIMIZATION_KEYS.ULTIMATE_PERF,
@@ -837,6 +944,7 @@ const CAUTION_OPTIMIZATIONS: readonly OptimizationDef[] = [
       cons: ['Higher power consumption', 'May hurt AMD X3D efficiency', 'More heat output'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.B,
   },
   {
     key: OPTIMIZATION_KEYS.SERVICES_TRIM,
@@ -855,6 +963,7 @@ const CAUTION_OPTIMIZATIONS: readonly OptimizationDef[] = [
       cons: ['Printing may need manual service start', 'Review list matches your usage'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.C,
   },
   {
     key: OPTIMIZATION_KEYS.DISK_CLEANUP,
@@ -869,6 +978,7 @@ const CAUTION_OPTIMIZATIONS: readonly OptimizationDef[] = [
       cons: ['Cannot roll back updates', 'May need re-downloads', 'One-way operation'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.C,
   },
   {
     key: OPTIMIZATION_KEYS.WPBT_DISABLE,
@@ -883,6 +993,7 @@ const CAUTION_OPTIMIZATIONS: readonly OptimizationDef[] = [
       cons: ['May affect BIOS features', 'Test after mobo updates', 'Some utilities blocked'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.D,
   },
   {
     key: OPTIMIZATION_KEYS.QOS_GAMING,
@@ -901,6 +1012,7 @@ const CAUTION_OPTIMIZATIONS: readonly OptimizationDef[] = [
       cons: ['Not all routers respect this', 'Test in multiplayer', 'Router QoS may conflict'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.B,
   },
   {
     key: OPTIMIZATION_KEYS.NETWORK_THROTTLING,
@@ -919,6 +1031,7 @@ const CAUTION_OPTIMIZATIONS: readonly OptimizationDef[] = [
       cons: ['Slightly higher CPU usage on network I/O'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.B,
   },
   {
     key: OPTIMIZATION_KEYS.INTERRUPT_AFFINITY,
@@ -933,6 +1046,7 @@ const CAUTION_OPTIMIZATIONS: readonly OptimizationDef[] = [
       cons: ['Hardware-specific tuning', 'Use MSI Utility Tool', 'Wrong settings hurt perf'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.D,
   },
   {
     key: OPTIMIZATION_KEYS.PROCESS_MITIGATION,
@@ -951,6 +1065,7 @@ const CAUTION_OPTIMIZATIONS: readonly OptimizationDef[] = [
       ],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.D,
   },
   {
     key: OPTIMIZATION_KEYS.MMCSS_GAMING,
@@ -965,6 +1080,7 @@ const CAUTION_OPTIMIZATIONS: readonly OptimizationDef[] = [
       cons: ['May affect streaming/capture', 'Test with your games', 'OBS may need adjustment'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.D,
   },
   {
     key: OPTIMIZATION_KEYS.SCHEDULER_OPT,
@@ -979,6 +1095,12 @@ const CAUTION_OPTIMIZATIONS: readonly OptimizationDef[] = [
       cons: ['May affect background tasks', 'Benchmark before/after', 'Subtle differences'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.F,
+    evidence: {
+      level: EVIDENCE_LEVELS.LOW,
+      sources: ['https://xbitlabs.com/win32priorityseparation-performance'],
+      note: 'Subtle effect; results vary significantly by system',
+    },
   },
   {
     key: OPTIMIZATION_KEYS.CORE_PARKING,
@@ -993,6 +1115,7 @@ const CAUTION_OPTIMIZATIONS: readonly OptimizationDef[] = [
       cons: ['Higher idle power', 'May hurt AMD X3D efficiency', 'More heat at idle'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.C,
   },
   {
     key: OPTIMIZATION_KEYS.TIMER_REGISTRY,
@@ -1011,6 +1134,7 @@ const CAUTION_OPTIMIZATIONS: readonly OptimizationDef[] = [
       cons: ['May increase power usage', 'Test with timer-tool.ps1', 'Subtle improvements'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.D,
   },
   {
     key: OPTIMIZATION_KEYS.RSC_DISABLE,
@@ -1029,6 +1153,7 @@ const CAUTION_OPTIMIZATIONS: readonly OptimizationDef[] = [
       cons: ['Slightly higher CPU usage', 'Not all adapters support', 'Benchmark network perf'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.C,
   },
   {
     key: OPTIMIZATION_KEYS.SYSMAIN_DISABLE,
@@ -1043,6 +1168,7 @@ const CAUTION_OPTIMIZATIONS: readonly OptimizationDef[] = [
       cons: ['Slower app launches', 'Better for gaming-only PCs', 'First launch slower'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.C,
   },
   {
     key: OPTIMIZATION_KEYS.SERVICES_SEARCH_OFF,
@@ -1057,6 +1183,7 @@ const CAUTION_OPTIMIZATIONS: readonly OptimizationDef[] = [
       cons: ['File search slower initially', 'Start menu less responsive', 'No instant results'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.C,
   },
   {
     key: OPTIMIZATION_KEYS.MEMORY_GAMING,
@@ -1071,6 +1198,7 @@ const CAUTION_OPTIMIZATIONS: readonly OptimizationDef[] = [
       cons: ['Requires 16GB+ RAM', 'Memory pressure on low-RAM', 'Not for 8GB systems'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.C,
   },
   {
     key: OPTIMIZATION_KEYS.POWER_THROTTLE_OFF,
@@ -1085,6 +1213,7 @@ const CAUTION_OPTIMIZATIONS: readonly OptimizationDef[] = [
       cons: ['Higher power consumption', 'Laptop battery drain', 'More heat output'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.C,
   },
   {
     key: OPTIMIZATION_KEYS.PRIORITY_BOOST_OFF,
@@ -1099,6 +1228,7 @@ const CAUTION_OPTIMIZATIONS: readonly OptimizationDef[] = [
       cons: ['May affect multitasking', 'Test before competitive', 'Subtle change'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.D,
   },
 ]
 
@@ -1117,6 +1247,7 @@ const RISKY_OPTIMIZATIONS: readonly OptimizationDef[] = [
       cons: ['Personalization features disabled', 'Timeline/activity history gone'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.B,
   },
   {
     key: OPTIMIZATION_KEYS.PRIVACY_TIER2,
@@ -1139,6 +1270,7 @@ const RISKY_OPTIMIZATIONS: readonly OptimizationDef[] = [
       ],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.B,
   },
   {
     key: OPTIMIZATION_KEYS.PRIVACY_TIER3,
@@ -1157,6 +1289,16 @@ const RISKY_OPTIMIZATIONS: readonly OptimizationDef[] = [
       cons: ['May break MS Store updates', 'Some apps may not work', 'Hard to diagnose issues'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.E,
+    evidence: {
+      level: EVIDENCE_LEVELS.MEDIUM,
+      note: 'Real privacy improvement, but breaks functionality',
+    },
+    breakingChanges: [
+      { feature: 'Game Pass', impact: 'Cannot download or play Game Pass games' },
+      { feature: 'Xbox App', impact: 'Xbox app may not function properly' },
+      { feature: 'MS Store', impact: 'Store updates may fail' },
+    ],
   },
   {
     key: OPTIMIZATION_KEYS.BLOATWARE,
@@ -1171,6 +1313,7 @@ const RISKY_OPTIMIZATIONS: readonly OptimizationDef[] = [
       cons: ['Some apps hard to get back', 'Xbox apps may be affected'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.B,
   },
   {
     key: OPTIMIZATION_KEYS.IPV4_PREFER,
@@ -1185,6 +1328,7 @@ const RISKY_OPTIMIZATIONS: readonly OptimizationDef[] = [
       cons: ['Can break IPv6-only services', 'Some ISPs require IPv6', 'Future compatibility'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.D,
   },
   {
     key: OPTIMIZATION_KEYS.TEREDO_DISABLE,
@@ -1199,6 +1343,15 @@ const RISKY_OPTIMIZATIONS: readonly OptimizationDef[] = [
       cons: ['Breaks Xbox Party Chat', 'May affect P2P games', 'Some features need IPv6'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.E,
+    evidence: {
+      level: EVIDENCE_LEVELS.MEDIUM,
+      note: 'Removes overhead, but breaks Xbox features',
+    },
+    breakingChanges: [
+      { feature: 'Xbox Party Chat', impact: 'Voice chat in Xbox parties may not work' },
+      { feature: 'P2P Games', impact: 'Some peer-to-peer multiplayer games affected' },
+    ],
   },
   {
     key: OPTIMIZATION_KEYS.NATIVE_NVME,
@@ -1213,6 +1366,7 @@ const RISKY_OPTIMIZATIONS: readonly OptimizationDef[] = [
       cons: ['NVMe drives only', 'Benchmark to verify gains'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.C,
   },
   {
     key: OPTIMIZATION_KEYS.SMT_DISABLE,
@@ -1227,6 +1381,7 @@ const RISKY_OPTIMIZATIONS: readonly OptimizationDef[] = [
       cons: ['**Significantly reduces multitasking**', 'Streaming affected', 'Half the threads'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.E,
   },
   {
     key: OPTIMIZATION_KEYS.AUDIO_EXCLUSIVE,
@@ -1241,6 +1396,7 @@ const RISKY_OPTIMIZATIONS: readonly OptimizationDef[] = [
       cons: ['**Discord/music blocked**', 'Only for competitive focus', 'No multitasking audio'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.E,
   },
   {
     key: OPTIMIZATION_KEYS.TCP_OPTIMIZER,
@@ -1255,6 +1411,7 @@ const RISKY_OPTIMIZATIONS: readonly OptimizationDef[] = [
       cons: ['May hurt some connections', 'Benchmark needed', 'ISP-dependent results'],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.C,
   },
 ]
 
@@ -1280,6 +1437,15 @@ const LUDICROUS_OPTIMIZATIONS: readonly OptimizationDef[] = [
       ],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.S,
+    evidence: {
+      level: EVIDENCE_LEVELS.HIGH,
+      sources: ['https://www.tomshardware.com/news/windows-vbs-harms-performance-rtx-4090'],
+      note: 'Documented 5-15% FPS improvement, but removes critical security',
+    },
+    breakingChanges: [
+      { feature: 'Security', impact: 'Malware can inject kernel code; rootkits trivial' },
+    ],
   },
   {
     key: OPTIMIZATION_KEYS.SPECTRE_MELTDOWN_OFF,
@@ -1302,6 +1468,15 @@ const LUDICROUS_OPTIMIZATIONS: readonly OptimizationDef[] = [
       ],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.A,
+    evidence: {
+      level: EVIDENCE_LEVELS.HIGH,
+      note: 'Real 5-30% gains, but exposes CPU to known exploits',
+    },
+    breakingChanges: [
+      { feature: 'Security', impact: 'Any website JavaScript can read passwords and secrets' },
+      { feature: 'Network Safety', impact: 'NEVER connect to internet with this enabled' },
+    ],
   },
   {
     key: OPTIMIZATION_KEYS.KERNEL_MITIGATIONS_OFF,
@@ -1324,6 +1499,7 @@ const LUDICROUS_OPTIMIZATIONS: readonly OptimizationDef[] = [
       ],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.C,
   },
   {
     key: OPTIMIZATION_KEYS.DEP_OFF,
@@ -1342,6 +1518,7 @@ const LUDICROUS_OPTIMIZATIONS: readonly OptimizationDef[] = [
       ],
     },
     defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.E,
   },
 ]
 
@@ -1447,6 +1624,7 @@ const PROFILE_OPTIMIZATIONS: Record<ProfileId, readonly OptimizationKey[]> = {
   ],
 
   pro_gamer: [
+    // Core optimizations (high evidence)
     'pagefile',
     'fastboot',
     'timer',
@@ -1459,7 +1637,6 @@ const PROFILE_OPTIMIZATIONS: Record<ProfileId, readonly OptimizationKey[]> = {
     'dns',
     'nagle',
     'mouse_accel',
-    'display_perf',
     'gamedvr',
     'background_apps',
     'edge_debloat',
@@ -1468,6 +1645,7 @@ const PROFILE_OPTIMIZATIONS: Record<ProfileId, readonly OptimizationKey[]> = {
     'audio_communications',
     'audio_system_sounds',
     'accessibility_shortcuts',
+    // Caution tier (medium evidence, test recommended)
     'msi_mode',
     'fso_disable',
     'ultimate_perf',
@@ -1477,17 +1655,17 @@ const PROFILE_OPTIMIZATIONS: Record<ProfileId, readonly OptimizationKey[]> = {
     'qos_gaming',
     'network_throttling',
     'interrupt_affinity',
-    'keyboard_response',
     'end_task',
-
     'game_mode',
     'mmcss_gaming',
-    'scheduler_opt',
     'timer_registry',
     'min_processor_state',
     'delivery_opt',
     'feedback_disable',
     'rss_enable',
+    // Removed: keyboard_response (only affects key repeat, not gaming input)
+    // Removed: display_perf (minimal impact in fullscreen games)
+    // Removed: scheduler_opt (subtle/placebo-level effect)
   ],
 
   benchmarker: [

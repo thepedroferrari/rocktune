@@ -3,6 +3,7 @@
    * Optimizations Section - Upgrades/tweaks selection
    *
    * Renders all optimization checkboxes grouped by tier and category.
+   * Features tier ranking system (S-F) with clickable badges.
    */
 
   import {
@@ -17,10 +18,12 @@
     getOptimizationsByTierAndCategory,
     getCategoriesForTier,
     type OptimizationCategory,
+    type OptimizationDef,
   } from '$lib/optimizations'
-  import { OPTIMIZATION_TIERS, OPTIMIZATION_KEYS, type OptimizationTier, type OptimizationKey } from '$lib/types'
+  import { OPTIMIZATION_TIERS, OPTIMIZATION_KEYS, type OptimizationTier, type OptimizationKey, type BreakingChange } from '$lib/types'
   import OptimizationCheckbox from './OptimizationCheckbox.svelte'
   import DnsProviderSelector from './DnsProviderSelector.svelte'
+  import TierLegendDialog from './TierLegendDialog.svelte'
 
   /** Category display names */
   const CATEGORY_LABELS: Record<OptimizationCategory, string> = {
@@ -52,6 +55,20 @@
   let ludicrousDialog: HTMLDialogElement | null = $state(null)
   /** Reference to restore point dialog element */
   let restorePointDialog: HTMLDialogElement | null = $state(null)
+  /** Reference to breaking changes dialog element */
+  let breakingChangesDialog: HTMLDialogElement | null = $state(null)
+  /** Pending optimization with breaking changes */
+  let pendingBreakingOpt: OptimizationDef | null = $state(null)
+  /** Tier legend dialog open state */
+  let tierLegendOpen = $state(false)
+
+  function openTierLegend() {
+    tierLegendOpen = true
+  }
+
+  function closeTierLegend() {
+    tierLegendOpen = false
+  }
 
   function handleWizardToggle() {
     toggleWizardMode()
@@ -85,18 +102,45 @@
     restorePointDialog?.close()
   }
 
+  function openBreakingChangesModal(opt: OptimizationDef) {
+    pendingBreakingOpt = opt
+    breakingChangesDialog?.showModal()
+  }
+
+  function closeBreakingChangesModal() {
+    pendingBreakingOpt = null
+    breakingChangesDialog?.close()
+  }
+
+  function confirmBreakingChanges() {
+    if (pendingBreakingOpt) {
+      toggleOptimization(pendingBreakingOpt.key)
+    }
+    pendingBreakingOpt = null
+    breakingChangesDialog?.close()
+  }
+
   /**
-   * Intercept toggle for restore_point - show modal if trying to disable without acknowledgment
+   * Intercept toggle for restore_point and items with breaking changes
    */
   function handleBeforeToggle(key: OptimizationKey, isCurrentlyChecked: boolean): boolean {
-
+    // Restore point special handling
     if (key === OPTIMIZATION_KEYS.RESTORE_POINT && isCurrentlyChecked) {
-
       if (!app.ui.restorePointAcknowledged) {
         openRestorePointModal()
         return false
       }
     }
+
+    // Breaking changes warning - only when enabling (not currently checked)
+    if (!isCurrentlyChecked) {
+      const opt = OPTIMIZATIONS.find(o => o.key === key)
+      if (opt?.breakingChanges && opt.breakingChanges.length > 0) {
+        openBreakingChangesModal(opt)
+        return false
+      }
+    }
+
     return true
   }
 </script>
@@ -105,7 +149,12 @@
   <header class="step-banner">
     <div class="step-banner__marker">3</div>
     <div class="step-banner__content">
-      <h2 class="step-banner__title">Upgrades</h2>
+      <h2 class="step-banner__title">
+        Upgrades
+        <button type="button" onclick={openTierLegend} title="What do the tier letters mean?">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+        </button>
+      </h2>
       <p class="step-banner__subtitle">Safe options enabled by default — hover for details</p>
     </div>
     <div class="step-banner__actions">
@@ -424,4 +473,63 @@
     </footer>
   </dialog>
 
+  <!-- Breaking Changes Confirmation Dialog -->
+  <dialog
+    bind:this={breakingChangesDialog}
+    class="breaking-changes-dialog"
+    aria-labelledby="breaking-changes-dialog-title"
+  >
+    <header class="breaking-changes-dialog-header">
+      <svg class="warning-icon" viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
+        <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+      </svg>
+      <h3 id="breaking-changes-dialog-title">
+        {pendingBreakingOpt?.label ?? 'Optimization'} — Breaking Changes
+      </h3>
+    </header>
+
+    <div class="breaking-changes-dialog-body">
+      <p class="breaking-changes-intro">
+        This option may break the following features:
+      </p>
+
+      {#if pendingBreakingOpt?.breakingChanges}
+        <ul class="breaking-changes-list">
+          {#each pendingBreakingOpt.breakingChanges as change}
+            <li>
+              <strong>{change.feature}</strong>
+              <span>{change.impact}</span>
+            </li>
+          {/each}
+        </ul>
+      {/if}
+
+      <p class="breaking-changes-note">
+        Only enable this if you don't use these features.
+      </p>
+    </div>
+
+    <footer class="breaking-changes-dialog-footer">
+      <button type="button" class="btn-secondary" onclick={closeBreakingChangesModal}>
+        Cancel
+      </button>
+      <button type="button" class="btn-caution" onclick={confirmBreakingChanges}>
+        Enable Anyway
+      </button>
+    </footer>
+  </dialog>
+
+  <TierLegendDialog open={tierLegendOpen} onclose={closeTierLegend} />
 </section>
+
+<style>
+  .step-banner__title button {
+    all: unset;
+    cursor: pointer;
+    opacity: 0.6;
+  }
+
+  .step-banner__title button:hover {
+    opacity: 1;
+  }
+</style>

@@ -457,6 +457,18 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
   }
   lines.push('')
   lines.push('    Windows is the arena. RockTune is the upgrade bay.')
+  lines.push('.NOTES')
+  lines.push('    BENCHMARKING GUIDANCE:')
+  lines.push('    Before running optimizations:')
+  lines.push('      1. Run CapFrameX or RTSS benchmark in your main game')
+  lines.push('      2. Note: Average FPS, 1% low, 0.1% low')
+  lines.push('      3. Apply optimizations, reboot')
+  lines.push('      4. Run same benchmark, compare results')
+  lines.push('')
+  lines.push('    Recommended tools:')
+  lines.push('      - CapFrameX: https://www.capframex.com/')
+  lines.push('      - LatencyMon: https://www.resplendence.com/latencymon')
+  lines.push('      - RTSS: https://www.guru3d.com/download/rtss-rivatuner-statistics-server-download/')
   lines.push('#>')
   lines.push('')
 
