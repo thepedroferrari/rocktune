@@ -956,13 +956,19 @@ try {
         $script:WingetAvailable = Test-WingetAvailable
 
         Write-Section "Install Required Tools"
+        $totalPkgs = $packages.Count
+        $currentPkg = 0
         foreach ($package in $packages) {
+            $currentPkg++
+            $pct = [math]::Round(($currentPkg / $totalPkgs) * 100)
+            Write-Progress -Activity "Installing Tools" -Status $package.Name -PercentComplete $pct -CurrentOperation "$currentPkg of $totalPkgs"
             Write-Note "$($package.Name): $($package.Purpose)"
             $installed = Install-WingetPackage -PackageId $package.Id -PackageName $package.Name
             if (-not $installed) {
                 Write-Warn "$($package.Name) failed to install. The script will continue, but launching may fail."
             }
         }
+        Write-Progress -Activity "Installing Tools" -Completed
     } else {
         # The user did not approve installs. We still try to locate and launch
         # any tools that are already installed.

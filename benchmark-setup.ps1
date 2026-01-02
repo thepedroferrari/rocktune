@@ -61,6 +61,10 @@ $script:ResetConsent = $ResetConsent
 $script:ConsentRoot = Join-Path $env:LOCALAPPDATA "WindowsGamingSettings"
 $script:ConsentFilePath = Join-Path $script:ConsentRoot "benchmark-consent.json"
 
+# Progress tracking
+$script:SectionIndex = 0
+$script:SectionTotal = 10  # Total number of Write-Section calls in main flow
+
 function Write-Section {
     <#
     .SYNOPSIS
@@ -72,6 +76,10 @@ function Write-Section {
         [Parameter(Mandatory=$true)]
         [string]$Title
     )
+
+    $script:SectionIndex++
+    $pct = [math]::Min(100, [math]::Round(($script:SectionIndex / $script:SectionTotal) * 100))
+    Write-Progress -Activity "Benchmark Setup" -Status $Title -PercentComplete $pct -CurrentOperation "Step $($script:SectionIndex) of $($script:SectionTotal)"
 
     Write-Host ""
     Write-Host "=== $Title ===" -ForegroundColor Cyan
@@ -956,13 +964,19 @@ try {
         $script:WingetAvailable = Test-WingetAvailable
 
         Write-Section "Install Required Tools"
+        $totalPkgs = $packages.Count
+        $currentPkg = 0
         foreach ($package in $packages) {
+            $currentPkg++
+            $pct = [math]::Round(($currentPkg / $totalPkgs) * 100)
+            Write-Progress -Activity "Installing Tools" -Status $package.Name -PercentComplete $pct -CurrentOperation "$currentPkg of $totalPkgs"
             Write-Note "$($package.Name): $($package.Purpose)"
             $installed = Install-WingetPackage -PackageId $package.Id -PackageName $package.Name
             if (-not $installed) {
                 Write-Warn "$($package.Name) failed to install. The script will continue, but launching may fail."
             }
         }
+        Write-Progress -Activity "Installing Tools" -Completed
     } else {
         # The user did not approve installs. We still try to locate and launch
         # any tools that are already installed.
@@ -1039,6 +1053,7 @@ try {
     Write-Note "Compare Avg FPS, 1% low, 0.1% low, and frametime graphs."
 
     Write-Ok "Benchmark stack is ready."
+    Write-Progress -Activity "Benchmark Setup" -Completed
 
     Show-RockTuneFinalChecklist
 } catch {

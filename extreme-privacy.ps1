@@ -44,6 +44,10 @@ $script:LogPath = ".\extreme-privacy.log"
 .OUTPUTS
     None.
 #>
+# Progress tracking
+$script:SectionIndex = 0
+$script:SectionTotal = if ($EnableFirewallRules) { 22 } else { 21 }
+
 function Write-Log {
     param([string]$Message, [string]$Level = "INFO")
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
@@ -55,6 +59,14 @@ function Write-Log {
     }
 
     Write-Host $logMessage -ForegroundColor $(if ($Level -eq "ERROR") { "Red" } elseif ($Level -eq "SUCCESS") { "Green" } else { "White" })
+}
+
+function Write-Section {
+    param([string]$Title)
+    $script:SectionIndex++
+    $pct = [math]::Min(100, [math]::Round(($script:SectionIndex / $script:SectionTotal) * 100))
+    Write-Progress -Activity "Extreme Privacy" -Status $Title -PercentComplete $pct -CurrentOperation "Step $($script:SectionIndex) of $($script:SectionTotal)"
+    Write-Log "=== $Title ==="
 }
 
 <#
@@ -110,7 +122,7 @@ if (-not $SkipConfirmations) {
 }
 
 # Windows Update is disabled to prevent telemetry and background bandwidth usage.
-Write-Log "=== Disabling Windows Update Completely ==="
+Write-Section "Disabling Windows Update Completely"
 try {
     Stop-Service wuauserv -Force -ErrorAction SilentlyContinue
     Set-Service wuauserv -StartupType Disabled
@@ -130,7 +142,7 @@ try {
 
 
 # Disable telemetry and diagnostic services that phone home.
-Write-Log "=== Disabling All Telemetry Services ==="
+Write-Section "Disabling All Telemetry Services"
 $telemetryServices = @(
     "DiagTrack",
     "dmwappushservice",
@@ -161,7 +173,7 @@ foreach ($svc in $telemetryServices) {
 
 
 # Disable location sensors and location-based permission stores.
-Write-Log "=== Disabling Location Tracking ==="
+Write-Section "Disabling Location Tracking"
 Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\LocationAndSensors" -Name "DisableLocation" -Value 1
 Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\LocationAndSensors" -Name "DisableWindowsLocationProvider" -Value 1
 Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\LocationAndSensors" -Name "DisableLocationScripting" -Value 1
@@ -169,7 +181,7 @@ Set-RegistryValue -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Capabil
 
 
 # Block camera access for UWP/modern apps, keep microphone enabled for voice chat.
-Write-Log "=== Hardening Camera Privacy ==="
+Write-Section "Hardening Camera Privacy"
 Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppPrivacy" -Name "LetAppsAccessCamera" -Value 2
 Set-RegistryValue -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\webcam" -Name "Value" -Value "Deny" -Type "String"
 
@@ -178,13 +190,13 @@ Write-Log "Camera blocked | Microphone enabled for gaming voice chat" "SUCCESS"
 
 
 # Disable Windows Hello biometrics and PIN logon for domain usage.
-Write-Log "=== Disabling Biometrics ==="
+Write-Section "Disabling Biometrics"
 Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Biometrics" -Name "Enabled" -Value 0
 Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" -Name "AllowDomainPINLogon" -Value 0
 
 
 # Remove OneDrive background sync and shell integration.
-Write-Log "=== Disabling OneDrive ==="
+Write-Section "Disabling OneDrive"
 try {
     taskkill /f /im OneDrive.exe 2>&1 | Out-Null
 
@@ -210,7 +222,7 @@ try {
 
 
 # Disable Windows settings sync to reduce cloud footprint.
-Write-Log "=== Disabling Sync Settings ==="
+Write-Section "Disabling Sync Settings"
 Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\SettingSync" -Name "DisableSettingSync" -Value 2
 Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\SettingSync" -Name "DisableSettingSyncUserOverride" -Value 1
 Set-RegistryValue -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\SettingSync" -Name "SyncPolicy" -Value 5
@@ -223,13 +235,13 @@ Set-RegistryValue -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Setting
 
 
 # Prevent Microsoft account sign-in integration (local account bias).
-Write-Log "=== Disabling Microsoft Account Integration ==="
+Write-Section "Disabling Microsoft Account Integration"
 Set-RegistryValue -Path "HKLM:\SOFTWARE\Microsoft\PolicyManager\current\device\Accounts" -Name "AllowMicrosoftAccountConnection" -Value 0
 Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\MicrosoftAccount" -Name "DisableUserAuth" -Value 1
 
 
 # Disable consumer cloud content delivery and spotlight suggestions.
-Write-Log "=== Disabling Cloud Content ==="
+Write-Section "Disabling Cloud Content"
 Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" -Name "DisableWindowsConsumerFeatures" -Value 1
 Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" -Name "DisableCloudOptimizedContent" -Value 1
 Set-RegistryValue -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "ContentDeliveryAllowed" -Value 0
@@ -245,13 +257,13 @@ Set-RegistryValue -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Content
 
 
 # Stop app suggestions and sync provider notifications.
-Write-Log "=== Disabling App Suggestions ==="
+Write-Section "Disabling App Suggestions"
 Set-RegistryValue -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SoftLandingEnabled" -Value 0
 Set-RegistryValue -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "ShowSyncProviderNotifications" -Value 0
 
 
 # Disable typing/ink data collection used for personalization.
-Write-Log "=== Disabling Typing Data Collection ==="
+Write-Section "Disabling Typing Data Collection"
 Set-RegistryValue -Path "HKCU:\Software\Microsoft\InputPersonalization" -Name "RestrictImplicitInkCollection" -Value 1
 Set-RegistryValue -Path "HKCU:\Software\Microsoft\InputPersonalization" -Name "RestrictImplicitTextCollection" -Value 1
 Set-RegistryValue -Path "HKCU:\Software\Microsoft\InputPersonalization\TrainedDataStore" -Name "HarvestContacts" -Value 0
@@ -259,55 +271,55 @@ Set-RegistryValue -Path "HKCU:\Software\Microsoft\Personalization\Settings" -Nam
 
 
 # Block handwriting data sharing.
-Write-Log "=== Disabling Handwriting Data Collection ==="
+Write-Section "Disabling Handwriting Data Collection"
 Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\TabletPC" -Name "PreventHandwritingDataSharing" -Value 1
 Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\HandwritingErrorReports" -Name "PreventHandwritingErrorReports" -Value 1
 
 
 # Disable Microsoft experimentation/feature rollouts (A/B testing).
-Write-Log "=== Disabling Microsoft Experimentation ==="
+Write-Section "Disabling Microsoft Experimentation"
 Set-RegistryValue -Path "HKLM:\SOFTWARE\Microsoft\PolicyManager\current\device\System" -Name "AllowExperimentation" -Value 0
 Set-RegistryValue -Path "HKLM:\SOFTWARE\Microsoft\PolicyManager\default\System\AllowExperimentation" -Name "value" -Value 0
 
 
 # Deny UWP app access to account data and identity info.
-Write-Log "=== Disabling App Access to Account Info ==="
+Write-Section "Disabling App Access to Account Info"
 Set-RegistryValue -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\userAccountInformation" -Name "Value" -Value "Deny" -Type "String"
 Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppPrivacy" -Name "LetAppsAccessAccountInfo" -Value 2
 
 
 # Deny app access to contacts and PIM data sources.
-Write-Log "=== Disabling App Access to Contacts ==="
+Write-Section "Disabling App Access to Contacts"
 Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppPrivacy" -Name "LetAppsAccessContacts" -Value 2
 
 
 # Deny app access to calendar entries.
-Write-Log "=== Disabling App Access to Calendar ==="
+Write-Section "Disabling App Access to Calendar"
 Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppPrivacy" -Name "LetAppsAccessCalendar" -Value 2
 
 
 # Deny app access to call history logs.
-Write-Log "=== Disabling App Access to Call History ==="
+Write-Section "Disabling App Access to Call History"
 Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppPrivacy" -Name "LetAppsAccessCallHistory" -Value 2
 
 
 # Deny app access to email data.
-Write-Log "=== Disabling App Access to Email ==="
+Write-Section "Disabling App Access to Email"
 Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppPrivacy" -Name "LetAppsAccessEmail" -Value 2
 
 
 # Deny app access to notifications history.
-Write-Log "=== Disabling App Access to Notifications ==="
+Write-Section "Disabling App Access to Notifications"
 Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppPrivacy" -Name "LetAppsAccessNotifications" -Value 2
 
 
 # Prevent automatic map package downloads.
-Write-Log "=== Disabling Maps Auto-Update ==="
+Write-Section "Disabling Maps Auto-Update"
 Set-RegistryValue -Path "HKLM:\SYSTEM\Maps" -Name "AutoUpdateEnabled" -Value 0
 
 
 # Adds telemetry domains to hosts file; requires ownership/ACL changes.
-Write-Log "=== Advanced Hosts File Telemetry Blocking ==="
+Write-Section "Advanced Hosts File Telemetry Blocking"
 try {
     $hostsFile = "$env:SystemRoot\System32\drivers\etc\hosts"
 
@@ -482,7 +494,7 @@ try {
 
 if ($EnableFirewallRules) {
     # Optional: outbound firewall rules for known telemetry IPs.
-    Write-Log "=== Creating Firewall Rules to Block Telemetry ==="
+    Write-Section "Creating Firewall Rules to Block Telemetry"
     try {
         $telemetryIPs = @(
             "134.170.30.202",
@@ -513,6 +525,7 @@ if ($EnableFirewallRules) {
 }
 
 
+Write-Progress -Activity "Extreme Privacy" -Completed
 Write-Log "=== Extreme Privacy Script Completed ===" "SUCCESS"
 Write-Host ""
 Write-Host "=== EXTREME PRIVACY APPLIED ===" -ForegroundColor Green

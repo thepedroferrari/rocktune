@@ -636,9 +636,16 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
       .filter((entry) => entry.pkg)
       .sort((a, b) => a.pkg.name.localeCompare(b.pkg.name))
 
+    const total = sorted.length
+    lines.push(`${indent}    $totalPkgs = ${total}`)
+    lines.push(`${indent}    $currentPkg = 0`)
+
     for (const entry of sorted) {
       const packageName = escapePsDoubleQuoted(entry.pkg.name)
       const packageId = escapePsDoubleQuoted(entry.pkg.id)
+      lines.push(`${indent}    $currentPkg++`)
+      lines.push(`${indent}    $pct = [math]::Round(($currentPkg / $totalPkgs) * 100)`)
+      lines.push(`${indent}    Write-Progress -Activity "Installing Arsenal" -Status "${packageName}" -PercentComplete $pct -CurrentOperation "$currentPkg of $totalPkgs"`)
       lines.push(`${indent}    Write-Host "  Installing ${packageName}..." -NoNewline`)
       lines.push(
         `${indent}    $installOutput = winget install --id "${packageId}" --silent --accept-package-agreements --accept-source-agreements 2>&1`,
@@ -652,6 +659,7 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
       )
     }
 
+    lines.push(`${indent}    Write-Progress -Activity "Installing Arsenal" -Completed`)
     lines.push(`${indent}}`)
     lines.push('')
   }
