@@ -63,6 +63,12 @@ interface ShareDataV1 {
 type ShareData = ShareDataV1
 
 /**
+ * Safety limits to prevent DoS from malicious URLs
+ */
+const MAX_ARRAY_LENGTH = 100
+const URL_LENGTH_WARNING_THRESHOLD = 2000
+
+/**
  * Decoded build state (human-readable)
  */
 export interface DecodedBuild {
@@ -99,6 +105,18 @@ export interface BuildToEncode {
   optimizations: OptimizationKey[]
   packages: PackageKey[]
   preset?: PresetType
+}
+
+/**
+ * Result of encoding with metadata
+ */
+export interface EncodeResult {
+  hash: string
+  url: string
+  /** True if URL exceeds safe length for some browsers/services */
+  urlTooLong: boolean
+  /** URL length in characters */
+  urlLength: number
 }
 
 /**
@@ -207,6 +225,14 @@ export function decodeShareURL(hash: string): DecodeResult {
 }
 
 /**
+ * Safely slice an array to max length (DoS prevention)
+ */
+function safeSlice<T>(arr: T[] | undefined, max: number): T[] {
+  if (!arr) return []
+  return arr.slice(0, max)
+}
+
+/**
  * Decode version 1 share data
  */
 function decodeV1(data: ShareDataV1): DecodeResult {
@@ -255,53 +281,63 @@ function decodeV1(data: ShareDataV1): DecodeResult {
     }
   }
 
-  // Decode peripherals
+  // Decode peripherals (with array limit)
   if (data.p) {
-    for (const id of data.p) {
+    const limitedPeripherals = safeSlice(data.p, MAX_ARRAY_LENGTH)
+    let peripheralSkips = 0
+    for (const id of limitedPeripherals) {
       const peripheral = PERIPHERAL_ID_TO_VALUE[id]
       if (peripheral && isPeripheralType(peripheral)) {
         build.peripherals.push(peripheral)
       } else {
+        peripheralSkips++
         skippedCount++
       }
     }
-    if (skippedCount > 0 && data.p.length > build.peripherals.length) {
-      warnings.push(`${data.p.length - build.peripherals.length} peripheral(s) no longer available`)
+    if (peripheralSkips > 0) {
+      warnings.push(`${peripheralSkips} peripheral(s) no longer available`)
     }
   }
 
-  // Decode monitor software
+  // Decode monitor software (with array limit)
   if (data.m) {
-    for (const id of data.m) {
+    const limitedMonitors = safeSlice(data.m, MAX_ARRAY_LENGTH)
+    let monitorSkips = 0
+    for (const id of limitedMonitors) {
       const monitor = MONITOR_ID_TO_VALUE[id]
       if (monitor && isMonitorSoftwareType(monitor)) {
         build.monitorSoftware.push(monitor)
       } else {
+        monitorSkips++
         skippedCount++
       }
     }
+    if (monitorSkips > 0) {
+      warnings.push(`${monitorSkips} monitor software no longer available`)
+    }
   }
 
-  // Decode optimizations
+  // Decode optimizations (with array limit)
   if (data.o) {
-    const skippedOpts = []
-    for (const id of data.o) {
+    const limitedOpts = safeSlice(data.o, MAX_ARRAY_LENGTH)
+    let optSkips = 0
+    for (const id of limitedOpts) {
       const opt = OPT_ID_TO_VALUE[id]
       if (opt && isOptimizationKey(opt)) {
         build.optimizations.push(opt)
       } else {
+        optSkips++
         skippedCount++
-        skippedOpts.push(id)
       }
     }
-    if (skippedOpts.length > 0) {
-      warnings.push(`${skippedOpts.length} optimization(s) no longer available`)
+    if (optSkips > 0) {
+      warnings.push(`${optSkips} optimization(s) no longer available`)
     }
   }
 
-  // Decode packages (strings, validated against catalog later)
+  // Decode packages (with array limit, strings validated against catalog later)
   if (data.s) {
-    build.packages = data.s as PackageKey[]
+    build.packages = safeSlice(data.s, MAX_ARRAY_LENGTH) as PackageKey[]
   }
 
   // Decode preset
@@ -353,12 +389,52 @@ export function clearShareHash(): void {
 
 /**
  * Generate full shareable URL from build state
+ * @returns Just the URL string (for backward compatibility)
  */
 export function getFullShareURL(build: BuildToEncode): string {
+  return getFullShareURLWithMeta(build).url
+}
+
+/**
+ * Generate full shareable URL with metadata about length
+ * @returns EncodeResult with URL and length warnings
+ */
+export function getFullShareURLWithMeta(build: BuildToEncode): EncodeResult {
   const hash = encodeShareURL(build)
   // In production, use the actual domain
   const baseURL = typeof window !== 'undefined' ? window.location.origin : 'https://rocktune.pedroferrari.com'
-  return `${baseURL}/#${hash}`
+  const url = `${baseURL}/#${hash}`
+
+  return {
+    hash,
+    url,
+    urlLength: url.length,
+    urlTooLong: url.length > URL_LENGTH_WARNING_THRESHOLD,
+  }
+}
+
+/**
+ * Validate packages against a catalog and return valid/invalid counts
+ * @param packages - Package keys to validate
+ * @param catalogKeys - Set of valid package keys from catalog
+ * @returns Object with valid packages and count of invalid ones
+ */
+export function validatePackages(
+  packages: readonly PackageKey[],
+  catalogKeys: Set<string>
+): { valid: PackageKey[]; invalidCount: number } {
+  const valid: PackageKey[] = []
+  let invalidCount = 0
+
+  for (const pkg of packages) {
+    if (catalogKeys.has(pkg)) {
+      valid.push(pkg)
+    } else {
+      invalidCount++
+    }
+  }
+
+  return { valid, invalidCount }
 }
 
 /**

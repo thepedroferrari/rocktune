@@ -10,10 +10,10 @@
 
   import { app } from '$lib/state.svelte'
   import {
-    encodeShareURL,
-    getFullShareURL,
+    getFullShareURLWithMeta,
     generateTextSummary,
     type BuildToEncode,
+    type EncodeResult,
   } from '$lib/share'
   import { copyToClipboard } from '$lib/checksum'
   import { showToast } from '$lib/toast.svelte'
@@ -41,15 +41,29 @@
     preset: app.activePreset ?? undefined,
   })
 
-  let shareURL = $derived(getFullShareURL(currentBuild))
+  // Get URL with metadata (length warning)
+  let shareResult = $derived<EncodeResult>(getFullShareURLWithMeta(currentBuild))
+  let shareURL = $derived(shareResult.url)
   let textSummary = $derived(generateTextSummary(currentBuild))
+
+  // Svelte 5: Auto-reset copied states with proper cleanup
+  $effect(() => {
+    if (!urlCopied) return
+    const timer = setTimeout(() => (urlCopied = false), 2000)
+    return () => clearTimeout(timer)
+  })
+
+  $effect(() => {
+    if (!textCopied) return
+    const timer = setTimeout(() => (textCopied = false), 2000)
+    return () => clearTimeout(timer)
+  })
 
   async function handleCopyURL() {
     const success = await copyToClipboard(shareURL)
     if (success) {
       urlCopied = true
       showToast('Link copied to clipboard!', 'success')
-      setTimeout(() => (urlCopied = false), 2000)
     }
   }
 
@@ -58,7 +72,6 @@
     if (success) {
       textCopied = true
       showToast('Text summary copied!', 'success')
-      setTimeout(() => (textCopied = false), 2000)
     }
   }
 
@@ -68,14 +81,20 @@
     }
   }
 
-  function handleKeydown(e: KeyboardEvent) {
-    if (e.key === 'Escape') {
-      onclose()
-    }
-  }
-</script>
+  // Svelte 5: Conditionally add/remove keydown listener
+  $effect(() => {
+    if (!open) return
 
-<svelte:window onkeydown={handleKeydown} />
+    function handleKeydown(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        onclose()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeydown)
+    return () => window.removeEventListener('keydown', handleKeydown)
+  })
+</script>
 
 {#if open}
   <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -180,9 +199,20 @@
                 {/if}
               </button>
             </div>
-            <p class="share-panel__hint">
-              Works on Discord, Reddit, Twitter, and anywhere else you can paste a link.
-            </p>
+            {#if shareResult.urlTooLong}
+              <p class="share-panel__warning">
+                <svg class="warning-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
+                  <line x1="12" y1="9" x2="12" y2="13" />
+                  <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg>
+                URL is {shareResult.urlLength} chars — some services may truncate long URLs.
+              </p>
+            {:else}
+              <p class="share-panel__hint">
+                Works on Discord, Reddit, Twitter, and anywhere else you can paste a link.
+              </p>
+            {/if}
           </div>
         {:else}
           <div class="share-panel" role="tabpanel">
@@ -414,6 +444,25 @@
     margin: 0;
     font-size: var(--text-xs);
     color: var(--text-muted);
+  }
+
+  .share-panel__warning {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    margin: 0;
+    padding: var(--space-xs) var(--space-sm);
+    background: oklch(0.8 0.15 85 / 0.1);
+    border: 1px solid oklch(0.8 0.15 85 / 0.3);
+    border-radius: var(--radius-sm);
+    font-size: var(--text-xs);
+    color: oklch(0.85 0.12 85);
+  }
+
+  .share-panel__warning .warning-icon {
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
   }
 
   .share-text-box {

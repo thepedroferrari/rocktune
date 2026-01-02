@@ -32,6 +32,7 @@
     getShareHash,
     decodeShareURL,
     clearShareHash,
+    validatePackages,
     type DecodedBuild,
   } from '$lib/share'
   import type { PackageKey } from '$lib/types'
@@ -71,6 +72,8 @@
   let loading = $state(true)
   let error = $state<string | null>(null)
 
+  /** Pending packages from share URL (validated after catalog loads) */
+  let pendingSharePackages = $state<PackageKey[] | null>(null)
 
   let selectedCount = $derived(getSelectedCount())
   let totalCount = $derived(getTotalCount())
@@ -198,6 +201,9 @@
         const defaults = getDefaultOptimizations()
         setOptimizations(defaults)
       }
+
+      // Validate and apply pending share packages
+      applyPendingSharePackages(catalog)
     } catch (e) {
       // RTFB-501: User-friendly errors + cache fallback
       const cached = getCachedCatalog()
@@ -244,6 +250,8 @@
             const defaults = getDefaultOptimizations()
             setOptimizations(defaults)
           }
+          // Validate and apply pending share packages
+          applyPendingSharePackages(cached)
         }
       } else {
         error = 'Unknown error loading catalog.'
@@ -257,6 +265,7 @@
 
   /**
    * Apply a decoded shared build to app state
+   * Note: Packages are stored as pending and validated after catalog loads
    */
   function applySharedBuild(build: DecodedBuild): void {
     if (build.cpu) setCpu(build.cpu)
@@ -265,10 +274,38 @@
     if (build.peripherals.length > 0) setPeripherals(build.peripherals)
     if (build.monitorSoftware.length > 0) setMonitorSoftware(build.monitorSoftware)
     if (build.optimizations.length > 0) setOptimizations(build.optimizations)
-    if (build.packages.length > 0) setSelection(build.packages)
     if (build.preset) setActivePreset(build.preset)
 
+    // Store packages for validation after catalog loads
+    if (build.packages.length > 0) {
+      pendingSharePackages = build.packages
+    }
+
     loadedFromShare = true
+  }
+
+  /**
+   * Validate and apply pending share packages against loaded catalog
+   */
+  function applyPendingSharePackages(catalog: SoftwareCatalog): void {
+    if (!pendingSharePackages) return
+
+    const catalogKeys = new Set(Object.keys(catalog))
+    const { valid, invalidCount } = validatePackages(pendingSharePackages, catalogKeys)
+
+    if (valid.length > 0) {
+      setSelection(valid)
+    }
+
+    if (invalidCount > 0) {
+      showToast(
+        `${invalidCount} package(s) from shared link no longer available.`,
+        'warning',
+        5000
+      )
+    }
+
+    pendingSharePackages = null
   }
 
   /**
