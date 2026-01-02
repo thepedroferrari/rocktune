@@ -199,6 +199,18 @@
                 {/if}
               </button>
             </div>
+            {#if shareResult.blockedCount > 0}
+              <div class="share-panel__security-notice">
+                <svg class="security-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                  <path d="m9 12 2 2 4-4"/>
+                </svg>
+                <span>
+                  {shareResult.blockedCount} dangerous optimization{shareResult.blockedCount > 1 ? 's' : ''} excluded for security.
+                  Recipients must enable LUDICROUS mode themselves.
+                </span>
+              </div>
+            {/if}
             {#if shareResult.urlTooLong}
               <p class="share-panel__warning">
                 <svg class="warning-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -463,6 +475,27 @@
     flex-shrink: 0;
     width: 14px;
     height: 14px;
+  }
+
+  .share-panel__security-notice {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    background: oklch(0.6 0.18 145 / 0.1);
+    border: 1px solid oklch(0.6 0.18 145 / 0.3);
+    border-radius: var(--radius-sm);
+    font-size: var(--text-xs);
+    color: oklch(0.75 0.15 145);
+    line-height: 1.4;
+  }
+
+  .share-panel__security-notice .security-icon {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    margin-top: 1px;
   }
 
   .share-text-box {

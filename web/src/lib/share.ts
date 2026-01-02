@@ -26,6 +26,7 @@ import {
   isOptimizationKey,
   isPeripheralType,
   isPresetType,
+  OPTIMIZATION_KEYS,
 } from './types'
 import {
   CPU_ID_TO_VALUE,
@@ -67,6 +68,38 @@ type ShareData = ShareDataV1
  */
 const MAX_ARRAY_LENGTH = 100
 const URL_LENGTH_WARNING_THRESHOLD = 2000
+
+/**
+ * LUDICROUS optimization keys - blocked from sharing
+ * These bypass the consent flow and could harm users who click shared links.
+ * Recipients must enable LUDICROUS mode themselves through the proper consent flow.
+ */
+const BLOCKED_SHARE_KEYS: Set<string> = new Set([
+  OPTIMIZATION_KEYS.SPECTRE_MELTDOWN_OFF,
+  OPTIMIZATION_KEYS.CORE_ISOLATION_OFF,
+  OPTIMIZATION_KEYS.KERNEL_MITIGATIONS_OFF,
+  OPTIMIZATION_KEYS.DEP_OFF,
+])
+
+/**
+ * Filter out LUDICROUS optimizations that would bypass consent flow
+ * @param optimizations - Array of optimization keys to filter
+ * @returns Object with safe optimizations and count of blocked ones
+ */
+function filterBlockedOptimizations(
+  optimizations: readonly OptimizationKey[]
+): { safe: OptimizationKey[]; blockedCount: number } {
+  const safe: OptimizationKey[] = []
+  let blockedCount = 0
+  for (const opt of optimizations) {
+    if (BLOCKED_SHARE_KEYS.has(opt)) {
+      blockedCount++
+    } else {
+      safe.push(opt)
+    }
+  }
+  return { safe, blockedCount }
+}
 
 /**
  * Decoded build state (human-readable)
@@ -117,6 +150,8 @@ export interface EncodeResult {
   urlTooLong: boolean
   /** URL length in characters */
   urlLength: number
+  /** Number of LUDICROUS optimizations excluded from share for security */
+  blockedCount: number
 }
 
 /**
@@ -147,7 +182,11 @@ export function encodeShareURL(build: BuildToEncode): string {
     data.m = build.monitorSoftware.map((m) => MONITOR_VALUE_TO_ID[m])
   }
   if (build.optimizations.length > 0) {
-    data.o = build.optimizations.map((o) => OPT_VALUE_TO_ID[o]).filter((id) => id !== undefined)
+    // Filter out LUDICROUS optimizations - they bypass consent flow
+    const { safe } = filterBlockedOptimizations(build.optimizations)
+    if (safe.length > 0) {
+      data.o = safe.map((o) => OPT_VALUE_TO_ID[o]).filter((id) => id !== undefined)
+    }
   }
   // Packages use string keys (more resilient to catalog changes)
   if (build.packages.length > 0) {
@@ -333,6 +372,16 @@ function decodeV1(data: ShareDataV1): DecodeResult {
     if (optSkips > 0) {
       warnings.push(`${optSkips} optimization(s) no longer available`)
     }
+
+    // Defense in depth: Filter out LUDICROUS optimizations that bypass consent
+    const { safe: safeOpts, blockedCount: ludicrousBlocked } = filterBlockedOptimizations(
+      build.optimizations
+    )
+    build.optimizations = safeOpts
+    if (ludicrousBlocked > 0) {
+      skippedCount += ludicrousBlocked
+      warnings.push(`${ludicrousBlocked} dangerous optimization(s) removed for security`)
+    }
   }
 
   // Decode packages (with array limit, strings validated against catalog later)
@@ -396,13 +445,17 @@ export function getFullShareURL(build: BuildToEncode): string {
 }
 
 /**
- * Generate full shareable URL with metadata about length
- * @returns EncodeResult with URL and length warnings
+ * Generate full shareable URL with metadata about length and blocked items
+ * @returns EncodeResult with URL, length warnings, and blocked count
  */
 export function getFullShareURLWithMeta(build: BuildToEncode): EncodeResult {
+  // Check how many LUDICROUS optimizations will be excluded
+  const { blockedCount } = filterBlockedOptimizations(build.optimizations)
+
   const hash = encodeShareURL(build)
   // In production, use the actual domain
-  const baseURL = typeof window !== 'undefined' ? window.location.origin : 'https://rocktune.pedroferrari.com'
+  const baseURL =
+    typeof window !== 'undefined' ? window.location.origin : 'https://rocktune.pedroferrari.com'
   const url = `${baseURL}/#${hash}`
 
   return {
@@ -410,6 +463,7 @@ export function getFullShareURLWithMeta(build: BuildToEncode): EncodeResult {
     url,
     urlLength: url.length,
     urlTooLong: url.length > URL_LENGTH_WARNING_THRESHOLD,
+    blockedCount,
   }
 }
 
