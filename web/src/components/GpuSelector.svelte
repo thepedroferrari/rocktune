@@ -43,6 +43,7 @@
         name="gpu"
         value={option.value}
         checked={app.hardware.gpu === option.value}
+        autocomplete="off"
         onchange={handleChange}
       />
       <span class="label-text">{option.label}</span>

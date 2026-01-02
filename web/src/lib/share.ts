@@ -165,7 +165,6 @@ export function encodeShareURL(build: BuildToEncode): string {
     v: SHARE_SCHEMA_VERSION,
   }
 
-  // Only include non-default values to minimize URL size
   if (build.cpu) {
     data.c = CPU_VALUE_TO_ID[build.cpu]
   }
@@ -182,13 +181,11 @@ export function encodeShareURL(build: BuildToEncode): string {
     data.m = build.monitorSoftware.map((m) => MONITOR_VALUE_TO_ID[m])
   }
   if (build.optimizations.length > 0) {
-    // Filter out LUDICROUS optimizations - they bypass consent flow
     const { safe } = filterBlockedOptimizations(build.optimizations)
     if (safe.length > 0) {
       data.o = safe.map((o) => OPT_VALUE_TO_ID[o]).filter((id) => id !== undefined)
     }
   }
-  // Packages use string keys (more resilient to catalog changes)
   if (build.packages.length > 0) {
     data.s = [...build.packages]
   }
@@ -210,7 +207,6 @@ export function encodeShareURL(build: BuildToEncode): string {
  */
 export function decodeShareURL(hash: string): DecodeResult {
   try {
-    // Clean up the hash
     let cleanHash = hash
     if (cleanHash.startsWith('#')) {
       cleanHash = cleanHash.slice(1)
@@ -219,7 +215,6 @@ export function decodeShareURL(hash: string): DecodeResult {
       cleanHash = cleanHash.slice(2)
     }
 
-    // Parse version and data
     const dotIndex = cleanHash.indexOf('.')
     if (dotIndex === -1) {
       return { success: false, error: 'Invalid URL format: missing version separator' }
@@ -232,13 +227,11 @@ export function decodeShareURL(hash: string): DecodeResult {
       return { success: false, error: 'Invalid URL format: invalid version' }
     }
 
-    // Decompress
     const json = decompressFromEncodedURIComponent(compressed)
     if (!json) {
       return { success: false, error: 'Could not decompress URL data' }
     }
 
-    // Parse JSON
     let data: ShareData
     try {
       data = JSON.parse(json) as ShareData
@@ -246,13 +239,10 @@ export function decodeShareURL(hash: string): DecodeResult {
       return { success: false, error: 'Invalid URL data format' }
     }
 
-    // Route to version-specific decoder
     if (data.v === 1) {
       return decodeV1(data)
     }
 
-    // Future versions: try to decode as best we can
-    // For now, fail gracefully
     return {
       success: false,
       error: `URL version ${data.v} is not supported. Please update RockTune.`,
@@ -287,7 +277,6 @@ function decodeV1(data: ShareDataV1): DecodeResult {
     warnings: [],
   }
 
-  // Decode CPU
   if (data.c !== undefined) {
     const cpu = CPU_ID_TO_VALUE[data.c]
     if (cpu && isCpuType(cpu)) {
@@ -298,7 +287,6 @@ function decodeV1(data: ShareDataV1): DecodeResult {
     }
   }
 
-  // Decode GPU
   if (data.g !== undefined) {
     const gpu = GPU_ID_TO_VALUE[data.g]
     if (gpu && isGpuType(gpu)) {
@@ -309,7 +297,6 @@ function decodeV1(data: ShareDataV1): DecodeResult {
     }
   }
 
-  // Decode DNS
   if (data.d !== undefined) {
     const dns = DNS_ID_TO_VALUE[data.d]
     if (dns) {
@@ -320,7 +307,6 @@ function decodeV1(data: ShareDataV1): DecodeResult {
     }
   }
 
-  // Decode peripherals (with array limit)
   if (data.p) {
     const limitedPeripherals = safeSlice(data.p, MAX_ARRAY_LENGTH)
     let peripheralSkips = 0
@@ -338,7 +324,6 @@ function decodeV1(data: ShareDataV1): DecodeResult {
     }
   }
 
-  // Decode monitor software (with array limit)
   if (data.m) {
     const limitedMonitors = safeSlice(data.m, MAX_ARRAY_LENGTH)
     let monitorSkips = 0
@@ -356,7 +341,6 @@ function decodeV1(data: ShareDataV1): DecodeResult {
     }
   }
 
-  // Decode optimizations (with array limit)
   if (data.o) {
     const limitedOpts = safeSlice(data.o, MAX_ARRAY_LENGTH)
     let optSkips = 0
@@ -373,7 +357,6 @@ function decodeV1(data: ShareDataV1): DecodeResult {
       warnings.push(`${optSkips} optimization(s) no longer available`)
     }
 
-    // Defense in depth: Filter out LUDICROUS optimizations that bypass consent
     const { safe: safeOpts, blockedCount: ludicrousBlocked } = filterBlockedOptimizations(
       build.optimizations
     )
@@ -384,12 +367,10 @@ function decodeV1(data: ShareDataV1): DecodeResult {
     }
   }
 
-  // Decode packages (with array limit, strings validated against catalog later)
   if (data.s) {
     build.packages = safeSlice(data.s, MAX_ARRAY_LENGTH) as PackageKey[]
   }
 
-  // Decode preset
   if (data.r !== undefined) {
     const preset = PRESET_ID_TO_VALUE[data.r]
     if (preset && isPresetType(preset)) {
@@ -430,7 +411,6 @@ export function getShareHash(): string | null {
  */
 export function clearShareHash(): void {
   if (typeof window === 'undefined') return
-  // Use replaceState to avoid adding to history
   const url = new URL(window.location.href)
   url.hash = ''
   window.history.replaceState(null, '', url.toString())
@@ -449,11 +429,8 @@ export function getFullShareURL(build: BuildToEncode): string {
  * @returns EncodeResult with URL, length warnings, and blocked count
  */
 export function getFullShareURLWithMeta(build: BuildToEncode): EncodeResult {
-  // Check how many LUDICROUS optimizations will be excluded
   const { blockedCount } = filterBlockedOptimizations(build.optimizations)
-
   const hash = encodeShareURL(build)
-  // In production, use the actual domain
   const baseURL =
     typeof window !== 'undefined' ? window.location.origin : 'https://rocktune.pedroferrari.com'
   const url = `${baseURL}/#${hash}`
@@ -524,10 +501,6 @@ export function generateTextSummary(build: BuildToEncode): string {
   return lines.join('\n')
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Compact URL Encoding for PowerShell One-Liner
-// ─────────────────────────────────────────────────────────────────────────────
-
 /**
  * Encode build state into compact query parameters for PowerShell one-liner
  *
@@ -535,14 +508,10 @@ export function generateTextSummary(build: BuildToEncode): string {
  *
  * This format can be parsed natively by PowerShell without LZ-string decompression.
  * LUDICROUS optimizations are filtered out for security.
- *
- * @param build - Current build state
- * @returns Query string (without leading ?)
  */
 export function encodeCompactURL(build: BuildToEncode): string {
   const params = new URLSearchParams()
 
-  // Hardware profile
   if (build.cpu) {
     params.set('c', String(CPU_VALUE_TO_ID[build.cpu]))
   }
@@ -553,7 +522,6 @@ export function encodeCompactURL(build: BuildToEncode): string {
     params.set('d', String(DNS_VALUE_TO_ID[build.dnsProvider]))
   }
 
-  // Peripherals (comma-separated IDs)
   if (build.peripherals.length > 0) {
     const ids = build.peripherals.map((p) => PERIPHERAL_VALUE_TO_ID[p]).filter(Boolean)
     if (ids.length > 0) {
@@ -561,7 +529,6 @@ export function encodeCompactURL(build: BuildToEncode): string {
     }
   }
 
-  // Monitor software (comma-separated IDs)
   if (build.monitorSoftware.length > 0) {
     const ids = build.monitorSoftware.map((m) => MONITOR_VALUE_TO_ID[m]).filter(Boolean)
     if (ids.length > 0) {
@@ -569,7 +536,6 @@ export function encodeCompactURL(build: BuildToEncode): string {
     }
   }
 
-  // Optimizations (comma-separated IDs, LUDICROUS filtered)
   if (build.optimizations.length > 0) {
     const { safe } = filterBlockedOptimizations(build.optimizations)
     if (safe.length > 0) {
@@ -580,7 +546,6 @@ export function encodeCompactURL(build: BuildToEncode): string {
     }
   }
 
-  // Packages (comma-separated keys - strings, not IDs)
   if (build.packages.length > 0) {
     params.set('s', build.packages.join(','))
   }
@@ -617,13 +582,9 @@ export interface OneLinerResult {
 export function getOneLinerWithMeta(build: BuildToEncode): OneLinerResult {
   const { blockedCount } = filterBlockedOptimizations(build.optimizations)
   const configString = encodeCompactURL(build)
-
-  // Build URL (config goes in env var, not query params)
   const baseURL =
     typeof window !== 'undefined' ? window.location.origin : 'https://rocktune.pedroferrari.com'
   const url = `${baseURL}/run.ps1`
-
-  // Build command with env var: $env:RT='config'; irm url | iex
   const command = configString
     ? `$env:RT='${configString}'; irm ${url} | iex`
     : `irm ${url} | iex`

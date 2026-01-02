@@ -118,8 +118,10 @@
           <input
             type="checkbox"
             id="wizard-mode"
+            name="wizard-mode"
             class="cyber-toggle-input"
             checked={app.ui.wizardMode}
+            autocomplete="off"
             onchange={handleWizardToggle}
           />
           <label for="wizard-mode" class="cyber-toggle-label">

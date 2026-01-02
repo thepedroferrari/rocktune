@@ -147,7 +147,9 @@
     Load Profile
     <input
       type="file"
+      name="profile-file"
       accept=".json"
+      autocomplete="off"
       bind:this={fileInputEl}
       onchange={handleLoad}
       style="display: none"

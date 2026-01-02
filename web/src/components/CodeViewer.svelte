@@ -286,7 +286,9 @@
     <textarea
       class="pane edit"
       class:active={activeMode === 'edit'}
+      name="script-edit"
       spellcheck="false"
+      autocomplete="off"
       value={editContent}
       onfocus={handleEditFocus}
       onblur={handleEditBlur}

@@ -97,7 +97,6 @@
     setView(view)
   }
 
-  // RTFB-501: localStorage cache for offline resilience (AlgoExpert: O(1) lookup)
   const CATALOG_CACHE_KEY = 'rocktune_catalog_cache'
   const CATALOG_CACHE_VERSION = '1.0'
   const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000
@@ -114,7 +113,6 @@
       if (!cached) return null
 
       const data: unknown = JSON.parse(cached)
-      // Type guard pattern (Matt Pocock)
       if (
         typeof data === 'object' &&
         data !== null &&
@@ -157,7 +155,6 @@
       clearTimeout(timeoutId)
 
       if (!response.ok) {
-        // Friendly error codes (not raw HTTP status)
         if (response.status === 404) throw new Error('CATALOG_NOT_FOUND')
         if (response.status >= 500) throw new Error('SERVER_ERROR')
         throw new Error('NETWORK_ERROR')
@@ -170,7 +167,6 @@
         throw new Error('INVALID_FORMAT')
       }
 
-      // Save successful fetch to cache
       saveCatalogCache(result.data)
       return result.data
     } catch (err) {
@@ -196,16 +192,13 @@
       const catalog = await loadCatalog()
       setSoftware(catalog)
 
-      // Only apply defaults if we didn't load from a share URL
       if (!loadedFromShare) {
         const defaults = getDefaultOptimizations()
         setOptimizations(defaults)
       }
 
-      // Validate and apply pending share packages
       applyPendingSharePackages(catalog)
     } catch (e) {
-      // RTFB-501: User-friendly errors + cache fallback
       const cached = getCachedCatalog()
 
       if (e instanceof Error) {
@@ -242,15 +235,12 @@
               : '⚡ Failed to load catalog. Please try again.'
         }
 
-        // Apply cached catalog if available
         if (cached) {
           setSoftware(cached)
-          // Only apply defaults if we didn't load from a share URL
           if (!loadedFromShare) {
             const defaults = getDefaultOptimizations()
             setOptimizations(defaults)
           }
-          // Validate and apply pending share packages
           applyPendingSharePackages(cached)
         }
       } else {
@@ -276,7 +266,6 @@
     if (build.optimizations.length > 0) setOptimizations(build.optimizations)
     if (build.preset) setActivePreset(build.preset)
 
-    // Store packages for validation after catalog loads
     if (build.packages.length > 0) {
       pendingSharePackages = build.packages
     }
@@ -321,11 +310,8 @@
 
     if (result.success) {
       applySharedBuild(result.build)
-
-      // Clear the hash from URL (clean address bar)
       clearShareHash()
 
-      // Show appropriate toast
       if (result.build.skippedCount > 0) {
         showToast(
           `Build loaded! ${result.build.skippedCount} setting(s) no longer available.`,
@@ -342,10 +328,7 @@
   }
 
   onMount(() => {
-    // First try to load from share URL
     tryLoadFromShareURL()
-
-    // Then load catalog (may override defaults but shared state takes precedence)
     void hydrateCatalog()
   })
 </script>

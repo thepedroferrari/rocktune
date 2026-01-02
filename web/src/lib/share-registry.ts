@@ -22,7 +22,6 @@ import type {
   PresetType,
 } from './types'
 
-// Schema version for URL format
 export const SHARE_SCHEMA_VERSION = 1
 
 /**
@@ -227,7 +226,6 @@ export const OPT_ID_TO_VALUE: Record<number, OptimizationKey | null> = {
   103: 'dep_off',
 }
 
-// Build reverse mapping
 export const OPT_VALUE_TO_ID: Record<OptimizationKey, number> = Object.fromEntries(
   Object.entries(OPT_ID_TO_VALUE)
     .filter(([_, value]) => value !== null)

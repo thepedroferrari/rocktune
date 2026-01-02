@@ -32,6 +32,7 @@
           name="dns-provider"
           value={option.value}
           checked={app.dnsProvider === option.value}
+          autocomplete="off"
           onchange={handleChange}
         />
         <span class="dns-option-label">{option.label}</span>

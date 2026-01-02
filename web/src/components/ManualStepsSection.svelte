@@ -456,8 +456,10 @@
                     <label class="manual-steps__item-label">
                       <input
                         type="checkbox"
+                        name="manual-step-{section.id}-{itemId}"
                         class="manual-steps__checkbox"
                         checked={itemDone}
+                        autocomplete="off"
                         onchange={() => handleCheckbox(section.id, itemId)}
                       />
                       <span class="manual-steps__checkbox-visual"></span>

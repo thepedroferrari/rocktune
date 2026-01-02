@@ -91,7 +91,6 @@
         <p class="tagline-secondary">Yes, really.</p>
       </div>
 
-      <!-- RTFB-101: Provenance chips for trust (above fold) -->
       <div class="provenance-bar" role="group" aria-label="Project information">
         <a
           href="https://github.com/thepedroferrari/rocktune/tree/{__BUILD_COMMIT__}"
@@ -417,7 +416,6 @@
     animation: fadeSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.55s both;
   }
 
-  /* RTFB-101: Provenance Bar (Cyberpunk/Codrops style) */
   .provenance-bar {
     display: flex;
     gap: var(--space-xs);
@@ -446,8 +444,6 @@
     text-decoration: none;
     letter-spacing: 0.02em;
     border-radius: 4px;
-
-    /* Cyber clip-path corners (Kevin Powell technique) */
     clip-path: polygon(
       0 0,
       calc(100% - 6px) 0,
@@ -456,8 +452,6 @@
       6px 100%,
       0 calc(100% - 6px)
     );
-
-    /* Spring physics transition (Codrops style) */
     transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     cursor: pointer;
   }
@@ -474,7 +468,6 @@
     line-height: 1;
   }
 
-  /* Neon glow on hover (Kevin Powell + Codrops technique) */
   .proof-chip:where(a):hover,
   .proof-chip:where(a):focus-visible {
     --chip-bg: oklch(0.18 0.04 195 / 0.5);
@@ -532,7 +525,6 @@
   }
 
   .profile-badge {
-    /* Text-only style - no boxes */
     display: inline-flex;
     align-items: center;
     gap: var(--space-sm);
@@ -554,7 +546,6 @@
       transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
-  /* Cyberpunk separator - gradient line that glows from center */
   .profile-badge:not(:first-child)::before {
     content: "";
     width: 1px;
@@ -571,13 +562,11 @@
     box-shadow: 0 0 4px oklch(0.6 0.08 102 / 0.25);
   }
 
-  /* Hover state: yellow glow text */
   .profile-badge:hover {
     color: oklch(0.9 0.16 102);
     text-shadow: 0 0 20px oklch(0.85 0.18 102 / 0.6);
   }
 
-  /* Default badge: always glowing */
   .profile-badge--default {
     color: oklch(0.92 0.18 102);
     text-shadow:
@@ -916,7 +905,6 @@
       clip-path: var(--clip-cyber-sm);
     }
 
-    /* RTFB-101: Mobile-friendly provenance chips */
     .provenance-bar {
       gap: var(--space-2xs);
       margin-top: var(--space-sm);

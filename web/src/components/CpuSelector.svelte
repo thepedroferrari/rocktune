@@ -46,6 +46,7 @@
         name="cpu"
         value={option.value}
         checked={app.hardware.cpu === option.value}
+        autocomplete="off"
         onchange={handleChange}
       />
       <span class="label-text">{option.label}</span>

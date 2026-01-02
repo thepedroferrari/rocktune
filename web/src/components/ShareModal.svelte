@@ -32,7 +32,6 @@
   let oneLinerCopied = $state(false)
   let activeTab = $state<'url' | 'oneliner' | 'text'>('url')
 
-  // Build current state for encoding
   let currentBuild = $derived<BuildToEncode>({
     cpu: app.hardware.cpu,
     gpu: app.hardware.gpu,
@@ -44,16 +43,13 @@
     preset: app.activePreset ?? undefined,
   })
 
-  // Get URL with metadata (length warning)
   let shareResult = $derived<EncodeResult>(getFullShareURLWithMeta(currentBuild))
   let shareURL = $derived(shareResult.url)
   let textSummary = $derived(generateTextSummary(currentBuild))
 
-  // Get one-liner command for PowerShell execution
   let oneLinerResult = $derived<OneLinerResult>(getOneLinerWithMeta(currentBuild))
   let oneLinerCommand = $derived(oneLinerResult.command)
 
-  // Svelte 5: Auto-reset copied states with proper cleanup
   $effect(() => {
     if (!urlCopied) return
     const timer = setTimeout(() => (urlCopied = false), 2000)
@@ -102,7 +98,6 @@
     }
   }
 
-  // Svelte 5: Conditionally add/remove keydown listener
   $effect(() => {
     if (!open) return
 
@@ -209,9 +204,11 @@
             <div class="share-url-box">
               <input
                 type="text"
+                name="share-url"
                 class="share-url-input"
                 value={shareURL}
                 readonly
+                autocomplete="off"
                 onclick={(e) => e.currentTarget.select()}
               />
               <button

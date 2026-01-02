@@ -61,9 +61,11 @@
       </svg>
       <input
         id="software-search"
+        name="software-search"
         type="search"
         class="search-input"
         placeholder="Search..."
+        autocomplete="off"
         bind:value={app.search}
         aria-label="Search software packages"
       />

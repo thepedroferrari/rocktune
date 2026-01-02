@@ -40,6 +40,7 @@
     id="opt-{opt.key}"
     value={opt.key}
     checked={isChecked}
+    autocomplete="off"
     onchange={handleChange}
     aria-describedby="opt-hint-{opt.key}"
     class="sr-only"

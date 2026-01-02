@@ -68,6 +68,7 @@
                 id="peripheral-{option.value}"
                 value={option.value}
                 checked={app.peripherals.has(option.value)}
+                autocomplete="off"
                 onchange={handlePeripheralChange}
                 aria-describedby="peripheral-hint-{option.value}"
               />
@@ -122,6 +123,7 @@
                 id="monitor-{option.value}"
                 value={option.value}
                 checked={app.monitorSoftware.has(option.value)}
+                autocomplete="off"
                 onchange={handleMonitorChange}
                 aria-describedby="monitor-hint-{option.value}"
               />
