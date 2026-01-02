@@ -65,6 +65,14 @@ export interface UIState {
   restorePointAcknowledged: boolean
 }
 
+/** Script build options for customizing generated output */
+export interface ScriptBuildOptions {
+  /** Include embedded timer tool code (default: true) */
+  includeTimer: boolean
+  /** Include manual steps section in script (default: false) */
+  includeManualSteps: boolean
+}
+
 interface AppStore {
   software: SoftwareCatalog
   selected: Set<PackageKey>
@@ -81,6 +89,8 @@ interface AppStore {
   script: ScriptState
   ui: UIState
   optimizationCount: number
+  /** Build options for script generation */
+  buildOptions: ScriptBuildOptions
 }
 
 /** Default hardware configuration */
@@ -107,6 +117,12 @@ const DEFAULT_UI: UIState = {
   wizardMode: false,
   ludicrousAcknowledged: false,
   restorePointAcknowledged: false,
+}
+
+/** Default build options */
+const DEFAULT_BUILD_OPTIONS: ScriptBuildOptions = {
+  includeTimer: true,
+  includeManualSteps: false,
 }
 
 const DEFAULT_CATALOG: SoftwareCatalog = {}
@@ -160,6 +176,9 @@ export const app: AppStore = $state({
 
   /** Number of enabled optimizations (derived from optimizations.size) */
   optimizationCount: 0,
+
+  /** Build options for script generation */
+  buildOptions: { ...DEFAULT_BUILD_OPTIONS },
 })
 
 function emitAppEvent(name: AppEventName, detail: unknown): void {
@@ -479,6 +498,20 @@ export function acknowledgeRestorePointDisable(): void {
 }
 
 /**
+ * Set whether to include timer tool in generated script
+ */
+export function setIncludeTimer(include: boolean): void {
+  app.buildOptions = { ...app.buildOptions, includeTimer: include }
+}
+
+/**
+ * Set whether to include manual steps in generated script
+ */
+export function setIncludeManualSteps(include: boolean): void {
+  app.buildOptions = { ...app.buildOptions, includeManualSteps: include }
+}
+
+/**
  * Build SelectionState from current app state
  * Used for script generation
  */
@@ -499,6 +532,9 @@ function buildSelectionState(): SelectionState {
     optimizations: Array.from(app.optimizations),
     packages: packages.filter((key) => key in app.software),
     missingPackages,
+    preset: app.activePreset,
+    includeTimer: app.buildOptions.includeTimer,
+    includeManualSteps: app.buildOptions.includeManualSteps,
   }
 }
 

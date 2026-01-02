@@ -15,6 +15,8 @@
     openPreviewModal,
     generateCurrentScript,
     setScriptDownloaded,
+    setIncludeTimer,
+    setIncludeManualSteps,
   } from "$lib/state.svelte";
   import { SCRIPT_FILENAME } from "$lib/types";
   import { generateSHA256, copyToClipboard } from "$lib/checksum";
@@ -68,9 +70,20 @@
       optimizations: Array.from(app.optimizations),
       packages: Array.from(app.selected),
       missingPackages: [],
+      preset: app.activePreset,
+      includeTimer: app.buildOptions.includeTimer,
+      includeManualSteps: app.buildOptions.includeManualSteps,
     };
     const script = buildVerificationScript(selection);
     downloadText(script, "rocktune-verify.ps1");
+  }
+
+  function handleToggleTimer() {
+    setIncludeTimer(!app.buildOptions.includeTimer);
+  }
+
+  function handleToggleManualSteps() {
+    setIncludeManualSteps(!app.buildOptions.includeManualSteps);
   }
 
   async function handleCopyHash() {

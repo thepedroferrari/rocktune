@@ -13,6 +13,7 @@ import type {
   OptimizationTier,
   PackageKey,
   PeripheralType,
+  PresetType,
   SoftwareCatalog,
 } from './types'
 import { isPackageKey, OPTIMIZATION_KEYS, OPTIMIZATION_TIERS } from './types'
@@ -37,6 +38,225 @@ const TIER_PRIORITY: Record<OptimizationTier, number> = {
   [OPTIMIZATION_TIERS.RISKY]: 2,
   [OPTIMIZATION_TIERS.LUDICROUS]: 3,
 }
+
+/** Curated next steps per persona - shown after script completion */
+const NEXT_STEPS_BY_PRESET: Record<PresetType, readonly string[]> = {
+  gamer: [
+    'DISPLAY: Set refresh rate to max (Settings > Display > Advanced)',
+    'GPU: Low Latency Mode = On, Power = Max Performance',
+    'DISCORD: Disable Hardware Acceleration (Settings > Advanced)',
+  ],
+  pro_gamer: [
+    'DISPLAY: Set refresh rate to max (Settings > Display > Advanced)',
+    'GPU: Low Latency Mode = Ultra, Power = Max Performance',
+    'DISCORD: Disable Hardware Acceleration (Settings > Advanced)',
+    'RGB: Disable all RGB software overlays',
+    'TIMER: Use option [2] in the menu to run timer before gaming',
+  ],
+  streamer: [
+    'OBS: Set encoder to NVENC/AMF, Quality preset',
+    'OBS: Enable Game Capture over Display Capture',
+    'AUDIO: Configure VoiceMeeter for stream/game split',
+    'GPU: Enable capture mode in NVIDIA/AMD settings',
+  ],
+  benchmarker: [
+    'CAPFRAMEX: Capture baseline before/after for comparisons',
+    'LATENCYMON: Verify DPC latency < 500us, no red flags',
+    'HWINFO: Log temps/power during benchmark runs',
+    'TIMER: Use option [2] in the menu for accurate frametime capture',
+  ],
+}
+
+/** Competitive games for Task Scheduler auto-timer */
+const COMPETITIVE_GAMES = [
+  { name: 'CS2', process: 'cs2' },
+  { name: 'Valorant', process: 'VALORANT-Win64-Shipping' },
+  { name: 'Fortnite', process: 'FortniteClient-Win64-Shipping' },
+  { name: 'Apex Legends', process: 'r5apex' },
+  { name: 'League of Legends', process: 'League of Legends' },
+  { name: 'Dota 2', process: 'dota2' },
+  { name: 'Overwatch 2', process: 'Overwatch' },
+  { name: 'Rainbow Six Siege', process: 'RainbowSix' },
+] as const
+
+/** Embedded timer tool code (from timer-tool.ps1) */
+const TIMER_TOOL_CODE = `
+# ══════════════════════════════════════════════════════════════════════════════
+# TIMER RESOLUTION TOOL (embedded from timer-tool.ps1)
+# Maintains 0.5ms timer resolution for smooth frame pacing
+# ══════════════════════════════════════════════════════════════════════════════
+
+Add-Type @"
+using System;
+using System.Runtime.InteropServices;
+
+public class TimerResolution {
+    [DllImport("ntdll.dll", SetLastError = true)]
+    public static extern uint NtSetTimerResolution(uint DesiredResolution, bool SetResolution, out uint CurrentResolution);
+
+    [DllImport("ntdll.dll", SetLastError = true)]
+    public static extern uint NtQueryTimerResolution(out uint MinimumResolution, out uint MaximumResolution, out uint CurrentResolution);
+}
+"@
+
+function Set-TimerResolution {
+    param([double]$Milliseconds = 0.5)
+    $period = [uint32]($Milliseconds * 10000)
+    try {
+        $currentRes = [uint32]0
+        $result = [TimerResolution]::NtSetTimerResolution($period, $true, [ref]$currentRes)
+        return $result -eq 0
+    } catch { return $false }
+}
+
+function Get-CurrentTimerResolution {
+    try {
+        $minRes = [uint32]0; $maxRes = [uint32]0; $curRes = [uint32]0
+        $result = [TimerResolution]::NtQueryTimerResolution([ref]$minRes, [ref]$maxRes, [ref]$curRes)
+        if ($result -eq 0) { return $curRes / 10000.0 }
+        return $null
+    } catch { return $null }
+}
+
+function Start-TimerLoop {
+    param([string]$GameProcess = "")
+
+    Write-Host ""
+    Write-Host "  === TIMER RESOLUTION TOOL ===" -ForegroundColor Cyan
+    Write-Host "  Maintaining 0.5ms timer resolution for smooth frame pacing" -ForegroundColor Yellow
+    Write-Host ""
+
+    $currentRes = Get-CurrentTimerResolution
+    if ($currentRes) {
+        Write-Host "  Current: $([math]::Round($currentRes, 2)) ms  ->  Target: 0.5 ms" -ForegroundColor Yellow
+    }
+
+    if (Set-TimerResolution -Milliseconds 0.5) {
+        $newRes = Get-CurrentTimerResolution
+        if ($newRes) { Write-Host "  Timer set to: $([math]::Round($newRes, 2)) ms" -ForegroundColor Green }
+        else { Write-Host "  Timer set to 0.5ms (unable to verify)" -ForegroundColor Green }
+    } else {
+        Write-Host "  Failed to set timer resolution" -ForegroundColor Red
+        return
+    }
+
+    Write-Host ""
+    Write-Host "  Keep this window open while gaming." -ForegroundColor Yellow
+    Write-Host "  Press Ctrl+C to stop." -ForegroundColor Yellow
+    Write-Host ""
+
+    if ($GameProcess) {
+        Write-Host "  Monitoring for process: $GameProcess" -ForegroundColor Cyan
+        Write-Host "  Will exit when game closes." -ForegroundColor Yellow
+        while ($true) {
+            $proc = Get-Process -Name $GameProcess -ErrorAction SilentlyContinue
+            if (-not $proc) {
+                Write-Host "  Game process not found. Exiting..." -ForegroundColor Yellow
+                break
+            }
+            Start-Sleep -Seconds 5
+        }
+    } else {
+        while ($true) {
+            Start-Sleep -Seconds 1
+            $current = Get-CurrentTimerResolution
+            if ($current -and $current -gt 1.0) {
+                Write-Host "[$(Get-Date -Format 'HH:mm:ss')] Timer reset detected ($([math]::Round($current, 2)) ms). Re-applying..." -ForegroundColor Yellow
+                Set-TimerResolution -Milliseconds 0.5 | Out-Null
+            }
+        }
+    }
+}
+
+function Install-GameTimerTask {
+    Write-Host ""
+    Write-Host "  === GAME AUTO-TIMER SETUP ===" -ForegroundColor Cyan
+    Write-Host "  Select games to auto-enable 0.5ms timer when launched:" -ForegroundColor Yellow
+    Write-Host ""
+
+    $games = @(
+${COMPETITIVE_GAMES.map((g, i) => `        @{ Name = "${g.name}"; Process = "${g.process}" }`).join(',\n')}
+    )
+
+    for ($i = 0; $i -lt $games.Length; $i++) {
+        Write-Host "    [$($i+1)] $($games[$i].Name)" -ForegroundColor White
+    }
+    Write-Host "    [A] All games" -ForegroundColor Cyan
+    Write-Host "    [X] Cancel" -ForegroundColor DarkGray
+    Write-Host ""
+
+    $choice = Read-Host "  Select"
+
+    if ($choice -eq "X" -or $choice -eq "x") {
+        Write-Host "  Cancelled." -ForegroundColor Yellow
+        return
+    }
+
+    $selectedGames = @()
+    if ($choice -eq "A" -or $choice -eq "a") {
+        $selectedGames = $games
+    } else {
+        $indices = $choice -split "," | ForEach-Object { [int]$_.Trim() - 1 }
+        foreach ($idx in $indices) {
+            if ($idx -ge 0 -and $idx -lt $games.Length) {
+                $selectedGames += $games[$idx]
+            }
+        }
+    }
+
+    if ($selectedGames.Length -eq 0) {
+        Write-Host "  No valid games selected." -ForegroundColor Yellow
+        return
+    }
+
+    # Create a script that will be triggered by Task Scheduler
+    $timerScriptPath = "$env:USERPROFILE\\RockTune-TimerTool.ps1"
+
+    # Write the timer script
+    $timerScript = @'
+param([string]$GameProcess)
+# RockTune Timer Tool - Auto-launched for game
+Add-Type @"
+using System; using System.Runtime.InteropServices;
+public class TR {
+    [DllImport("ntdll.dll")] public static extern uint NtSetTimerResolution(uint d, bool s, out uint c);
+    [DllImport("ntdll.dll")] public static extern uint NtQueryTimerResolution(out uint min, out uint max, out uint cur);
+}
+"@
+$c = [uint32]0; [TR]::NtSetTimerResolution(5000, $true, [ref]$c)
+while ((Get-Process -Name $GameProcess -EA SilentlyContinue)) { Start-Sleep -Seconds 5 }
+'@
+
+    Set-Content -Path $timerScriptPath -Value $timerScript -Force
+    Write-Host "  Timer script saved to: $timerScriptPath" -ForegroundColor Green
+
+    foreach ($game in $selectedGames) {
+        $taskName = "RockTune-Timer-$($game.Name -replace ' ','')"
+
+        # Remove existing task if present
+        Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction SilentlyContinue
+
+        # Create trigger for when game starts
+        # Note: Event-based triggers require a bit more setup
+        $action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-WindowStyle Hidden -ExecutionPolicy Bypass -File \`"$timerScriptPath\`" -GameProcess \`"$($game.Process)\`""
+        $trigger = New-ScheduledTaskTrigger -AtLogOn
+        $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable
+        $principal = New-ScheduledTaskPrincipal -UserId $env:USERNAME -LogonType Interactive -RunLevel Highest
+
+        try {
+            Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Settings $settings -Principal $principal -Force | Out-Null
+            Write-Host "  [OK] Task created for $($game.Name)" -ForegroundColor Green
+        } catch {
+            Write-Host "  [FAIL] Could not create task for $($game.Name): $_" -ForegroundColor Red
+        }
+    }
+
+    Write-Host ""
+    Write-Host "  Note: Tasks are set to run at logon. For event-based triggers," -ForegroundColor Yellow
+    Write-Host "  open Task Scheduler and modify the trigger to 'On an event'." -ForegroundColor Yellow
+    Write-Host ""
+}
+`
 
 /**
  * Calculate the highest risk tier from selected optimizations
@@ -77,6 +297,11 @@ export type SelectionState = {
   optimizations: OptimizationKey[]
   packages: PackageKey[]
   missingPackages: string[]
+  preset: PresetType | null
+  /** Include embedded timer tool code with launch menu (default: true) */
+  includeTimer: boolean
+  /** Include manual steps section in completion (default: false) */
+  includeManualSteps: boolean
 }
 
 /** Map peripheral types to catalog package keys */
@@ -156,10 +381,131 @@ function Set-Reg {
 `
 
 /**
+ * Generate PowerShell code for displaying next steps based on preset
+ */
+function generateNextStepsBlock(preset: PresetType | null): string[] {
+  const lines: string[] = []
+  const steps = NEXT_STEPS_BY_PRESET[preset ?? 'gamer']
+  const presetLabel = (preset ?? 'gamer').toUpperCase().replace('_', ' ')
+
+  lines.push('')
+  lines.push('Write-Host ""')
+  lines.push(
+    'Write-Host "  ╔════════════════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan',
+  )
+  lines.push(
+    `Write-Host "  ║                           NEXT STEPS: ${presetLabel.padEnd(24)}          ║" -ForegroundColor Cyan`,
+  )
+  lines.push(
+    'Write-Host "  ╠════════════════════════════════════════════════════════════════════════════╣" -ForegroundColor Cyan',
+  )
+  lines.push('Write-Host "  ║" -ForegroundColor Cyan')
+
+  for (let i = 0; i < steps.length; i++) {
+    const step = steps[i]
+    const paddedStep = `  ${i + 1}. ${step}`.padEnd(76)
+    lines.push(`Write-Host "  ║${paddedStep}║" -ForegroundColor Cyan`)
+  }
+
+  lines.push('Write-Host "  ║" -ForegroundColor Cyan')
+  lines.push(
+    'Write-Host "  ║  Full guide: https://rocktune.pedroferrari.com/#guide                      ║" -ForegroundColor Cyan',
+  )
+  lines.push(
+    'Write-Host "  ╚════════════════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan',
+  )
+  lines.push('Write-Host ""')
+
+  return lines
+}
+
+/**
+ * Generate the launch menu PowerShell code (when timer is included)
+ */
+function generateLaunchMenu(): string[] {
+  const lines: string[] = []
+
+  lines.push('')
+  lines.push('# ══════════════════════════════════════════════════════════════════════════════')
+  lines.push('# LAUNCH MENU')
+  lines.push('# ══════════════════════════════════════════════════════════════════════════════')
+  lines.push('')
+  lines.push('function Show-RockTuneMenu {')
+  lines.push('    Clear-Host')
+  lines.push('    Write-Banner')
+  lines.push('    Write-Host ""')
+  lines.push(
+    '    Write-Host "  ╔════════════════════════════════════════════════════════════════╗" -ForegroundColor Magenta',
+  )
+  lines.push(
+    '    Write-Host "  ║                    ROCKTUNE LOADOUT                            ║" -ForegroundColor Magenta',
+  )
+  lines.push(
+    '    Write-Host "  ╠════════════════════════════════════════════════════════════════╣" -ForegroundColor Magenta',
+  )
+  lines.push(
+    '    Write-Host "  ║                                                                ║" -ForegroundColor Magenta',
+  )
+  lines.push(
+    '    Write-Host "  ║  [1] Apply Optimizations                                       ║" -ForegroundColor White',
+  )
+  lines.push(
+    '    Write-Host "  ║      Run system optimizations and install software             ║" -ForegroundColor DarkGray',
+  )
+  lines.push(
+    '    Write-Host "  ║                                                                ║" -ForegroundColor Magenta',
+  )
+  lines.push(
+    '    Write-Host "  ║  [2] Run Timer Tool (0.5ms)                                    ║" -ForegroundColor White',
+  )
+  lines.push(
+    '    Write-Host "  ║      Keep running for smooth frame pacing during games         ║" -ForegroundColor DarkGray',
+  )
+  lines.push(
+    '    Write-Host "  ║                                                                ║" -ForegroundColor Magenta',
+  )
+  lines.push(
+    '    Write-Host "  ║  [3] Both (Apply + Timer)                                      ║" -ForegroundColor White',
+  )
+  lines.push(
+    '    Write-Host "  ║      Apply optimizations, then start timer tool                ║" -ForegroundColor DarkGray',
+  )
+  lines.push(
+    '    Write-Host "  ║                                                                ║" -ForegroundColor Magenta',
+  )
+  lines.push(
+    '    Write-Host "  ║  [4] Setup Game Auto-Timer (Task Scheduler)                    ║" -ForegroundColor White',
+  )
+  lines.push(
+    '    Write-Host "  ║      Configure timer to auto-start with competitive games      ║" -ForegroundColor DarkGray',
+  )
+  lines.push(
+    '    Write-Host "  ║                                                                ║" -ForegroundColor Magenta',
+  )
+  lines.push(
+    '    Write-Host "  ╚════════════════════════════════════════════════════════════════╝" -ForegroundColor Magenta',
+  )
+  lines.push('    Write-Host ""')
+  lines.push('    $choice = Read-Host "  Select option (1-4)"')
+  lines.push('')
+  lines.push('    switch ($choice) {')
+  lines.push('        "1" { Invoke-RockTuneOptimizations }')
+  lines.push('        "2" { Start-TimerLoop }')
+  lines.push('        "3" { Invoke-RockTuneOptimizations; Start-TimerLoop }')
+  lines.push('        "4" { Install-GameTimerTask }')
+  lines.push('        default { Write-Host "Invalid option. Exiting." -ForegroundColor Yellow }')
+  lines.push('    }')
+  lines.push('}')
+  lines.push('')
+
+  return lines
+}
+
+/**
  * Build a complete PowerShell script from selection state
  */
 export function buildScript(selection: SelectionState, options: ScriptGeneratorOptions): string {
-  const { hardware, optimizations, packages, missingPackages } = selection
+  const { hardware, optimizations, packages, missingPackages, preset, includeTimer } = selection
   const { catalog, dnsProvider = DEFAULT_DNS_PROVIDER } = options
   const selected = new Set(optimizations)
 
@@ -237,105 +583,136 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
   lines.push(HELPER_FUNCTIONS.trim())
   lines.push('')
 
+  // Add timer tool code if enabled
+  if (includeTimer) {
+    lines.push(TIMER_TOOL_CODE.trim())
+    lines.push('')
+    lines.push(...generateLaunchMenu())
+  }
+
   let stepCount = 0
   if (selected.has('restore_point')) stepCount++
   stepCount++
   if (allPackagesArray.length > 0) stepCount++
   stepCount++
 
-  lines.push('Clear-Host')
-  lines.push(`$script:StepTotal = ${stepCount}`)
-  lines.push('Write-Banner')
-  lines.push('Write-Host ""')
-  lines.push('')
-
-  lines.push('$cpu = (Get-CimInstance Win32_Processor).Name')
-  lines.push(
-    '$gpu = (Get-CimInstance Win32_VideoController | Where-Object {$_.Status -eq "OK"} | Select-Object -First 1).Name',
-  )
-  lines.push(
-    '$ram = [math]::Round((Get-CimInstance Win32_PhysicalMemory | Measure-Object -Property Capacity -Sum).Sum / 1GB)',
-  )
-  lines.push('Write-Host "  CPU: $cpu" -ForegroundColor White')
-  lines.push('Write-Host "  GPU: $gpu" -ForegroundColor White')
-
-  lines.push('Write-Host "  RAM: ' + '$' + '{ram}GB" -ForegroundColor White')
-  lines.push('')
-
-  if (selected.has('restore_point')) {
-    lines.push('Write-Step "Pre-flight: System Restore Point"')
-    lines.push('$recentRestorePoint = $null')
-    lines.push(
-      'try { $recentRestorePoint = Get-ComputerRestorePoint -EA Stop | Sort-Object CreationTime -Descending | Select-Object -First 1 } catch { $recentRestorePoint = $null }',
-    )
-    lines.push(
-      'if ($recentRestorePoint -and $recentRestorePoint.CreationTime -gt (Get-Date).AddMinutes(-1440)) {',
-    )
-    lines.push('    Write-Warn "Restore point already created within last 24 hours (skipped)"')
-    lines.push('} else {')
-    lines.push('    try {')
-    lines.push(
-      '        Checkpoint-Computer -Description "Before RockTune" -RestorePointType MODIFY_SETTINGS -EA Stop -WarningAction SilentlyContinue',
-    )
-    lines.push('        Write-OK "Restore point created"')
-    lines.push('    } catch {')
-    lines.push('        Write-Warn "Could not create restore point: $($_.Exception.Message)"')
-    lines.push('    }')
-    lines.push('}')
+  // When timer is included, wrap optimizations in a function
+  if (includeTimer) {
+    lines.push('# ══════════════════════════════════════════════════════════════════════════════')
+    lines.push('# OPTIMIZATION FUNCTION')
+    lines.push('# ══════════════════════════════════════════════════════════════════════════════')
+    lines.push('')
+    lines.push('function Invoke-RockTuneOptimizations {')
+    lines.push('    Clear-Host')
+    lines.push(`    $script:StepTotal = ${stepCount}`)
+    lines.push('    Write-Banner')
+    lines.push('    Write-Host ""')
+    lines.push('')
+  } else {
+    lines.push('Clear-Host')
+    lines.push(`$script:StepTotal = ${stepCount}`)
+    lines.push('Write-Banner')
+    lines.push('Write-Host ""')
     lines.push('')
   }
 
-  lines.push('Write-Step "Upgrades"')
+  // Indentation prefix for function body
+  const indent = includeTimer ? '    ' : ''
+
+  lines.push(`${indent}$cpu = (Get-CimInstance Win32_Processor).Name`)
+  lines.push(
+    `${indent}$gpu = (Get-CimInstance Win32_VideoController | Where-Object {$_.Status -eq "OK"} | Select-Object -First 1).Name`,
+  )
+  lines.push(
+    `${indent}$ram = [math]::Round((Get-CimInstance Win32_PhysicalMemory | Measure-Object -Property Capacity -Sum).Sum / 1GB)`,
+  )
+  lines.push(`${indent}Write-Host "  CPU: $cpu" -ForegroundColor White`)
+  lines.push(`${indent}Write-Host "  GPU: $gpu" -ForegroundColor White`)
+
+  lines.push(`${indent}Write-Host "  RAM: ` + '$' + `{ram}GB" -ForegroundColor White`)
   lines.push('')
+
+  if (selected.has('restore_point')) {
+    lines.push(`${indent}Write-Step "Pre-flight: System Restore Point"`)
+    lines.push(`${indent}$recentRestorePoint = $null`)
+    lines.push(
+      `${indent}try { $recentRestorePoint = Get-ComputerRestorePoint -EA Stop | Sort-Object CreationTime -Descending | Select-Object -First 1 } catch { $recentRestorePoint = $null }`,
+    )
+    lines.push(
+      `${indent}if ($recentRestorePoint -and $recentRestorePoint.CreationTime -gt (Get-Date).AddMinutes(-1440)) {`,
+    )
+    lines.push(`${indent}    Write-Warn "Restore point already created within last 24 hours (skipped)"`)
+    lines.push(`${indent}} else {`)
+    lines.push(`${indent}    try {`)
+    lines.push(
+      `${indent}        Checkpoint-Computer -Description "Before RockTune" -RestorePointType MODIFY_SETTINGS -EA Stop -WarningAction SilentlyContinue`,
+    )
+    lines.push(`${indent}        Write-OK "Restore point created"`)
+    lines.push(`${indent}    } catch {`)
+    lines.push(`${indent}        Write-Warn "Could not create restore point: $($_.Exception.Message)"`)
+    lines.push(`${indent}    }`)
+    lines.push(`${indent}}`)
+    lines.push('')
+  }
+
+  lines.push(`${indent}Write-Step "Upgrades"`)
+  lines.push('')
+
+  // Helper to add indented lines
+  const addIndented = (optLines: string[]) => {
+    for (const line of optLines) {
+      lines.push(line ? `${indent}${line}` : '')
+    }
+  }
 
   const systemOpts = generateSystemOpts(selected)
   if (systemOpts.length > 0) {
-    lines.push('# System')
-    lines.push(...systemOpts)
+    lines.push(`${indent}# System`)
+    addIndented(systemOpts)
     lines.push('')
   }
 
   const perfOpts = generatePerformanceOpts(selected, hardware)
   if (perfOpts.length > 0) {
-    lines.push('# Performance')
-    lines.push(...perfOpts)
+    lines.push(`${indent}# Performance`)
+    addIndented(perfOpts)
     lines.push('')
   }
 
   const powerOpts = generatePowerOpts(selected)
   if (powerOpts.length > 0) {
-    lines.push('# Power')
-    lines.push(...powerOpts)
+    lines.push(`${indent}# Power`)
+    addIndented(powerOpts)
     lines.push('')
   }
 
   const networkOpts = generateNetworkOpts(selected, dnsProvider)
   if (networkOpts.length > 0) {
-    lines.push('# Network')
-    lines.push(...networkOpts)
+    lines.push(`${indent}# Network`)
+    addIndented(networkOpts)
     lines.push('')
   }
 
   const privacyOpts = generatePrivacyOpts(selected)
   if (privacyOpts.length > 0) {
-    lines.push('# Privacy')
-    lines.push(...privacyOpts)
+    lines.push(`${indent}# Privacy`)
+    addIndented(privacyOpts)
     lines.push('')
   }
 
   const audioOpts = generateAudioOpts(selected)
   if (audioOpts.length > 0) {
-    lines.push('# Audio')
-    lines.push(...audioOpts)
+    lines.push(`${indent}# Audio`)
+    addIndented(audioOpts)
     lines.push('')
   }
 
   if (allPackagesArray.length > 0) {
-    lines.push('Write-Step "Arsenal (winget)"')
-    lines.push('$wingetPath = Get-Command winget -EA SilentlyContinue')
-    lines.push('if (-not $wingetPath) {')
-    lines.push('    Write-Fail "winget not found. Install App Installer from Microsoft Store."')
-    lines.push('} else {')
+    lines.push(`${indent}Write-Step "Arsenal (winget)"`)
+    lines.push(`${indent}$wingetPath = Get-Command winget -EA SilentlyContinue`)
+    lines.push(`${indent}if (-not $wingetPath) {`)
+    lines.push(`${indent}    Write-Fail "winget not found. Install App Installer from Microsoft Store."`)
+    lines.push(`${indent}} else {`)
 
     const sorted = allPackagesArray
       .map((key) => ({ key, pkg: catalog[key] }))
@@ -345,53 +722,113 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
     for (const entry of sorted) {
       const packageName = escapePsDoubleQuoted(entry.pkg.name)
       const packageId = escapePsDoubleQuoted(entry.pkg.id)
-      lines.push(`    Write-Host "  Installing ${packageName}..." -NoNewline`)
+      lines.push(`${indent}    Write-Host "  Installing ${packageName}..." -NoNewline`)
       lines.push(
-        `    $installOutput = winget install --id "${packageId}" --silent --accept-package-agreements --accept-source-agreements 2>&1`,
+        `${indent}    $installOutput = winget install --id "${packageId}" --silent --accept-package-agreements --accept-source-agreements 2>&1`,
       )
-      lines.push('    if ($LASTEXITCODE -eq 0) { Write-OK "" }')
+      lines.push(`${indent}    if ($LASTEXITCODE -eq 0) { Write-OK "" }`)
       lines.push(
-        '    elseif ($installOutput -match "No available upgrade found|No newer package versions are available|already installed") { Write-OK "Already installed" }',
+        `${indent}    elseif ($installOutput -match "No available upgrade found|No newer package versions are available|already installed") { Write-OK "Already installed" }`,
       )
       lines.push(
-        '    else { Write-Fail ""; $installOutput | ForEach-Object { Write-Host "    $_" -ForegroundColor DarkGray } }',
+        `${indent}    else { Write-Fail ""; $installOutput | ForEach-Object { Write-Host "    $_" -ForegroundColor DarkGray } }`,
       )
     }
 
-    lines.push('}')
+    lines.push(`${indent}}`)
     lines.push('')
   }
 
   if (missingPackages.length > 0) {
-    lines.push('# Missing software mappings:')
+    lines.push(`${indent}# Missing software mappings:`)
     for (const missing of missingPackages) {
-      lines.push(`#   - ${missing}`)
+      lines.push(`${indent}#   - ${missing}`)
     }
     lines.push('')
   }
 
-  lines.push('Write-Step "Complete"')
-  lines.push('Write-Host ""')
-  lines.push('Write-Host "  ╔════════════════════════════════════════╗" -ForegroundColor White')
-  lines.push('Write-Host "  ║           LOADOUT SUMMARY              ║" -ForegroundColor White')
-  lines.push('Write-Host "  ╚════════════════════════════════════════╝" -ForegroundColor White')
-  lines.push('Write-Host ""')
-  lines.push('Write-Host "  Applied:  $($script:SuccessCount) changes" -ForegroundColor Green')
+  lines.push(`${indent}Write-Step "Complete"`)
+  lines.push(`${indent}Write-Host ""`)
   lines.push(
-    'if ($script:WarningCount -gt 0) { Write-Host "  Warnings: $($script:WarningCount)" -ForegroundColor Yellow }',
+    `${indent}Write-Host "  ╔════════════════════════════════════════╗" -ForegroundColor White`,
   )
   lines.push(
-    'if ($script:FailCount -gt 0) { Write-Host "  Failed:   $($script:FailCount)" -ForegroundColor Red }',
+    `${indent}Write-Host "  ║           LOADOUT SUMMARY              ║" -ForegroundColor White`,
   )
-  lines.push('Write-Host ""')
   lines.push(
-    'Write-Host "  Reboot recommended for all changes to take effect." -ForegroundColor Cyan',
+    `${indent}Write-Host "  ╚════════════════════════════════════════╝" -ForegroundColor White`,
   )
-  lines.push('Write-Host ""')
-  lines.push('')
-  lines.push('# Script verification hash')
-  lines.push(`Write-Host "  Build: ${__BUILD_COMMIT__}" -ForegroundColor DarkGray`)
-  lines.push('Write-Host ""')
+  lines.push(`${indent}Write-Host ""`)
+  lines.push(`${indent}Write-Host "  Applied:  $($script:SuccessCount) changes" -ForegroundColor Green`)
+  lines.push(
+    `${indent}if ($script:WarningCount -gt 0) { Write-Host "  Warnings: $($script:WarningCount)" -ForegroundColor Yellow }`,
+  )
+  lines.push(
+    `${indent}if ($script:FailCount -gt 0) { Write-Host "  Failed:   $($script:FailCount)" -ForegroundColor Red }`,
+  )
+  lines.push(`${indent}Write-Host ""`)
+
+  // Support & website reference
+  lines.push(`${indent}Write-Host "  Need help or have feedback?" -ForegroundColor White`)
+  lines.push(`${indent}Write-Host "    Web:    https://rocktune.pedroferrari.com" -ForegroundColor Cyan`)
+  lines.push(
+    `${indent}Write-Host "    Issues: https://github.com/thepedroferrari/rocktune/issues" -ForegroundColor Cyan`,
+  )
+  lines.push(`${indent}Write-Host ""`)
+
+  // Verification command
+  lines.push(`${indent}Write-Host "  Verify:" -ForegroundColor DarkGray`)
+  lines.push(
+    `${indent}Write-Host "  Get-FileHash .\\rocktune-setup.ps1 -Algorithm SHA256" -ForegroundColor DarkGray`,
+  )
+  lines.push(`${indent}Write-Host "  Build: ${__BUILD_COMMIT__}" -ForegroundColor DarkGray`)
+  lines.push(`${indent}Write-Host ""`)
+
+  // Interactive key prompt with next-steps option
+  lines.push(
+    `${indent}Write-Host "  ╔═══════════════════════════════════════════════════════════════╗" -ForegroundColor DarkCyan`,
+  )
+  lines.push(
+    `${indent}Write-Host "  ║  Press [N] for next steps, or any key to exit                 ║" -ForegroundColor DarkCyan`,
+  )
+  lines.push(
+    `${indent}Write-Host "  ╚═══════════════════════════════════════════════════════════════╝" -ForegroundColor DarkCyan`,
+  )
+  lines.push(`${indent}Write-Host ""`)
+  // Try/catch wrapper for non-interactive shells (CI, remote, etc.)
+  lines.push(`${indent}try {`)
+  lines.push(
+    `${indent}    $key = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown").Character.ToString().ToUpper()`,
+  )
+  lines.push(`${indent}} catch {`)
+  lines.push(`${indent}    # Non-interactive shell - auto-continue`)
+  lines.push(`${indent}    $key = ""`)
+  lines.push(`${indent}}`)
+  lines.push(`${indent}if ($key -eq "N") {`)
+
+  // Generate next steps block inline
+  const nextStepsLines = generateNextStepsBlock(preset)
+  for (const line of nextStepsLines) {
+    lines.push(`${indent}    ${line}`)
+  }
+
+  lines.push(`${indent}}`)
+  lines.push(`${indent}Write-Host ""`)
+  lines.push(
+    `${indent}Write-Host "  Reboot recommended for all changes to take effect." -ForegroundColor Cyan`,
+  )
+  lines.push(`${indent}Write-Host ""`)
+
+  // Close the function if timer is included
+  if (includeTimer) {
+    lines.push('}')
+    lines.push('')
+    lines.push('# ══════════════════════════════════════════════════════════════════════════════')
+    lines.push('# ENTRY POINT')
+    lines.push('# ══════════════════════════════════════════════════════════════════════════════')
+    lines.push('')
+    lines.push('Show-RockTuneMenu')
+  }
 
   return lines.join('\n')
 }

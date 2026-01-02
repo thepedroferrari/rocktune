@@ -12,9 +12,19 @@
     setScriptMode,
     setEditedScript,
     generateCurrentScript,
+    setIncludeTimer,
+    setIncludeManualSteps,
     type ScriptMode,
   } from '$lib/state.svelte'
   import CodeViewer from './CodeViewer.svelte'
+
+  function handleTimerToggle() {
+    setIncludeTimer(!app.buildOptions.includeTimer)
+  }
+
+  function handleManualStepsToggle() {
+    setIncludeManualSteps(!app.buildOptions.includeManualSteps)
+  }
 
   
   let dialogEl: HTMLDialogElement | null = null
@@ -98,6 +108,19 @@
     />
   </div>
 
+  <div class="build-options">
+    <span class="build-options__label">Build Options:</span>
+    <label class="build-option">
+      <input
+        type="checkbox"
+        checked={app.buildOptions.includeTimer}
+        onchange={handleTimerToggle}
+      />
+      <span class="build-option__text">Include Timer Tool</span>
+      <span class="build-option__hint">(adds 0.5ms timer + launch menu)</span>
+    </label>
+  </div>
+
   <footer class="footer">
     <span class="label">To run:</span>
     <kbd>Right-click</kbd>
@@ -108,4 +131,45 @@
   </footer>
 </dialog>
 
+<style>
+  .build-options {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    background: var(--surface-1, #1a1a2e);
+    border-top: 1px solid var(--border-subtle, #2d2d44);
+  }
 
+  .build-options__label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted, #888);
+    font-weight: 500;
+  }
+
+  .build-option {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+  }
+
+  .build-option input[type="checkbox"] {
+    width: 1rem;
+    height: 1rem;
+    accent-color: var(--accent, #00d9ff);
+    cursor: pointer;
+  }
+
+  .build-option__text {
+    color: var(--text-primary, #fff);
+  }
+
+  .build-option__hint {
+    font-size: 0.75rem;
+    color: var(--text-muted, #666);
+  }
+</style>
