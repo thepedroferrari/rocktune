@@ -273,7 +273,10 @@
               </div>
               <div class="instruction-step">
                 <span class="step-number">2</span>
-                <span>Paste the command below and press <kbd>Enter</kbd></span>
+                <span>Paste the entire command and press <kbd>Enter</kbd></span>
+              </div>
+              <div class="instruction-note">
+                The command sets a config variable, downloads the script, and runs it.
               </div>
             </div>
             <div class="share-oneliner-box">
@@ -636,6 +639,14 @@
     font-family: var(--font-mono);
     font-size: var(--text-xs);
     color: var(--text-primary);
+  }
+
+  .instruction-note {
+    margin-top: var(--space-xs);
+    padding-left: calc(20px + var(--space-sm));
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+    font-style: italic;
   }
 
   .share-oneliner-box {

@@ -607,29 +607,32 @@ export interface OneLinerResult {
 /**
  * Generate PowerShell one-liner command for direct execution
  *
+ * Uses environment variable to pass config (more reliable than URL parsing):
  * @example
- * irm "https://rocktune.pedroferrari.com/run.ps1?c=1&g=1&o=1,2,10" | iex
+ * $env:RT='c=1&g=1&o=1,2,10'; irm https://rocktune.pedroferrari.com/run.ps1 | iex
  *
  * @param build - Current build state
  * @returns OneLinerResult with command and metadata
  */
 export function getOneLinerWithMeta(build: BuildToEncode): OneLinerResult {
   const { blockedCount } = filterBlockedOptimizations(build.optimizations)
-  const queryString = encodeCompactURL(build)
+  const configString = encodeCompactURL(build)
 
-  // Build URL
+  // Build URL (config goes in env var, not query params)
   const baseURL =
     typeof window !== 'undefined' ? window.location.origin : 'https://rocktune.pedroferrari.com'
-  const url = queryString ? `${baseURL}/run.ps1?${queryString}` : `${baseURL}/run.ps1`
+  const url = `${baseURL}/run.ps1`
 
-  // Build command
-  const command = `irm "${url}" | iex`
+  // Build command with env var: $env:RT='config'; irm url | iex
+  const command = configString
+    ? `$env:RT='${configString}'; irm ${url} | iex`
+    : `irm ${url} | iex`
 
   return {
     command,
     url,
-    urlLength: url.length,
-    urlTooLong: url.length > URL_LENGTH_WARNING_THRESHOLD,
+    urlLength: command.length,
+    urlTooLong: command.length > URL_LENGTH_WARNING_THRESHOLD,
     blockedCount,
   }
 }
