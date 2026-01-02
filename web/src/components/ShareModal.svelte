@@ -266,6 +266,16 @@
             <p class="share-panel__desc">
               Run directly in PowerShell (Admin) on a fresh Windows install — no browser needed.
             </p>
+            <div class="share-oneliner-instructions">
+              <div class="instruction-step">
+                <span class="step-number">1</span>
+                <span>Press <kbd>Win</kbd> + <kbd>X</kbd> → <strong>Terminal (Admin)</strong></span>
+              </div>
+              <div class="instruction-step">
+                <span class="step-number">2</span>
+                <span>Paste the command below and press <kbd>Enter</kbd></span>
+              </div>
+            </div>
             <div class="share-oneliner-box">
               <pre class="share-oneliner-code">{oneLinerCommand}</pre>
               <button
@@ -584,6 +594,48 @@
     width: 16px;
     height: 16px;
     margin-top: 1px;
+  }
+
+  .share-oneliner-instructions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    margin-bottom: var(--space-md);
+    padding: var(--space-sm) var(--space-md);
+    background: oklch(0.15 0.02 250);
+    border-radius: var(--radius-sm);
+  }
+
+  .instruction-step {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+  }
+
+  .step-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    background: oklch(0.6 0.18 145 / 0.2);
+    border-radius: 50%;
+    font-size: var(--text-xs);
+    font-weight: 600;
+    color: oklch(0.75 0.15 145);
+  }
+
+  .instruction-step kbd {
+    display: inline-block;
+    padding: 2px 6px;
+    background: oklch(0.2 0.02 250);
+    border: 1px solid oklch(0.3 0.03 250);
+    border-radius: 4px;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--text-primary);
   }
 
   .share-oneliner-box {
