@@ -202,6 +202,8 @@ export type SelectionState = {
   includeTimer: boolean
   /** Include manual steps section in completion (default: false) */
   includeManualSteps: boolean
+  /** Create backup of current settings before applying (default: true) */
+  createBackup: boolean
 }
 
 /** Map peripheral types to catalog package keys */
@@ -276,6 +278,8 @@ function Write-Warn { param([string]$M) $script:WarningCount++; Write-Host "  [!
 function Add-RebootReason { param([string]$R) $script:RebootRequired = $true; $script:RebootReasons += $R }
 function Set-Reg {
     param([string]$Path, [string]$Name, $Value, [string]$Type = "DWORD", [switch]$PassThru)
+    # Backup the registry key before modifying (if backup is enabled)
+    Backup-RegKey $Path
     $success = $false
     try {
         if (-not (Test-Path $Path)) { New-Item -Path $Path -Force | Out-Null }
@@ -407,6 +411,81 @@ function Add-AppliedChange {
         Name = $Name
         Status = $Status
     }
+}
+
+# --- Backup & Rollback System ---
+$script:BackupDir = $null
+$script:BackupManifest = @()
+$script:BackedUpPaths = @{}  # Track already backed-up paths to avoid duplicates
+
+function Initialize-Backup {
+    $timestamp = Get-Date -Format 'yyyy-MM-dd_HHmmss'
+    $script:BackupDir = Join-Path $env:USERPROFILE "RockTune-Backup\\$timestamp"
+    New-Item -ItemType Directory -Path $script:BackupDir -Force | Out-Null
+    Write-Host "  Backup location: $script:BackupDir" -ForegroundColor Gray
+}
+
+function Backup-RegKey {
+    param([string]$Path)
+    if (-not $script:BackupDir) { return }
+    if (-not (Test-Path $Path)) { return }  # Key doesn't exist yet - nothing to backup
+    if ($script:BackedUpPaths.ContainsKey($Path)) { return }  # Already backed up
+
+    $safeName = $Path.Replace('\\', '_').Replace(':', '')
+    $backupFile = Join-Path $script:BackupDir "$safeName.reg"
+    $exportPath = $Path.Replace('HKLM:\\', 'HKEY_LOCAL_MACHINE\\').Replace('HKCU:\\', 'HKEY_CURRENT_USER\\')
+
+    $null = reg export $exportPath $backupFile /y 2>&1
+    if ($LASTEXITCODE -eq 0) {
+        $script:BackupManifest += [PSCustomObject]@{ Path = $Path; File = $backupFile }
+        $script:BackedUpPaths[$Path] = $true
+    }
+}
+
+function Save-BackupManifest {
+    if (-not $script:BackupDir -or $script:BackupManifest.Count -eq 0) { return }
+
+    $manifestPath = Join-Path $script:BackupDir "manifest.json"
+    $script:BackupManifest | ConvertTo-Json -Depth 3 | Set-Content $manifestPath -Encoding UTF8
+
+    # Generate restore script
+    $restorePath = Join-Path $script:BackupDir "Restore-RockTune.ps1"
+    $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+    $restoreLines = @(
+        '#Requires -RunAsAdministrator'
+        "# RockTune Restore Script - Generated \$timestamp"
+        '# This script restores your settings from before RockTune optimizations'
+        ''
+        'Write-Host ""'
+        'Write-Host "  ROCKTUNE RESTORE" -ForegroundColor Cyan'
+        "Write-Host \`"  Restoring settings from: \$script:BackupDir\`" -ForegroundColor Gray"
+        'Write-Host ""'
+        ''
+        "\\\$manifest = Get-Content \`"\$manifestPath\`" | ConvertFrom-Json"
+        '\$restored = 0'
+        '\$failed = 0'
+        ''
+        'foreach (\$item in \$manifest) {'
+        '    if (Test-Path \$item.File) {'
+        '        \$null = reg import \$item.File 2>&1'
+        '        if (\$LASTEXITCODE -eq 0) {'
+        '            Write-Host "  [OK] \$(\$item.Path)" -ForegroundColor Green'
+        '            \$restored++'
+        '        } else {'
+        '            Write-Host "  [FAIL] \$(\$item.Path)" -ForegroundColor Red'
+        '            \$failed++'
+        '        }'
+        '    }'
+        '}'
+        ''
+        'Write-Host ""'
+        'Write-Host "  Restored: \$restored | Failed: \$failed" -ForegroundColor Cyan'
+        'Write-Host "  Reboot recommended to apply all changes." -ForegroundColor Yellow'
+        'Write-Host ""'
+    )
+    \$restoreLines -join "\`r\`n" | Set-Content \$restorePath -Encoding UTF8
+    Write-Host ""
+    Write-Host "  Restore script: $restorePath" -ForegroundColor Green
 }
 
 # --- Confirmation prompt ---
@@ -590,7 +669,8 @@ function generateLaunchMenu(): string[] {
  * Build a complete PowerShell script from selection state
  */
 export function buildScript(selection: SelectionState, options: ScriptGeneratorOptions): string {
-  const { hardware, optimizations, packages, missingPackages, preset, includeTimer } = selection
+  const { hardware, optimizations, packages, missingPackages, preset, includeTimer, createBackup } =
+    selection
   const { catalog, dnsProvider = DEFAULT_DNS_PROVIDER } = options
   const selected = new Set(optimizations)
 
@@ -618,6 +698,43 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
   const hasLudicrous = LUDICROUS_KEYS.some((key) => selected.has(key))
 
   lines.push('#Requires -RunAsAdministrator')
+  // Add param block for -Undo and -SkipBackup switches
+  lines.push('param(')
+  lines.push('    [switch]$Undo,')
+  lines.push('    [switch]$SkipBackup')
+  lines.push(')')
+  lines.push('')
+  // Handle -Undo switch at script start
+  lines.push('if ($Undo) {')
+  lines.push('    $backupRoot = Join-Path $env:USERPROFILE "RockTune-Backup"')
+  lines.push('    if (-not (Test-Path $backupRoot)) {')
+  lines.push('        Write-Host ""')
+  lines.push('        Write-Host "  [ERROR] No backup found at: $backupRoot" -ForegroundColor Red')
+  lines.push('        Write-Host "  Run the script without -Undo to apply optimizations first." -ForegroundColor Yellow')
+  lines.push('        Write-Host ""')
+  lines.push('        exit 1')
+  lines.push('    }')
+  lines.push(
+    '    $latest = Get-ChildItem $backupRoot -Directory | Sort-Object Name -Descending | Select-Object -First 1',
+  )
+  lines.push('    if (-not $latest) {')
+  lines.push('        Write-Host ""')
+  lines.push('        Write-Host "  [ERROR] No backup folders found in: $backupRoot" -ForegroundColor Red')
+  lines.push('        Write-Host ""')
+  lines.push('        exit 1')
+  lines.push('    }')
+  lines.push('    $restoreScript = Join-Path $latest.FullName "Restore-RockTune.ps1"')
+  lines.push('    if (Test-Path $restoreScript) {')
+  lines.push('        & $restoreScript')
+  lines.push('    } else {')
+  lines.push('        Write-Host ""')
+  lines.push('        Write-Host "  [ERROR] Restore script not found: $restoreScript" -ForegroundColor Red')
+  lines.push('        Write-Host ""')
+  lines.push('        exit 1')
+  lines.push('    }')
+  lines.push('    exit 0')
+  lines.push('}')
+  lines.push('')
   if (hasLudicrous) {
     lines.push('# ╔═══════════════════════════════════════════════════════════════════════╗')
     lines.push('# ║  ⚠️  DANGER_ZONE_ENABLED=true                                          ║')
@@ -796,6 +913,17 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
   lines.push(`${indent}    return`)
   lines.push(`${indent}}`)
   lines.push('')
+
+  // Initialize backup system (if enabled and not skipped via -SkipBackup)
+  if (createBackup) {
+    lines.push(`${indent}# Initialize backup of current settings`)
+    lines.push(`${indent}if (-not $SkipBackup) {`)
+    lines.push(`${indent}    Write-Host ""`)
+    lines.push(`${indent}    Write-Host "  Creating backup of current settings..." -ForegroundColor Cyan`)
+    lines.push(`${indent}    Initialize-Backup`)
+    lines.push(`${indent}}`)
+    lines.push('')
+  }
 
   if (selected.has('restore_point')) {
     lines.push(`${indent}Write-Step "Pre-flight: System Restore Point"`)
@@ -976,6 +1104,14 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
   lines.push(`${indent}# Show applied changes manifest`)
   lines.push(`${indent}Write-AppliedManifest`)
   lines.push('')
+
+  // Save backup manifest and generate restore script (if backup was created)
+  if (createBackup) {
+    lines.push(`${indent}# Save backup manifest and generate restore script`)
+    lines.push(`${indent}if (-not $SkipBackup) { Save-BackupManifest }`)
+    lines.push('')
+  }
+
   lines.push(`${indent}Write-Host ""`)
   lines.push(
     `${indent}Write-Host "  ╔════════════════════════════════════════╗" -ForegroundColor White`,
@@ -997,6 +1133,15 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
     `${indent}if ($script:FailCount -gt 0) { Write-Host "  Failed:   $($script:FailCount)" -ForegroundColor Red }`,
   )
   lines.push(`${indent}Write-Host "  Elapsed:  $elapsedStr" -ForegroundColor Cyan`)
+
+  // Show rollback instructions if backup was created
+  if (createBackup) {
+    lines.push(`${indent}if ($script:BackupDir) {`)
+    lines.push(`${indent}    Write-Host ""`)
+    lines.push(`${indent}    Write-Host "  To undo: .\\rocktune-setup.ps1 -Undo" -ForegroundColor DarkGray`)
+    lines.push(`${indent}}`)
+  }
+
   lines.push(`${indent}Write-Host ""`)
 
   // Support & website reference
