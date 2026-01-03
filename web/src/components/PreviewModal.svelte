@@ -14,6 +14,7 @@
     generateCurrentScript,
     setIncludeTimer,
     setIncludeManualSteps,
+    setCreateBackup,
     type ScriptMode,
   } from '$lib/state.svelte'
   import CodeViewer from './CodeViewer.svelte'
@@ -24,6 +25,10 @@
 
   function handleManualStepsToggle() {
     setIncludeManualSteps(!app.buildOptions.includeManualSteps)
+  }
+
+  function handleBackupToggle() {
+    setCreateBackup(!app.buildOptions.createBackup)
   }
 
   
@@ -118,6 +123,15 @@
       />
       <span class="preview-modal__option-text">Include Timer Tool</span>
       <span class="preview-modal__option-hint">(adds 0.5ms timer + launch menu)</span>
+    </label>
+    <label class="preview-modal__option">
+      <input
+        type="checkbox"
+        checked={app.buildOptions.createBackup}
+        onchange={handleBackupToggle}
+      />
+      <span class="preview-modal__option-text">Create Backup</span>
+      <span class="preview-modal__option-hint">(saves settings for easy rollback)</span>
     </label>
   </div>
 
