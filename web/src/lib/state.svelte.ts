@@ -71,6 +71,8 @@ export interface ScriptBuildOptions {
   includeTimer: boolean
   /** Include manual steps section in script (default: false) */
   includeManualSteps: boolean
+  /** Create backup of current settings before applying (default: true) */
+  createBackup: boolean
 }
 
 interface AppStore {
@@ -123,6 +125,7 @@ const DEFAULT_UI: UIState = {
 const DEFAULT_BUILD_OPTIONS: ScriptBuildOptions = {
   includeTimer: true,
   includeManualSteps: false,
+  createBackup: true,
 }
 
 const DEFAULT_CATALOG: SoftwareCatalog = {}
@@ -505,6 +508,13 @@ export function setIncludeManualSteps(include: boolean): void {
 }
 
 /**
+ * Set whether to create backup before applying optimizations
+ */
+export function setCreateBackup(create: boolean): void {
+  app.buildOptions = { ...app.buildOptions, createBackup: create }
+}
+
+/**
  * Build SelectionState from current app state
  * Used for script generation
  */
@@ -528,6 +538,7 @@ function buildSelectionState(): SelectionState {
     preset: app.activePreset,
     includeTimer: app.buildOptions.includeTimer,
     includeManualSteps: app.buildOptions.includeManualSteps,
+    createBackup: app.buildOptions.createBackup,
   }
 }
 
