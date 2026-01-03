@@ -3,6 +3,52 @@
  *
  * Generates self-contained PowerShell scripts from user selections.
  * Scripts work offline without network dependencies.
+ *
+ * ## Generator Modules (for new optimizations)
+ *
+ * When adding new optimizations, prefer using the structured generators
+ * from ./generators/ for consistent code generation:
+ *
+ * ```typescript
+ * import { generateRegistryOpt, generateServiceOpt, generateBcdeditOpt } from './generators'
+ *
+ * // Registry optimization
+ * const lines = generateRegistryOpt({
+ *   type: 'registry',
+ *   tier: 'safe',
+ *   description: 'Disable mouse acceleration',
+ *   path: 'HKCU:\\Control Panel\\Mouse',
+ *   name: 'MouseSpeed',
+ *   value: 0,
+ *   successMessage: 'Mouse acceleration disabled'
+ * })
+ *
+ * // Service optimization
+ * const lines = generateServiceOpt({
+ *   type: 'service',
+ *   tier: 'risky',
+ *   description: 'Disable Xbox services - breaks Game Pass',
+ *   services: ['XblAuthManager', 'XblGameSave'],
+ *   action: 'stop-and-disable',
+ *   warningMessage: 'This will break Game Pass!',
+ *   successMessage: 'Xbox services disabled'
+ * })
+ *
+ * // Bcdedit optimization
+ * const lines = generateBcdeditOpt(
+ *   'caution',
+ *   'Disable HPET',
+ *   '/set useplatformclock false',
+ *   'HPET disabled',
+ *   'HPET disabled'  // reboot reason
+ * )
+ * ```
+ *
+ * These generators automatically handle:
+ * - Tier-prefixed comments ([SAFE], [CAUTION], [RISKY], [LUDICROUS])
+ * - Consistent feedback (Write-OK, Write-Fail, Write-Warn)
+ * - Reboot tracking (Add-RebootReason)
+ * - Error handling
  */
 
 import { OPTIMIZATIONS } from './optimizations'
@@ -256,6 +302,10 @@ $script:SuccessCount = 0
 $script:FailCount = 0
 $script:WarningCount = 0
 
+# --- Reboot tracking ---
+$script:RebootRequired = $false
+$script:RebootReasons = @()
+
 $script:Banner = ${ASCII_BANNER.trim()}
 
 function Write-Banner { Write-Host $script:Banner -ForegroundColor Magenta }
@@ -263,6 +313,7 @@ function Write-Step { param([string]$M) $script:StepCount++; Write-Host ""; Writ
 function Write-OK { param([string]$M) $script:SuccessCount++; Write-Host "  [OK] $M" -ForegroundColor Green }
 function Write-Fail { param([string]$M) $script:FailCount++; Write-Host "  [FAIL] $M" -ForegroundColor Red }
 function Write-Warn { param([string]$M) $script:WarningCount++; Write-Host "  [!] $M" -ForegroundColor Yellow }
+function Add-RebootReason { param([string]$R) $script:RebootRequired = $true; $script:RebootReasons += $R }
 function Set-Reg {
     param([string]$Path, [string]$Name, $Value, [string]$Type = "DWORD", [switch]$PassThru)
     $success = $false
@@ -277,6 +328,83 @@ function Set-Reg {
         $success = $true
     } catch { $success = $false }
     if ($PassThru) { return $success }
+}
+function Set-Reg-Verified {
+    param([string]$Path, [string]$Name, $Value, [string]$Type = "DWORD", [string]$Label)
+    $before = (Get-ItemProperty -Path $Path -Name $Name -EA SilentlyContinue).$Name
+    $success = Set-Reg $Path $Name $Value $Type -PassThru
+    if ($success) {
+        $after = (Get-ItemProperty -Path $Path -Name $Name -EA SilentlyContinue).$Name
+        if ($after -eq $Value) { Write-OK "$Label" }
+        else { Write-Warn "$Label (expected $Value, got $after)" }
+    } else { Write-Fail "$Label" }
+}
+
+# --- Pre-flight scan ---
+$script:ScanResults = @()
+function Get-RegValue { param([string]$Path, [string]$Name)
+    try {
+        if (-not (Test-Path $Path)) { return $null }
+        return (Get-ItemProperty -Path $Path -Name $Name -EA SilentlyContinue).$Name
+    } catch { return $null }
+}
+function Add-ScanResult {
+    param([string]$Name, [string]$Current, [string]$Target, [string]$Status)
+    $script:ScanResults += [PSCustomObject]@{
+        Setting = $Name
+        Current = if ($Current -eq $null -or $Current -eq '') { '(not set)' } else { $Current }
+        Target = $Target
+        Status = $Status
+    }
+}
+function Write-ScanHeader {
+    Write-Host ""
+    Write-Host "ITEM                                    | BEFORE        | AFTER" -ForegroundColor Cyan
+    Write-Host "$([string]::new([char]0x2500, 40))" -NoNewline -ForegroundColor DarkGray
+    Write-Host "$([char]0x253C)" -NoNewline -ForegroundColor DarkGray
+    Write-Host "$([string]::new([char]0x2500, 15))" -NoNewline -ForegroundColor DarkGray
+    Write-Host "$([char]0x253C)" -NoNewline -ForegroundColor DarkGray
+    Write-Host "$([string]::new([char]0x2500, 22))" -ForegroundColor DarkGray
+}
+function Write-ScanRow {
+    param([string]$Item, [string]$Before, [string]$After, [string]$Status)
+    $checkbox = switch ($Status) {
+        'OK'     { '[X]' }
+        'CHANGE' { '[ ]' }
+        default  { '[~]' }
+    }
+    $color = switch ($Status) {
+        'OK'     { 'DarkGreen' }
+        'CHANGE' { 'Yellow' }
+        default  { 'DarkGray' }
+    }
+    $itemCol = if ($Item.Length -gt 40) { $Item.Substring(0,37) + '...' } else { $Item.PadRight(40) }
+    $beforeCol = if ($Before.Length -gt 14) { $Before.Substring(0,11) + '...' } else { $Before.PadRight(14) }
+    $afterVal = if ($After.Length -gt 14) { $After.Substring(0,11) + '...' } else { $After }
+    $afterCol = "$afterVal $checkbox".PadRight(22)
+    Write-Host $itemCol -NoNewline -ForegroundColor $color
+    Write-Host "|" -NoNewline -ForegroundColor DarkGray
+    Write-Host $beforeCol -NoNewline -ForegroundColor $color
+    Write-Host "|" -NoNewline -ForegroundColor DarkGray
+    Write-Host $afterCol -ForegroundColor $color
+}
+function Write-ScanResults {
+    foreach ($r in $script:ScanResults) {
+        Write-ScanRow $r.Setting $r.Current $r.Target $r.Status
+    }
+    $ok = ($script:ScanResults | Where-Object { $_.Status -eq 'OK' }).Count
+    $change = ($script:ScanResults | Where-Object { $_.Status -eq 'CHANGE' }).Count
+    $other = ($script:ScanResults | Where-Object { $_.Status -notin 'OK','CHANGE' }).Count
+    Write-Host ""
+    Write-Host "Summary: " -NoNewline
+    Write-Host "$ok ready" -ForegroundColor Green -NoNewline
+    Write-Host " | " -NoNewline
+    Write-Host "$change to apply" -ForegroundColor Yellow -NoNewline
+    if ($other -gt 0) {
+        Write-Host " | " -NoNewline
+        Write-Host "$other pending reboot" -ForegroundColor DarkGray
+    }
+    Write-Host ""
 }
 `
 
@@ -508,10 +636,11 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
   }
 
   let stepCount = 0
+  stepCount++ // Pre-flight scan
   if (selected.has('restore_point')) stepCount++
-  stepCount++
+  stepCount++ // Upgrades
   if (allPackagesArray.length > 0) stepCount++
-  stepCount++
+  stepCount++ // Completion
 
   // When timer is included, wrap optimizations in a function
   if (includeTimer) {
@@ -536,6 +665,13 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
   // Indentation prefix for function body
   const indent = includeTimer ? '    ' : ''
 
+  // Helper to add indented lines
+  const addIndented = (optLines: string[]) => {
+    for (const line of optLines) {
+      lines.push(line ? `${indent}${line}` : '')
+    }
+  }
+
   lines.push(`${indent}$cpu = (Get-CimInstance Win32_Processor).Name`)
   lines.push(
     `${indent}$gpu = (Get-CimInstance Win32_VideoController | Where-Object {$_.Status -eq "OK"} | Select-Object -First 1).Name`,
@@ -547,6 +683,12 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
   lines.push(`${indent}Write-Host "  GPU: $gpu" -ForegroundColor White`)
 
   lines.push(`${indent}Write-Host "  RAM: ` + '$' + `{ram}GB" -ForegroundColor White`)
+  lines.push('')
+
+  // Pre-flight scan step - show current vs. target values
+  lines.push(`${indent}Write-Step "Pre-flight Scan"`)
+  const scanLines = generatePreflightScan(selected, hardware)
+  addIndented(scanLines)
   lines.push('')
 
   if (selected.has('restore_point')) {
@@ -574,13 +716,6 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
 
   lines.push(`${indent}Write-Step "Upgrades"`)
   lines.push('')
-
-  // Helper to add indented lines
-  const addIndented = (optLines: string[]) => {
-    for (const line of optLines) {
-      lines.push(line ? `${indent}${line}` : '')
-    }
-  }
 
   const systemOpts = generateSystemOpts(selected)
   if (systemOpts.length > 0) {
@@ -738,6 +873,24 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
   }
 
   lines.push(`${indent}}`)
+
+  // Display reboot reasons if any
+  lines.push(`${indent}if ($script:RebootRequired) {`)
+  lines.push(`${indent}    Write-Host ""`)
+  lines.push(
+    `${indent}    Write-Host "  ╔════════════════════════════════════════════════════════════════╗" -ForegroundColor Yellow`,
+  )
+  lines.push(
+    `${indent}    Write-Host "  ║  REBOOT REQUIRED for these changes to take effect:            ║" -ForegroundColor Yellow`,
+  )
+  lines.push(
+    `${indent}    Write-Host "  ╚════════════════════════════════════════════════════════════════╝" -ForegroundColor Yellow`,
+  )
+  lines.push(`${indent}    foreach ($reason in $script:RebootReasons) {`)
+  lines.push(`${indent}        Write-Host "    - $reason" -ForegroundColor Yellow`)
+  lines.push(`${indent}    }`)
+  lines.push(`${indent}}`)
+
   lines.push(`${indent}Write-Host ""`)
   lines.push(
     `${indent}Write-Host "  Reboot recommended for all changes to take effect." -ForegroundColor Cyan`,
@@ -758,11 +911,429 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
   return lines.join('\n')
 }
 
+/**
+ * Generate pre-flight scan code to show current vs. target settings
+ * This helps users understand what will change before applying optimizations
+ */
+function generatePreflightScan(
+  selected: Set<string>,
+  hardware: HardwareProfile,
+): string[] {
+  const lines: string[] = []
+
+  lines.push('Write-ScanHeader')
+  lines.push('')
+
+  // === SYSTEM OPTIMIZATIONS ===
+  if (selected.has('mouse_accel')) {
+    lines.push('# Scan: Mouse acceleration')
+    lines.push('$val = Get-RegValue "HKCU:\\Control Panel\\Mouse" "MouseSpeed"')
+    lines.push(
+      'if ($val -eq 0) { Add-ScanResult "Mouse acceleration" "Disabled" "Disabled" "OK" }',
+    )
+    lines.push(
+      'else { Add-ScanResult "Mouse acceleration" "Enabled ($val)" "Disabled (0)" "CHANGE" }',
+    )
+  }
+
+  if (selected.has('keyboard_response')) {
+    lines.push('# Scan: Keyboard response')
+    lines.push('$delay = Get-RegValue "HKCU:\\Control Panel\\Keyboard" "KeyboardDelay"')
+    lines.push(
+      'if ($delay -eq 0) { Add-ScanResult "Keyboard delay" "0 (fastest)" "0" "OK" }',
+    )
+    lines.push(
+      'else { Add-ScanResult "Keyboard delay" "$delay" "0 (fastest)" "CHANGE" }',
+    )
+  }
+
+  if (selected.has('fastboot')) {
+    lines.push('# Scan: Fast startup')
+    lines.push(
+      '$val = Get-RegValue "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Power" "HiberbootEnabled"',
+    )
+    lines.push(
+      'if ($val -eq 0) { Add-ScanResult "Fast startup" "Disabled" "Disabled" "OK" }',
+    )
+    lines.push(
+      'else { Add-ScanResult "Fast startup" "Enabled" "Disabled" "CHANGE" }',
+    )
+  }
+
+  if (selected.has('end_task')) {
+    lines.push('# Scan: End Task in taskbar')
+    lines.push(
+      '$val = Get-RegValue "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced\\TaskbarDeveloperSettings" "TaskbarEndTask"',
+    )
+    lines.push(
+      'if ($val -eq 1) { Add-ScanResult "End Task in taskbar" "Enabled" "Enabled" "OK" }',
+    )
+    lines.push(
+      'else { Add-ScanResult "End Task in taskbar" "Disabled" "Enabled" "CHANGE" }',
+    )
+  }
+
+  if (selected.has('notifications_off')) {
+    lines.push('# Scan: Notifications')
+    lines.push(
+      '$val = Get-RegValue "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\PushNotifications" "ToastEnabled"',
+    )
+    lines.push(
+      'if ($val -eq 0) { Add-ScanResult "Notifications" "Disabled" "Disabled" "OK" }',
+    )
+    lines.push(
+      'else { Add-ScanResult "Notifications" "Enabled" "Disabled" "CHANGE" }',
+    )
+  }
+
+  if (selected.has('storage_sense')) {
+    lines.push('# Scan: Storage Sense')
+    lines.push(
+      '$val = Get-RegValue "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\StorageSense\\Parameters\\StoragePolicy" "01"',
+    )
+    lines.push(
+      'if ($val -eq 0) { Add-ScanResult "Storage Sense" "Disabled" "Disabled" "OK" }',
+    )
+    lines.push(
+      'else { Add-ScanResult "Storage Sense" "Enabled" "Disabled" "CHANGE" }',
+    )
+  }
+
+  if (selected.has('input_buffer')) {
+    lines.push('# Scan: Input buffer size')
+    lines.push(
+      '$val = Get-RegValue "HKLM:\\SYSTEM\\CurrentControlSet\\Services\\mouclass\\Parameters" "MouseDataQueueSize"',
+    )
+    lines.push(
+      'if ($val -eq 32) { Add-ScanResult "Mouse buffer size" "32" "32" "OK" }',
+    )
+    lines.push(
+      'else { Add-ScanResult "Mouse buffer size" "$val" "32" "CHANGE" }',
+    )
+  }
+
+  // === PERFORMANCE OPTIMIZATIONS ===
+  if (selected.has('gamedvr')) {
+    lines.push('# Scan: Game DVR')
+    lines.push('$val = Get-RegValue "HKCU:\\System\\GameConfigStore" "GameDVR_Enabled"')
+    lines.push(
+      'if ($val -eq 0) { Add-ScanResult "Game DVR" "Disabled" "Disabled" "OK" }',
+    )
+    lines.push(
+      'else { Add-ScanResult "Game DVR" "Enabled" "Disabled" "CHANGE" }',
+    )
+  }
+
+  if (selected.has('game_bar')) {
+    lines.push('# Scan: Game Bar overlays')
+    lines.push('$val = Get-RegValue "HKCU:\\Software\\Microsoft\\GameBar" "ShowStartupPanel"')
+    lines.push(
+      'if ($val -eq 0) { Add-ScanResult "Game Bar overlays" "Disabled" "Disabled" "OK" }',
+    )
+    lines.push(
+      'else { Add-ScanResult "Game Bar overlays" "Enabled" "Disabled" "CHANGE" }',
+    )
+  }
+
+  if (selected.has('hags')) {
+    lines.push('# Scan: HAGS')
+    lines.push(
+      '$val = Get-RegValue "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\GraphicsDrivers" "HwSchMode"',
+    )
+    lines.push(
+      'if ($val -eq 2) { Add-ScanResult "Hardware Accelerated GPU Scheduling" "Enabled" "Enabled" "OK" }',
+    )
+    lines.push(
+      'else { Add-ScanResult "Hardware Accelerated GPU Scheduling" "Disabled" "Enabled" "CHANGE" }',
+    )
+  }
+
+  if (selected.has('fso_disable')) {
+    lines.push('# Scan: Fullscreen optimizations')
+    lines.push('$val = Get-RegValue "HKCU:\\System\\GameConfigStore" "GameDVR_FSEBehaviorMode"')
+    lines.push(
+      'if ($val -eq 2) { Add-ScanResult "Fullscreen optimizations" "Disabled" "Disabled" "OK" }',
+    )
+    lines.push(
+      'else { Add-ScanResult "Fullscreen optimizations" "Enabled" "Disabled" "CHANGE" }',
+    )
+  }
+
+  if (selected.has('hpet')) {
+    lines.push('# Scan: HPET (requires bcdedit)')
+    lines.push('$hpetVal = bcdedit /enum | Select-String "useplatformclock"')
+    lines.push(
+      'if ($hpetVal -match "No") { Add-ScanResult "HPET" "Disabled" "Disabled" "OK" }',
+    )
+    lines.push(
+      'elseif ($hpetVal) { Add-ScanResult "HPET" "Enabled" "Disabled" "CHANGE" }',
+    )
+    lines.push(
+      'else { Add-ScanResult "HPET" "(not set)" "Disabled" "CHANGE" }',
+    )
+  }
+
+  if (selected.has('multiplane_overlay')) {
+    lines.push('# Scan: Multiplane Overlay')
+    lines.push('$val = Get-RegValue "HKLM:\\SOFTWARE\\Microsoft\\Windows\\Dwm" "OverlayTestMode"')
+    lines.push(
+      'if ($val -eq 5) { Add-ScanResult "Multiplane Overlay" "Disabled" "Disabled" "OK" }',
+    )
+    lines.push(
+      'else { Add-ScanResult "Multiplane Overlay" "Enabled" "Disabled" "CHANGE" }',
+    )
+  }
+
+  if (selected.has('core_isolation_off')) {
+    lines.push('# Scan: Core Isolation')
+    lines.push(
+      '$val = Get-RegValue "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\DeviceGuard" "EnableVirtualizationBasedSecurity"',
+    )
+    lines.push(
+      'if ($val -eq 0) { Add-ScanResult "Core Isolation (VBS)" "Disabled" "Disabled" "OK" }',
+    )
+    lines.push(
+      'else { Add-ScanResult "Core Isolation (VBS)" "Enabled" "Disabled [DANGER]" "CHANGE" }',
+    )
+  }
+
+  if (selected.has('spectre_meltdown_off')) {
+    lines.push('# Scan: Spectre/Meltdown mitigations')
+    lines.push(
+      '$val = Get-RegValue "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Memory Management" "FeatureSettingsOverride"',
+    )
+    lines.push(
+      'if ($val -eq 3) { Add-ScanResult "Spectre/Meltdown mitigations" "Disabled" "Disabled" "OK" }',
+    )
+    lines.push(
+      'else { Add-ScanResult "Spectre/Meltdown mitigations" "Enabled" "Disabled [DANGER]" "CHANGE" }',
+    )
+  }
+
+  if (selected.has('dep_off')) {
+    lines.push('# Scan: DEP')
+    lines.push('$nxVal = bcdedit /enum | Select-String "nx"')
+    lines.push(
+      'if ($nxVal -match "AlwaysOff") { Add-ScanResult "DEP (Data Execution Prevention)" "Disabled" "Disabled" "OK" }',
+    )
+    lines.push(
+      'else { Add-ScanResult "DEP (Data Execution Prevention)" "Enabled" "Disabled [DANGER]" "CHANGE" }',
+    )
+  }
+
+  if (selected.has('native_nvme')) {
+    lines.push('# Scan: Native NVMe')
+    lines.push(
+      '$val = Get-RegValue "HKLM:\\SYSTEM\\CurrentControlSet\\Policies\\Microsoft\\FeatureManagement\\Overrides" "1176759950"',
+    )
+    lines.push(
+      'if ($val -eq 1) { Add-ScanResult "Native NVMe I/O" "Enabled" "Enabled" "OK" }',
+    )
+    lines.push(
+      'else { Add-ScanResult "Native NVMe I/O" "Disabled" "Enabled" "CHANGE" }',
+    )
+  }
+
+  if (selected.has('smt_disable')) {
+    lines.push('# Scan: SMT (requires bcdedit)')
+    lines.push('Add-ScanResult "SMT/Hyperthreading" "(current)" "Disabled" "REBOOT"')
+  }
+
+  // === POWER OPTIMIZATIONS ===
+  if (selected.has('power_ultimate')) {
+    lines.push('# Scan: Ultimate Power Plan')
+    lines.push('$activePlan = powercfg /getactivescheme')
+    lines.push(
+      'if ($activePlan -match "Ultimate") { Add-ScanResult "Power Plan" "Ultimate" "Ultimate" "OK" }',
+    )
+    lines.push(
+      'elseif ($activePlan -match "High performance") { Add-ScanResult "Power Plan" "High Performance" "Ultimate" "CHANGE" }',
+    )
+    lines.push(
+      'else { Add-ScanResult "Power Plan" "Other" "Ultimate" "CHANGE" }',
+    )
+  }
+
+  if (selected.has('usb_power')) {
+    lines.push('# Scan: USB selective suspend')
+    lines.push(
+      '$val = Get-RegValue "HKLM:\\SYSTEM\\CurrentControlSet\\Services\\USB\\DisableSelectiveSuspend" "DisableSelectiveSuspend"',
+    )
+    lines.push(
+      'if ($val -eq 1) { Add-ScanResult "USB selective suspend" "Disabled" "Disabled" "OK" }',
+    )
+    lines.push(
+      'else { Add-ScanResult "USB selective suspend" "Enabled" "Disabled" "CHANGE" }',
+    )
+  }
+
+  if (selected.has('pcie_power')) {
+    lines.push('# Scan: PCIe ASPM')
+    lines.push('Add-ScanResult "PCIe link state power management" "(check powercfg)" "Off" "CHANGE"')
+  }
+
+  // === NETWORK OPTIMIZATIONS ===
+  if (selected.has('nagle')) {
+    lines.push('# Scan: Nagle algorithm')
+    lines.push('Add-ScanResult "Nagle algorithm" "(per-adapter)" "Disabled" "CHANGE"')
+  }
+
+  if (selected.has('throttle_index')) {
+    lines.push('# Scan: Network throttling')
+    lines.push(
+      '$val = Get-RegValue "HKLM:\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile" "NetworkThrottlingIndex"',
+    )
+    lines.push(
+      'if ($val -eq 4294967295) { Add-ScanResult "Network throttling" "Disabled" "Disabled" "OK" }',
+    )
+    lines.push(
+      'else { Add-ScanResult "Network throttling" "Enabled ($val)" "Disabled" "CHANGE" }',
+    )
+  }
+
+  if (selected.has('network_teredo')) {
+    lines.push('# Scan: Teredo')
+    lines.push('$teredoState = netsh interface teredo show state 2>$null')
+    lines.push(
+      'if ($teredoState -match "disabled") { Add-ScanResult "Teredo tunneling" "Disabled" "Disabled" "OK" }',
+    )
+    lines.push(
+      'else { Add-ScanResult "Teredo tunneling" "Enabled" "Disabled" "CHANGE" }',
+    )
+  }
+
+  // === PRIVACY OPTIMIZATIONS ===
+  if (selected.has('ads_off')) {
+    lines.push('# Scan: Windows ads')
+    lines.push(
+      '$val = Get-RegValue "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager" "SubscribedContent-338388Enabled"',
+    )
+    lines.push(
+      'if ($val -eq 0) { Add-ScanResult "Windows advertising" "Disabled" "Disabled" "OK" }',
+    )
+    lines.push(
+      'else { Add-ScanResult "Windows advertising" "Enabled" "Disabled" "CHANGE" }',
+    )
+  }
+
+  if (selected.has('telemetry_min')) {
+    lines.push('# Scan: Telemetry level')
+    lines.push(
+      '$val = Get-RegValue "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection" "AllowTelemetry"',
+    )
+    lines.push(
+      'if ($val -eq 0) { Add-ScanResult "Telemetry" "Security only (0)" "Security only (0)" "OK" }',
+    )
+    lines.push(
+      'elseif ($val -eq 1) { Add-ScanResult "Telemetry" "Basic (1)" "Security only (0)" "CHANGE" }',
+    )
+    lines.push(
+      'else { Add-ScanResult "Telemetry" "Full ($val)" "Security only (0)" "CHANGE" }',
+    )
+  }
+
+  if (selected.has('activity_off')) {
+    lines.push('# Scan: Activity history')
+    lines.push(
+      '$val = Get-RegValue "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\System" "EnableActivityFeed"',
+    )
+    lines.push(
+      'if ($val -eq 0) { Add-ScanResult "Activity history" "Disabled" "Disabled" "OK" }',
+    )
+    lines.push(
+      'else { Add-ScanResult "Activity history" "Enabled" "Disabled" "CHANGE" }',
+    )
+  }
+
+  if (selected.has('cortana_off')) {
+    lines.push('# Scan: Cortana')
+    lines.push(
+      '$val = Get-RegValue "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\Windows Search" "AllowCortana"',
+    )
+    lines.push(
+      'if ($val -eq 0) { Add-ScanResult "Cortana" "Disabled" "Disabled" "OK" }',
+    )
+    lines.push(
+      'else { Add-ScanResult "Cortana" "Enabled" "Disabled" "CHANGE" }',
+    )
+  }
+
+  // === SERVICE OPTIMIZATIONS ===
+  if (selected.has('services_search_off')) {
+    lines.push('# Scan: Windows Search service')
+    lines.push('$svc = Get-Service WSearch -EA SilentlyContinue')
+    lines.push(
+      'if ($svc -and $svc.StartType -eq "Manual") { Add-ScanResult "Windows Search service" "Manual" "Manual" "OK" }',
+    )
+    lines.push(
+      'elseif ($svc) { Add-ScanResult "Windows Search service" "$($svc.StartType)" "Manual" "CHANGE" }',
+    )
+    lines.push('else { Add-ScanResult "Windows Search service" "Not found" "Manual" "N/A" }')
+  }
+
+  if (selected.has('services_superfetch')) {
+    lines.push('# Scan: SysMain (Superfetch) service')
+    lines.push('$svc = Get-Service SysMain -EA SilentlyContinue')
+    lines.push(
+      'if ($svc -and $svc.StartType -eq "Manual") { Add-ScanResult "SysMain (Superfetch)" "Manual" "Manual" "OK" }',
+    )
+    lines.push(
+      'elseif ($svc) { Add-ScanResult "SysMain (Superfetch)" "$($svc.StartType)" "Manual" "CHANGE" }',
+    )
+    lines.push('else { Add-ScanResult "SysMain (Superfetch)" "Not found" "Manual" "N/A" }')
+  }
+
+  if (selected.has('services_xbox_off')) {
+    lines.push('# Scan: Xbox services')
+    lines.push('$xblAuth = Get-Service XblAuthManager -EA SilentlyContinue')
+    lines.push(
+      'if ($xblAuth -and $xblAuth.StartType -eq "Disabled") { Add-ScanResult "Xbox services" "Disabled" "Disabled" "OK" }',
+    )
+    lines.push(
+      'elseif ($xblAuth) { Add-ScanResult "Xbox services" "$($xblAuth.StartType)" "Disabled" "CHANGE" }',
+    )
+    lines.push('else { Add-ScanResult "Xbox services" "Not found" "Disabled" "N/A" }')
+  }
+
+  // === AUDIO OPTIMIZATIONS ===
+  if (selected.has('audio_enhancements')) {
+    lines.push('# Scan: Audio enhancements (registry)')
+    lines.push('$val = Get-RegValue "HKCU:\\Software\\Microsoft\\Multimedia\\Audio" "DisableAudioEnhancements"')
+    lines.push(
+      'if ($val -eq 1) { Add-ScanResult "Audio enhancements (global)" "Disabled" "Disabled" "OK" }',
+    )
+    lines.push(
+      'else { Add-ScanResult "Audio enhancements (global)" "Enabled" "Disabled" "CHANGE" }',
+    )
+  }
+
+  if (selected.has('audio_exclusive')) {
+    lines.push('# Scan: Exclusive mode priority')
+    lines.push('$val = Get-RegValue "HKCU:\\Software\\Microsoft\\Multimedia\\Audio" "ExclusiveModeLatency"')
+    lines.push(
+      'if ($val -eq 1) { Add-ScanResult "Exclusive mode priority" "Low latency" "Low latency" "OK" }',
+    )
+    lines.push(
+      'else { Add-ScanResult "Exclusive mode priority" "Normal" "Low latency" "CHANGE" }',
+    )
+  }
+
+  lines.push('')
+  lines.push('Write-ScanResults')
+  lines.push('')
+  lines.push('Write-Host ""')
+  lines.push('Write-Host "  Press any key to continue with optimizations..." -ForegroundColor DarkGray')
+  lines.push('$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")')
+  lines.push('Write-Host ""')
+
+  return lines
+}
+
 function generateSystemOpts(selected: Set<string>): string[] {
   const lines: string[] = []
 
   if (selected.has('pagefile')) {
-    lines.push('# Configure fixed page file')
+    lines.push('# [SAFE] Configure fixed page file - reduces fragmentation')
     lines.push(
       '$ram = [math]::Round((Get-CimInstance Win32_PhysicalMemory | Measure-Object Capacity -Sum).Sum/1GB)',
     )
@@ -781,7 +1352,7 @@ function generateSystemOpts(selected: Set<string>): string[] {
   }
 
   if (selected.has('mouse_accel')) {
-    lines.push('# Disable mouse acceleration')
+    lines.push('# [SAFE] Disable mouse acceleration - improves aim consistency')
     lines.push(
       'if (Set-Reg "HKCU:\\Control Panel\\Mouse" "MouseSpeed" 0 -PassThru) { Write-OK "Mouse acceleration disabled" }',
     )
@@ -790,7 +1361,7 @@ function generateSystemOpts(selected: Set<string>): string[] {
   }
 
   if (selected.has('keyboard_response')) {
-    lines.push('# Faster keyboard response')
+    lines.push('# [SAFE] Faster keyboard response')
     lines.push(
       'if (Set-Reg "HKCU:\\Control Panel\\Keyboard" "KeyboardDelay" 0 -PassThru) { Write-OK "Keyboard delay minimized" }',
     )
@@ -798,7 +1369,7 @@ function generateSystemOpts(selected: Set<string>): string[] {
   }
 
   if (selected.has('fastboot')) {
-    lines.push('# Disable fast startup')
+    lines.push('# [SAFE] Disable fast startup - ensures clean boots')
     lines.push(
       'if (Set-Reg "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Power" "HiberbootEnabled" 0 -PassThru) { Write-OK "Fast startup disabled" }',
     )
@@ -940,28 +1511,28 @@ function generatePerformanceOpts(selected: Set<string>, hardware: HardwareProfil
   }
 
   if (selected.has('gamedvr')) {
-    lines.push('# Disable Game DVR')
+    lines.push('# [SAFE] Disable Game DVR - 1-3% FPS improvement')
     lines.push('Set-Reg "HKCU:\\System\\GameConfigStore" "GameDVR_Enabled" 0')
     lines.push('Set-Reg "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\GameDVR" "AllowGameDVR" 0')
     lines.push('Write-OK "Game DVR disabled"')
   }
 
   if (selected.has('game_bar')) {
-    lines.push('# Configure Game Bar (keep enabled for X3D, disable overlays)')
+    lines.push('# [SAFE] Configure Game Bar (keep enabled for X3D, disable overlays)')
     lines.push('Set-Reg "HKCU:\\Software\\Microsoft\\GameBar" "ShowStartupPanel" 0')
     lines.push('Set-Reg "HKCU:\\Software\\Microsoft\\GameBar" "GamePanelStartupTipIndex" 3')
     lines.push('Write-OK "Game Bar overlays disabled"')
   }
 
   if (selected.has('hags')) {
-    lines.push('# Enable Hardware Accelerated GPU Scheduling')
+    lines.push('# [CAUTION] Enable Hardware Accelerated GPU Scheduling - test for regressions')
     lines.push(
       'if (Set-Reg "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\GraphicsDrivers" "HwSchMode" 2 -PassThru) { Write-OK "HAGS enabled" }',
     )
   }
 
   if (selected.has('fso_disable')) {
-    lines.push('# Disable fullscreen optimizations globally')
+    lines.push('# [CAUTION] Disable fullscreen optimizations globally')
     lines.push('Set-Reg "HKCU:\\System\\GameConfigStore" "GameDVR_FSEBehaviorMode" 2')
     lines.push('Set-Reg "HKCU:\\System\\GameConfigStore" "GameDVR_HonorUserFSEBehaviorMode" 1')
     lines.push('Set-Reg "HKCU:\\System\\GameConfigStore" "GameDVR_FSEBehavior" 2')
@@ -1014,10 +1585,15 @@ function generatePerformanceOpts(selected: Set<string>, hardware: HardwareProfil
   }
 
   if (selected.has('hpet')) {
-    lines.push('# Disable HPET')
-    lines.push('bcdedit /set useplatformclock false 2>$null')
-    lines.push('bcdedit /set disabledynamictick yes 2>$null')
-    lines.push('Write-OK "HPET disabled (reboot required)"')
+    lines.push('# [CAUTION] Disable HPET - requires reboot, test with benchmarks')
+    lines.push('$hpetResult = bcdedit /set useplatformclock false 2>&1')
+    lines.push('$tickResult = bcdedit /set disabledynamictick yes 2>&1')
+    lines.push('if ($LASTEXITCODE -eq 0) {')
+    lines.push('    Write-OK "HPET disabled"')
+    lines.push('    Add-RebootReason "HPET disabled"')
+    lines.push('} else {')
+    lines.push('    Write-Fail "HPET: $hpetResult"')
+    lines.push('}')
   }
 
   if (selected.has('multiplane_overlay')) {
@@ -1051,7 +1627,7 @@ function generatePerformanceOpts(selected: Set<string>, hardware: HardwareProfil
   }
 
   if (selected.has('core_isolation_off')) {
-    lines.push('# ⚠️ LUDICROUS: Disable Core Isolation (VBS/HVCI)')
+    lines.push('# [LUDICROUS] Disable Core Isolation (VBS/HVCI) - SECURITY RISK')
     lines.push('Write-Host "  [!!] DANGER: Disabling Core Isolation" -ForegroundColor Red')
     lines.push(
       'Set-Reg "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\DeviceGuard" "EnableVirtualizationBasedSecurity" 0',
@@ -1059,11 +1635,12 @@ function generatePerformanceOpts(selected: Set<string>, hardware: HardwareProfil
     lines.push(
       'Set-Reg "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\DeviceGuard\\Scenarios\\HypervisorEnforcedCodeIntegrity" "Enabled" 0',
     )
-    lines.push('Write-OK "Core Isolation disabled (SECURITY REDUCED, reboot required)"')
+    lines.push('Write-OK "Core Isolation disabled (SECURITY REDUCED)"')
+    lines.push('Add-RebootReason "Core Isolation (VBS/HVCI) disabled"')
   }
 
   if (selected.has('spectre_meltdown_off')) {
-    lines.push('# ⚠️ LUDICROUS: Disable Spectre/Meltdown Mitigations')
+    lines.push('# [LUDICROUS] Disable Spectre/Meltdown Mitigations - CRITICAL SECURITY RISK')
     lines.push('Write-Host ""')
     lines.push(
       'Write-Host "  ╔═══════════════════════════════════════════════════════════════╗" -ForegroundColor Red',
@@ -1090,37 +1667,44 @@ function generatePerformanceOpts(selected: Set<string>, hardware: HardwareProfil
     lines.push(
       'Set-Reg "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Memory Management" "FeatureSettingsOverrideMask" 3',
     )
-    lines.push('Write-OK "Spectre/Meltdown mitigations DISABLED (reboot required)"')
+    lines.push('Write-OK "Spectre/Meltdown mitigations DISABLED"')
+    lines.push('Add-RebootReason "Spectre/Meltdown mitigations disabled"')
   }
 
   if (selected.has('kernel_mitigations_off')) {
-    lines.push('# ⚠️ LUDICROUS: Disable Kernel Mitigations')
+    lines.push('# [LUDICROUS] Disable Kernel Mitigations - CRITICAL SECURITY RISK')
     lines.push(
       'Write-Host "  [!!] DANGER: Disabling kernel exploit protections" -ForegroundColor Red',
     )
-    lines.push('bcdedit /set isolatedcontext No 2>$null')
-    lines.push('bcdedit /set allowedinmemorysettings 0x0 2>$null')
+    lines.push('$r1 = bcdedit /set isolatedcontext No 2>&1')
+    lines.push('$r2 = bcdedit /set allowedinmemorysettings 0x0 2>&1')
     lines.push(
       'Set-Reg "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\kernel" "DisableExceptionChainValidation" 1',
     )
     lines.push(
       'Set-Reg "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\kernel" "KernelSEHOPEnabled" 0',
     )
-    lines.push('Write-OK "Kernel mitigations DISABLED (SECURITY REDUCED, reboot required)"')
+    lines.push('Write-OK "Kernel mitigations DISABLED"')
+    lines.push('Add-RebootReason "Kernel mitigations disabled"')
   }
 
   if (selected.has('dep_off')) {
-    lines.push('# ⚠️ LUDICROUS: Disable DEP (Data Execution Prevention)')
+    lines.push('# [LUDICROUS] Disable DEP (Data Execution Prevention) - CRITICAL SECURITY RISK')
     lines.push(
       'Write-Host "  [!!] DANGER: Disabling DEP - Buffer overflow exploits work again" -ForegroundColor Red',
     )
-    lines.push('bcdedit /set nx AlwaysOff 2>$null')
-    lines.push('Write-OK "DEP DISABLED (SECURITY REDUCED, reboot required)"')
+    lines.push('$depResult = bcdedit /set nx AlwaysOff 2>&1')
+    lines.push('if ($LASTEXITCODE -eq 0) {')
+    lines.push('    Write-OK "DEP DISABLED"')
+    lines.push('    Add-RebootReason "DEP (Data Execution Prevention) disabled"')
+    lines.push('} else {')
+    lines.push('    Write-Fail "DEP disable failed: $depResult"')
+    lines.push('}')
     lines.push('Write-Host "  [!!] Re-enable with: bcdedit /set nx OptIn" -ForegroundColor Yellow')
   }
 
   if (selected.has('native_nvme')) {
-    lines.push('# Enable Native NVMe I/O (Win11 24H2+)')
+    lines.push('# [CAUTION] Enable Native NVMe I/O (Win11 24H2+) - requires reboot')
     lines.push('$build = [int](Get-CimInstance Win32_OperatingSystem).BuildNumber')
     lines.push('if ($build -ge 26100) {')
     lines.push(
@@ -1128,16 +1712,21 @@ function generatePerformanceOpts(selected: Set<string>, hardware: HardwareProfil
     )
     lines.push('    if (-not (Test-Path $nvmePath)) { New-Item -Path $nvmePath -Force | Out-Null }')
     lines.push('    Set-Reg $nvmePath "1176759950" 1')
-    lines.push('    Write-OK "Native NVMe enabled (reboot required)"')
+    lines.push('    Write-OK "Native NVMe enabled"')
+    lines.push('    Add-RebootReason "Native NVMe I/O"')
     lines.push('} else { Write-Fail "Native NVMe requires Win11 24H2+" }')
   }
 
   if (selected.has('smt_disable')) {
-    lines.push('# Disable SMT/Hyperthreading')
-    lines.push(
-      '$cores = (Get-CimInstance Win32_Processor).NumberOfCores; bcdedit /set numproc $cores 2>$null',
-    )
-    lines.push('Write-OK "SMT disabled (reboot required)"')
+    lines.push('# [RISKY] Disable SMT/Hyperthreading - significantly reduces multitasking')
+    lines.push('$cores = (Get-CimInstance Win32_Processor).NumberOfCores')
+    lines.push('$smtResult = bcdedit /set numproc $cores 2>&1')
+    lines.push('if ($LASTEXITCODE -eq 0) {')
+    lines.push('    Write-OK "SMT disabled (cores limited to $cores)"')
+    lines.push('    Add-RebootReason "SMT/Hyperthreading disabled"')
+    lines.push('} else {')
+    lines.push('    Write-Fail "SMT disable failed: $smtResult"')
+    lines.push('}')
   }
 
   if (selected.has('mmcss_gaming')) {
@@ -1357,35 +1946,45 @@ function generateNetworkOpts(selected: Set<string>, dnsProvider: string): string
   }
 
   if (selected.has('teredo_disable')) {
-    lines.push('# Disable Teredo')
-    lines.push('netsh interface teredo set state disabled 2>$null')
-    lines.push('Write-OK "Teredo disabled"')
+    lines.push('# [RISKY] Disable Teredo - may break Xbox Party Chat')
+    lines.push('$teredoResult = netsh interface teredo set state disabled 2>&1')
+    lines.push('if ($LASTEXITCODE -eq 0) { Write-OK "Teredo disabled" }')
+    lines.push('else { Write-Fail "Teredo: $teredoResult" }')
   }
 
   if (selected.has('rss_enable')) {
-    lines.push('# Enable Receive Side Scaling')
+    lines.push('# [SAFE] Enable Receive Side Scaling')
+    lines.push('$rssCount = 0')
     lines.push('Get-NetAdapter | Where-Object {$_.Status -eq "Up"} | ForEach-Object {')
-    lines.push('    Enable-NetAdapterRss -Name $_.Name -EA SilentlyContinue')
+    lines.push('    try { Enable-NetAdapterRss -Name $_.Name -EA Stop; $rssCount++ } catch { }')
     lines.push('}')
-    lines.push('Write-OK "RSS enabled on active adapters"')
+    lines.push('if ($rssCount -gt 0) { Write-OK "RSS enabled on $rssCount adapter(s)" }')
+    lines.push('else { Write-Warn "RSS: No adapters supported or already enabled" }')
   }
 
   if (selected.has('rsc_disable')) {
-    lines.push('# Disable Receive Segment Coalescing')
+    lines.push('# [CAUTION] Disable Receive Segment Coalescing - may increase CPU usage')
+    lines.push('$rscCount = 0')
     lines.push('Get-NetAdapter | Where-Object {$_.Status -eq "Up"} | ForEach-Object {')
-    lines.push('    Disable-NetAdapterRsc -Name $_.Name -EA SilentlyContinue')
+    lines.push('    try { Disable-NetAdapterRsc -Name $_.Name -EA Stop; $rscCount++ } catch { }')
     lines.push('}')
-    lines.push('Write-OK "RSC disabled on active adapters"')
+    lines.push('if ($rscCount -gt 0) { Write-OK "RSC disabled on $rscCount adapter(s)" }')
+    lines.push('else { Write-Warn "RSC: No adapters supported or already disabled" }')
   }
 
   if (selected.has('adapter_power')) {
-    lines.push('# Disable network adapter power saving')
+    lines.push('# [SAFE] Disable network adapter power saving')
+    lines.push('$adapterCount = 0')
     lines.push('Get-NetAdapter | Where-Object {$_.Status -eq "Up"} | ForEach-Object {')
+    lines.push('    try {')
     lines.push(
-      '    Set-NetAdapterPowerManagement -Name $_.Name -WakeOnMagicPacket Disabled -WakeOnPattern Disabled -EA SilentlyContinue',
+      '        Set-NetAdapterPowerManagement -Name $_.Name -WakeOnMagicPacket Disabled -WakeOnPattern Disabled -EA Stop',
     )
+    lines.push('        $adapterCount++')
+    lines.push('    } catch { }')
     lines.push('}')
-    lines.push('Write-OK "Network adapter power saving disabled"')
+    lines.push('if ($adapterCount -gt 0) { Write-OK "Power saving disabled on $adapterCount adapter(s)" }')
+    lines.push('else { Write-Warn "Adapter power: No changes applied" }')
   }
 
   return lines
@@ -1395,7 +1994,7 @@ function generatePrivacyOpts(selected: Set<string>): string[] {
   const lines: string[] = []
 
   if (selected.has('privacy_tier1')) {
-    lines.push('# Privacy Tier 1 (Safe)')
+    lines.push('# [SAFE] Privacy Tier 1 - ads and personalization')
     lines.push(
       'Set-Reg "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\AdvertisingInfo" "Enabled" 0',
     )
@@ -1406,7 +2005,7 @@ function generatePrivacyOpts(selected: Set<string>): string[] {
   }
 
   if (selected.has('privacy_tier2')) {
-    lines.push('# Privacy Tier 2 (Moderate)')
+    lines.push('# [CAUTION] Privacy Tier 2 - telemetry and tracking')
     lines.push(
       'Set-Reg "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection" "AllowTelemetry" 0',
     )
@@ -1417,7 +2016,7 @@ function generatePrivacyOpts(selected: Set<string>): string[] {
   }
 
   if (selected.has('background_apps')) {
-    lines.push('# Disable background apps')
+    lines.push('# [SAFE] Disable background apps')
     lines.push(
       'Set-Reg "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\BackgroundAccessApplications" "GlobalUserDisabled" 1',
     )
@@ -1425,7 +2024,7 @@ function generatePrivacyOpts(selected: Set<string>): string[] {
   }
 
   if (selected.has('copilot_disable')) {
-    lines.push('# Disable Copilot')
+    lines.push('# [SAFE] Disable Copilot')
     lines.push(
       'Set-Reg "HKCU:\\Software\\Policies\\Microsoft\\Windows\\WindowsCopilot" "TurnOffWindowsCopilot" 1',
     )
@@ -1433,25 +2032,26 @@ function generatePrivacyOpts(selected: Set<string>): string[] {
   }
 
   if (selected.has('bloatware')) {
-    lines.push('# Remove bloatware apps')
+    lines.push('# [CAUTION] Remove bloatware apps')
     lines.push(
       '$bloatApps = @("Microsoft.BingNews", "Microsoft.GetHelp", "Microsoft.Getstarted", "Microsoft.MicrosoftSolitaireCollection", "Microsoft.People", "Microsoft.PowerAutomateDesktop", "Microsoft.Todos", "Microsoft.WindowsAlarms", "Microsoft.WindowsFeedbackHub", "Microsoft.WindowsMaps", "Microsoft.WindowsSoundRecorder", "Microsoft.YourPhone", "Microsoft.ZuneMusic", "Microsoft.ZuneVideo", "Clipchamp.Clipchamp", "Microsoft.549981C3F5F10")',
     )
+    lines.push('$removedCount = 0')
     lines.push('foreach ($app in $bloatApps) {')
-    lines.push(
-      '    Get-AppxPackage -Name $app -AllUsers | Remove-AppxPackage -AllUsers -EA SilentlyContinue',
-    )
+    lines.push('    $pkg = Get-AppxPackage -Name $app -AllUsers -EA SilentlyContinue')
+    lines.push('    if ($pkg) { $pkg | Remove-AppxPackage -AllUsers -EA SilentlyContinue; $removedCount++ }')
     lines.push('}')
-    lines.push('Write-OK "Bloatware removed"')
+    lines.push('Write-OK "Bloatware: $removedCount apps removed"')
   }
 
   if (selected.has('privacy_tier3')) {
-    lines.push('# Privacy Tier 3 (Aggressive - breaks Game Pass)')
+    lines.push('# [RISKY] Privacy Tier 3 - BREAKS Game Pass and Xbox apps')
+    lines.push('Write-Warn "This will break Game Pass and Xbox services!"')
     lines.push('$xboxSvc = @("XblAuthManager","XblGameSave","XboxGipSvc","XboxNetApiSvc")')
     lines.push(
       'foreach ($s in $xboxSvc) { Stop-Service $s -Force -EA SilentlyContinue; Set-Service $s -StartupType Disabled -EA SilentlyContinue }',
     )
-    lines.push('Write-OK "Xbox services disabled (Game Pass broken)"')
+    lines.push('Write-OK "Xbox services disabled"')
   }
 
   if (selected.has('edge_debloat')) {
@@ -1707,6 +2307,70 @@ export function buildVerificationScript(selection: SelectionState): string {
     )
   }
 
+  if (selected.has('mmcss_gaming')) {
+    lines.push(
+      'if (Test-RegValue "HKLM:\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile\\Tasks\\Games" "GPU Priority" 8) { Write-Pass "MMCSS gaming priority configured" } else { Write-Fail "MMCSS gaming NOT configured" }',
+    )
+  }
+
+  if (selected.has('scheduler_opt')) {
+    lines.push(
+      'if (Test-RegValue "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\PriorityControl" "Win32PrioritySeparation" 26) { Write-Pass "Scheduler optimized for gaming" } else { Write-Fail "Scheduler NOT optimized" }',
+    )
+  }
+
+  if (selected.has('timer_registry')) {
+    lines.push(
+      'if (Test-RegValue "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\kernel" "GlobalTimerResolutionRequests" 1) { Write-Pass "Timer resolution registry configured" } else { Write-Fail "Timer resolution registry NOT configured" }',
+    )
+  }
+
+  if (selected.has('memory_gaming')) {
+    lines.push(
+      'if (Test-RegValue "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Memory Management" "DisablePagingExecutive" 1) { Write-Pass "Memory gaming mode enabled" } else { Write-Fail "Memory gaming mode NOT enabled" }',
+    )
+  }
+
+  if (selected.has('hpet')) {
+    lines.push('$bcdedit = bcdedit /enum 2>&1 | Out-String')
+    lines.push(
+      'if ($bcdedit -match "useplatformclock\\s+No" -or $bcdedit -notmatch "useplatformclock") { Write-Pass "HPET disabled" } else { Write-Fail "HPET may still be enabled" }',
+    )
+  }
+
+  if (selected.has('smt_disable')) {
+    lines.push('$bcdeditSmt = bcdedit /enum 2>&1 | Out-String')
+    lines.push('$cores = (Get-CimInstance Win32_Processor).NumberOfCores')
+    lines.push(
+      'if ($bcdeditSmt -match "numproc\\s+$cores") { Write-Pass "SMT disabled (limited to $cores cores)" } else { Write-Fail "SMT may not be disabled" }',
+    )
+  }
+
+  if (selected.has('core_isolation_off')) {
+    lines.push(
+      'if (Test-RegValue "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\DeviceGuard" "EnableVirtualizationBasedSecurity" 0) { Write-Pass "Core Isolation disabled" } else { Write-Fail "Core Isolation may still be enabled" }',
+    )
+  }
+
+  if (selected.has('spectre_meltdown_off')) {
+    lines.push(
+      'if (Test-RegValue "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Memory Management" "FeatureSettingsOverride" 3) { Write-Pass "Spectre/Meltdown mitigations disabled" } else { Write-Fail "Spectre/Meltdown mitigations may still be enabled" }',
+    )
+  }
+
+  if (selected.has('sysmain_disable')) {
+    lines.push('$sysMain = Get-Service SysMain -EA SilentlyContinue')
+    lines.push(
+      'if ($sysMain -and $sysMain.Status -eq "Stopped") { Write-Pass "SysMain/Superfetch disabled" } else { Write-Fail "SysMain may still be running" }',
+    )
+  }
+
+  if (selected.has('multiplane_overlay')) {
+    lines.push(
+      'if (Test-RegValue "HKLM:\\SOFTWARE\\Microsoft\\Windows\\Dwm" "OverlayTestMode" 5) { Write-Pass "Multiplane Overlay disabled" } else { Write-Fail "Multiplane Overlay NOT disabled" }',
+    )
+  }
+
   lines.push('')
   lines.push('Write-Section "Power Settings"')
 
@@ -1721,6 +2385,12 @@ export function buildVerificationScript(selection: SelectionState): string {
     lines.push('$hibPath = "$env:SystemDrive\\hiberfil.sys"')
     lines.push(
       'if (-not (Test-Path $hibPath)) { Write-Pass "Hibernation disabled" } else { Write-Fail "Hibernation file still exists" }',
+    )
+  }
+
+  if (selected.has('power_throttle_off')) {
+    lines.push(
+      'if (Test-RegValue "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Power\\PowerThrottling" "PowerThrottlingOff" 1) { Write-Pass "Power throttling disabled" } else { Write-Fail "Power throttling NOT disabled" }',
     )
   }
 
@@ -1771,6 +2441,14 @@ export function buildVerificationScript(selection: SelectionState): string {
   if (selected.has('copilot_disable')) {
     lines.push(
       'if (Test-RegValue "HKCU:\\Software\\Policies\\Microsoft\\Windows\\WindowsCopilot" "TurnOffWindowsCopilot" 1) { Write-Pass "Copilot disabled" } else { Write-Fail "Copilot NOT disabled" }',
+    )
+  }
+
+  if (selected.has('audio_enhancements') || selected.has('audio_communications')) {
+    lines.push('')
+    lines.push('Write-Section "Audio Settings"')
+    lines.push(
+      'if (Test-RegValue "HKCU:\\Software\\Microsoft\\Multimedia\\Audio" "UserDuckingPreference" 3) { Write-Pass "Audio ducking disabled" } else { Write-Fail "Audio ducking NOT disabled" }',
     )
   }
 

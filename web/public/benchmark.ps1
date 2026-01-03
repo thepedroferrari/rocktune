@@ -61,6 +61,10 @@ $script:ResetConsent = $ResetConsent
 $script:ConsentRoot = Join-Path $env:LOCALAPPDATA "WindowsGamingSettings"
 $script:ConsentFilePath = Join-Path $script:ConsentRoot "benchmark-consent.json"
 
+# Progress tracking
+$script:SectionIndex = 0
+$script:SectionTotal = 10  # Total number of Write-Section calls in main flow
+
 function Write-Section {
     <#
     .SYNOPSIS
@@ -72,6 +76,10 @@ function Write-Section {
         [Parameter(Mandatory=$true)]
         [string]$Title
     )
+
+    $script:SectionIndex++
+    $pct = [math]::Min(100, [math]::Round(($script:SectionIndex / $script:SectionTotal) * 100))
+    Write-Progress -Activity "Benchmark Setup" -Status $Title -PercentComplete $pct -CurrentOperation "Step $($script:SectionIndex) of $($script:SectionTotal)"
 
     Write-Host ""
     Write-Host "=== $Title ===" -ForegroundColor Cyan
@@ -1045,6 +1053,7 @@ try {
     Write-Note "Compare Avg FPS, 1% low, 0.1% low, and frametime graphs."
 
     Write-Ok "Benchmark stack is ready."
+    Write-Progress -Activity "Benchmark Setup" -Completed
 
     Show-RockTuneFinalChecklist
 } catch {
