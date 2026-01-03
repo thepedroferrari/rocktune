@@ -61,7 +61,7 @@ export const CPU_OPTIONS = [
     label: 'Intel Core',
     hint: '12th, 13th, 14th gen, Core Ultra',
   },
-] as const satisfies readonly CpuOption[];
+] as const satisfies readonly CpuOption[]
 
 /** GPU options for the selector */
 export const GPU_OPTIONS = [
@@ -80,7 +80,7 @@ export const GPU_OPTIONS = [
     label: 'Intel Arc',
     hint: 'A770, A750, B580',
   },
-] as const satisfies readonly GpuOption[];
+] as const satisfies readonly GpuOption[]
 /** Driver cards configuration */
 export const DRIVER_CARDS = [
   {
@@ -153,7 +153,7 @@ export const DRIVER_CARDS = [
       { label: 'ASRock', url: 'https://www.asrock.com/support/index.asp' },
     ],
   },
-] as const satisfies readonly DriverCard[];
+] as const satisfies readonly DriverCard[]
 
 /**
  * Check if a driver card should be visible based on hardware selection
