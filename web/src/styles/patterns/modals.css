@@ -57,7 +57,6 @@
 .modal-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: var(--space-md);
   padding: var(--space-md) var(--space-lg);
   background: var(--_header-bg);
@@ -82,6 +81,7 @@
   justify-content: center;
   inline-size: 32px;
   block-size: 32px;
+  margin-inline-start: auto;
   padding: 0;
   background: transparent;
   border: 1px solid transparent;
@@ -143,6 +143,7 @@
 }
 
 .modal-base--sm { --_width: 360px; }
+.modal-base--md { --_width: 540px; }
 .modal-base--lg { --_width: 700px; }
 .modal-base--xl { --_width: 900px; }
 .modal-base--full {
@@ -161,17 +162,27 @@
   --_accent: var(--placard-red, oklch(0.55 0.2 25));
   --_accent-glow: color-mix(in oklch, var(--placard-red) 50%, transparent);
   --_backdrop-bg: oklch(0 0 0 / 0.92);
+
+  & .modal-icon {
+    color: white;
+    filter: drop-shadow(0 2px 4px oklch(0 0 0 / 0.3));
+  }
 }
 
 .modal-base--caution {
   --_border: var(--caution);
   --_header-bg: var(--caution);
-  --_header-color: oklch(0.1 0 0);
+  --_header-color: oklch(0.15 0.02 85);
   --_header-border: oklch(0.2 0 0 / 0.3);
   --_footer-bg: color-mix(in oklch, var(--caution) 5%, transparent);
   --_footer-border: oklch(0.2 0.02 85 / 0.3);
   --_accent: var(--caution);
   --_accent-glow: color-mix(in oklch, var(--caution) 50%, transparent);
+
+  & .modal-icon {
+    color: oklch(0.15 0.02 85);
+    filter: none;
+  }
 }
 
 .modal-base--centered {
