@@ -15,6 +15,35 @@ Import-Module (Join-Path $PSScriptRoot "..\core\logger.psm1") -Force -Global
 Import-Module (Join-Path $PSScriptRoot "..\core\registry.psm1") -Force -Global
 
 
+# --- Helper Functions ---
+
+function Set-ScheduledTaskState {
+    <#
+    .SYNOPSIS
+        Enables or disables a Windows scheduled task.
+    .PARAMETER TaskPath
+        The full task path (e.g., "Microsoft\Windows\Autochk\Proxy").
+    .PARAMETER State
+        "Disabled" or "Enabled".
+    #>
+    param(
+        [string]$TaskPath,
+        [string]$State
+    )
+    try {
+        if ($State -eq 'Disabled') {
+            Disable-ScheduledTask -TaskName $TaskPath -ErrorAction SilentlyContinue | Out-Null
+        } else {
+            Enable-ScheduledTask -TaskName $TaskPath -ErrorAction SilentlyContinue | Out-Null
+        }
+        Write-Log "Scheduled task '$TaskPath' set to $State" "INFO"
+        return $true
+    } catch {
+        Write-Log "Failed to set task '$TaskPath': $($_.Exception.Message)" "WARNING"
+        return $false
+    }
+}
+
 
 function Test-PrivacyOptimizations {
     <#
@@ -121,58 +150,113 @@ function Apply-PrivacyTier2Moderate {
     .SYNOPSIS
         Applies Tier 2 privacy settings (moderate).
     .DESCRIPTION
-        Disables telemetry-related services and delivery optimization.
+        Disables telemetry scheduled tasks, services, and applies comprehensive
+        privacy registry settings. Based on WinUtil's proven approach.
     .OUTPUTS
         None.
     #>
     try {
-        Write-Log "Applying Tier 2 moderate privacy tweaks (opt-in)..." "INFO"
+        Write-Log "Applying Tier 2 moderate privacy tweaks..." "INFO"
 
+        # --- Disable telemetry scheduled tasks ---
+        Write-Log "Disabling telemetry scheduled tasks..." "INFO"
+        $telemetryTasks = @(
+            "Microsoft\Windows\Autochk\Proxy",
+            "Microsoft\Windows\Customer Experience Improvement Program\Consolidator",
+            "Microsoft\Windows\Customer Experience Improvement Program\UsbCeip",
+            "Microsoft\Windows\DiskDiagnostic\Microsoft-Windows-DiskDiagnosticDataCollector",
+            "Microsoft\Windows\Feedback\Siuf\DmClient",
+            "Microsoft\Windows\Feedback\Siuf\DmClientOnScenarioDownload",
+            "Microsoft\Windows\Windows Error Reporting\QueueReporting",
+            "Microsoft\Windows\Application Experience\MareBackup",
+            "Microsoft\Windows\Application Experience\StartupAppTask",
+            "Microsoft\Windows\Application Experience\PcaPatchDbTask"
+        )
+        foreach ($task in $telemetryTasks) {
+            Set-ScheduledTaskState -TaskPath $task -State "Disabled"
+        }
+        Write-Log "Telemetry scheduled tasks disabled" "SUCCESS"
+
+        # --- AllowTelemetry at both policy paths ---
+        $telemetryPath1 = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\DataCollection"
+        Backup-RegistryKey -Path $telemetryPath1
+        Set-RegistryValue -Path $telemetryPath1 -Name "AllowTelemetry" -Value 0 -Type "DWORD"
+
+        $telemetryPath2 = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection"
+        Backup-RegistryKey -Path $telemetryPath2
+        Set-RegistryValue -Path $telemetryPath2 -Name "AllowTelemetry" -Value 0 -Type "DWORD"
+        Set-RegistryValue -Path $telemetryPath2 -Name "DoNotShowFeedbackNotifications" -Value 1 -Type "DWORD"
+        Write-Log "Telemetry set to minimum" "SUCCESS"
+
+        # --- ContentDeliveryManager (content suggestions, pre-installed apps) ---
+        $cdmPath = "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager"
+        Backup-RegistryKey -Path $cdmPath
+        Set-RegistryValue -Path $cdmPath -Name "ContentDeliveryAllowed" -Value 0 -Type "DWORD"
+        Set-RegistryValue -Path $cdmPath -Name "OemPreInstalledAppsEnabled" -Value 0 -Type "DWORD"
+        Set-RegistryValue -Path $cdmPath -Name "PreInstalledAppsEnabled" -Value 0 -Type "DWORD"
+        Set-RegistryValue -Path $cdmPath -Name "PreInstalledAppsEverEnabled" -Value 0 -Type "DWORD"
+        Set-RegistryValue -Path $cdmPath -Name "SilentInstalledAppsEnabled" -Value 0 -Type "DWORD"
+        Set-RegistryValue -Path $cdmPath -Name "SubscribedContent-338387Enabled" -Value 0 -Type "DWORD"
+        Set-RegistryValue -Path $cdmPath -Name "SubscribedContent-338388Enabled" -Value 0 -Type "DWORD"
+        Set-RegistryValue -Path $cdmPath -Name "SubscribedContent-338389Enabled" -Value 0 -Type "DWORD"
+        Set-RegistryValue -Path $cdmPath -Name "SubscribedContent-353698Enabled" -Value 0 -Type "DWORD"
+        Set-RegistryValue -Path $cdmPath -Name "SystemPaneSuggestionsEnabled" -Value 0 -Type "DWORD"
+        Write-Log "Content delivery/suggestions disabled" "SUCCESS"
+
+        # --- Feedback and advertising ---
+        $siufPath = "HKCU:\SOFTWARE\Microsoft\Siuf\Rules"
+        Backup-RegistryKey -Path $siufPath
+        Set-RegistryValue -Path $siufPath -Name "NumberOfSIUFInPeriod" -Value 0 -Type "DWORD"
+
+        $cloudPath = "HKCU:\SOFTWARE\Policies\Microsoft\Windows\CloudContent"
+        Backup-RegistryKey -Path $cloudPath
+        Set-RegistryValue -Path $cloudPath -Name "DisableTailoredExperiencesWithDiagnosticData" -Value 1 -Type "DWORD"
+
+        $adInfoPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo"
+        Backup-RegistryKey -Path $adInfoPath
+        Set-RegistryValue -Path $adInfoPath -Name "DisabledByGroupPolicy" -Value 1 -Type "DWORD"
+        Write-Log "Feedback and advertising disabled" "SUCCESS"
+
+        # --- Windows Error Reporting ---
+        $werPath = "HKLM:\SOFTWARE\Microsoft\Windows\Windows Error Reporting"
+        Backup-RegistryKey -Path $werPath
+        Set-RegistryValue -Path $werPath -Name "Disabled" -Value 1 -Type "DWORD"
+        Write-Log "Windows Error Reporting disabled" "SUCCESS"
+
+        # --- Delivery Optimization P2P at both paths ---
+        $doPath1 = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\DeliveryOptimization\Config"
+        Backup-RegistryKey -Path $doPath1
+        Set-RegistryValue -Path $doPath1 -Name "DODownloadMode" -Value 0 -Type "DWORD"
+
+        $doPath2 = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DeliveryOptimization"
+        Backup-RegistryKey -Path $doPath2
+        Set-RegistryValue -Path $doPath2 -Name "DODownloadMode" -Value 0 -Type "DWORD"
+        Write-Log "Delivery Optimization P2P disabled" "SUCCESS"
+
+        # --- Disable telemetry services ---
         try {
             $service = Get-Service -Name "DiagTrack" -ErrorAction SilentlyContinue
             if ($service) {
-                Stop-Service -Name "DiagTrack" -Force -ErrorAction Stop
-                Set-Service -Name "DiagTrack" -StartupType Disabled -ErrorAction Stop
-                Write-Log "Disabled DiagTrack service (may affect diagnostics)" "SUCCESS"
+                Stop-Service -Name "DiagTrack" -Force -ErrorAction SilentlyContinue
+                Set-Service -Name "DiagTrack" -StartupType Disabled -ErrorAction SilentlyContinue
+                Write-Log "Disabled DiagTrack service" "SUCCESS"
             }
         } catch {
-            Write-Log "Error disabling DiagTrack: $_" "ERROR"
+            Write-Log "Error disabling DiagTrack: $_" "WARNING"
         }
 
         try {
             $service = Get-Service -Name "dmwappushservice" -ErrorAction SilentlyContinue
             if ($service) {
-                Stop-Service -Name "dmwappushservice" -Force -ErrorAction Stop
-                Set-Service -Name "dmwappushservice" -StartupType Disabled -ErrorAction Stop
+                Stop-Service -Name "dmwappushservice" -Force -ErrorAction SilentlyContinue
+                Set-Service -Name "dmwappushservice" -StartupType Disabled -ErrorAction SilentlyContinue
                 Write-Log "Disabled dmwappushservice" "SUCCESS"
             }
         } catch {
-            Write-Log "Error disabling dmwappushservice: $_" "ERROR"
+            Write-Log "Error disabling dmwappushservice: $_" "WARNING"
         }
 
-        try {
-            $service = Get-Service -Name "SysMain" -ErrorAction SilentlyContinue
-            if ($service) {
-                Stop-Service -Name "SysMain" -Force -ErrorAction Stop
-                Set-Service -Name "SysMain" -StartupType Disabled -ErrorAction Stop
-                Write-Log "Disabled SysMain (Superfetch) - may affect load times" "SUCCESS"
-            }
-        } catch {
-            Write-Log "Error disabling SysMain: $_" "ERROR"
-        }
-
-        $werPath = "HKLM:\SOFTWARE\Microsoft\Windows\Windows Error Reporting"
-        Backup-RegistryKey -Path $werPath
-        Set-RegistryValue -Path $werPath -Name "Disabled" -Value 1 -Type "DWORD"
-        Write-Log "Disabled Windows Error Reporting" "SUCCESS"
-
-        $doPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\DeliveryOptimization\Config"
-        Backup-RegistryKey -Path $doPath
-        Set-RegistryValue -Path $doPath -Name "DODownloadMode" -Value 0 -Type "DWORD"
-        Set-RegistryValue -Path $doPath -Name "DownloadMode" -Value 0 -Type "DWORD"
-        Write-Log "Disabled Delivery Optimization P2P" "SUCCESS"
-
-        Write-Log "Tier 2 moderate privacy tweaks complete" "SUCCESS"
+        Write-Log "Tier 2 privacy tweaks complete (tasks + registry + services)" "SUCCESS"
 
     } catch {
         Write-Log "Error applying Tier 2 privacy tweaks: $_" "ERROR"
@@ -376,22 +460,56 @@ function Apply-EdgeDebloat {
 function Disable-Copilot {
     <#
     .SYNOPSIS
-        Disables Windows Copilot.
+        Disables Windows Copilot completely.
     .DESCRIPTION
-        Applies user and policy keys to disable Copilot UI on Windows 11.
+        Applies 8 registry keys and removes Copilot AppX packages.
+        Based on WinUtil's comprehensive Copilot removal approach.
     .OUTPUTS
         None.
     #>
     try {
-        $userCopilot = "HKCU:\SOFTWARE\Microsoft\Windows\Shell\CopilotAI"
-        Backup-RegistryKey -Path $userCopilot
-        Set-RegistryValue -Path $userCopilot -Name "IsCopilotAllowed" -Value 0 -Type "DWORD"
+        Write-Log "Disabling Copilot..." "INFO"
 
-        $policyCopilot = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsCopilot"
-        Backup-RegistryKey -Path $policyCopilot
-        Set-RegistryValue -Path $policyCopilot -Name "TurnOffWindowsCopilot" -Value 1 -Type "DWORD"
+        # Policy keys (HKLM and HKCU) - most authoritative
+        $policyCopilotLM = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsCopilot"
+        Backup-RegistryKey -Path $policyCopilotLM
+        Set-RegistryValue -Path $policyCopilotLM -Name "TurnOffWindowsCopilot" -Value 1 -Type "DWORD"
 
-        Write-Log "Disabled Copilot (Win11 guard, harmless on Win10)" "SUCCESS"
+        $policyCopilotCU = "HKCU:\Software\Policies\Microsoft\Windows\WindowsCopilot"
+        Backup-RegistryKey -Path $policyCopilotCU
+        Set-RegistryValue -Path $policyCopilotCU -Name "TurnOffWindowsCopilot" -Value 1 -Type "DWORD"
+
+        # UI visibility - hide button from taskbar
+        $explorerAdvanced = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"
+        Backup-RegistryKey -Path $explorerAdvanced
+        Set-RegistryValue -Path $explorerAdvanced -Name "ShowCopilotButton" -Value 0 -Type "DWORD"
+
+        # Availability flags
+        $shellCopilot = "HKLM:\SOFTWARE\Microsoft\Windows\Shell\Copilot"
+        Backup-RegistryKey -Path $shellCopilot
+        Set-RegistryValue -Path $shellCopilot -Name "IsCopilotAvailable" -Value 0 -Type "DWORD"
+        Set-RegistryValue -Path $shellCopilot -Name "CopilotDisabledReason" -Value "IsEnabledForGeographicRegionFailed" -Type "String"
+
+        $windowsCopilot = "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsCopilot"
+        Backup-RegistryKey -Path $windowsCopilot
+        Set-RegistryValue -Path $windowsCopilot -Name "AllowCopilotRuntime" -Value 0 -Type "DWORD"
+
+        # Block shell extension
+        $blockedExtensions = "HKLM:\SOFTWARE\Microsoft\Windows\Shell Extensions\Blocked"
+        Backup-RegistryKey -Path $blockedExtensions
+        Set-RegistryValue -Path $blockedExtensions -Name "{CB3B0003-8088-4EDE-8769-8B354AB2FF8C}" -Value "" -Type "String"
+
+        # BingChat eligibility
+        $bingChat = "HKLM:\SOFTWARE\Microsoft\Windows\Shell\Copilot\BingChat"
+        Backup-RegistryKey -Path $bingChat
+        Set-RegistryValue -Path $bingChat -Name "IsUserEligible" -Value 0 -Type "DWORD"
+
+        # Remove Copilot AppX packages
+        Write-Log "Removing Copilot packages..." "INFO"
+        Get-AppxPackage -AllUsers *Copilot* -ErrorAction SilentlyContinue | Remove-AppxPackage -AllUsers -ErrorAction SilentlyContinue
+        Get-AppxPackage -AllUsers Microsoft.MicrosoftOfficeHub -ErrorAction SilentlyContinue | Remove-AppxPackage -AllUsers -ErrorAction SilentlyContinue
+
+        Write-Log "Copilot disabled and packages removed" "SUCCESS"
     } catch {
         Write-Log "Error disabling Copilot: $_" "ERROR"
         throw

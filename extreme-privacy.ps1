@@ -46,7 +46,7 @@ $script:LogPath = ".\extreme-privacy.log"
 #>
 # Progress tracking
 $script:SectionIndex = 0
-$script:SectionTotal = if ($EnableFirewallRules) { 22 } else { 21 }
+$script:SectionTotal = if ($EnableFirewallRules) { 24 } else { 23 }
 
 function Write-Log {
     param([string]$Message, [string]$Level = "INFO")
@@ -169,6 +169,59 @@ foreach ($svc in $telemetryServices) {
     } catch {
         Write-Log "Could not disable $svc : $_" "ERROR"
     }
+}
+
+
+# Disable telemetry scheduled tasks (WinUtil pattern)
+Write-Section "Disabling Telemetry Scheduled Tasks"
+$telemetryTasks = @(
+    "Microsoft\Windows\Autochk\Proxy",
+    "Microsoft\Windows\Customer Experience Improvement Program\Consolidator",
+    "Microsoft\Windows\Customer Experience Improvement Program\UsbCeip",
+    "Microsoft\Windows\DiskDiagnostic\Microsoft-Windows-DiskDiagnosticDataCollector",
+    "Microsoft\Windows\Feedback\Siuf\DmClient",
+    "Microsoft\Windows\Feedback\Siuf\DmClientOnScenarioDownload",
+    "Microsoft\Windows\Windows Error Reporting\QueueReporting",
+    "Microsoft\Windows\Application Experience\MareBackup",
+    "Microsoft\Windows\Application Experience\StartupAppTask",
+    "Microsoft\Windows\Application Experience\PcaPatchDbTask"
+)
+foreach ($task in $telemetryTasks) {
+    try {
+        Disable-ScheduledTask -TaskName $task -ErrorAction SilentlyContinue | Out-Null
+        Write-Log "Disabled scheduled task: $task" "SUCCESS"
+    } catch {
+        Write-Log "Could not disable task $task : $_" "ERROR"
+    }
+}
+
+
+# Disable Windows Copilot completely (WinUtil pattern)
+Write-Section "Disabling Windows Copilot"
+try {
+    # Policy keys
+    Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsCopilot" -Name "TurnOffWindowsCopilot" -Value 1
+    Set-RegistryValue -Path "HKCU:\Software\Policies\Microsoft\Windows\WindowsCopilot" -Name "TurnOffWindowsCopilot" -Value 1
+
+    # UI visibility
+    Set-RegistryValue -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "ShowCopilotButton" -Value 0
+
+    # Availability flags
+    Set-RegistryValue -Path "HKLM:\SOFTWARE\Microsoft\Windows\Shell\Copilot" -Name "IsCopilotAvailable" -Value 0
+    Set-RegistryValue -Path "HKLM:\SOFTWARE\Microsoft\Windows\Shell\Copilot" -Name "CopilotDisabledReason" -Value "IsEnabledForGeographicRegionFailed" -Type "String"
+    Set-RegistryValue -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsCopilot" -Name "AllowCopilotRuntime" -Value 0
+
+    # Shell extension blocking
+    Set-RegistryValue -Path "HKLM:\SOFTWARE\Microsoft\Windows\Shell Extensions\Blocked" -Name "{CB3B0003-8088-4EDE-8769-8B354AB2FF8C}" -Value "" -Type "String"
+    Set-RegistryValue -Path "HKLM:\SOFTWARE\Microsoft\Windows\Shell\Copilot\BingChat" -Name "IsUserEligible" -Value 0
+
+    # Remove Copilot packages
+    Get-AppxPackage -AllUsers *Copilot* -ErrorAction SilentlyContinue | Remove-AppxPackage -AllUsers -ErrorAction SilentlyContinue
+    Get-AppxPackage -AllUsers Microsoft.MicrosoftOfficeHub -ErrorAction SilentlyContinue | Remove-AppxPackage -AllUsers -ErrorAction SilentlyContinue
+
+    Write-Log "Copilot disabled and packages removed" "SUCCESS"
+} catch {
+    Write-Log "Error disabling Copilot: $_" "ERROR"
 }
 
 
