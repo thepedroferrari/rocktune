@@ -9,7 +9,6 @@
    * - Hamburger menu for mobile
    */
 
-  import { onMount } from "svelte";
   import { slide } from "svelte/transition";
   import ShareModal from "./ShareModal.svelte";
 
@@ -42,7 +41,7 @@
     menuOpen = false;
   }
 
-  onMount(() => {
+  $effect(() => {
     const sections = NAV_LINKS.map((link) => {
       const id = link.href.replace("#", "");
       return document.getElementById(id);
