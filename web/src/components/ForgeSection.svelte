@@ -165,7 +165,6 @@
         </svg>
         Download Loadout
       </span>
-      <span class="scanlines"></span>
     </button>
 
     <!-- Tagline beneath download -->

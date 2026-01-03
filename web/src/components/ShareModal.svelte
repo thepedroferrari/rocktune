@@ -184,46 +184,45 @@
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <dialog
   bind:this={dialogRef}
-  class="share-modal-backdrop"
+  class="modal-base modal-base--lg share-modal"
   aria-labelledby="share-modal-title"
   onclick={handleBackdropClick}
   onclose={handleDialogClose}
 >
-    <div class="share-modal">
-      <header class="share-modal__header">
-        <h2 id="share-modal-title" class="share-modal__title">
-          <svg
-            class="share-modal__icon"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <circle cx="18" cy="5" r="3" />
-            <circle cx="6" cy="12" r="3" />
-            <circle cx="18" cy="19" r="3" />
-            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-          </svg>
-          Share Your Build
-        </h2>
-        <button
-          type="button"
-          class="share-modal__close"
-          onclick={onclose}
-          aria-label="Close"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-        </button>
-      </header>
+  <header class="modal-header">
+    <h2 id="share-modal-title" class="modal-title share-modal__title">
+      <svg
+        class="share-modal__icon"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <circle cx="18" cy="5" r="3" />
+        <circle cx="6" cy="12" r="3" />
+        <circle cx="18" cy="19" r="3" />
+        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+      </svg>
+      Share Your Build
+    </h2>
+    <button
+      type="button"
+      class="modal-close"
+      onclick={onclose}
+      aria-label="Close"
+    >
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <line x1="18" y1="6" x2="6" y2="18" />
+        <line x1="6" y1="6" x2="18" y2="18" />
+      </svg>
+    </button>
+  </header>
 
       <!-- Build Preview Card -->
       <div class="build-preview">
@@ -781,117 +780,37 @@
         {/if}
       </div>
 
-      <footer class="share-modal__footer">
-        <p class="share-modal__stats">
-          {app.optimizations.size} optimizations · {app.selected.size} packages
-        </p>
-      </footer>
-    </div>
+  <footer class="modal-footer share-modal__footer">
+    <p class="share-modal__stats">
+      {app.optimizations.size} optimizations · {app.selected.size} packages
+    </p>
+  </footer>
 </dialog>
 
 <style>
-  .share-modal-backdrop {
-    /* Reset dialog defaults */
-    max-width: none;
-    max-height: none;
-    width: 100%;
-    height: 100%;
-    border: none;
-    padding: var(--space-md);
-    background: transparent;
-    margin: 0;
-  }
-
-  /* Only apply layout when dialog is open */
-  .share-modal-backdrop[open] {
-    position: fixed;
-    inset: 0;
-    z-index: 9000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    animation: fade-in 0.2s ease-out;
-  }
-
-  .share-modal-backdrop::backdrop {
-    background: oklch(0 0 0 / 0.8);
-    backdrop-filter: blur(4px);
-  }
-
-  @keyframes fade-in {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-
   .share-modal {
-    width: 100%;
-    max-width: 520px;
-    background: oklch(0.12 0.02 250);
-    border: 1px solid oklch(0.3 0.05 250);
+    --_width: 520px;
+    --_bg: oklch(0.12 0.02 250);
+    --_border: oklch(0.3 0.05 250);
+    --_clip: none;
     border-radius: var(--radius-lg);
     box-shadow: 0 20px 40px oklch(0 0 0 / 0.5);
-    animation: slide-up 0.2s ease-out;
-  }
-
-  @keyframes slide-up {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  .share-modal__header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: var(--space-md) var(--space-lg);
-    border-bottom: 1px solid oklch(0.25 0.03 250);
+    color: var(--text-primary);
   }
 
   .share-modal__title {
     display: flex;
     align-items: center;
     gap: var(--space-sm);
-    margin: 0;
-    font-size: var(--text-lg);
+    text-transform: none;
+    letter-spacing: normal;
     font-weight: 600;
-    color: var(--text-primary);
   }
 
   .share-modal__icon {
     width: 24px;
     height: 24px;
     color: oklch(0.7 0.15 250);
-  }
-
-  .share-modal__close {
-    padding: var(--space-xs);
-    background: none;
-    border: none;
-    color: var(--text-muted);
-    cursor: pointer;
-    border-radius: var(--radius-sm);
-    transition:
-      color 0.15s,
-      background-color 0.15s;
-  }
-
-  .share-modal__close:hover {
-    color: var(--text-primary);
-    background: oklch(1 0 0 / 0.1);
-  }
-
-  .share-modal__close svg {
-    width: 20px;
-    height: 20px;
   }
 
   .share-modal__tabs {
@@ -1240,9 +1159,7 @@
   }
 
   .share-modal__footer {
-    padding: var(--space-sm) var(--space-lg);
-    border-top: 1px solid oklch(0.2 0.02 250);
-    text-align: center;
+    justify-content: center;
   }
 
   .share-modal__stats {
@@ -1460,13 +1377,11 @@
   }
 
   @media (max-width: 640px) {
-    .share-modal-backdrop {
-      align-items: flex-end;
-      padding: 0;
-    }
-
     .share-modal {
-      max-width: none;
+      --_width: 100%;
+      inset-block-start: auto;
+      inset-block-end: 0;
+      transform: translateX(-50%);
       border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     }
 

@@ -81,14 +81,14 @@
 
 <dialog
   bind:this={dialogEl}
-  class="preview-modal"
+  class="modal-base modal-base--xl preview-modal"
   onclick={handleBackdropClick}
   oncancel={handleCancel}
   onkeydown={handleKeydown}
 >
-  <header class="header">
-    <h3><span class="header-icon">◢</span> SCRIPT PREVIEW</h3>
-    <button type="button" class="close" aria-label="Close" onclick={handleClose}>
+  <header class="modal-header preview-modal__header">
+    <h3 class="modal-title preview-modal__title"><span class="preview-modal__icon">◢</span> SCRIPT PREVIEW</h3>
+    <button type="button" class="modal-close" aria-label="Close" onclick={handleClose}>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <line x1="18" y1="6" x2="6" y2="18" />
         <line x1="6" y1="6" x2="18" y2="18" />
@@ -96,7 +96,7 @@
     </button>
   </header>
 
-  <div class="body">
+  <div class="modal-body preview-modal__body">
     <CodeViewer
       script={activeScript}
       previousScript={app.script.previous}
@@ -108,68 +108,69 @@
     />
   </div>
 
-  <div class="build-options">
-    <span class="build-options__label">Build Options:</span>
-    <label class="build-option">
+  <div class="preview-modal__options">
+    <span class="preview-modal__options-label">Build Options:</span>
+    <label class="preview-modal__option">
       <input
         type="checkbox"
         checked={app.buildOptions.includeTimer}
         onchange={handleTimerToggle}
       />
-      <span class="build-option__text">Include Timer Tool</span>
-      <span class="build-option__hint">(adds 0.5ms timer + launch menu)</span>
+      <span class="preview-modal__option-text">Include Timer Tool</span>
+      <span class="preview-modal__option-hint">(adds 0.5ms timer + launch menu)</span>
     </label>
   </div>
 
-  <footer class="footer">
-    <span class="label">To run:</span>
+  <footer class="modal-footer preview-modal__footer">
+    <span class="preview-modal__label">To run:</span>
     <kbd>Right-click</kbd>
-    <span class="arrow">→</span>
+    <span class="preview-modal__arrow">→</span>
     <kbd>Run with PowerShell</kbd>
-    <span class="arrow">→</span>
+    <span class="preview-modal__arrow">→</span>
     <kbd>Yes</kbd>
   </footer>
 </dialog>
 
 <style>
-  .build-options {
+  .preview-modal__options {
     display: flex;
     align-items: center;
-    gap: 1rem;
-    padding: 0.75rem 1rem;
-    background: var(--surface-1, #1a1a2e);
-    border-top: 1px solid var(--border-subtle, #2d2d44);
+    gap: var(--space-md);
+    padding: var(--space-sm) var(--space-md);
+    background: var(--bg-tertiary);
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
   }
 
-  .build-options__label {
-    font-size: 0.75rem;
+  .preview-modal__options-label {
+    font-size: var(--text-xs);
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: var(--text-muted, #888);
+    color: var(--text-hint);
     font-weight: 500;
   }
 
-  .build-option {
+  .preview-modal__option {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: var(--space-xs);
     cursor: pointer;
-    font-size: 0.875rem;
+    font-size: var(--text-sm);
   }
 
-  .build-option input[type="checkbox"] {
+  .preview-modal__option input[type="checkbox"] {
     width: 1rem;
     height: 1rem;
-    accent-color: var(--accent, #00d9ff);
+    accent-color: var(--accent);
     cursor: pointer;
   }
 
-  .build-option__text {
-    color: var(--text-primary, #fff);
+  .preview-modal__option-text {
+    color: var(--text-primary);
   }
 
-  .build-option__hint {
-    font-size: 0.75rem;
-    color: var(--text-muted, #666);
+  .preview-modal__option-hint {
+    font-size: var(--text-xs);
+    color: var(--text-hint);
   }
 </style>

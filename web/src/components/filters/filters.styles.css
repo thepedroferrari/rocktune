@@ -132,7 +132,6 @@
     }
   }
 
-  /* Selection Badge */
   .selection-badge {
     display: flex;
     align-items: center;
@@ -324,7 +323,6 @@
     }
   }
 
-  /* Recommended preset indicator on software cards */
   .software-card.preset-recommended::after {
     content: "\2605";
     position: absolute;

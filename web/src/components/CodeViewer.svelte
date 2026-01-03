@@ -308,7 +308,6 @@
         </button>
         <button type="button" class="download-btn" onclick={handleDownload}>
           <span class="text">Download</span>
-          <span class="shimmer"></span>
         </button>
       </div>
     {/if}

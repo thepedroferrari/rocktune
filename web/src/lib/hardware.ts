@@ -45,7 +45,7 @@ export interface DriverCard {
 }
 
 /** CPU options for the selector */
-export const CPU_OPTIONS: readonly CpuOption[] = [
+export const CPU_OPTIONS = [
   {
     value: CPU_TYPES.AMD_X3D,
     label: 'AMD Ryzen X3D',
@@ -61,10 +61,10 @@ export const CPU_OPTIONS: readonly CpuOption[] = [
     label: 'Intel Core',
     hint: '12th, 13th, 14th gen, Core Ultra',
   },
-] as const
+] as const satisfies readonly CpuOption[];
 
 /** GPU options for the selector */
-export const GPU_OPTIONS: readonly GpuOption[] = [
+export const GPU_OPTIONS = [
   {
     value: GPU_TYPES.NVIDIA,
     label: 'NVIDIA GeForce',
@@ -80,10 +80,9 @@ export const GPU_OPTIONS: readonly GpuOption[] = [
     label: 'Intel Arc',
     hint: 'A770, A750, B580',
   },
-] as const
-
+] as const satisfies readonly GpuOption[];
 /** Driver cards configuration */
-export const DRIVER_CARDS: readonly DriverCard[] = [
+export const DRIVER_CARDS = [
   {
     id: 'amd-chipset',
     badge: 'cpu',
@@ -154,7 +153,7 @@ export const DRIVER_CARDS: readonly DriverCard[] = [
       { label: 'ASRock', url: 'https://www.asrock.com/support/index.asp' },
     ],
   },
-] as const
+] as const satisfies readonly DriverCard[];
 
 /**
  * Check if a driver card should be visible based on hardware selection

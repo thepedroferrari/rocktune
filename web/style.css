@@ -1,8 +1,11 @@
-   @layer reset, tokens, base, layout, components, animations, utilities, overrides;
+   @layer reset, tokens, patterns, base, layout, components, animations, utilities, overrides;
    @import './src/styles/reset.css' layer(reset);
    @import './src/styles/tokens/_index.css' layer(tokens);
+   @import './src/styles/patterns/_index.css' layer(patterns);
    @import './src/styles/utilities.css' layer(utilities);
    @import './src/styles/layout.css' layer(layout);
+   @import './src/styles/patterns/buttons.css' layer(components);
+   @import './src/styles/patterns/modals.css' layer(components);
    @import './src/styles/buttons.css' layer(components);
    @import './src/components/cyber-toggle/cyber-toggle.styles.css' layer(components);
 

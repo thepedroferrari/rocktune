@@ -75,7 +75,9 @@
   }
 
   function openLudicrousModal() {
+    const scrollY = window.scrollY
     ludicrousDialog?.showModal()
+    window.scrollTo({ top: scrollY, behavior: 'instant' })
   }
 
   function closeLudicrousModal() {
@@ -89,7 +91,9 @@
 
 
   function openRestorePointModal() {
+    const scrollY = window.scrollY
     restorePointDialog?.showModal()
+    window.scrollTo({ top: scrollY, behavior: 'instant' })
   }
 
   function closeRestorePointModal() {
@@ -103,8 +107,10 @@
   }
 
   function openBreakingChangesModal(opt: OptimizationDef) {
+    const scrollY = window.scrollY
     pendingBreakingOpt = opt
     breakingChangesDialog?.showModal()
+    window.scrollTo({ top: scrollY, behavior: 'instant' })
   }
 
   function closeBreakingChangesModal() {
@@ -198,27 +204,26 @@
   </header>
 
 
-  <dialog id="wizard-modal" class="wizard-modal">
-    <div class="wizard-content">
-      <h3 id="wizard-title">Optimization Name</h3>
-      <div class="wizard-risk">
+  <dialog id="wizard-modal" class="modal-base wizard-modal">
+    <div class="modal-body wizard-modal__body">
+      <h3 id="wizard-title" class="wizard-modal__title">Optimization Name</h3>
+      <div class="wizard-modal__risk">
         <span id="wizard-risk-badge" class="tier tier-safe">Safe</span>
       </div>
-      <div id="wizard-description" class="wizard-description">
+      <div id="wizard-description" class="wizard-modal__desc">
         <p>Description of what this optimization does...</p>
       </div>
-      <div class="wizard-details">
+      <div class="wizard-modal__details">
         <h4>What it modifies:</h4>
         <ul id="wizard-changes"></ul>
       </div>
-      <div class="wizard-actions">
-        <button type="button" id="wizard-cancel" class="btn-secondary">Cancel</button>
-        <button type="button" id="wizard-confirm" class="download-btn">
-          <span class="text">Enable This</span>
-          <span class="shimmer"></span>
-        </button>
-      </div>
     </div>
+    <footer class="modal-footer wizard-modal__footer">
+      <button type="button" id="wizard-cancel" class="cyber-btn cyber-btn--ghost">Cancel</button>
+      <button type="button" id="wizard-confirm" class="cyber-btn cyber-btn--primary download-btn">
+        <span class="text">Enable This</span>
+      </button>
+    </footer>
   </dialog>
 
   <div class="upgrades-grid">
@@ -364,17 +369,17 @@
 
   <dialog
     bind:this={ludicrousDialog}
-    class="ludicrous-dialog"
+    class="modal-base modal-base--danger modal-base--lg"
     aria-labelledby="ludicrous-dialog-title"
   >
-    <header class="ludicrous-dialog-header">
-      <svg class="danger-icon" viewBox="0 0 24 24" width="32" height="32" fill="currentColor">
+    <header class="modal-header">
+      <svg class="modal-icon" viewBox="0 0 24 24" fill="currentColor">
         <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
       </svg>
-      <h3 id="ludicrous-dialog-title">Warning: Dangerous Optimizations</h3>
+      <h3 id="ludicrous-dialog-title" class="modal-title">Warning: Dangerous Optimizations</h3>
     </header>
 
-    <div class="ludicrous-dialog-body">
+    <div class="modal-body danger-content">
       <p class="danger-intro">
         <strong>These options disable real security features.</strong> This is not a joke or exaggeration.
         Anyone who knows you have these disabled can attack your computer.
@@ -425,70 +430,66 @@
       </div>
     </div>
 
-    <footer class="ludicrous-dialog-footer">
-      <button type="button" class="btn-secondary" onclick={closeLudicrousModal}>
+    <footer class="modal-footer">
+      <button type="button" class="cyber-btn cyber-btn--ghost" onclick={closeLudicrousModal}>
         Cancel (Stay Safe)
       </button>
-      <button type="button" class="btn-danger" onclick={confirmLudicrous}>
+      <button type="button" class="cyber-btn cyber-btn--outline-danger" onclick={confirmLudicrous}>
         I Understand the Risks
       </button>
     </footer>
   </dialog>
 
-
   <dialog
     bind:this={restorePointDialog}
-    class="restore-point-dialog"
+    class="modal-base modal-base--caution modal-base--centered"
     aria-labelledby="restore-point-dialog-title"
   >
-    <header class="restore-point-dialog-header">
-      <svg class="warning-icon" viewBox="0 0 24 24" width="32" height="32" fill="currentColor">
+    <header class="modal-header">
+      <svg class="modal-icon" viewBox="0 0 24 24" fill="currentColor">
         <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
       </svg>
-      <h3 id="restore-point-dialog-title">Disabling Restore Point?</h3>
+      <h3 id="restore-point-dialog-title" class="modal-title modal-title--sentence">Disabling Restore Point?</h3>
     </header>
 
-    <div class="restore-point-dialog-body">
-      <p class="restore-point-intro">
+    <div class="modal-body">
+      <p class="caution-intro">
         <strong>System Restore is your only rollback.</strong>
       </p>
-
-      <p class="restore-point-desc">
+      <p class="caution-desc">
         These tweaks can change registry, services, and security settings.
         Without a restore point, undoing this may require a full reinstall.
       </p>
-
-      <p class="restore-point-recommendation">
+      <p class="caution-recommendation">
         <strong>Recommended:</strong> leave this ON.
       </p>
     </div>
 
-    <footer class="restore-point-dialog-footer">
-      <button type="button" class="btn-secondary" onclick={closeRestorePointModal}>
+    <footer class="modal-footer modal-footer--stack">
+      <button type="button" class="cyber-btn cyber-btn--ghost" onclick={closeRestorePointModal}>
         Keep restore point ON
       </button>
-      <button type="button" class="btn-caution" onclick={confirmRestorePointDisable}>
+      <button type="button" class="cyber-btn cyber-btn--outline-caution" onclick={confirmRestorePointDisable}>
         I know the risks, disable restore point
       </button>
     </footer>
   </dialog>
 
-  <!-- Breaking Changes Confirmation Dialog -->
   <dialog
     bind:this={breakingChangesDialog}
-    class="breaking-changes-dialog"
+    class="modal-base modal-base--caution modal-base--sm"
     aria-labelledby="breaking-changes-dialog-title"
   >
-    <header class="breaking-changes-dialog-header">
-      <svg class="warning-icon" viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
+    <header class="modal-header">
+      <svg class="modal-icon" viewBox="0 0 24 24" fill="currentColor">
         <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
       </svg>
-      <h3 id="breaking-changes-dialog-title">
+      <h3 id="breaking-changes-dialog-title" class="modal-title modal-title--sentence">
         {pendingBreakingOpt?.label ?? 'Optimization'} — Breaking Changes
       </h3>
     </header>
 
-    <div class="breaking-changes-dialog-body">
+    <div class="modal-body">
       <p class="breaking-changes-intro">
         This option may break the following features:
       </p>
@@ -509,11 +510,11 @@
       </p>
     </div>
 
-    <footer class="breaking-changes-dialog-footer">
-      <button type="button" class="btn-secondary" onclick={closeBreakingChangesModal}>
+    <footer class="modal-footer">
+      <button type="button" class="cyber-btn cyber-btn--ghost" onclick={closeBreakingChangesModal}>
         Cancel
       </button>
-      <button type="button" class="btn-caution" onclick={confirmBreakingChanges}>
+      <button type="button" class="cyber-btn cyber-btn--outline-caution" onclick={confirmBreakingChanges}>
         Enable Anyway
       </button>
     </footer>

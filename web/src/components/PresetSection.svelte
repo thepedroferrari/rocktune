@@ -49,7 +49,7 @@
   <div id="preset-actions" class="preset-actions">
     <a
       href="#generate"
-      class="preset-action-btn preset-action-btn--primary"
+      class="cyber-btn cyber-btn--primary"
     >
       <svg
         class="btn-icon"
@@ -66,7 +66,7 @@
     </a>
     <a
       href="#hardware"
-      class="preset-action-btn preset-action-btn--secondary"
+      class="cyber-btn cyber-btn--secondary"
     >
       <svg
         class="btn-icon"
