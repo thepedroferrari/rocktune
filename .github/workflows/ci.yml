@@ -5,6 +5,7 @@ on:
     branches: [master, main]
   pull_request:
     branches: [master, main]
+  workflow_dispatch:
 
 jobs:
   validate-web:
@@ -13,44 +14,41 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Cache Deno dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/deno
+            web/node_modules
+          key: deno-${{ hashFiles('web/deno.lock') }}
+          restore-keys: deno-
+
       - name: Validate catalog.json
         run: |
-          echo "Validating catalog.json schema..."
+          echo "Validating catalog.json..."
           cat web/catalog.json | jq empty
-          echo "✓ catalog.json is valid JSON"
-
-      - name: Check for duplicate package IDs
-        run: |
-          echo "Checking for duplicate package IDs..."
-          duplicates=$(cat web/catalog.json | jq -r 'to_entries | .[].value.id' | sort | uniq -d)
+          # Check for duplicate winget IDs
+          duplicates=$(jq -r 'to_entries | .[].value.id' web/catalog.json | sort | uniq -d)
           if [ -n "$duplicates" ]; then
-            echo "❌ Duplicate package IDs found:"
-            echo "$duplicates"
+            echo "❌ Duplicate package IDs: $duplicates"
             exit 1
           fi
-          echo "✓ No duplicate package IDs"
+          echo "✓ catalog.json is valid"
 
-      - name: Validate package ID format
-        run: |
-          echo "Checking package ID format..."
-          invalid=$(cat web/catalog.json | jq -r 'to_entries | .[].value.id | select(test("^[a-zA-Z0-9._-]+$") | not)')
-          if [ -n "$invalid" ]; then
-            echo "❌ Invalid package IDs (must be alphanumeric with dots/hyphens):"
-            echo "$invalid"
-            exit 1
-          fi
-          echo "✓ All package IDs are valid"
+      - name: Validate web app (lint, typecheck, build)
+        working-directory: web
+        run: deno task validate
 
-      - name: Check HTML structure
+      - name: Audit catalogs
+        working-directory: web
         run: |
-          echo "Checking HTML files..."
-          for file in web/*.html; do
-            if ! grep -q "<!DOCTYPE html>" "$file"; then
-              echo "❌ $file missing DOCTYPE"
-              exit 1
-            fi
-          done
-          echo "✓ HTML files have valid structure"
+          deno task catalog:audit
+          deno task share:audit
 
   validate-powershell:
     name: Validate PowerShell Modules
@@ -62,22 +60,26 @@ jobs:
         shell: pwsh
         run: |
           $errors = @()
-          Get-ChildItem -Path . -Filter *.ps1 -Recurse | ForEach-Object {
-            $tokens = $null
-            $parseErrors = $null
-            [System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$tokens, [ref]$parseErrors)
-            if ($parseErrors) {
-              $errors += "$($_.Name): $($parseErrors | ForEach-Object { $_.Message })"
+          Get-ChildItem -Path . -Filter *.ps1 -Recurse |
+            Where-Object { $_.FullName -notlike '*_external*' -and $_.FullName -notlike '*node_modules*' } |
+            ForEach-Object {
+              $tokens = $null
+              $parseErrors = $null
+              [System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$tokens, [ref]$parseErrors)
+              if ($parseErrors) {
+                $errors += "$($_.Name): $($parseErrors | ForEach-Object { $_.Message })"
+              }
             }
-          }
-          Get-ChildItem -Path . -Filter *.psm1 -Recurse | ForEach-Object {
-            $tokens = $null
-            $parseErrors = $null
-            [System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$tokens, [ref]$parseErrors)
-            if ($parseErrors) {
-              $errors += "$($_.Name): $($parseErrors | ForEach-Object { $_.Message })"
+          Get-ChildItem -Path . -Filter *.psm1 -Recurse |
+            Where-Object { $_.FullName -notlike '*_external*' -and $_.FullName -notlike '*node_modules*' } |
+            ForEach-Object {
+              $tokens = $null
+              $parseErrors = $null
+              [System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$tokens, [ref]$parseErrors)
+              if ($parseErrors) {
+                $errors += "$($_.Name): $($parseErrors | ForEach-Object { $_.Message })"
+              }
             }
-          }
           if ($errors.Count -gt 0) {
             Write-Host "❌ PowerShell syntax errors found:" -ForegroundColor Red
             $errors | ForEach-Object { Write-Host "  $_" }
