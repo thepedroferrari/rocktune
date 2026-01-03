@@ -172,7 +172,7 @@ foreach ($svc in $telemetryServices) {
 }
 
 
-# Disable telemetry scheduled tasks (WinUtil pattern)
+# Disable telemetry scheduled task
 Write-Section "Disabling Telemetry Scheduled Tasks"
 $telemetryTasks = @(
     "Microsoft\Windows\Autochk\Proxy",
@@ -196,7 +196,7 @@ foreach ($task in $telemetryTasks) {
 }
 
 
-# Disable Windows Copilot completely (WinUtil pattern)
+# Disable Windows Copilot completely
 Write-Section "Disabling Windows Copilot"
 try {
     # Policy keys

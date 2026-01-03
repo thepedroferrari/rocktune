@@ -612,7 +612,7 @@ function Install-WingetIfMissing {
         $downloadPath = Join-Path $env:TEMP "Microsoft.DesktopAppInstaller.msixbundle"
 
         Write-Note "Downloading App Installer bundle from $appInstallerUrl"
-        Invoke-WebRequest -Uri $appInstallerUrl -OutFile $downloadPath -UseBasicParsing -ErrorAction Stop
+        Invoke-WebRequest -Uri $appInstallerUrl -OutFile $downloadPath -UseBasicParsing -TimeoutSec 60 -ErrorAction Stop
 
         Write-Note "Installing App Installer bundle"
         Add-AppxPackage -Path $downloadPath -ErrorAction Stop

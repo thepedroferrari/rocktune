@@ -58,6 +58,26 @@ $monitorIds = if ($query['m']) { $query['m'] -split ',' } else { @() }
 $optIds = if ($query['o']) { $query['o'] -split ',' } else { @() }
 $pkgKeys = if ($query['s']) { $query['s'] -split ',' } else { @() }
 
+$validCpuIds = @('1', '2', '3')
+$validGpuIds = @('1', '2', '3')
+$validDnsIds = @('1', '2', '3', '4', '5')
+
+if ($cpuId -and $cpuId -notin $validCpuIds) {
+    Write-Host "  WARNING: Invalid CPU ID '$cpuId' - defaulting to AMD" -ForegroundColor Yellow
+    $cpuId = '2'
+}
+if ($gpuId -and $gpuId -notin $validGpuIds) {
+    Write-Host "  WARNING: Invalid GPU ID '$gpuId' - defaulting to NVIDIA" -ForegroundColor Yellow
+    $gpuId = '1'
+}
+if ($dnsId -and $dnsId -notin $validDnsIds) {
+    Write-Host "  WARNING: Invalid DNS ID '$dnsId' - DNS optimization will be skipped" -ForegroundColor Yellow
+    $dnsId = $null
+}
+
+$optIds = $optIds | Where-Object { $_ -match '^\d+$' }
+$pkgKeys = $pkgKeys | Where-Object { $_ -match '^[a-zA-Z0-9._-]+$' }
+
 # Clear the env var after reading (security)
 $env:RT = $null
 
@@ -500,9 +520,22 @@ $OPT_FUNCTIONS = @{
         Write-OK "Explorer speed optimized"
     }
     '15' = { # temp_purge
-        Remove-Item "$env:TEMP\*" -Recurse -Force -EA SilentlyContinue
-        Remove-Item "$env:WINDIR\Temp\*" -Recurse -Force -EA SilentlyContinue
-        Write-OK "Temp folders purged"
+        $itemsRemoved = 0
+        if ($env:TEMP -and (Test-Path $env:TEMP)) {
+            $tempPath = [System.IO.Path]::GetFullPath($env:TEMP)
+            if ($tempPath -like "*\Temp*" -or $tempPath -like "*\tmp*") {
+                Get-ChildItem $tempPath -Force -EA SilentlyContinue | ForEach-Object {
+                    try { Remove-Item $_.FullName -Recurse -Force -EA Stop; $itemsRemoved++ } catch {}
+                }
+            }
+        }
+        $winTemp = Join-Path $env:WINDIR "Temp"
+        if (Test-Path $winTemp) {
+            Get-ChildItem $winTemp -Force -EA SilentlyContinue | ForEach-Object {
+                try { Remove-Item $_.FullName -Recurse -Force -EA Stop; $itemsRemoved++ } catch {}
+            }
+        }
+        Write-OK "Temp folders purged ($itemsRemoved items)"
     }
     '16' = { # razer_block
         Get-Service | Where-Object {$_.Name -like "Razer*"} | Stop-Service -Force -EA SilentlyContinue

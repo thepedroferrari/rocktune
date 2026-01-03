@@ -151,7 +151,7 @@ function Apply-PrivacyTier2Moderate {
         Applies Tier 2 privacy settings (moderate).
     .DESCRIPTION
         Disables telemetry scheduled tasks, services, and applies comprehensive
-        privacy registry settings. Based on WinUtil's proven approach.
+        privacy registry settings.
     .OUTPUTS
         None.
     #>
@@ -463,7 +463,6 @@ function Disable-Copilot {
         Disables Windows Copilot completely.
     .DESCRIPTION
         Applies 8 registry keys and removes Copilot AppX packages.
-        Based on WinUtil's comprehensive Copilot removal approach.
     .OUTPUTS
         None.
     #>
@@ -640,8 +639,7 @@ function Invoke-PrivacyOptimizations {
     .SYNOPSIS
         Applies selected privacy optimization tiers and extras.
     .DESCRIPTION
-        Runs tiered privacy settings, optional debloat steps, and WinUtil-inspired
-        tweaks such as notification and Copilot disablement.
+        Runs tiered privacy settings
     .PARAMETER Tier1Safe
         Applies safe privacy defaults when true.
     .PARAMETER Tier2Moderate
@@ -716,7 +714,6 @@ function Invoke-PrivacyOptimizations {
             Disable-Copilot
         }
 
-        # New WinUtil-inspired tweaks
         Disable-Notifications -Enable $DisableNotifications
 
         Disable-PS7Telemetry -Enable $DisablePS7Telemetry

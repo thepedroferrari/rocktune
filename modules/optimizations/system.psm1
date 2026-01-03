@@ -917,7 +917,6 @@ function Invoke-SystemOptimizations {
 
         Disable-RazerAutoInstall -Enable $BlockRazer
 
-        # New WinUtil-inspired tweaks
         Set-ClassicContextMenu -Enable $ClassicContextMenu
 
         Disable-StorageSense -Enable $DisableStorageSense
