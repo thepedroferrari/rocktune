@@ -9,6 +9,23 @@
  */
 
 import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from 'lz-string'
+import {
+  CPU_ID_TO_VALUE,
+  CPU_VALUE_TO_ID,
+  DNS_ID_TO_VALUE,
+  DNS_VALUE_TO_ID,
+  GPU_ID_TO_VALUE,
+  GPU_VALUE_TO_ID,
+  MONITOR_ID_TO_VALUE,
+  MONITOR_VALUE_TO_ID,
+  OPT_ID_TO_VALUE,
+  OPT_VALUE_TO_ID,
+  PERIPHERAL_ID_TO_VALUE,
+  PERIPHERAL_VALUE_TO_ID,
+  PRESET_ID_TO_VALUE,
+  PRESET_VALUE_TO_ID,
+  SHARE_SCHEMA_VERSION,
+} from './share-registry'
 import type {
   CpuType,
   DnsProviderType,
@@ -28,23 +45,6 @@ import {
   isPresetType,
   OPTIMIZATION_KEYS,
 } from './types'
-import {
-  CPU_ID_TO_VALUE,
-  CPU_VALUE_TO_ID,
-  DNS_ID_TO_VALUE,
-  DNS_VALUE_TO_ID,
-  GPU_ID_TO_VALUE,
-  GPU_VALUE_TO_ID,
-  MONITOR_ID_TO_VALUE,
-  MONITOR_VALUE_TO_ID,
-  OPT_ID_TO_VALUE,
-  OPT_VALUE_TO_ID,
-  PERIPHERAL_ID_TO_VALUE,
-  PERIPHERAL_VALUE_TO_ID,
-  PRESET_ID_TO_VALUE,
-  PRESET_VALUE_TO_ID,
-  SHARE_SCHEMA_VERSION,
-} from './share-registry'
 
 /**
  * Compressed share data format (short keys for minimal URL size)
@@ -86,9 +86,10 @@ const BLOCKED_SHARE_KEYS: Set<string> = new Set([
  * @param optimizations - Array of optimization keys to filter
  * @returns Object with safe optimizations and count of blocked ones
  */
-function filterBlockedOptimizations(
-  optimizations: readonly OptimizationKey[]
-): { safe: OptimizationKey[]; blockedCount: number } {
+function filterBlockedOptimizations(optimizations: readonly OptimizationKey[]): {
+  safe: OptimizationKey[]
+  blockedCount: number
+} {
   const safe: OptimizationKey[] = []
   let blockedCount = 0
   for (const opt of optimizations) {
@@ -358,7 +359,7 @@ function decodeV1(data: ShareDataV1): DecodeResult {
     }
 
     const { safe: safeOpts, blockedCount: ludicrousBlocked } = filterBlockedOptimizations(
-      build.optimizations
+      build.optimizations,
     )
     build.optimizations = safeOpts
     if (ludicrousBlocked > 0) {
@@ -452,7 +453,7 @@ export function getFullShareURLWithMeta(build: BuildToEncode): EncodeResult {
  */
 export function validatePackages(
   packages: readonly PackageKey[],
-  catalogKeys: Set<string>
+  catalogKeys: Set<string>,
 ): { valid: PackageKey[]; invalidCount: number } {
   const valid: PackageKey[] = []
   let invalidCount = 0
@@ -585,9 +586,7 @@ export function getOneLinerWithMeta(build: BuildToEncode): OneLinerResult {
   const baseURL =
     typeof window !== 'undefined' ? window.location.origin : 'https://rocktune.pedroferrari.com'
   const url = `${baseURL}/run.ps1`
-  const command = configString
-    ? `$env:RT='${configString}'; irm ${url} | iex`
-    : `irm ${url} | iex`
+  const command = configString ? `$env:RT='${configString}'; irm ${url} | iex` : `irm ${url} | iex`
 
   return {
     command,
@@ -683,7 +682,7 @@ export function generateTwitterText(build: BuildToEncode): string {
   }
 
   if (text.length > maxTextLength) {
-    text = text.slice(0, maxTextLength - 3) + '...'
+    text = `${text.slice(0, maxTextLength - 3)}...`
   }
 
   return `${text}\n${url}`
@@ -713,7 +712,9 @@ export function generateRedditText(build: BuildToEncode): string {
     lines.push(`| GPU | ${GPU_LABELS[build.gpu] || build.gpu} |`)
   }
   if (build.dnsProvider) {
-    lines.push(`| DNS | ${build.dnsProvider.charAt(0).toUpperCase() + build.dnsProvider.slice(1)} |`)
+    lines.push(
+      `| DNS | ${build.dnsProvider.charAt(0).toUpperCase() + build.dnsProvider.slice(1)} |`,
+    )
   }
   if (build.optimizations.length > 0) {
     lines.push(`| Optimizations | ${build.optimizations.length} enabled |`)
@@ -723,7 +724,7 @@ export function generateRedditText(build: BuildToEncode): string {
   }
   if (build.peripherals.length > 0) {
     lines.push(
-      `| Peripherals | ${build.peripherals.map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join(', ')} |`
+      `| Peripherals | ${build.peripherals.map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join(', ')} |`,
     )
   }
 
@@ -731,7 +732,9 @@ export function generateRedditText(build: BuildToEncode): string {
   lines.push(`**Import link:** ${url}`)
   lines.push('')
   lines.push('---')
-  lines.push('*Built with [RockTune](https://rocktune.pedroferrari.com) — Windows gaming loadout builder*')
+  lines.push(
+    '*Built with [RockTune](https://rocktune.pedroferrari.com) — Windows gaming loadout builder*',
+  )
 
   return lines.join('\n')
 }
@@ -796,7 +799,7 @@ export function getBuildSummary(build: BuildToEncode): BuildSummary {
   return {
     cpu: CPU_LABELS[build.cpu] || build.cpu || 'Not set',
     gpu: GPU_LABELS[build.gpu] || build.gpu || 'Not set',
-    preset: build.preset ? (PRESET_LABELS[build.preset] || build.preset) : null,
+    preset: build.preset ? PRESET_LABELS[build.preset] || build.preset : null,
     optimizationCount: build.optimizations.length,
     packageCount: build.packages.length,
     peripheralCount: build.peripherals.length,
