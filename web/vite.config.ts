@@ -1,6 +1,6 @@
-
 import { defineConfig } from 'vite'
 import { svelte, vitePreprocess } from '@sveltejs/vite-plugin-svelte'
+import { visualizer } from 'rollup-plugin-visualizer'
 
 
 function getGitInfo() {
@@ -28,6 +28,11 @@ export default defineConfig({
       compilerOptions: {
         runes: true,
       },
+    }),
+    visualizer({
+      filename: 'dist/stats.html',
+      gzipSize: true,
+      brotliSize: true,
     }),
   ],
   root: '.',
