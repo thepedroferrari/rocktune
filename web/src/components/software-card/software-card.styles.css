@@ -76,7 +76,6 @@
           box-shadow: 0 2px 6px var(--accent-40);
         }
 
-        /* Checkmark icon inside the circle */
         &::before {
           content: "";
           position: absolute;
@@ -86,10 +85,8 @@
           height: 12px;
           z-index: 26;
           background-color: oklch(0.1 0 0);
-          mask: var(--icon-check) no-repeat center;
-          mask-size: contain;
-          -webkit-mask: var(--icon-check) no-repeat center;
-          -webkit-mask-size: contain;
+          mask: var(--icon-check) no-repeat center / contain;
+          -webkit-mask: var(--icon-check) no-repeat center / contain;
         }
 
         & .name {
@@ -253,24 +250,31 @@
     }
 
     :scope.selected .card-overlay::after {
-      content: "✓";
+      content: "";
       position: absolute;
       top: -10px;
       right: -10px;
       width: 24px;
       height: 24px;
       background: var(--accent);
-      color: oklch(0.1 0 0);
-      font-size: 13px;
-      font-weight: 800;
-      display: flex;
-      align-items: center;
-      justify-content: center;
       border-radius: 50%;
       z-index: 110;
       box-shadow:
         0 2px 8px var(--accent-40),
         0 0 0 2px oklch(0.09 0.015 250);
+    }
+
+    :scope.selected .card-overlay::before {
+      content: "";
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      width: 12px;
+      height: 12px;
+      z-index: 111;
+      background-color: oklch(0.1 0 0);
+      mask: var(--icon-check) no-repeat center / contain;
+      -webkit-mask: var(--icon-check) no-repeat center / contain;
     }
 
     :scope.selected[data-overlay-position="left"] .card-overlay::after {

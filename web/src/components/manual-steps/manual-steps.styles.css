@@ -859,12 +859,18 @@
 
 
       .manual-steps__item.completed .manual-steps__checkbox-visual::after {
-        content: "✓" !important;
+        content: "" !important;
         display: block !important;
-        font-size: 12px !important;
-        line-height: 14px !important;
-        text-align: center !important;
-        color: #000 !important;
+        width: 12px !important;
+        height: 12px !important;
+        margin: 1px auto !important;
+        background-color: #000 !important;
+        mask: var(--icon-check) no-repeat center !important;
+        mask-size: contain !important;
+        -webkit-mask: var(--icon-check) no-repeat center !important;
+        -webkit-mask-size: contain !important;
+        print-color-adjust: exact !important;
+        -webkit-print-color-adjust: exact !important;
       }
 
 

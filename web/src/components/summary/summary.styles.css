@@ -39,23 +39,26 @@
       transition: all var(--duration-slow) var(--ease-out-expo);
       overflow: hidden;
       &::before {
-        content: "\25E2 DEPLOYMENT MANIFEST"; 
+        content: "DEPLOYMENT MANIFEST";
         position: absolute;
         inset-block-start: 0;
         inset-inline: 0;
         padding: var(--space-2xs) var(--space-md);
+        padding-inline-start: calc(var(--space-md) + 1em);
         font-family: var(--font-display);
         font-size: var(--text-2xs);
         font-weight: 700;
         letter-spacing: var(--tracking-wider);
         text-transform: uppercase;
         color: oklch(0.1 0.02 102);
-        background: linear-gradient(
-          90deg,
-          var(--summary-accent) 0%,
-          var(--cyber-yellow-dim) 60%,
-          transparent 100%
-        );
+        background:
+          var(--icon-corner-br) no-repeat 0.5rem center / 0.7em 0.7em,
+          linear-gradient(
+            90deg,
+            var(--summary-accent) 0%,
+            var(--cyber-yellow-dim) 60%,
+            transparent 100%
+          );
       }
       &::after {
         content: "";
@@ -185,15 +188,18 @@
         }
       }
       &::before {
-        content: "\25E2"; 
+        content: "";
         position: absolute;
-        inset-block-start: 0;
+        inset-block-start: 2px;
         inset-inline-start: 50%;
         transform: translateX(-50%);
-        font-size: var(--text-3xs);
-        color: var(--cyber-yellow);
+        inline-size: 0.6em;
+        block-size: 0.6em;
+        background-color: var(--cyber-yellow);
         opacity: 0.6;
-        text-shadow: var(--glow-sm) var(--cyber-yellow-glow);
+        mask: var(--icon-corner-br) no-repeat center / contain;
+        -webkit-mask: var(--icon-corner-br) no-repeat center / contain;
+        filter: drop-shadow(var(--glow-sm) var(--cyber-yellow-glow));
       }
     }
     .value {

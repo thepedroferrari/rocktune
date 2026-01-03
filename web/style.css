@@ -1169,8 +1169,12 @@
          gap: var(--space-sm);
 
          &::before {
-           content: '◢';
-           font-size: 0.7rem;
+           content: "";
+           inline-size: 0.7rem;
+           block-size: 0.7rem;
+           background-color: currentColor;
+           mask: var(--icon-corner-br) no-repeat center / contain;
+           -webkit-mask: var(--icon-corner-br) no-repeat center / contain;
          }
        }
 
@@ -1957,11 +1961,15 @@
              margin: 0.3em 0;
 
              &::before {
-               content: '›';
+               content: "";
                position: absolute;
                left: -1em;
-               color: var(--control-accent);
-               font-weight: 600;
+               top: 0.25em;
+               inline-size: 0.6em;
+               block-size: 0.6em;
+               background-color: var(--control-accent);
+               mask: var(--icon-chevron-right) no-repeat center / contain;
+               -webkit-mask: var(--icon-chevron-right) no-repeat center / contain;
              }
            }
          }
@@ -2091,19 +2099,24 @@
            color: oklch(0.82 0.02 285);
 
            &::before {
-             content: '›';
+             content: "";
              position: absolute;
              left: 0;
-             font-weight: 600;
+             top: 0.2em;
+             inline-size: 0.6em;
+             block-size: 0.6em;
+             background-color: currentColor;
+             mask: var(--icon-chevron-right) no-repeat center / contain;
+             -webkit-mask: var(--icon-chevron-right) no-repeat center / contain;
            }
          }
 
          .tt-pros li::before {
-           color: oklch(0.8 0.15 175);
+           background-color: oklch(0.8 0.15 175);
          }
 
          .tt-cons li::before {
-           color: oklch(0.75 0.18 10);
+           background-color: oklch(0.75 0.18 10);
          }
 
          strong {

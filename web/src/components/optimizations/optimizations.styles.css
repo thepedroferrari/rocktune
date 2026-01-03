@@ -814,10 +814,8 @@
     inline-size: 0.75em;
     block-size: 0.75em;
     background-color: var(--_accent);
-    mask: var(--icon-chevron-right) no-repeat center;
-    mask-size: contain;
-    -webkit-mask: var(--icon-chevron-right) no-repeat center;
-    -webkit-mask-size: contain;
+    mask: var(--icon-chevron-right) no-repeat center / contain;
+    -webkit-mask: var(--icon-chevron-right) no-repeat center / contain;
   }
 
   .only-for li::before {
@@ -828,10 +826,8 @@
     inline-size: 1em;
     block-size: 1em;
     background-color: var(--caution);
-    mask: var(--icon-warning) no-repeat center;
-    mask-size: contain;
-    -webkit-mask: var(--icon-warning) no-repeat center;
-    -webkit-mask-size: contain;
+    mask: var(--icon-warning) no-repeat center / contain;
+    -webkit-mask: var(--icon-warning) no-repeat center / contain;
   }
 
   .research-links {

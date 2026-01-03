@@ -797,9 +797,13 @@
       }
 
       &::before {
-        content: "▶";
+        content: "";
         display: inline-block;
-        font-size: 0.7em;
+        inline-size: 0.75em;
+        block-size: 0.75em;
+        background-color: currentColor;
+        mask: var(--icon-triangle-right) no-repeat center / contain;
+        -webkit-mask: var(--icon-triangle-right) no-repeat center / contain;
         transition: transform var(--transition-fast);
       }
     }
@@ -1173,8 +1177,13 @@
     }
 
     &::before {
-      content: '▸';
-      font-size: 0.75em;
+      content: "";
+      display: inline-block;
+      inline-size: 0.65em;
+      block-size: 0.65em;
+      background-color: currentColor;
+      mask: var(--icon-triangle-right) no-repeat center / contain;
+      -webkit-mask: var(--icon-triangle-right) no-repeat center / contain;
       transition: transform var(--transition-fast);
     }
   }

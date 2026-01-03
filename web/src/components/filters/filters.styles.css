@@ -324,13 +324,16 @@
   }
 
   .software-card.preset-recommended::after {
-    content: "\2605";
+    content: "";
     position: absolute;
     inset-block-start: 6px;
     inset-inline-end: 6px;
-    font-size: 12px;
-    color: var(--neon-cyan);
-    text-shadow: var(--glow-sm) var(--neon-cyan-glow);
+    inline-size: 12px;
+    block-size: 12px;
+    background-color: var(--neon-cyan);
+    mask: var(--icon-star-filled) no-repeat center / contain;
+    -webkit-mask: var(--icon-star-filled) no-repeat center / contain;
+    filter: drop-shadow(0 0 4px var(--neon-cyan-glow));
     z-index: 10;
     opacity: 0.7;
   }
