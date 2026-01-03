@@ -1109,6 +1109,7 @@ if ($optIds.Count -gt 0) {
     Write-Host ""
 
     $autoApprove = $false
+    $consecutiveYes = 0  # Track consecutive Y responses for smart auto-All
     $approvedIds = @()
     $skippedIds = @()
     $quit = $false
@@ -1137,9 +1138,20 @@ if ($optIds.Count -gt 0) {
         switch ($response.ToLower()) {
             'a' { $autoApprove = $true; $response = 'y' }
             'q' { $quit = $true }
+            'n' { $consecutiveYes = 0 }  # Reset on skip
         }
 
         if (-not $quit -and $response.ToLower() -eq 'y') {
+            $consecutiveYes++
+            # Smart Auto-All: after 3 consecutive Y, auto-approve remaining
+            if ($consecutiveYes -ge 3 -and -not $autoApprove) {
+                $autoApprove = $true
+                $remaining = $total - $current
+                Write-Host ""
+                Write-Host "  $([char]0x2192) Auto-applying remaining $remaining optimizations (3 consecutive approvals)" -ForegroundColor Cyan
+                Write-Host "  $([char]0x2192) Press Ctrl+C to abort if needed" -ForegroundColor DarkGray
+                Write-Host ""
+            }
             Get-NetAdapter | Where-Object {$_.Status -eq "Up"} | Set-DnsClientServerAddress -ServerAddresses $dns.primary,$dns.secondary
             Write-OK "DNS set to $($dns.name)"
             $approvedIds += '7'
@@ -1170,9 +1182,20 @@ if ($optIds.Count -gt 0) {
         switch ($response.ToLower()) {
             'a' { $autoApprove = $true; $response = 'y' }
             'q' { $quit = $true }
+            'n' { $consecutiveYes = 0 }  # Reset on skip
         }
 
         if (-not $quit -and $response.ToLower() -eq 'y') {
+            $consecutiveYes++
+            # Smart Auto-All: after 3 consecutive Y, auto-approve remaining
+            if ($consecutiveYes -ge 3 -and -not $autoApprove) {
+                $autoApprove = $true
+                $remaining = $total - $current
+                Write-Host ""
+                Write-Host "  $([char]0x2192) Auto-applying remaining $remaining optimizations (3 consecutive approvals)" -ForegroundColor Cyan
+                Write-Host "  $([char]0x2192) Press Ctrl+C to abort if needed" -ForegroundColor DarkGray
+                Write-Host ""
+            }
             try {
                 & $OPT_FUNCTIONS[$id]
                 $approvedIds += $id
@@ -1212,6 +1235,7 @@ if ($pkgKeys.Count -gt 0) {
         Write-Fail "winget not found. Install App Installer from Microsoft Store."
     } else {
         $pkgAutoApprove = $false
+        $pkgConsecutiveYes = 0  # Track consecutive Y responses for smart auto-All
         $installedPkgs = @()
         $skippedPkgs = @()
         $pkgQuit = $false
@@ -1247,9 +1271,20 @@ if ($pkgKeys.Count -gt 0) {
             switch ($pkgResponse.ToLower()) {
                 'a' { $pkgAutoApprove = $true; $pkgResponse = 'y' }
                 'q' { $pkgQuit = $true }
+                'n' { $pkgConsecutiveYes = 0 }  # Reset on skip
             }
 
             if (-not $pkgQuit -and $pkgResponse.ToLower() -eq 'y') {
+                $pkgConsecutiveYes++
+                # Smart Auto-All: after 3 consecutive Y, auto-approve remaining
+                if ($pkgConsecutiveYes -ge 3 -and -not $pkgAutoApprove) {
+                    $pkgAutoApprove = $true
+                    $remaining = $pkgTotal - $pkgCurrent
+                    Write-Host ""
+                    Write-Host "  $([char]0x2192) Auto-installing remaining $remaining packages (3 consecutive approvals)" -ForegroundColor Cyan
+                    Write-Host "  $([char]0x2192) Press Ctrl+C to abort if needed" -ForegroundColor DarkGray
+                    Write-Host ""
+                }
                 Write-Host "  Installing $($pkg.name)..." -NoNewline
                 $installOutput = winget install --id "$($pkg.id)" --silent --accept-package-agreements --accept-source-agreements 2>&1
                 if ($LASTEXITCODE -eq 0) { Write-OK ""; $installedPkgs += $key }

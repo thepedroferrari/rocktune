@@ -161,7 +161,7 @@ export interface EncodeResult {
  * @param build - Current build state
  * @returns URL hash string (without the #) e.g., "b=1.eJx..."
  */
-export function encodeShareURL(build: BuildToEncode): string {
+function encodeShareURL(build: BuildToEncode): string {
   const data: ShareDataV1 = {
     v: SHARE_SCHEMA_VERSION,
   }
@@ -421,7 +421,7 @@ export function clearShareHash(): void {
  * Generate full shareable URL from build state
  * @returns Just the URL string (for backward compatibility)
  */
-export function getFullShareURL(build: BuildToEncode): string {
+function getFullShareURL(build: BuildToEncode): string {
   return getFullShareURLWithMeta(build).url
 }
 
@@ -470,39 +470,6 @@ export function validatePackages(
 }
 
 /**
- * Generate text summary of a build for sharing on forums/Reddit
- */
-export function generateTextSummary(build: BuildToEncode): string {
-  const lines: string[] = ['RockTune Build', '─'.repeat(40)]
-
-  if (build.cpu || build.gpu) {
-    const hw = [build.cpu?.toUpperCase(), build.gpu?.toUpperCase()].filter(Boolean).join(' + ')
-    lines.push(`Hardware: ${hw}`)
-  }
-
-  if (build.dnsProvider) {
-    lines.push(`DNS: ${build.dnsProvider}`)
-  }
-
-  if (build.peripherals.length > 0) {
-    lines.push(`Peripherals: ${build.peripherals.join(', ')}`)
-  }
-
-  if (build.optimizations.length > 0) {
-    lines.push(`Optimizations: ${build.optimizations.length} enabled`)
-  }
-
-  if (build.packages.length > 0) {
-    lines.push(`Software: ${build.packages.length} packages`)
-  }
-
-  lines.push('')
-  lines.push(`Import: ${getFullShareURL(build)}`)
-
-  return lines.join('\n')
-}
-
-/**
  * Encode build state into compact query parameters for PowerShell one-liner
  *
  * Format: c=1&g=1&d=1&o=1,2,3&s=steam,discord&p=1,2&m=1
@@ -510,7 +477,7 @@ export function generateTextSummary(build: BuildToEncode): string {
  * This format can be parsed natively by PowerShell without LZ-string decompression.
  * LUDICROUS optimizations are filtered out for security.
  */
-export function encodeCompactURL(build: BuildToEncode): string {
+function encodeCompactURL(build: BuildToEncode): string {
   const params = new URLSearchParams()
 
   if (build.cpu) {
@@ -595,25 +562,6 @@ export function getOneLinerWithMeta(build: BuildToEncode): OneLinerResult {
     urlTooLong: command.length > URL_LENGTH_WARNING_THRESHOLD,
     blockedCount,
   }
-}
-
-/**
- * Generate PowerShell one-liner command (simple version)
- *
- * @param build - Current build state
- * @returns PowerShell command string
- */
-export function getOneLinerCommand(build: BuildToEncode): string {
-  return getOneLinerWithMeta(build).command
-}
-
-/**
- * Platform-specific share text formats
- */
-export interface PlatformShareText {
-  twitter: string
-  reddit: string
-  discord: string
 }
 
 /**
@@ -767,17 +715,6 @@ export function generateDiscordText(build: BuildToEncode): string {
   lines.push(url)
 
   return lines.join('\n')
-}
-
-/**
- * Generate all platform-specific share texts
- */
-export function generatePlatformTexts(build: BuildToEncode): PlatformShareText {
-  return {
-    twitter: generateTwitterText(build),
-    reddit: generateRedditText(build),
-    discord: generateDiscordText(build),
-  }
 }
 
 /**

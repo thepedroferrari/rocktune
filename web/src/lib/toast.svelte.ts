@@ -48,10 +48,3 @@ export function showToast(
 export function dismissToast(id: number): void {
   toasts = toasts.filter((t) => t.id !== id)
 }
-
-/**
- * Dismiss all toasts
- */
-export function clearToasts(): void {
-  toasts = []
-}

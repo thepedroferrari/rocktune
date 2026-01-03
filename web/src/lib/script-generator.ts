@@ -3,52 +3,6 @@
  *
  * Generates self-contained PowerShell scripts from user selections.
  * Scripts work offline without network dependencies.
- *
- * ## Generator Modules (for new optimizations)
- *
- * When adding new optimizations, prefer using the structured generators
- * from ./generators/ for consistent code generation:
- *
- * ```typescript
- * import { generateRegistryOpt, generateServiceOpt, generateBcdeditOpt } from './generators'
- *
- * // Registry optimization
- * const lines = generateRegistryOpt({
- *   type: 'registry',
- *   tier: 'safe',
- *   description: 'Disable mouse acceleration',
- *   path: 'HKCU:\\Control Panel\\Mouse',
- *   name: 'MouseSpeed',
- *   value: 0,
- *   successMessage: 'Mouse acceleration disabled'
- * })
- *
- * // Service optimization
- * const lines = generateServiceOpt({
- *   type: 'service',
- *   tier: 'risky',
- *   description: 'Disable Xbox services - breaks Game Pass',
- *   services: ['XblAuthManager', 'XblGameSave'],
- *   action: 'stop-and-disable',
- *   warningMessage: 'This will break Game Pass!',
- *   successMessage: 'Xbox services disabled'
- * })
- *
- * // Bcdedit optimization
- * const lines = generateBcdeditOpt(
- *   'caution',
- *   'Disable HPET',
- *   '/set useplatformclock false',
- *   'HPET disabled',
- *   'HPET disabled'  // reboot reason
- * )
- * ```
- *
- * These generators automatically handle:
- * - Tier-prefixed comments ([SAFE], [CAUTION], [RISKY], [LUDICROUS])
- * - Consistent feedback (Write-OK, Write-Fail, Write-Warn)
- * - Reboot tracking (Add-RebootReason)
- * - Error handling
  */
 
 import { OPTIMIZATIONS } from './optimizations'
@@ -792,7 +746,7 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
   lines.push(`${indent}Write-Host "  CPU: $cpu" -ForegroundColor White`)
   lines.push(`${indent}Write-Host "  GPU: $gpu" -ForegroundColor White`)
 
-  // Use string concat to preserve PowerShell $ram variable
+  // biome-ignore lint/style/useTemplate: preserve PowerShell $ram variable
   lines.push(`${indent}Write-Host "  RAM: ` + '$ram' + `GB" -ForegroundColor White`)
   lines.push(`${indent}Write-Host "  Windows: Build $script:WinBuild" -ForegroundColor Gray`)
   lines.push('')

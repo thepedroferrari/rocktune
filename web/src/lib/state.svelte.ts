@@ -454,13 +454,6 @@ export function setScriptDownloaded(downloaded: boolean): void {
 }
 
 /**
- * Mark script as verified by user
- */
-export function setScriptVerified(verified: boolean): void {
-  app.script = { ...app.script, verified }
-}
-
-/**
  * Open the preview modal
  */
 export function openPreviewModal(): void {

@@ -297,25 +297,3 @@ export const OPT_VALUE_TO_ID: Record<OptimizationKey, number> = Object.fromEntri
     .filter(([_, value]) => value !== null)
     .map(([id, value]) => [value, Number(id)]),
 ) as Record<OptimizationKey, number>
-
-/**
- * Type guard to check if an optimization ID maps to a valid (non-deprecated) value
- */
-export function isValidOptId(id: number): boolean {
-  return id in OPT_ID_TO_VALUE && OPT_ID_TO_VALUE[id] !== null
-}
-
-/**
- * Get optimization key from ID, returns undefined for unknown/deprecated IDs
- */
-export function getOptFromId(id: number): OptimizationKey | undefined {
-  const value = OPT_ID_TO_VALUE[id]
-  return value ?? undefined
-}
-
-/**
- * Get ID from optimization key, returns undefined for unknown keys
- */
-export function getIdFromOpt(key: OptimizationKey): number | undefined {
-  return OPT_VALUE_TO_ID[key]
-}
