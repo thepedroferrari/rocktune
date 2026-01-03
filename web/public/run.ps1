@@ -229,6 +229,7 @@ $PACKAGE_MAP = @{
 $script:SuccessCount = 0
 $script:FailCount = 0
 $script:WarningCount = 0
+$script:ScanResults = @()
 
 function Write-Banner {
     Write-Host @'
@@ -261,6 +262,67 @@ function Set-Reg {
         $success = $true
     } catch { $success = $false }
     if ($PassThru) { return $success }
+}
+
+function Add-ScanResult {
+    param([string]$Name, [string]$Current, [string]$Target, [string]$Status = "CHANGE")
+    $script:ScanResults += [PSCustomObject]@{
+        Name = $Name
+        Current = $Current
+        Target = $Target
+        Status = $Status
+    }
+}
+
+function Write-ScanResults {
+    if ($script:ScanResults.Count -eq 0) { return }
+
+    $nameWidth = 36
+    $currentWidth = 14
+    $targetWidth = 18
+
+    Write-Host ""
+    Write-Host "  ╔$('═' * $nameWidth)╤$('═' * $currentWidth)╤$('═' * $targetWidth)╗" -ForegroundColor White
+    Write-Host "  ║ Setting$(' ' * ($nameWidth - 9))│ Current$(' ' * ($currentWidth - 9))│ Target$(' ' * ($targetWidth - 8))║" -ForegroundColor White
+    Write-Host "  ╠$('═' * $nameWidth)╪$('═' * $currentWidth)╪$('═' * $targetWidth)╣" -ForegroundColor White
+
+    foreach ($result in $script:ScanResults) {
+        $name = $result.Name
+        if ($name.Length -gt ($nameWidth - 2)) { $name = $name.Substring(0, $nameWidth - 5) + "..." }
+        $name = " " + $name.PadRight($nameWidth - 2)
+
+        $current = $result.Current
+        if ($current.Length -gt ($currentWidth - 2)) { $current = $current.Substring(0, $currentWidth - 5) + "..." }
+        $current = " " + $current.PadRight($currentWidth - 2)
+
+        $target = $result.Target
+        if ($target.Length -gt ($targetWidth - 2)) { $target = $target.Substring(0, $targetWidth - 5) + "..." }
+        $target = " " + $target.PadRight($targetWidth - 2)
+
+        $color = switch ($result.Status) {
+            "OK"      { "Green" }
+            "CHANGE"  { "Yellow" }
+            "INFO"    { "Cyan" }
+            "PENDING" { "Gray" }
+            default   { "White" }
+        }
+
+        Write-Host "  ║" -NoNewline -ForegroundColor White
+        Write-Host $name -NoNewline -ForegroundColor $color
+        Write-Host "│" -NoNewline -ForegroundColor White
+        Write-Host $current -NoNewline -ForegroundColor $color
+        Write-Host "│" -NoNewline -ForegroundColor White
+        Write-Host $target -NoNewline -ForegroundColor $color
+        Write-Host "║" -ForegroundColor White
+    }
+
+    Write-Host "  ╚$('═' * $nameWidth)╧$('═' * $currentWidth)╧$('═' * $targetWidth)╝" -ForegroundColor White
+    Write-Host ""
+
+    $changeCount = ($script:ScanResults | Where-Object { $_.Status -eq "CHANGE" }).Count
+    $okCount = ($script:ScanResults | Where-Object { $_.Status -eq "OK" }).Count
+    Write-Host "  Summary: $changeCount changes needed, $okCount already configured" -ForegroundColor Gray
+    Write-Host ""
 }
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -820,6 +882,179 @@ Write-Host "    CPU: $cpu" -ForegroundColor Gray
 Write-Host "    GPU: $gpu" -ForegroundColor Gray
 Write-Host "    RAM: ${ram}GB" -ForegroundColor Gray
 Write-Host ""
+
+# ════════════════════════════════════════════════════════════════════════════
+# PRE-FLIGHT SCAN
+# ════════════════════════════════════════════════════════════════════════════
+
+if ($optIds.Count -gt 0) {
+    Write-Host "  Scanning current system state..." -ForegroundColor Gray
+
+    # Scan each selected optimization
+    foreach ($id in $optIds) {
+        $info = $OPT_DESCRIPTIONS[$id]
+        if (-not $info) { continue }
+
+        $name = "[$($info.tier)] $($info.name)"
+        $current = "—"
+        $target = "Will apply"
+        $status = "PENDING"
+
+        switch ($id) {
+            '1' { # pagefile
+                try {
+                    $cs = Get-WmiObject Win32_ComputerSystem
+                    if ($cs.AutomaticManagedPagefile) {
+                        $current = "Auto"
+                        $target = "Fixed size"
+                        $status = "CHANGE"
+                    } else {
+                        $current = "Fixed"
+                        $status = "OK"
+                    }
+                } catch { }
+            }
+            '2' { # fastboot
+                try {
+                    $val = Get-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Power" -Name "HiberbootEnabled" -EA SilentlyContinue
+                    if ($val.HiberbootEnabled -eq 0) { $current = "OFF"; $status = "OK" }
+                    else { $current = "ON"; $target = "OFF"; $status = "CHANGE" }
+                } catch { }
+            }
+            '10' { # gamedvr
+                try {
+                    $val = Get-ItemProperty "HKCU:\System\GameConfigStore" -Name "GameDVR_Enabled" -EA SilentlyContinue
+                    if ($val.GameDVR_Enabled -eq 0) { $current = "OFF"; $status = "OK" }
+                    else { $current = "ON"; $target = "OFF"; $status = "CHANGE" }
+                } catch { }
+            }
+            '11' { # background_apps
+                try {
+                    $val = Get-ItemProperty "HKCU:\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications" -Name "GlobalUserDisabled" -EA SilentlyContinue
+                    if ($val.GlobalUserDisabled -eq 1) { $current = "OFF"; $status = "OK" }
+                    else { $current = "ON"; $target = "OFF"; $status = "CHANGE" }
+                } catch { }
+            }
+            '13' { # copilot_disable
+                try {
+                    $val = Get-ItemProperty "HKCU:\Software\Policies\Microsoft\Windows\WindowsCopilot" -Name "TurnOffWindowsCopilot" -EA SilentlyContinue
+                    if ($val.TurnOffWindowsCopilot -eq 1) { $current = "OFF"; $status = "OK" }
+                    else { $current = "ON"; $target = "OFF"; $status = "CHANGE" }
+                } catch { }
+            }
+            '21' { # end_task
+                try {
+                    $val = Get-ItemProperty "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\TaskbarDeveloperSettings" -Name "TaskbarEndTask" -EA SilentlyContinue
+                    if ($val.TaskbarEndTask -eq 1) { $current = "ON"; $status = "OK" }
+                    else { $current = "OFF"; $target = "ON"; $status = "CHANGE" }
+                } catch { }
+            }
+            '23' { # notifications_off
+                try {
+                    $val = Get-ItemProperty "HKCU:\Software\Policies\Microsoft\Windows\Explorer" -Name "DisableNotificationCenter" -EA SilentlyContinue
+                    if ($val.DisableNotificationCenter -eq 1) { $current = "OFF"; $status = "OK" }
+                    else { $current = "ON"; $target = "OFF"; $status = "CHANGE" }
+                } catch { }
+            }
+            '26' { # mouse_accel
+                try {
+                    $val = Get-ItemProperty "HKCU:\Control Panel\Mouse" -Name "MouseSpeed" -EA SilentlyContinue
+                    if ($val.MouseSpeed -eq "0") { $current = "OFF"; $status = "OK" }
+                    else { $current = "ON"; $target = "OFF"; $status = "CHANGE" }
+                } catch { }
+            }
+            '28' { # keyboard_response
+                try {
+                    $val = Get-ItemProperty "HKCU:\Control Panel\Keyboard" -Name "KeyboardDelay" -EA SilentlyContinue
+                    if ($val.KeyboardDelay -eq "0") { $current = "0ms"; $status = "OK" }
+                    else { $current = "$($val.KeyboardDelay)"; $target = "0ms"; $status = "CHANGE" }
+                } catch { }
+            }
+            '29' { # game_mode
+                try {
+                    $val = Get-ItemProperty "HKCU:\Software\Microsoft\GameBar" -Name "AutoGameModeEnabled" -EA SilentlyContinue
+                    if ($val.AutoGameModeEnabled -eq 1) { $current = "ON"; $status = "OK" }
+                    else { $current = "OFF"; $target = "ON"; $status = "CHANGE" }
+                } catch { }
+            }
+            '52' { # game_bar
+                try {
+                    $val = Get-ItemProperty "HKCU:\Software\Microsoft\GameBar" -Name "ShowStartupPanel" -EA SilentlyContinue
+                    if ($val.ShowStartupPanel -eq 0) { $current = "OFF"; $status = "OK" }
+                    else { $current = "ON"; $target = "OFF"; $status = "CHANGE" }
+                } catch { }
+            }
+            '53' { # hags
+                try {
+                    $val = Get-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" -Name "HwSchMode" -EA SilentlyContinue
+                    if ($val.HwSchMode -eq 2) { $current = "ON"; $status = "OK" }
+                    else { $current = "OFF"; $target = "ON"; $status = "CHANGE" }
+                } catch { }
+            }
+            '54' { # fso_disable
+                try {
+                    $val = Get-ItemProperty "HKCU:\System\GameConfigStore" -Name "GameDVR_FSEBehaviorMode" -EA SilentlyContinue
+                    if ($val.GameDVR_FSEBehaviorMode -eq 2) { $current = "OFF"; $status = "OK" }
+                    else { $current = "ON"; $target = "OFF"; $status = "CHANGE" }
+                } catch { }
+            }
+            '68' { # sysmain_disable
+                try {
+                    $svc = Get-Service SysMain -EA SilentlyContinue
+                    if ($svc.StartType -eq 'Disabled') { $current = "OFF"; $status = "OK" }
+                    else { $current = "ON"; $target = "OFF"; $status = "CHANGE" }
+                } catch { }
+            }
+            '69' { # services_search_off
+                try {
+                    $svc = Get-Service WSearch -EA SilentlyContinue
+                    if ($svc.StartType -eq 'Manual' -or $svc.StartType -eq 'Disabled') { $current = "Manual"; $status = "OK" }
+                    else { $current = "Auto"; $target = "Manual"; $status = "CHANGE" }
+                } catch { }
+            }
+            '80' { # privacy_tier1
+                try {
+                    $val = Get-ItemProperty "HKCU:\Software\Microsoft\Windows\CurrentVersion\AdvertisingInfo" -Name "Enabled" -EA SilentlyContinue
+                    if ($val.Enabled -eq 0) { $current = "OFF"; $status = "OK" }
+                    else { $current = "ON"; $target = "OFF"; $status = "CHANGE" }
+                } catch { }
+            }
+            '81' { # privacy_tier2
+                try {
+                    $val = Get-ItemProperty "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection" -Name "AllowTelemetry" -EA SilentlyContinue
+                    if ($val.AllowTelemetry -eq 0) { $current = "Minimal"; $status = "OK" }
+                    else { $current = "Full"; $target = "Minimal"; $status = "CHANGE" }
+                } catch { }
+            }
+            '85' { # teredo_disable
+                try {
+                    $teredo = netsh interface teredo show state 2>$null | Select-String "Type"
+                    if ($teredo -match "disabled") { $current = "OFF"; $status = "OK" }
+                    else { $current = "ON"; $target = "OFF"; $status = "CHANGE" }
+                } catch { }
+            }
+            '7' { # dns - special handling
+                if ($dnsId -and $DNS_MAP[$dnsId]) {
+                    $dns = $DNS_MAP[$dnsId]
+                    $name = "[SAFE] DNS Provider"
+                    $target = $dns.name
+                    try {
+                        $adapter = Get-NetAdapter | Where-Object {$_.Status -eq "Up"} | Select-Object -First 1
+                        if ($adapter) {
+                            $dnsServers = (Get-DnsClientServerAddress -InterfaceIndex $adapter.InterfaceIndex -AddressFamily IPv4).ServerAddresses
+                            if ($dnsServers -contains $dns.primary) { $current = $dns.name; $status = "OK" }
+                            else { $current = "Other"; $status = "CHANGE" }
+                        }
+                    } catch { }
+                }
+            }
+        }
+
+        Add-ScanResult $name $current $target $status
+    }
+
+    Write-ScanResults
+}
 
 # ════════════════════════════════════════════════════════════════════════════
 # INTERACTIVE APPROVAL MODE
