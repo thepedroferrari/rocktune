@@ -362,52 +362,61 @@ function Add-ScanResult {
         Status = $Status
     }
 }
-function Write-ScanHeader {
-    Write-Host ""
-    Write-Host "ITEM                                    | BEFORE        | AFTER" -ForegroundColor Cyan
-    Write-Host "$([string]::new([char]0x2500, 40))" -NoNewline -ForegroundColor DarkGray
-    Write-Host "$([char]0x253C)" -NoNewline -ForegroundColor DarkGray
-    Write-Host "$([string]::new([char]0x2500, 15))" -NoNewline -ForegroundColor DarkGray
-    Write-Host "$([char]0x253C)" -NoNewline -ForegroundColor DarkGray
-    Write-Host "$([string]::new([char]0x2500, 22))" -ForegroundColor DarkGray
-}
-function Write-ScanRow {
-    param([string]$Item, [string]$Before, [string]$After, [string]$Status)
-    $checkbox = switch ($Status) {
-        'OK'     { '[X]' }
-        'CHANGE' { '[ ]' }
-        default  { '[~]' }
-    }
-    $color = switch ($Status) {
-        'OK'     { 'DarkGreen' }
-        'CHANGE' { 'Yellow' }
-        default  { 'DarkGray' }
-    }
-    $itemCol = if ($Item.Length -gt 40) { $Item.Substring(0,37) + '...' } else { $Item.PadRight(40) }
-    $beforeCol = if ($Before.Length -gt 14) { $Before.Substring(0,11) + '...' } else { $Before.PadRight(14) }
-    $afterVal = if ($After.Length -gt 14) { $After.Substring(0,11) + '...' } else { $After }
-    $afterCol = "$afterVal $checkbox".PadRight(22)
-    Write-Host $itemCol -NoNewline -ForegroundColor $color
-    Write-Host "|" -NoNewline -ForegroundColor DarkGray
-    Write-Host $beforeCol -NoNewline -ForegroundColor $color
-    Write-Host "|" -NoNewline -ForegroundColor DarkGray
-    Write-Host $afterCol -ForegroundColor $color
-}
 function Write-ScanResults {
-    foreach ($r in $script:ScanResults) {
-        Write-ScanRow $r.Setting $r.Current $r.Target $r.Status
-    }
-    $ok = ($script:ScanResults | Where-Object { $_.Status -eq 'OK' }).Count
-    $change = ($script:ScanResults | Where-Object { $_.Status -eq 'CHANGE' }).Count
-    $other = ($script:ScanResults | Where-Object { $_.Status -notin 'OK','CHANGE' }).Count
+    if ($script:ScanResults.Count -eq 0) { return }
+
+    $nameWidth = 36
+    $currentWidth = 14
+    $targetWidth = 18
+
     Write-Host ""
-    Write-Host "Summary: " -NoNewline
-    Write-Host "$ok ready" -ForegroundColor Green -NoNewline
-    Write-Host " | " -NoNewline
-    Write-Host "$change to apply" -ForegroundColor Yellow -NoNewline
-    if ($other -gt 0) {
-        Write-Host " | " -NoNewline
-        Write-Host "$other pending reboot" -ForegroundColor DarkGray
+    Write-Host "  $([char]0x2554)$([string]::new([char]0x2550, $nameWidth))$([char]0x2564)$([string]::new([char]0x2550, $currentWidth))$([char]0x2564)$([string]::new([char]0x2550, $targetWidth))$([char]0x2557)" -ForegroundColor White
+    Write-Host "  $([char]0x2551) Setting$(' ' * ($nameWidth - 9))$([char]0x2502) Current$(' ' * ($currentWidth - 9))$([char]0x2502) Target$(' ' * ($targetWidth - 8))$([char]0x2551)" -ForegroundColor White
+    Write-Host "  $([char]0x2560)$([string]::new([char]0x2550, $nameWidth))$([char]0x256A)$([string]::new([char]0x2550, $currentWidth))$([char]0x256A)$([string]::new([char]0x2550, $targetWidth))$([char]0x2563)" -ForegroundColor White
+
+    foreach ($result in $script:ScanResults) {
+        $name = $result.Setting
+        if ($name.Length -gt ($nameWidth - 2)) { $name = $name.Substring(0, $nameWidth - 5) + "..." }
+        $name = " " + $name.PadRight($nameWidth - 2)
+
+        $current = $result.Current
+        if ($current.Length -gt ($currentWidth - 2)) { $current = $current.Substring(0, $currentWidth - 5) + "..." }
+        $current = " " + $current.PadRight($currentWidth - 2)
+
+        $target = $result.Target
+        if ($target.Length -gt ($targetWidth - 2)) { $target = $target.Substring(0, $targetWidth - 5) + "..." }
+        $target = " " + $target.PadRight($targetWidth - 2)
+
+        $color = switch ($result.Status) {
+            "OK"      { "Green" }
+            "CHANGE"  { "Yellow" }
+            "INFO"    { "Cyan" }
+            "PENDING" { "Gray" }
+            default   { "White" }
+        }
+
+        Write-Host "  $([char]0x2551)" -NoNewline -ForegroundColor White
+        Write-Host $name -NoNewline -ForegroundColor $color
+        Write-Host "$([char]0x2502)" -NoNewline -ForegroundColor White
+        Write-Host $current -NoNewline -ForegroundColor $color
+        Write-Host "$([char]0x2502)" -NoNewline -ForegroundColor White
+        Write-Host $target -NoNewline -ForegroundColor $color
+        Write-Host "$([char]0x2551)" -ForegroundColor White
+    }
+
+    Write-Host "  $([char]0x255A)$([string]::new([char]0x2550, $nameWidth))$([char]0x2567)$([string]::new([char]0x2550, $currentWidth))$([char]0x2567)$([string]::new([char]0x2550, $targetWidth))$([char]0x255D)" -ForegroundColor White
+    Write-Host ""
+
+    $changeCount = ($script:ScanResults | Where-Object { $_.Status -eq "CHANGE" }).Count
+    $okCount = ($script:ScanResults | Where-Object { $_.Status -eq "OK" }).Count
+    $pendingCount = ($script:ScanResults | Where-Object { $_.Status -eq "PENDING" }).Count
+    Write-Host "  Summary: " -NoNewline
+    Write-Host "$changeCount changes" -NoNewline -ForegroundColor Yellow
+    Write-Host ", " -NoNewline
+    Write-Host "$okCount ready" -NoNewline -ForegroundColor Green
+    if ($pendingCount -gt 0) {
+        Write-Host ", " -NoNewline
+        Write-Host "$pendingCount pending" -ForegroundColor Gray -NoNewline
     }
     Write-Host ""
 }
@@ -931,9 +940,6 @@ function generatePreflightScan(
   hardware: HardwareProfile,
 ): string[] {
   const lines: string[] = []
-
-  lines.push('Write-ScanHeader')
-  lines.push('')
 
   // === SYSTEM OPTIMIZATIONS ===
   if (selected.has('mouse_accel')) {
