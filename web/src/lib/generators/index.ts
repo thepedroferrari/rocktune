@@ -12,15 +12,15 @@
  * - Optional reboot tracking (Add-RebootReason)
  */
 
-// Types
-export * from './types'
+export {
+  generateBcdeditOpt,
+  generateCommandOpt,
+  generateNetworkAdapterOpt,
+  generatePowerCfgOpt,
+} from './command'
 
 // Generators
-export { generateRegistryOpt, generateRegistryBatch } from './registry'
+export { generateRegistryBatch, generateRegistryOpt } from './registry'
 export { generateServiceOpt, generateServicePatternOpt } from './service'
-export {
-  generateCommandOpt,
-  generatePowerCfgOpt,
-  generateNetworkAdapterOpt,
-  generateBcdeditOpt,
-} from './command'
+// Types
+export * from './types'
