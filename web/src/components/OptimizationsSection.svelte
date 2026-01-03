@@ -477,7 +477,7 @@
 
   <dialog
     bind:this={breakingChangesDialog}
-    class="modal-base modal-base--caution modal-base--sm"
+    class="modal-base modal-base--caution"
     aria-labelledby="breaking-changes-dialog-title"
   >
     <header class="modal-header">

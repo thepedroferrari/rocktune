@@ -867,43 +867,45 @@
   }
 
   .breaking-changes-intro {
-    font-size: 0.95rem;
-    line-height: 1.4;
-    color: oklch(0.8 0 0);
-    margin: 0;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: oklch(0.85 0 0);
+    margin: 0 0 var(--space-md);
   }
 
   .breaking-changes-list {
     list-style: none;
-    margin: 0;
+    margin: 0 0 var(--space-lg);
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: var(--space-sm);
+    gap: var(--space-md);
   }
 
   .breaking-changes-list li {
     background: color-mix(in oklch, var(--caution) 8%, transparent);
     border-left: 3px solid var(--caution);
-    padding: var(--space-sm) var(--space-md);
+    padding: var(--space-md) var(--space-lg);
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: var(--space-xs);
 
     & strong {
       color: var(--caution);
-      font-size: 0.9rem;
+      font-size: 1rem;
+      font-weight: 700;
     }
 
     & span {
-      color: oklch(0.65 0 0);
-      font-size: 0.85rem;
+      color: oklch(0.7 0 0);
+      font-size: 0.9rem;
+      line-height: 1.4;
     }
   }
 
   .breaking-changes-note {
-    font-size: 0.85rem;
-    color: oklch(0.55 0 0);
+    font-size: 0.9rem;
+    color: oklch(0.6 0 0);
     margin: 0;
     font-style: italic;
   }
