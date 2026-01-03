@@ -1,7 +1,16 @@
 {
   "name": "rocktune-web",
+  "version": "1.0.0",
+  "description": "RockTune - A loadout builder for Windows gaming optimization",
   "private": true,
   "type": "module",
+  "author": "Pedro Ferrari",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thepedroferrari/rocktune"
+  },
+  "homepage": "https://rocktune.pedroferrari.com",
   "devDependencies": {
     "svelte": "^5.0.0"
   }
