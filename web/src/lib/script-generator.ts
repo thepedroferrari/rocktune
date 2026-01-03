@@ -302,6 +302,12 @@ $script:SuccessCount = 0
 $script:FailCount = 0
 $script:WarningCount = 0
 
+# --- Timing & tracking ---
+$script:StartTime = Get-Date
+$script:AppliedChanges = @()
+$script:WinBuild = (Get-CimInstance Win32_OperatingSystem).BuildNumber
+$script:WinVersion = [Environment]::OSVersion.Version
+
 # --- Reboot tracking ---
 $script:RebootRequired = $false
 $script:RebootReasons = @()
@@ -420,15 +426,91 @@ function Write-ScanResults {
     }
     Write-Host ""
 }
+
+# --- Disk space check ---
+function Test-DiskSpace {
+    param([int]$RequiredGB = 5)
+    $drive = (Get-PSDrive C).Free / 1GB
+    if ($drive -lt $RequiredGB) {
+        Write-Warn "Low disk space: $([math]::Round($drive, 1))GB free (\${RequiredGB}GB recommended)"
+        return $false
+    }
+    return $true
+}
+
+# --- Progress step with native Windows progress bar ---
+function Write-ProgressStep {
+    param([string]$Activity, [string]$Status, [int]$Current, [int]$Total)
+    $pct = [math]::Round(($Current / $Total) * 100)
+    Write-Progress -Activity $Activity -Status $Status -PercentComplete $pct -CurrentOperation "Step $Current of $Total"
+}
+
+# --- Track applied changes for manifest ---
+function Add-AppliedChange {
+    param([string]$Category, [string]$Name, [string]$Status = "OK")
+    $script:AppliedChanges += [PSCustomObject]@{
+        Category = $Category
+        Name = $Name
+        Status = $Status
+    }
+}
+
+# --- Confirmation prompt ---
+function Confirm-Continue {
+    param([string]$Message = "Continue with optimizations?")
+    Write-Host ""
+    Write-Host "  $Message [Y/N]: " -NoNewline -ForegroundColor Yellow
+    try {
+        $response = Read-Host
+        return ($response -match '^[Yy]')
+    } catch {
+        # Non-interactive shell - assume yes
+        return $true
+    }
+}
+
+# --- Applied changes manifest display ---
+function Write-AppliedManifest {
+    if ($script:AppliedChanges.Count -eq 0) { return }
+
+    Write-Host ""
+    Write-Host "  $([char]0x2554)$([string]::new([char]0x2550, 66))$([char]0x2557)" -ForegroundColor White
+    Write-Host "  $([char]0x2551)  CHANGES APPLIED$(' ' * 49)$([char]0x2551)" -ForegroundColor White
+    Write-Host "  $([char]0x255A)$([string]::new([char]0x2550, 66))$([char]0x255D)" -ForegroundColor White
+
+    $categories = $script:AppliedChanges | Group-Object Category
+    foreach ($cat in $categories) {
+        Write-Host ""
+        Write-Host "  $($cat.Name):" -ForegroundColor Cyan
+        foreach ($change in $cat.Group) {
+            $icon = if ($change.Status -eq 'OK') { [char]0x2713 } else { '!' }
+            $color = if ($change.Status -eq 'OK') { 'Green' } else { 'Yellow' }
+            Write-Host "    $icon $($change.Name)" -ForegroundColor $color
+        }
+    }
+    Write-Host ""
+}
 `
 
+/** GPU-specific optimization steps */
+const GPU_NEXT_STEPS: Record<string, string> = {
+  nvidia: 'NVIDIA Control Panel → Manage 3D Settings → Power: Max Performance',
+  amd: 'AMD Software → Gaming → Graphics → Wait for Vertical Refresh: Off',
+  intel: 'Intel Graphics → Power → Max Performance',
+}
+
 /**
- * Generate PowerShell code for displaying next steps based on preset
+ * Generate PowerShell code for displaying next steps based on preset and hardware
  */
-function generateNextStepsBlock(preset: PresetType | null): string[] {
+function generateNextStepsBlock(preset: PresetType | null, gpu?: string): string[] {
   const lines: string[] = []
-  const steps = NEXT_STEPS_BY_PRESET[preset ?? 'gamer']
+  const baseSteps = [...NEXT_STEPS_BY_PRESET[preset ?? 'gamer']]
   const presetLabel = (preset ?? 'gamer').toUpperCase().replace('_', ' ')
+
+  // Add GPU-specific step if we have GPU info
+  if (gpu && GPU_NEXT_STEPS[gpu]) {
+    baseSteps.push(GPU_NEXT_STEPS[gpu])
+  }
 
   lines.push('')
   lines.push('Write-Host ""')
@@ -443,8 +525,8 @@ function generateNextStepsBlock(preset: PresetType | null): string[] {
   )
   lines.push('Write-Host "  ║" -ForegroundColor Cyan')
 
-  for (let i = 0; i < steps.length; i++) {
-    const step = steps[i]
+  for (let i = 0; i < baseSteps.length; i++) {
+    const step = baseSteps[i]
     const paddedStep = `  ${i + 1}. ${step}`.padEnd(76)
     lines.push(`Write-Host "  ║${paddedStep}║" -ForegroundColor Cyan`)
   }
@@ -535,8 +617,12 @@ function generateLaunchMenu(): string[] {
   lines.push('            "Q" { Write-Host "  Exiting." -ForegroundColor Yellow; return }')
   lines.push('            default {')
   lines.push('                Write-Host ""')
-  lines.push('                Write-Host "  Invalid option. Press any key to try again..." -ForegroundColor Red')
-  lines.push('                try { $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown") } catch { }')
+  lines.push(
+    '                Write-Host "  Invalid option. Press any key to try again..." -ForegroundColor Red',
+  )
+  lines.push(
+    '                try { $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown") } catch { }',
+  )
   lines.push('            }')
   lines.push('        }')
   lines.push('    }')
@@ -610,7 +696,9 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
   lines.push('    Recommended tools:')
   lines.push('      - CapFrameX: https://www.capframex.com/')
   lines.push('      - LatencyMon: https://www.resplendence.com/latencymon')
-  lines.push('      - RTSS: https://www.guru3d.com/download/rtss-rivatuner-statistics-server-download/')
+  lines.push(
+    '      - RTSS: https://www.guru3d.com/download/rtss-rivatuner-statistics-server-download/',
+  )
   lines.push('#>')
   lines.push('')
 
@@ -670,6 +758,8 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
     lines.push('    $script:FailCount = 0')
     lines.push('    $script:WarningCount = 0')
     lines.push('    $script:ScanResults = @()')
+    lines.push('    $script:AppliedChanges = @()')
+    lines.push('    $script:StartTime = Get-Date')
     lines.push(`    $script:StepTotal = ${stepCount}`)
     lines.push('    Write-Banner')
     lines.push('    Write-Host ""')
@@ -702,13 +792,55 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
   lines.push(`${indent}Write-Host "  CPU: $cpu" -ForegroundColor White`)
   lines.push(`${indent}Write-Host "  GPU: $gpu" -ForegroundColor White`)
 
-  lines.push(`${indent}Write-Host "  RAM: ` + '$' + `{ram}GB" -ForegroundColor White`)
+  // Use string concat to preserve PowerShell $ram variable
+  lines.push(`${indent}Write-Host "  RAM: ` + '$ram' + `GB" -ForegroundColor White`)
+  lines.push(`${indent}Write-Host "  Windows: Build $script:WinBuild" -ForegroundColor Gray`)
+  lines.push('')
+
+  // Windows version check
+  lines.push(`${indent}# Windows version check`)
+  lines.push(`${indent}if ($script:WinVersion.Major -lt 10) {`)
+  lines.push(`${indent}    Write-Host ""`)
+  lines.push(
+    `${indent}    Write-Host "  [ERROR] RockTune requires Windows 10 or later" -ForegroundColor Red`,
+  )
+  lines.push(
+    `${indent}    Write-Host "  Detected: Windows $($script:WinVersion.Major).$($script:WinVersion.Minor)" -ForegroundColor Gray`,
+  )
+  lines.push(`${indent}    Write-Host ""`)
+  lines.push(`${indent}    return`)
+  lines.push(`${indent}}`)
+  lines.push('')
+
+  // Nothing selected guard
+  lines.push(`${indent}# Nothing-selected guard`)
+  lines.push(`${indent}if ($Config.optimizations.Count -eq 0 -and $Config.packages.Count -eq 0) {`)
+  lines.push(`${indent}    Write-Host ""`)
+  lines.push(
+    `${indent}    Write-Host "  No optimizations or packages selected." -ForegroundColor Yellow`,
+  )
+  lines.push(
+    `${indent}    Write-Host "  Generate a new loadout at: https://rocktune.pedroferrari.com" -ForegroundColor Cyan`,
+  )
+  lines.push(`${indent}    Write-Host ""`)
+  lines.push(`${indent}    return`)
+  lines.push(`${indent}}`)
   lines.push('')
 
   // Pre-flight scan step - show current vs. target values
   lines.push(`${indent}Write-Step "Pre-flight Scan"`)
   const scanLines = generatePreflightScan(selected, hardware)
   addIndented(scanLines)
+  lines.push('')
+
+  // Confirmation after pre-flight
+  lines.push(`${indent}# Confirmation prompt`)
+  lines.push(`${indent}if (-not (Confirm-Continue "Apply these optimizations?")) {`)
+  lines.push(`${indent}    Write-Host ""`)
+  lines.push(`${indent}    Write-Host "  Cancelled by user." -ForegroundColor Yellow`)
+  lines.push(`${indent}    Write-Host ""`)
+  lines.push(`${indent}    return`)
+  lines.push(`${indent}}`)
   lines.push('')
 
   if (selected.has('restore_point')) {
@@ -720,7 +852,9 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
     lines.push(
       `${indent}if ($recentRestorePoint -and $recentRestorePoint.CreationTime -gt (Get-Date).AddMinutes(-1440)) {`,
     )
-    lines.push(`${indent}    Write-Warn "Restore point already created within last 24 hours (skipped)"`)
+    lines.push(
+      `${indent}    Write-Warn "Restore point already created within last 24 hours (skipped)"`,
+    )
     lines.push(`${indent}} else {`)
     lines.push(`${indent}    try {`)
     lines.push(
@@ -728,7 +862,9 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
     )
     lines.push(`${indent}        Write-OK "Restore point created"`)
     lines.push(`${indent}    } catch {`)
-    lines.push(`${indent}        Write-Warn "Could not create restore point: $($_.Exception.Message)"`)
+    lines.push(
+      `${indent}        Write-Warn "Could not create restore point: $($_.Exception.Message)"`,
+    )
     lines.push(`${indent}    }`)
     lines.push(`${indent}}`)
     lines.push('')
@@ -737,53 +873,96 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
   lines.push(`${indent}Write-Step "Upgrades"`)
   lines.push('')
 
+  // Track optimization categories for progress
+  const categories: string[] = []
   const systemOpts = generateSystemOpts(selected)
+  if (systemOpts.length > 0) categories.push('System')
+  const perfOpts = generatePerformanceOpts(selected, hardware)
+  if (perfOpts.length > 0) categories.push('Performance')
+  const powerOpts = generatePowerOpts(selected)
+  if (powerOpts.length > 0) categories.push('Power')
+  const networkOpts = generateNetworkOpts(selected, dnsProvider)
+  if (networkOpts.length > 0) categories.push('Network')
+  const privacyOpts = generatePrivacyOpts(selected)
+  if (privacyOpts.length > 0) categories.push('Privacy')
+  const audioOpts = generateAudioOpts(selected)
+  if (audioOpts.length > 0) categories.push('Audio')
+
+  lines.push(`${indent}$optCategories = @(${categories.map((c) => `'${c}'`).join(', ')})`)
+  lines.push(`${indent}$optCatIndex = 0`)
+  lines.push('')
+
   if (systemOpts.length > 0) {
     lines.push(`${indent}# System`)
+    lines.push(`${indent}$optCatIndex++`)
+    lines.push(
+      `${indent}Write-ProgressStep "Applying Optimizations" "System" $optCatIndex $optCategories.Count`,
+    )
     addIndented(systemOpts)
     lines.push('')
   }
 
-  const perfOpts = generatePerformanceOpts(selected, hardware)
   if (perfOpts.length > 0) {
     lines.push(`${indent}# Performance`)
+    lines.push(`${indent}$optCatIndex++`)
+    lines.push(
+      `${indent}Write-ProgressStep "Applying Optimizations" "Performance" $optCatIndex $optCategories.Count`,
+    )
     addIndented(perfOpts)
     lines.push('')
   }
 
-  const powerOpts = generatePowerOpts(selected)
   if (powerOpts.length > 0) {
     lines.push(`${indent}# Power`)
+    lines.push(`${indent}$optCatIndex++`)
+    lines.push(
+      `${indent}Write-ProgressStep "Applying Optimizations" "Power" $optCatIndex $optCategories.Count`,
+    )
     addIndented(powerOpts)
     lines.push('')
   }
 
-  const networkOpts = generateNetworkOpts(selected, dnsProvider)
   if (networkOpts.length > 0) {
     lines.push(`${indent}# Network`)
+    lines.push(`${indent}$optCatIndex++`)
+    lines.push(
+      `${indent}Write-ProgressStep "Applying Optimizations" "Network" $optCatIndex $optCategories.Count`,
+    )
     addIndented(networkOpts)
     lines.push('')
   }
 
-  const privacyOpts = generatePrivacyOpts(selected)
   if (privacyOpts.length > 0) {
     lines.push(`${indent}# Privacy`)
+    lines.push(`${indent}$optCatIndex++`)
+    lines.push(
+      `${indent}Write-ProgressStep "Applying Optimizations" "Privacy" $optCatIndex $optCategories.Count`,
+    )
     addIndented(privacyOpts)
     lines.push('')
   }
 
-  const audioOpts = generateAudioOpts(selected)
   if (audioOpts.length > 0) {
     lines.push(`${indent}# Audio`)
+    lines.push(`${indent}$optCatIndex++`)
+    lines.push(
+      `${indent}Write-ProgressStep "Applying Optimizations" "Audio" $optCatIndex $optCategories.Count`,
+    )
     addIndented(audioOpts)
     lines.push('')
   }
 
   if (allPackagesArray.length > 0) {
     lines.push(`${indent}Write-Step "Arsenal (winget)"`)
+    lines.push('')
+    lines.push(`${indent}# Check disk space before installing packages`)
+    lines.push(`${indent}$null = Test-DiskSpace -RequiredGB 5`)
+    lines.push('')
     lines.push(`${indent}$wingetPath = Get-Command winget -EA SilentlyContinue`)
     lines.push(`${indent}if (-not $wingetPath) {`)
-    lines.push(`${indent}    Write-Fail "winget not found. Install App Installer from Microsoft Store."`)
+    lines.push(
+      `${indent}    Write-Fail "winget not found. Install App Installer from Microsoft Store."`,
+    )
     lines.push(`${indent}} else {`)
 
     const sorted = allPackagesArray
@@ -800,7 +979,9 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
       const packageId = escapePsDoubleQuoted(entry.pkg.id)
       lines.push(`${indent}    $currentPkg++`)
       lines.push(`${indent}    $pct = [math]::Round(($currentPkg / $totalPkgs) * 100)`)
-      lines.push(`${indent}    Write-Progress -Activity "Installing Arsenal" -Status "${packageName}" -PercentComplete $pct -CurrentOperation "$currentPkg of $totalPkgs"`)
+      lines.push(
+        `${indent}    Write-Progress -Activity "Installing Arsenal" -Status "${packageName}" -PercentComplete $pct -CurrentOperation "$currentPkg of $totalPkgs"`,
+      )
       lines.push(`${indent}    Write-Host "  Installing ${packageName}..." -NoNewline`)
       lines.push(
         `${indent}    $installOutput = winget install --id "${packageId}" --silent --accept-package-agreements --accept-source-agreements 2>&1`,
@@ -808,7 +989,9 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
       // Use exit codes only for reliable detection (works on non-English Windows)
       // Exit code 0 = success, -1978335189 (0x8A150019) = already installed
       lines.push(`${indent}    if ($LASTEXITCODE -eq 0) { Write-OK "" }`)
-      lines.push(`${indent}    elseif ($LASTEXITCODE -eq -1978335189) { Write-OK "Already installed" }`)
+      lines.push(
+        `${indent}    elseif ($LASTEXITCODE -eq -1978335189) { Write-OK "Already installed" }`,
+      )
       lines.push(
         `${indent}    else { Write-Fail "Exit code: $LASTEXITCODE"; $installOutput | ForEach-Object { Write-Host "    $_" -ForegroundColor DarkGray } }`,
       )
@@ -828,6 +1011,17 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
   }
 
   lines.push(`${indent}Write-Step "Complete"`)
+  lines.push(`${indent}Write-Progress -Activity "Applying Optimizations" -Completed`)
+  lines.push('')
+  lines.push(`${indent}# Calculate elapsed time`)
+  lines.push(`${indent}$elapsed = (Get-Date) - $script:StartTime`)
+  lines.push(
+    `${indent}$elapsedStr = if ($elapsed.TotalMinutes -ge 1) { "$([math]::Floor($elapsed.TotalMinutes))m $([math]::Round($elapsed.Seconds))s" } else { "$([math]::Round($elapsed.TotalSeconds, 1))s" }`,
+  )
+  lines.push('')
+  lines.push(`${indent}# Show applied changes manifest`)
+  lines.push(`${indent}Write-AppliedManifest`)
+  lines.push('')
   lines.push(`${indent}Write-Host ""`)
   lines.push(
     `${indent}Write-Host "  ╔════════════════════════════════════════╗" -ForegroundColor White`,
@@ -839,18 +1033,23 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
     `${indent}Write-Host "  ╚════════════════════════════════════════╝" -ForegroundColor White`,
   )
   lines.push(`${indent}Write-Host ""`)
-  lines.push(`${indent}Write-Host "  Applied:  $($script:SuccessCount) changes" -ForegroundColor Green`)
+  lines.push(
+    `${indent}Write-Host "  Applied:  $($script:SuccessCount) changes" -ForegroundColor Green`,
+  )
   lines.push(
     `${indent}if ($script:WarningCount -gt 0) { Write-Host "  Warnings: $($script:WarningCount)" -ForegroundColor Yellow }`,
   )
   lines.push(
     `${indent}if ($script:FailCount -gt 0) { Write-Host "  Failed:   $($script:FailCount)" -ForegroundColor Red }`,
   )
+  lines.push(`${indent}Write-Host "  Elapsed:  $elapsedStr" -ForegroundColor Cyan`)
   lines.push(`${indent}Write-Host ""`)
 
   // Support & website reference
   lines.push(`${indent}Write-Host "  Need help or have feedback?" -ForegroundColor White`)
-  lines.push(`${indent}Write-Host "    Web:    https://rocktune.pedroferrari.com" -ForegroundColor Cyan`)
+  lines.push(
+    `${indent}Write-Host "    Web:    https://rocktune.pedroferrari.com" -ForegroundColor Cyan`,
+  )
   lines.push(
     `${indent}Write-Host "    Issues: https://github.com/thepedroferrari/rocktune/issues" -ForegroundColor Cyan`,
   )
@@ -887,14 +1086,14 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
   lines.push(`${indent}if ($key -eq "N") {`)
 
   // Generate next steps block inline
-  const nextStepsLines = generateNextStepsBlock(preset)
+  const nextStepsLines = generateNextStepsBlock(preset, hardware.gpu)
   for (const line of nextStepsLines) {
     lines.push(`${indent}    ${line}`)
   }
 
   lines.push(`${indent}}`)
 
-  // Display reboot reasons if any
+  // Display reboot reasons and offer interactive reboot
   lines.push(`${indent}if ($script:RebootRequired) {`)
   lines.push(`${indent}    Write-Host ""`)
   lines.push(
@@ -907,14 +1106,28 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
     `${indent}    Write-Host "  ╚════════════════════════════════════════════════════════════════╝" -ForegroundColor Yellow`,
   )
   lines.push(`${indent}    foreach ($reason in $script:RebootReasons) {`)
-  lines.push(`${indent}        Write-Host "    - $reason" -ForegroundColor Yellow`)
+  lines.push(`${indent}        Write-Host "    • $reason" -ForegroundColor Yellow`)
   lines.push(`${indent}    }`)
-  lines.push(`${indent}}`)
-
-  lines.push(`${indent}Write-Host ""`)
+  lines.push(`${indent}    Write-Host ""`)
+  lines.push(`${indent}    Write-Host "  Reboot now? [Y/N]: " -NoNewline -ForegroundColor Cyan`)
+  lines.push(`${indent}    try {`)
+  lines.push(`${indent}        $rebootChoice = Read-Host`)
+  lines.push(`${indent}        if ($rebootChoice -match '^[Yy]') {`)
   lines.push(
-    `${indent}Write-Host "  Reboot recommended for all changes to take effect." -ForegroundColor Cyan`,
+    `${indent}            Write-Host "  Rebooting in 5 seconds..." -ForegroundColor Yellow`,
   )
+  lines.push(`${indent}            Start-Sleep -Seconds 5`)
+  lines.push(`${indent}            Restart-Computer -Force`)
+  lines.push(`${indent}        }`)
+  lines.push(`${indent}    } catch {`)
+  lines.push(`${indent}        # Non-interactive - skip reboot prompt`)
+  lines.push(`${indent}    }`)
+  lines.push(`${indent}} else {`)
+  lines.push(`${indent}    Write-Host ""`)
+  lines.push(
+    `${indent}    Write-Host "  Reboot recommended for all changes to take effect." -ForegroundColor Cyan`,
+  )
+  lines.push(`${indent}}`)
   lines.push(`${indent}Write-Host ""`)
 
   // Close the function if timer is included
@@ -935,19 +1148,14 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
  * Generate pre-flight scan code to show current vs. target settings
  * This helps users understand what will change before applying optimizations
  */
-function generatePreflightScan(
-  selected: Set<string>,
-  hardware: HardwareProfile,
-): string[] {
+function generatePreflightScan(selected: Set<string>, _hardware: HardwareProfile): string[] {
   const lines: string[] = []
 
   // === SYSTEM OPTIMIZATIONS ===
   if (selected.has('mouse_accel')) {
     lines.push('# Scan: Mouse acceleration')
     lines.push('$val = Get-RegValue "HKCU:\\Control Panel\\Mouse" "MouseSpeed"')
-    lines.push(
-      'if ($val -eq 0) { Add-ScanResult "Mouse acceleration" "Disabled" "Disabled" "OK" }',
-    )
+    lines.push('if ($val -eq 0) { Add-ScanResult "Mouse acceleration" "Disabled" "Disabled" "OK" }')
     lines.push(
       'else { Add-ScanResult "Mouse acceleration" "Enabled ($val)" "Disabled (0)" "CHANGE" }',
     )
@@ -956,12 +1164,8 @@ function generatePreflightScan(
   if (selected.has('keyboard_response')) {
     lines.push('# Scan: Keyboard response')
     lines.push('$delay = Get-RegValue "HKCU:\\Control Panel\\Keyboard" "KeyboardDelay"')
-    lines.push(
-      'if ($delay -eq 0) { Add-ScanResult "Keyboard delay" "0 (fastest)" "0" "OK" }',
-    )
-    lines.push(
-      'else { Add-ScanResult "Keyboard delay" "$delay" "0 (fastest)" "CHANGE" }',
-    )
+    lines.push('if ($delay -eq 0) { Add-ScanResult "Keyboard delay" "0 (fastest)" "0" "OK" }')
+    lines.push('else { Add-ScanResult "Keyboard delay" "$delay" "0 (fastest)" "CHANGE" }')
   }
 
   if (selected.has('fastboot')) {
@@ -969,12 +1173,8 @@ function generatePreflightScan(
     lines.push(
       '$val = Get-RegValue "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Power" "HiberbootEnabled"',
     )
-    lines.push(
-      'if ($val -eq 0) { Add-ScanResult "Fast startup" "Disabled" "Disabled" "OK" }',
-    )
-    lines.push(
-      'else { Add-ScanResult "Fast startup" "Enabled" "Disabled" "CHANGE" }',
-    )
+    lines.push('if ($val -eq 0) { Add-ScanResult "Fast startup" "Disabled" "Disabled" "OK" }')
+    lines.push('else { Add-ScanResult "Fast startup" "Enabled" "Disabled" "CHANGE" }')
   }
 
   if (selected.has('end_task')) {
@@ -982,12 +1182,8 @@ function generatePreflightScan(
     lines.push(
       '$val = Get-RegValue "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced\\TaskbarDeveloperSettings" "TaskbarEndTask"',
     )
-    lines.push(
-      'if ($val -eq 1) { Add-ScanResult "End Task in taskbar" "Enabled" "Enabled" "OK" }',
-    )
-    lines.push(
-      'else { Add-ScanResult "End Task in taskbar" "Disabled" "Enabled" "CHANGE" }',
-    )
+    lines.push('if ($val -eq 1) { Add-ScanResult "End Task in taskbar" "Enabled" "Enabled" "OK" }')
+    lines.push('else { Add-ScanResult "End Task in taskbar" "Disabled" "Enabled" "CHANGE" }')
   }
 
   if (selected.has('notifications_off')) {
@@ -995,12 +1191,8 @@ function generatePreflightScan(
     lines.push(
       '$val = Get-RegValue "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\PushNotifications" "ToastEnabled"',
     )
-    lines.push(
-      'if ($val -eq 0) { Add-ScanResult "Notifications" "Disabled" "Disabled" "OK" }',
-    )
-    lines.push(
-      'else { Add-ScanResult "Notifications" "Enabled" "Disabled" "CHANGE" }',
-    )
+    lines.push('if ($val -eq 0) { Add-ScanResult "Notifications" "Disabled" "Disabled" "OK" }')
+    lines.push('else { Add-ScanResult "Notifications" "Enabled" "Disabled" "CHANGE" }')
   }
 
   if (selected.has('storage_sense')) {
@@ -1008,12 +1200,8 @@ function generatePreflightScan(
     lines.push(
       '$val = Get-RegValue "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\StorageSense\\Parameters\\StoragePolicy" "01"',
     )
-    lines.push(
-      'if ($val -eq 0) { Add-ScanResult "Storage Sense" "Disabled" "Disabled" "OK" }',
-    )
-    lines.push(
-      'else { Add-ScanResult "Storage Sense" "Enabled" "Disabled" "CHANGE" }',
-    )
+    lines.push('if ($val -eq 0) { Add-ScanResult "Storage Sense" "Disabled" "Disabled" "OK" }')
+    lines.push('else { Add-ScanResult "Storage Sense" "Enabled" "Disabled" "CHANGE" }')
   }
 
   if (selected.has('input_buffer')) {
@@ -1021,35 +1209,23 @@ function generatePreflightScan(
     lines.push(
       '$val = Get-RegValue "HKLM:\\SYSTEM\\CurrentControlSet\\Services\\mouclass\\Parameters" "MouseDataQueueSize"',
     )
-    lines.push(
-      'if ($val -eq 32) { Add-ScanResult "Mouse buffer size" "32" "32" "OK" }',
-    )
-    lines.push(
-      'else { Add-ScanResult "Mouse buffer size" "$val" "32" "CHANGE" }',
-    )
+    lines.push('if ($val -eq 32) { Add-ScanResult "Mouse buffer size" "32" "32" "OK" }')
+    lines.push('else { Add-ScanResult "Mouse buffer size" "$val" "32" "CHANGE" }')
   }
 
   // === PERFORMANCE OPTIMIZATIONS ===
   if (selected.has('gamedvr')) {
     lines.push('# Scan: Game DVR')
     lines.push('$val = Get-RegValue "HKCU:\\System\\GameConfigStore" "GameDVR_Enabled"')
-    lines.push(
-      'if ($val -eq 0) { Add-ScanResult "Game DVR" "Disabled" "Disabled" "OK" }',
-    )
-    lines.push(
-      'else { Add-ScanResult "Game DVR" "Enabled" "Disabled" "CHANGE" }',
-    )
+    lines.push('if ($val -eq 0) { Add-ScanResult "Game DVR" "Disabled" "Disabled" "OK" }')
+    lines.push('else { Add-ScanResult "Game DVR" "Enabled" "Disabled" "CHANGE" }')
   }
 
   if (selected.has('game_bar')) {
     lines.push('# Scan: Game Bar overlays')
     lines.push('$val = Get-RegValue "HKCU:\\Software\\Microsoft\\GameBar" "ShowStartupPanel"')
-    lines.push(
-      'if ($val -eq 0) { Add-ScanResult "Game Bar overlays" "Disabled" "Disabled" "OK" }',
-    )
-    lines.push(
-      'else { Add-ScanResult "Game Bar overlays" "Enabled" "Disabled" "CHANGE" }',
-    )
+    lines.push('if ($val -eq 0) { Add-ScanResult "Game Bar overlays" "Disabled" "Disabled" "OK" }')
+    lines.push('else { Add-ScanResult "Game Bar overlays" "Enabled" "Disabled" "CHANGE" }')
   }
 
   if (selected.has('hags')) {
@@ -1071,34 +1247,22 @@ function generatePreflightScan(
     lines.push(
       'if ($val -eq 2) { Add-ScanResult "Fullscreen optimizations" "Disabled" "Disabled" "OK" }',
     )
-    lines.push(
-      'else { Add-ScanResult "Fullscreen optimizations" "Enabled" "Disabled" "CHANGE" }',
-    )
+    lines.push('else { Add-ScanResult "Fullscreen optimizations" "Enabled" "Disabled" "CHANGE" }')
   }
 
   if (selected.has('hpet')) {
     lines.push('# Scan: HPET (requires bcdedit)')
     lines.push('$hpetVal = bcdedit /enum | Select-String "useplatformclock"')
-    lines.push(
-      'if ($hpetVal -match "No") { Add-ScanResult "HPET" "Disabled" "Disabled" "OK" }',
-    )
-    lines.push(
-      'elseif ($hpetVal) { Add-ScanResult "HPET" "Enabled" "Disabled" "CHANGE" }',
-    )
-    lines.push(
-      'else { Add-ScanResult "HPET" "(not set)" "Disabled" "CHANGE" }',
-    )
+    lines.push('if ($hpetVal -match "No") { Add-ScanResult "HPET" "Disabled" "Disabled" "OK" }')
+    lines.push('elseif ($hpetVal) { Add-ScanResult "HPET" "Enabled" "Disabled" "CHANGE" }')
+    lines.push('else { Add-ScanResult "HPET" "(not set)" "Disabled" "CHANGE" }')
   }
 
   if (selected.has('multiplane_overlay')) {
     lines.push('# Scan: Multiplane Overlay')
     lines.push('$val = Get-RegValue "HKLM:\\SOFTWARE\\Microsoft\\Windows\\Dwm" "OverlayTestMode"')
-    lines.push(
-      'if ($val -eq 5) { Add-ScanResult "Multiplane Overlay" "Disabled" "Disabled" "OK" }',
-    )
-    lines.push(
-      'else { Add-ScanResult "Multiplane Overlay" "Enabled" "Disabled" "CHANGE" }',
-    )
+    lines.push('if ($val -eq 5) { Add-ScanResult "Multiplane Overlay" "Disabled" "Disabled" "OK" }')
+    lines.push('else { Add-ScanResult "Multiplane Overlay" "Enabled" "Disabled" "CHANGE" }')
   }
 
   if (selected.has('core_isolation_off')) {
@@ -1143,12 +1307,8 @@ function generatePreflightScan(
     lines.push(
       '$val = Get-RegValue "HKLM:\\SYSTEM\\CurrentControlSet\\Policies\\Microsoft\\FeatureManagement\\Overrides" "1176759950"',
     )
-    lines.push(
-      'if ($val -eq 1) { Add-ScanResult "Native NVMe I/O" "Enabled" "Enabled" "OK" }',
-    )
-    lines.push(
-      'else { Add-ScanResult "Native NVMe I/O" "Disabled" "Enabled" "CHANGE" }',
-    )
+    lines.push('if ($val -eq 1) { Add-ScanResult "Native NVMe I/O" "Enabled" "Enabled" "OK" }')
+    lines.push('else { Add-ScanResult "Native NVMe I/O" "Disabled" "Enabled" "CHANGE" }')
   }
 
   if (selected.has('smt_disable')) {
@@ -1166,9 +1326,7 @@ function generatePreflightScan(
     lines.push(
       'elseif ($activePlan -match "High performance") { Add-ScanResult "Power Plan" "High Performance" "Ultimate" "CHANGE" }',
     )
-    lines.push(
-      'else { Add-ScanResult "Power Plan" "Other" "Ultimate" "CHANGE" }',
-    )
+    lines.push('else { Add-ScanResult "Power Plan" "Other" "Ultimate" "CHANGE" }')
   }
 
   if (selected.has('usb_power')) {
@@ -1179,14 +1337,14 @@ function generatePreflightScan(
     lines.push(
       'if ($val -eq 1) { Add-ScanResult "USB selective suspend" "Disabled" "Disabled" "OK" }',
     )
-    lines.push(
-      'else { Add-ScanResult "USB selective suspend" "Enabled" "Disabled" "CHANGE" }',
-    )
+    lines.push('else { Add-ScanResult "USB selective suspend" "Enabled" "Disabled" "CHANGE" }')
   }
 
   if (selected.has('pcie_power')) {
     lines.push('# Scan: PCIe ASPM')
-    lines.push('Add-ScanResult "PCIe link state power management" "(check powercfg)" "Off" "CHANGE"')
+    lines.push(
+      'Add-ScanResult "PCIe link state power management" "(check powercfg)" "Off" "CHANGE"',
+    )
   }
 
   // === NETWORK OPTIMIZATIONS ===
@@ -1203,9 +1361,7 @@ function generatePreflightScan(
     lines.push(
       'if ($val -eq 4294967295) { Add-ScanResult "Network throttling" "Disabled" "Disabled" "OK" }',
     )
-    lines.push(
-      'else { Add-ScanResult "Network throttling" "Enabled ($val)" "Disabled" "CHANGE" }',
-    )
+    lines.push('else { Add-ScanResult "Network throttling" "Enabled ($val)" "Disabled" "CHANGE" }')
   }
 
   if (selected.has('network_teredo')) {
@@ -1214,9 +1370,7 @@ function generatePreflightScan(
     lines.push(
       'if ($teredoState -match "disabled") { Add-ScanResult "Teredo tunneling" "Disabled" "Disabled" "OK" }',
     )
-    lines.push(
-      'else { Add-ScanResult "Teredo tunneling" "Enabled" "Disabled" "CHANGE" }',
-    )
+    lines.push('else { Add-ScanResult "Teredo tunneling" "Enabled" "Disabled" "CHANGE" }')
   }
 
   // === PRIVACY OPTIMIZATIONS ===
@@ -1228,9 +1382,7 @@ function generatePreflightScan(
     lines.push(
       'if ($val -eq 0) { Add-ScanResult "Windows advertising" "Disabled" "Disabled" "OK" }',
     )
-    lines.push(
-      'else { Add-ScanResult "Windows advertising" "Enabled" "Disabled" "CHANGE" }',
-    )
+    lines.push('else { Add-ScanResult "Windows advertising" "Enabled" "Disabled" "CHANGE" }')
   }
 
   if (selected.has('telemetry_min')) {
@@ -1244,9 +1396,7 @@ function generatePreflightScan(
     lines.push(
       'elseif ($val -eq 1) { Add-ScanResult "Telemetry" "Basic (1)" "Security only (0)" "CHANGE" }',
     )
-    lines.push(
-      'else { Add-ScanResult "Telemetry" "Full ($val)" "Security only (0)" "CHANGE" }',
-    )
+    lines.push('else { Add-ScanResult "Telemetry" "Full ($val)" "Security only (0)" "CHANGE" }')
   }
 
   if (selected.has('activity_off')) {
@@ -1254,12 +1404,8 @@ function generatePreflightScan(
     lines.push(
       '$val = Get-RegValue "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\System" "EnableActivityFeed"',
     )
-    lines.push(
-      'if ($val -eq 0) { Add-ScanResult "Activity history" "Disabled" "Disabled" "OK" }',
-    )
-    lines.push(
-      'else { Add-ScanResult "Activity history" "Enabled" "Disabled" "CHANGE" }',
-    )
+    lines.push('if ($val -eq 0) { Add-ScanResult "Activity history" "Disabled" "Disabled" "OK" }')
+    lines.push('else { Add-ScanResult "Activity history" "Enabled" "Disabled" "CHANGE" }')
   }
 
   if (selected.has('cortana_off')) {
@@ -1267,12 +1413,8 @@ function generatePreflightScan(
     lines.push(
       '$val = Get-RegValue "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\Windows Search" "AllowCortana"',
     )
-    lines.push(
-      'if ($val -eq 0) { Add-ScanResult "Cortana" "Disabled" "Disabled" "OK" }',
-    )
-    lines.push(
-      'else { Add-ScanResult "Cortana" "Enabled" "Disabled" "CHANGE" }',
-    )
+    lines.push('if ($val -eq 0) { Add-ScanResult "Cortana" "Disabled" "Disabled" "OK" }')
+    lines.push('else { Add-ScanResult "Cortana" "Enabled" "Disabled" "CHANGE" }')
   }
 
   // === SERVICE OPTIMIZATIONS ===
@@ -1315,7 +1457,9 @@ function generatePreflightScan(
   // === AUDIO OPTIMIZATIONS ===
   if (selected.has('audio_enhancements')) {
     lines.push('# Scan: Audio enhancements (registry)')
-    lines.push('$val = Get-RegValue "HKCU:\\Software\\Microsoft\\Multimedia\\Audio" "DisableAudioEnhancements"')
+    lines.push(
+      '$val = Get-RegValue "HKCU:\\Software\\Microsoft\\Multimedia\\Audio" "DisableAudioEnhancements"',
+    )
     lines.push(
       'if ($val -eq 1) { Add-ScanResult "Audio enhancements (global)" "Disabled" "Disabled" "OK" }',
     )
@@ -1326,13 +1470,13 @@ function generatePreflightScan(
 
   if (selected.has('audio_exclusive')) {
     lines.push('# Scan: Exclusive mode priority')
-    lines.push('$val = Get-RegValue "HKCU:\\Software\\Microsoft\\Multimedia\\Audio" "ExclusiveModeLatency"')
+    lines.push(
+      '$val = Get-RegValue "HKCU:\\Software\\Microsoft\\Multimedia\\Audio" "ExclusiveModeLatency"',
+    )
     lines.push(
       'if ($val -eq 1) { Add-ScanResult "Exclusive mode priority" "Low latency" "Low latency" "OK" }',
     )
-    lines.push(
-      'else { Add-ScanResult "Exclusive mode priority" "Normal" "Low latency" "CHANGE" }',
-    )
+    lines.push('else { Add-ScanResult "Exclusive mode priority" "Normal" "Low latency" "CHANGE" }')
   }
 
   // === FALLBACK: Show all selected optimizations that don't have explicit scan checks ===
@@ -1389,7 +1533,9 @@ function generatePreflightScan(
   lines.push('Write-ScanResults')
   lines.push('')
   lines.push('Write-Host ""')
-  lines.push('Write-Host "  Press any key to continue with optimizations..." -ForegroundColor DarkGray')
+  lines.push(
+    'Write-Host "  Press any key to continue with optimizations..." -ForegroundColor DarkGray',
+  )
   lines.push('$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")')
   lines.push('Write-Host ""')
 
@@ -1421,7 +1567,7 @@ function generateSystemOpts(selected: Set<string>): string[] {
   if (selected.has('mouse_accel')) {
     lines.push('# [SAFE] Disable mouse acceleration - improves aim consistency')
     lines.push(
-      'if (Set-Reg "HKCU:\\Control Panel\\Mouse" "MouseSpeed" 0 -PassThru) { Write-OK "Mouse acceleration disabled" }',
+      'if (Set-Reg "HKCU:\\Control Panel\\Mouse" "MouseSpeed" 0 -PassThru) { Write-OK "Mouse acceleration disabled"; Add-AppliedChange "Input" "Mouse Acceleration" "OK" }',
     )
     lines.push('Set-Reg "HKCU:\\Control Panel\\Mouse" "MouseThreshold1" 0')
     lines.push('Set-Reg "HKCU:\\Control Panel\\Mouse" "MouseThreshold2" 0')
@@ -1430,7 +1576,7 @@ function generateSystemOpts(selected: Set<string>): string[] {
   if (selected.has('keyboard_response')) {
     lines.push('# [SAFE] Faster keyboard response')
     lines.push(
-      'if (Set-Reg "HKCU:\\Control Panel\\Keyboard" "KeyboardDelay" 0 -PassThru) { Write-OK "Keyboard delay minimized" }',
+      'if (Set-Reg "HKCU:\\Control Panel\\Keyboard" "KeyboardDelay" 0 -PassThru) { Write-OK "Keyboard delay minimized"; Add-AppliedChange "Input" "Keyboard Response" "OK" }',
     )
     lines.push('Set-Reg "HKCU:\\Control Panel\\Keyboard" "KeyboardSpeed" 31')
   }
@@ -1438,7 +1584,7 @@ function generateSystemOpts(selected: Set<string>): string[] {
   if (selected.has('fastboot')) {
     lines.push('# [SAFE] Disable fast startup - ensures clean boots')
     lines.push(
-      'if (Set-Reg "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Power" "HiberbootEnabled" 0 -PassThru) { Write-OK "Fast startup disabled" }',
+      'if (Set-Reg "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Power" "HiberbootEnabled" 0 -PassThru) { Write-OK "Fast startup disabled"; Add-AppliedChange "System" "Fast Startup" "OK" }',
     )
   }
 
@@ -2050,7 +2196,9 @@ function generateNetworkOpts(selected: Set<string>, dnsProvider: string): string
     lines.push('        $adapterCount++')
     lines.push('    } catch { }')
     lines.push('}')
-    lines.push('if ($adapterCount -gt 0) { Write-OK "Power saving disabled on $adapterCount adapter(s)" }')
+    lines.push(
+      'if ($adapterCount -gt 0) { Write-OK "Power saving disabled on $adapterCount adapter(s)" }',
+    )
     lines.push('else { Write-Warn "Adapter power: No changes applied" }')
   }
 
@@ -2080,12 +2228,8 @@ function generatePrivacyOpts(selected: Set<string>): string[] {
     lines.push('# Disable telemetry scheduled tasks')
     lines.push('$telemetryTasks = @(')
     lines.push('    "Microsoft\\Windows\\Autochk\\Proxy",')
-    lines.push(
-      '    "Microsoft\\Windows\\Customer Experience Improvement Program\\Consolidator",',
-    )
-    lines.push(
-      '    "Microsoft\\Windows\\Customer Experience Improvement Program\\UsbCeip",',
-    )
+    lines.push('    "Microsoft\\Windows\\Customer Experience Improvement Program\\Consolidator",')
+    lines.push('    "Microsoft\\Windows\\Customer Experience Improvement Program\\UsbCeip",')
     lines.push(
       '    "Microsoft\\Windows\\DiskDiagnostic\\Microsoft-Windows-DiskDiagnosticDataCollector",',
     )
@@ -2220,7 +2364,9 @@ function generatePrivacyOpts(selected: Set<string>): string[] {
     lines.push('$removedCount = 0')
     lines.push('foreach ($app in $bloatApps) {')
     lines.push('    $pkg = Get-AppxPackage -Name $app -AllUsers -EA SilentlyContinue')
-    lines.push('    if ($pkg) { $pkg | Remove-AppxPackage -AllUsers -EA SilentlyContinue; $removedCount++ }')
+    lines.push(
+      '    if ($pkg) { $pkg | Remove-AppxPackage -AllUsers -EA SilentlyContinue; $removedCount++ }',
+    )
     lines.push('}')
     lines.push('Write-OK "Bloatware: $removedCount apps removed"')
   }
