@@ -5,8 +5,61 @@
 .DESCRIPTION
     Provides interactive, text-based selection menus for choosing categories,
     toggling options, and printing a configuration summary.
+
+    AUTOMATION SUPPORT
+    ==================
+    These menu functions support unattended/automated execution through environment
+    variables. This allows the scripts to be used in CI/CD pipelines, automated
+    testing, or scripted deployments without human interaction.
+
+    Environment Variables:
+    ----------------------
+    ROCKTUNE_MENU_MODE
+        Controls menu behavior in Show-Menu:
+        - "all"         : Auto-select ALL items and continue (like pressing 'A' then Enter)
+        - "none"        : Auto-select NONE and continue (like pressing 'N' then Enter)
+        - "recommended" : Auto-select RECOMMENDED items and continue (like pressing 'R' then Enter)
+        - "default"     : Accept current selections and continue (like pressing Enter)
+        If not set, menu is interactive as usual.
+
+    ROCKTUNE_SETUP_MODE
+        Pre-selects the setup mode in Show-SetupModeSelection:
+        - "express"  : Express Setup (recommended defaults)
+        - "custom"   : Custom Setup (advanced, select each option)
+        - "profile"  : Load Profile (pre-made configurations)
+        - "exit"     : Exit the wizard
+        If not set, user is prompted interactively.
+
+    Usage Examples:
+    ---------------
+    # Run with all optimizations selected (non-interactive)
+    $env:ROCKTUNE_MENU_MODE = "all"
+    $env:ROCKTUNE_SETUP_MODE = "express"
+    .\gaming-pc-setup.ps1
+
+    # Run with only recommended optimizations
+    $env:ROCKTUNE_MENU_MODE = "recommended"
+    .\gaming-pc-setup.ps1
+
+    # CI/CD pipeline example (bash)
+    ROCKTUNE_MENU_MODE=all ROCKTUNE_SETUP_MODE=express pwsh -File gaming-pc-setup.ps1
+
+    Why Environment Variables?
+    --------------------------
+    Environment variables were chosen over command-line parameters because:
+    1. The menu module is imported by multiple scripts - env vars work universally
+    2. They can be set by parent processes, CI/CD systems, or wrapper scripts
+    3. They don't pollute the parameter space of consuming scripts
+    4. They're the standard approach for configuration in containerized environments
+
+    See also:
+    - gaming-pc-setup.ps1 -SkipConfirmation (skip final confirmation prompt)
+    - benchmark-setup.ps1 -AutoAccept (skip install consent prompt)
+    - extreme-privacy.ps1 -SkipConfirmations (skip all confirmation prompts)
+
 .NOTES
     Designed for PowerShell console UX; uses Clear-Host and Read-Host.
+    Supports automation via ROCKTUNE_MENU_MODE and ROCKTUNE_SETUP_MODE env vars.
 #>
 
 function Show-Menu {
@@ -17,6 +70,28 @@ function Show-Menu {
         Displays options with selection markers and optional descriptions. Users
         can toggle items by number, select all/none/recommended, and press Enter
         to accept the current selection.
+
+        AUTOMATION MODE
+        ===============
+        When the environment variable ROCKTUNE_MENU_MODE is set, this function
+        bypasses the interactive loop and applies the specified selection mode:
+
+        - "all"         : Selects ALL non-disabled items (equivalent to pressing 'A')
+        - "none"        : Deselects ALL items (equivalent to pressing 'N')
+        - "recommended" : Selects items marked with [*] icon (equivalent to pressing 'R')
+        - "default"     : Keeps the initial selection state (equivalent to pressing Enter)
+
+        This is useful for:
+        - CI/CD pipelines where no human is present to interact
+        - Automated testing that needs deterministic behavior
+        - Scripted deployments with pre-determined configurations
+        - Remote execution where interactive prompts would hang
+
+        Example:
+            $env:ROCKTUNE_MENU_MODE = "all"
+            $selected = Show-Menu -Title "Options" -Options $opts
+            # Returns all non-disabled indices without prompting
+
     .PARAMETER Title
         Menu title displayed at the top.
     .PARAMETER Options
@@ -43,6 +118,86 @@ function Show-Menu {
     )
 
     $selectedIndices = @()
+
+    # -------------------------------------------------------------------------
+    # AUTOMATION MODE CHECK
+    # -------------------------------------------------------------------------
+    # Check if the ROCKTUNE_MENU_MODE environment variable is set. If so, we
+    # bypass the interactive do/while loop entirely and apply the selection
+    # mode directly. This enables fully unattended script execution.
+    #
+    # Why check before the loop?
+    # - Avoids any Clear-Host or Write-Host that would clutter CI logs
+    # - Returns immediately for faster automated execution
+    # - Deterministic behavior - no timing or race condition concerns
+    #
+    # The env var is read fresh each time Show-Menu is called, so you can
+    # potentially change it between menus in a complex orchestration scenario
+    # (though this is uncommon - typically set once at the start).
+    # -------------------------------------------------------------------------
+    $menuMode = $env:ROCKTUNE_MENU_MODE
+    if ($menuMode) {
+        # Normalize to lowercase for case-insensitive comparison
+        $menuMode = $menuMode.ToLower()
+
+        switch ($menuMode) {
+            'all' {
+                # Select ALL non-disabled items
+                # This mirrors pressing 'A' in the interactive menu
+                for ($i = 0; $i -lt $Options.Count; $i++) {
+                    if (-not $Options[$i].Disabled) {
+                        $Options[$i].Selected = $true
+                    }
+                }
+                Write-Host "[AUTO] Menu '$Title': Selected ALL items (ROCKTUNE_MENU_MODE=all)" -ForegroundColor Cyan
+            }
+            'none' {
+                # Deselect ALL items
+                # This mirrors pressing 'N' in the interactive menu
+                for ($i = 0; $i -lt $Options.Count; $i++) {
+                    $Options[$i].Selected = $false
+                }
+                Write-Host "[AUTO] Menu '$Title': Selected NONE (ROCKTUNE_MENU_MODE=none)" -ForegroundColor Cyan
+            }
+            'recommended' {
+                # Select only items marked as recommended (icon = "[*]")
+                # This mirrors pressing 'R' in the interactive menu
+                for ($i = 0; $i -lt $Options.Count; $i++) {
+                    $Options[$i].Selected = ($Options[$i].Icon -eq "[*]")
+                }
+                Write-Host "[AUTO] Menu '$Title': Selected RECOMMENDED items (ROCKTUNE_MENU_MODE=recommended)" -ForegroundColor Cyan
+            }
+            'default' {
+                # Keep initial selection state - just proceed
+                # This mirrors pressing Enter immediately in the interactive menu
+                Write-Host "[AUTO] Menu '$Title': Using DEFAULT selections (ROCKTUNE_MENU_MODE=default)" -ForegroundColor Cyan
+            }
+            default {
+                # Unrecognized mode - warn and fall through to interactive
+                Write-Host "[WARN] Unknown ROCKTUNE_MENU_MODE='$menuMode'. Valid: all, none, recommended, default" -ForegroundColor Yellow
+                Write-Host "[WARN] Falling back to interactive mode." -ForegroundColor Yellow
+                $menuMode = $null  # Clear so we enter the interactive loop
+            }
+        }
+
+        # If we successfully processed an automation mode, return immediately
+        if ($menuMode) {
+            $selectedIndices = @()
+            for ($i = 0; $i -lt $Options.Count; $i++) {
+                if ($Options[$i].Selected) {
+                    $selectedIndices += $i
+                }
+            }
+            return $selectedIndices
+        }
+    }
+
+    # -------------------------------------------------------------------------
+    # INTERACTIVE MODE
+    # -------------------------------------------------------------------------
+    # If ROCKTUNE_MENU_MODE is not set (or was invalid), we fall through to
+    # the standard interactive menu loop. This is the default behavior.
+    # -------------------------------------------------------------------------
 
     do {
         Clear-Host
@@ -320,9 +475,83 @@ function Show-SetupModeSelection {
     .DESCRIPTION
         Lets the user choose between express, custom, or profile-based setup,
         or exit the wizard.
+
+        AUTOMATION MODE
+        ===============
+        When the environment variable ROCKTUNE_SETUP_MODE is set, this function
+        bypasses the interactive menu and returns the specified mode directly:
+
+        - "express"  : Express Setup - uses proven defaults, best for most users
+        - "custom"   : Custom Setup - select each optimization individually
+        - "profile"  : Load Profile - use pre-made competitive/balanced/privacy configurations
+        - "exit"     : Exit the wizard without making changes
+
+        This is useful for:
+        - CI/CD pipelines that need deterministic, non-interactive execution
+        - Automated testing of specific setup modes
+        - Scripted deployments with pre-determined configurations
+        - Remote execution where interactive prompts would block
+
+        Example:
+            $env:ROCKTUNE_SETUP_MODE = "express"
+            $mode = Show-SetupModeSelection
+            # Returns "express" without prompting
+
+        Note: For full automation, combine with ROCKTUNE_MENU_MODE and the
+        -SkipConfirmation parameter on the main script:
+
+            $env:ROCKTUNE_SETUP_MODE = "express"
+            $env:ROCKTUNE_MENU_MODE = "recommended"
+            .\gaming-pc-setup.ps1 -SkipConfirmation
+
     .OUTPUTS
         [string] One of: express, custom, profile, exit.
     #>
+
+    # -------------------------------------------------------------------------
+    # AUTOMATION MODE CHECK
+    # -------------------------------------------------------------------------
+    # Check if ROCKTUNE_SETUP_MODE environment variable is set. If so, we
+    # return the specified mode directly without displaying the menu or
+    # prompting for input.
+    #
+    # Why check first?
+    # - Avoids Clear-Host which would disrupt CI/CD log output
+    # - Returns immediately for faster automated execution
+    # - Provides clear feedback about what mode was auto-selected
+    #
+    # Valid modes match the return values of the interactive menu:
+    # - express  : Maps to menu choice "1" (Express Setup)
+    # - custom   : Maps to menu choice "2" (Custom Setup)
+    # - profile  : Maps to menu choice "3" (Load Profile)
+    # - exit     : Maps to menu choice "4" (Exit)
+    #
+    # Invalid values trigger a warning and fall through to interactive mode.
+    # This is intentional - we don't want automation to silently fail.
+    # -------------------------------------------------------------------------
+    $setupMode = $env:ROCKTUNE_SETUP_MODE
+    if ($setupMode) {
+        # Normalize to lowercase for case-insensitive comparison
+        $setupMode = $setupMode.ToLower()
+
+        $validModes = @('express', 'custom', 'profile', 'exit')
+        if ($validModes -contains $setupMode) {
+            # Log the auto-selection for transparency in CI logs
+            Write-Host "[AUTO] Setup mode: $setupMode (ROCKTUNE_SETUP_MODE env var)" -ForegroundColor Cyan
+            return $setupMode
+        } else {
+            # Invalid mode specified - warn and fall through to interactive
+            Write-Host "[WARN] Unknown ROCKTUNE_SETUP_MODE='$setupMode'. Valid: express, custom, profile, exit" -ForegroundColor Yellow
+            Write-Host "[WARN] Falling back to interactive mode." -ForegroundColor Yellow
+        }
+    }
+
+    # -------------------------------------------------------------------------
+    # INTERACTIVE MODE
+    # -------------------------------------------------------------------------
+    # If ROCKTUNE_SETUP_MODE is not set (or was invalid), display the menu
+    # and prompt for user input as normal.
+    # -------------------------------------------------------------------------
 
     Clear-Host
     Write-Host "?????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????" -ForegroundColor Cyan
