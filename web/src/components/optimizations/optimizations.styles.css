@@ -772,6 +772,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    color: oklch(1 0 0 / 0.85);
   }
 
   .cve-list a {
