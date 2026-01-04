@@ -5,7 +5,12 @@ const OUTPUT_FILE = `${ICONS_DIR}/sprite.svg`
 
 const svgFiles: string[] = []
 for await (const entry of Deno.readDir(ICONS_DIR)) {
-  if (entry.isFile && entry.name.endsWith('.svg') && entry.name !== 'sprite.svg') {
+  if (
+    entry.isFile &&
+    entry.name.endsWith('.svg') &&
+    entry.name !== 'sprite.svg' &&
+    entry.name !== 'ui-sprite.svg'
+  ) {
     svgFiles.push(entry.name)
   }
 }

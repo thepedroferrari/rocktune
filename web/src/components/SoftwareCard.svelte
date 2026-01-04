@@ -49,7 +49,7 @@
       aria-label={isOverlay ? undefined : `${pkg.name} icon`}
       aria-hidden={isOverlay ? 'true' : undefined}
     >
-      <use href="icons/sprite.svg#{spriteId}"></use>
+      <use href="/icons/sprite.svg#{spriteId}"></use>
     </svg>
   {:else if logoType === 'cdn'}
     {#if iconFailed}
@@ -60,7 +60,7 @@
         aria-label={isOverlay ? undefined : 'Fallback icon'}
         aria-hidden={isOverlay ? 'true' : undefined}
       >
-        <use href="icons/sprite.svg#fallback"></use>
+        <use href="/icons/sprite.svg#fallback"></use>
       </svg>
     {:else}
       <img
