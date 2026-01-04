@@ -4,7 +4,7 @@
 *.log.*
 gaming-pc-setup.log
 extreme-privacy.log
-*/.playwright-mcp
+.playwright-mcp
 
 # Registry backups
 *.reg
