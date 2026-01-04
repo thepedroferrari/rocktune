@@ -518,6 +518,80 @@ function Set-TCPOptimizations {
 }
 
 
+function Remove-NetworkBindings {
+    <#
+    .SYNOPSIS
+        Strips unnecessary network protocol bindings for minimal overhead.
+    .DESCRIPTION
+        FR33THY optimization - Removes non-essential network bindings from
+        active adapters including IPv6, file/printer sharing, LLDP, QoS,
+        and network discovery protocols. Leaves only IPv4 for pure gaming.
+
+        WARNING: This breaks file sharing, printer sharing, network discovery,
+        and some enterprise features. Only use for dedicated gaming machines.
+    .PARAMETER Enable
+        When true, strips network bindings.
+    .OUTPUTS
+        None.
+    .NOTES
+        RISKY: Breaks file/printer sharing and network discovery.
+        Recommended only for dedicated gaming PCs without local network sharing needs.
+    #>
+    param(
+        [bool]$Enable = $true
+    )
+
+    if (-not $Enable) {
+        Write-Log "Network binding strip: skipped" "INFO"
+        return
+    }
+
+    try {
+        Write-Log "WARNING: Stripping network bindings breaks file/printer sharing!" "WARNING"
+
+        # Network bindings to disable (keep only IPv4)
+        $bindingsToDisable = @(
+            "ms_lldp",      # Link Layer Discovery Protocol
+            "ms_lltdio",    # Link Layer Topology Discovery I/O
+            "ms_implat",    # Microsoft Network Adapter Multiplexor Protocol
+            "ms_rspndr",    # Link Layer Topology Discovery Responder
+            "ms_tcpip6",    # IPv6
+            "ms_server",    # File and Printer Sharing
+            "ms_msclient",  # Client for Microsoft Networks
+            "ms_pacer"      # QoS Packet Scheduler
+        )
+
+        # Get active network adapters
+        $adapters = Get-NetAdapter | Where-Object { $_.Status -eq "Up" }
+        $totalDisabled = 0
+
+        foreach ($adapter in $adapters) {
+            foreach ($binding in $bindingsToDisable) {
+                try {
+                    $currentBinding = Get-NetAdapterBinding -Name $adapter.Name -ComponentID $binding -ErrorAction SilentlyContinue
+                    if ($currentBinding -and $currentBinding.Enabled) {
+                        Disable-NetAdapterBinding -Name $adapter.Name -ComponentID $binding -ErrorAction Stop
+                        $totalDisabled++
+                    }
+                } catch {
+                    # Binding may not exist on this adapter
+                }
+            }
+        }
+
+        if ($totalDisabled -gt 0) {
+            Write-Log "Stripped $totalDisabled network bindings (IPv4 only mode)" "SUCCESS"
+            Write-Log "Disabled: IPv6, File Sharing, Network Discovery, QoS" "INFO"
+        } else {
+            Write-Log "No network bindings modified (may already be stripped)" "INFO"
+        }
+
+    } catch {
+        Write-Log "Error stripping network bindings: $_" "ERROR"
+    }
+}
+
+
 function Invoke-NetworkOptimizations {
     <#
     .SYNOPSIS
@@ -642,6 +716,7 @@ Export-ModuleMember -Function @(
     'Enable-QoSGaming',
     'Disable-NetworkThrottling',
     'Set-TCPOptimizations',
+    'Remove-NetworkBindings',
     'Test-NetworkOptimizations',
     'Invoke-NetworkOptimizations',
     'Undo-NetworkOptimizations'
