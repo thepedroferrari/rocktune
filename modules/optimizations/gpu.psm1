@@ -227,6 +227,127 @@ function Set-IntelOptimizations {
 }
 
 
+function Disable-AmdUlps {
+    <#
+    .SYNOPSIS
+        Disables AMD Ultra Low Power State (ULPS).
+    .DESCRIPTION
+        FR33THY optimization - ULPS causes AMD GPUs to downclock aggressively,
+        which can introduce micro-stutters during power state transitions.
+        Disabling keeps GPU ready for immediate performance.
+    .PARAMETER Enable
+        When true, disables ULPS (counterintuitive but matches pattern).
+    .OUTPUTS
+        None.
+    .NOTES
+        Only affects AMD Radeon GPUs. Safe but increases idle power draw slightly.
+    #>
+    param(
+        [bool]$Enable = $true
+    )
+
+    if (-not $Enable) {
+        Write-Log "AMD ULPS disable: skipped" "INFO"
+        return
+    }
+
+    try {
+        $gpuClassPath = "HKLM:\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}"
+        $foundAmd = $false
+
+        if (-not (Test-Path $gpuClassPath)) {
+            Write-Log "GPU class registry path not found" "INFO"
+            return
+        }
+
+        Get-ChildItem $gpuClassPath -ErrorAction SilentlyContinue | ForEach-Object {
+            try {
+                $driverDesc = Get-ItemPropertyValue $_.PSPath "DriverDesc" -ErrorAction SilentlyContinue
+                if ($driverDesc -match "AMD|Radeon") {
+                    $foundAmd = $true
+                    Backup-RegistryKey -Path $_.PSPath
+
+                    # FR33THY: EnableUlps=0 prevents aggressive downclocking
+                    Set-RegistryValue -Path $_.PSPath -Name "EnableUlps" -Value 0 -Type "DWORD"
+                    Set-RegistryValue -Path $_.PSPath -Name "EnableUlps_NA" -Value 0 -Type "DWORD"
+
+                    Write-Log "AMD ULPS disabled for: $driverDesc" "SUCCESS"
+                }
+            } catch {
+                # Silently skip entries without DriverDesc
+            }
+        }
+
+        if (-not $foundAmd) {
+            Write-Log "No AMD GPU found, ULPS disable skipped" "INFO"
+        }
+
+    } catch {
+        Write-Log "Error disabling AMD ULPS: $_" "ERROR"
+    }
+}
+
+
+function Set-NvidiaP0State {
+    <#
+    .SYNOPSIS
+        Forces NVIDIA GPU to stay in maximum performance state (P0).
+    .DESCRIPTION
+        FR33THY optimization - Disables dynamic P-state switching which
+        causes the GPU to constantly adjust clocks. Forces constant max clocks
+        for consistent frame times. WARNING: Increases heat and power usage.
+    .PARAMETER Enable
+        When true, forces P0 state.
+    .OUTPUTS
+        None.
+    .NOTES
+        RISKY: Significantly increases GPU temperature and power consumption.
+        Recommended only for competitive gaming sessions, not 24/7 use.
+    #>
+    param(
+        [bool]$Enable = $true
+    )
+
+    if (-not $Enable) {
+        Write-Log "NVIDIA P0 state: skipped" "INFO"
+        return
+    }
+
+    try {
+        $gpuClassPath = "HKLM:\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}"
+        $foundNvidia = $false
+
+        if (-not (Test-Path $gpuClassPath)) {
+            Write-Log "GPU class registry path not found" "INFO"
+            return
+        }
+
+        Get-ChildItem $gpuClassPath -ErrorAction SilentlyContinue | ForEach-Object {
+            try {
+                $driverDesc = Get-ItemPropertyValue $_.PSPath "DriverDesc" -ErrorAction SilentlyContinue
+                if ($driverDesc -match "NVIDIA|GeForce") {
+                    $foundNvidia = $true
+                    Backup-RegistryKey -Path $_.PSPath
+
+                    # FR33THY: DisableDynamicPstate=1 forces constant max clocks
+                    Set-RegistryValue -Path $_.PSPath -Name "DisableDynamicPstate" -Value 1 -Type "DWORD"
+
+                    Write-Log "NVIDIA P0 state forced for: $driverDesc" "SUCCESS"
+                    Write-Log "WARNING: GPU will run at constant max clocks (increased heat/power)" "WARNING"
+                }
+            } catch {
+                # Silently skip entries without DriverDesc
+            }
+        }
+
+        if (-not $foundNvidia) {
+            Write-Log "No NVIDIA GPU found, P0 state skip" "INFO"
+        }
+
+    } catch {
+        Write-Log "Error setting NVIDIA P0 state: $_" "ERROR"
+    }
+}
 
 
 function Invoke-GPUOptimizations {
@@ -332,6 +453,8 @@ Export-ModuleMember -Function @(
     'Set-NVIDIAOptimizations',
     'Set-AMDOptimizations',
     'Set-IntelOptimizations',
+    'Disable-AmdUlps',
+    'Set-NvidiaP0State',
     'Test-GPUOptimizations',
     'Invoke-GPUOptimizations',
     'Undo-GPUOptimizations'
