@@ -74,9 +74,9 @@ export const DEPRECATED_OPT_IDS: ReadonlyArray<{
   readonly removed: string // ISO date YYYY-MM-DD
   readonly reason?: string
 }> = [
-    // Example (uncomment when first deprecation happens):
-    // { id: 45, was: 'old_feature', removed: '2025-01-03', reason: 'No longer needed on Win11 24H2' },
-  ]
+  // Example (uncomment when first deprecation happens):
+  // { id: 45, was: 'old_feature', removed: '2025-01-03', reason: 'No longer needed on Win11 24H2' },
+]
 
 /**
  * Set of all deprecated IDs for quick lookup
