@@ -38,7 +38,7 @@ for (const file of svgFiles) {
   }
 }
 
-const sprite = `<svg xmlns="http:
+const sprite = `<svg xmlns="http://www.w3.org/2000/svg">
 ${symbols.join('\n')}
 </svg>
 `
