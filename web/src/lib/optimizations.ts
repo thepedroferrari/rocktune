@@ -96,15 +96,24 @@ const SAFE_SYSTEM: readonly OptimizationDef[] = [
     tooltip: {
       title: 'Timer Resolution Tool',
       desc: 'Sets Windows timer to 0.5ms (from 15.6ms default)',
-      pros: ['Improves input responsiveness', 'Better frame pacing', 'Smoother 128-tick gameplay'],
+      pros: [
+        '20-30% improvement in 1% lows (Battle(non)sense)',
+        'Eliminates visible micro-stutter',
+        'Better frame pacing',
+        'Smoother 128-tick gameplay',
+      ],
       cons: ['Must run during gameplay', 'Slightly higher power usage'],
     },
     defaultChecked: true,
     rank: EFFECTIVENESS_RANKS.S,
     evidence: {
       level: EVIDENCE_LEVELS.HIGH,
-      sources: ['https://forums.blurbusters.com/viewtopic.php?t=13842'],
-      note: '15ms→1ms is human-feelable; improves 1% lows by ~30%',
+      sources: [
+        'https://forums.blurbusters.com/viewtopic.php?t=13842',
+        'https://www.youtube.com/@battlenonsense',
+      ],
+      // Battle(non)sense: Proven by high-speed camera testing
+      note: 'Battle(non)sense tested: 15ms→0.5ms eliminates micro-stutters; 20-30% better 1% lows',
     },
   },
   {
@@ -555,6 +564,32 @@ const SAFE_INPUT: readonly OptimizationDef[] = [
     defaultChecked: false,
     rank: EFFECTIVENESS_RANKS.B,
   },
+  {
+    key: OPTIMIZATION_KEYS.BACKGROUND_POLLING,
+    tier: OPTIMIZATION_TIERS.SAFE,
+    category: 'input',
+    label: 'Background Polling Unlock',
+    hint: 'Full polling in background windows',
+    tooltip: {
+      title: 'Background Polling Unlock',
+      // FR33THY: Removes Windows throttling of mouse input in background
+      desc: 'Removes Windows throttling of mouse input when windows are in background',
+      pros: [
+        'Full polling rate in background windows',
+        'Better alt-tab responsiveness',
+        'No input lag when switching apps',
+      ],
+      cons: ['Slightly higher CPU usage'],
+    },
+    defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.A,
+    evidence: {
+      level: EVIDENCE_LEVELS.MEDIUM,
+      sources: ['https://github.com/FR33THYFR33THY/Ultimate-Windows-Optimization-Guide'],
+      // FR33THY 8 Advanced/17 Unlock Background Polling Rate Cap.ps1
+      note: 'FR33THY: RawMouseThrottleEnabled=0 removes background mouse throttling',
+    },
+  },
 ]
 
 /** Safe Display optimizations */
@@ -852,7 +887,12 @@ const CAUTION_OPTIMIZATIONS: readonly OptimizationDef[] = [
         'More efficient interrupt delivery',
         'Better for high-refresh gaming',
       ],
-      cons: ['Some older hardware incompatible', 'Test with LatencyMon after enabling'],
+      // Blur Busters consensus: Only safe if device explicitly supports it
+      cons: [
+        'Only enable if device supports it',
+        'Registry hacks can break system (Blur Busters)',
+        'Test with LatencyMon after enabling',
+      ],
     },
     defaultChecked: false,
     rank: EFFECTIVENESS_RANKS.C,
@@ -860,8 +900,10 @@ const CAUTION_OPTIMIZATIONS: readonly OptimizationDef[] = [
       level: EVIDENCE_LEVELS.MEDIUM,
       sources: [
         'https://www.overclock.net/threads/message-signaled-based-interrupt-msi-discussion-for-nvidia-gpus.1805762/',
+        'https://forums.blurbusters.com/viewtopic.php?t=9577',
       ],
-      note: 'System-dependent; use LatencyMon to verify DPC reduction',
+      // Expert consensus from Blur Busters forums
+      note: 'Blur Busters: Only safe if device explicitly supports it; can break system if forced',
     },
   },
   {
@@ -872,6 +914,7 @@ const CAUTION_OPTIMIZATIONS: readonly OptimizationDef[] = [
     hint: 'Alternative timer source',
     tooltip: {
       title: 'HPET Off',
+      // FR33THY: "Do not touch settings like useplatformclock"
       desc: 'Forces Windows to use TSC instead of High Precision Event Timer',
       pros: [
         'TSC is faster on modern CPUs',
@@ -879,17 +922,22 @@ const CAUTION_OPTIMIZATIONS: readonly OptimizationDef[] = [
         'Lower timer query overhead',
       ],
       cons: [
-        'Results vary by system',
-        'Requires reboot to take effect',
-        'Benchmark to verify improvement',
+        'Not used for game timing (FR33THY)',
+        'Modern Windows uses TSC by default',
+        'Can break system timers (Blur Busters)',
+        'Requires reboot to verify',
       ],
     },
     defaultChecked: false,
     rank: EFFECTIVENESS_RANKS.C,
     evidence: {
       level: EVIDENCE_LEVELS.MEDIUM,
-      sources: ['https://www.overclockers.at/articles/the-hpet-bug-what-it-is-and-what-it-isnt'],
-      note: 'Modern Windows uses TSC by default; unlikely to help on current systems',
+      sources: [
+        'https://www.overclockers.at/articles/the-hpet-bug-what-it-is-and-what-it-isnt',
+        'https://forums.blurbusters.com/viewtopic.php?t=9577',
+      ],
+      // FR33THY + Blur Busters consensus
+      note: 'FR33THY: HPET is not used for game timing. Blur Busters: Can increase jitter. Test carefully.',
     },
   },
   {
@@ -915,12 +963,27 @@ const CAUTION_OPTIMIZATIONS: readonly OptimizationDef[] = [
     hint: 'Hardware accelerated GPU scheduling',
     tooltip: {
       title: 'HAGS On',
-      desc: 'Hardware Accelerated GPU Scheduling',
-      pros: ['GPU manages own memory', 'Can reduce input latency', 'Benefits newer games'],
-      cons: ['Mixed results by GPU/game', 'Some older games worse', 'Test per-game'],
+      // Battle(non)sense: HAGS benefits depend heavily on game and GPU generation
+      desc: 'GPU manages its own memory scheduling instead of Windows',
+      pros: [
+        'GPU manages own VRAM scheduling',
+        'Can reduce input latency in some games',
+        'Benefits DX12/Vulkan games most',
+      ],
+      cons: [
+        'Mixed results by GPU/game (Battle(non)sense)',
+        'Some older DX9/DX11 games perform worse',
+        'Requires RTX 1000+ or RX 5000+ series',
+      ],
     },
     defaultChecked: false,
     rank: EFFECTIVENESS_RANKS.B,
+    evidence: {
+      level: EVIDENCE_LEVELS.MEDIUM,
+      sources: ['https://www.youtube.com/@battlenonsense'],
+      // Battle(non)sense tested extensively, results vary significantly
+      note: 'Battle(non)sense: Results vary by game and GPU. Test with frame time graphs.',
+    },
   },
   {
     key: OPTIMIZATION_KEYS.FSO_DISABLE,
@@ -930,12 +993,94 @@ const CAUTION_OPTIMIZATIONS: readonly OptimizationDef[] = [
     hint: 'Legacy fullscreen mode',
     tooltip: {
       title: 'Fullscreen Optimizations Off',
-      desc: 'True exclusive fullscreen mode',
-      pros: ['Lower input latency possible', 'Direct GPU access', 'No compositor overhead'],
-      cons: ['Alt-tab issues', 'Per-game setting may be better', 'Some games need it on'],
+      // Battle(non)sense: FSE vs borderless tested, results vary by G-SYNC/FreeSync
+      // Blur Busters: G-SYNC 101 recommends testing both modes
+      desc: 'Forces true exclusive fullscreen instead of borderless window',
+      pros: [
+        'Lower input latency possible',
+        'Direct GPU access bypasses compositor',
+        'May benefit non-VRR setups',
+      ],
+      cons: [
+        'Alt-tab is slower',
+        'Per-game setting may be better',
+        'Modern games often handle this correctly',
+        'G-SYNC/FreeSync may work better with FSO on',
+      ],
     },
     defaultChecked: false,
     rank: EFFECTIVENESS_RANKS.B,
+    evidence: {
+      level: EVIDENCE_LEVELS.MEDIUM,
+      sources: [
+        'https://blurbusters.com/gsync/gsync101-input-lag-tests-and-settings/',
+        'https://www.youtube.com/@battlenonsense',
+      ],
+      // Battle(non)sense: Results vary by VRR technology
+      // Blur Busters: G-SYNC 101 recommends borderless for VRR, FSE for fixed refresh
+      note: 'Battle(non)sense: FSE vs borderless varies by VRR. Blur Busters: Test both modes.',
+    },
+  },
+  // ═══════════════════════════════════════════════════════════════════════════
+  // GPU-SPECIFIC OPTIMIZATIONS (FR33THY)
+  // These require GPU vendor detection and have power/heat tradeoffs
+  // ═══════════════════════════════════════════════════════════════════════════
+  {
+    key: OPTIMIZATION_KEYS.AMD_ULPS_DISABLE,
+    tier: OPTIMIZATION_TIERS.CAUTION,
+    category: 'display',
+    label: 'AMD ULPS Disable',
+    hint: 'Disable Ultra Low Power State',
+    tooltip: {
+      title: 'AMD ULPS Disable',
+      // FR33THY: Prevents AMD GPU from entering ultra-low power state
+      desc: 'Keeps AMD GPU ready at all times, eliminating wake latency',
+      pros: [
+        'Faster GPU wake from low power',
+        'Reduces stutter on wake',
+        'Better alt-tab responsiveness',
+      ],
+      cons: ['Higher idle power consumption', 'More heat at idle', 'AMD GPUs only'],
+    },
+    defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.B,
+    evidence: {
+      level: EVIDENCE_LEVELS.MEDIUM,
+      sources: ['https://github.com/FR33THYFR33THY/Ultimate-Windows-Optimization-Guide'],
+      // FR33THY 8 Advanced/4 ULPS AMD.ps1
+      note: 'FR33THY: EnableUlps=0 prevents AMD GPU from entering ultra-low power state.',
+    },
+  },
+  {
+    key: OPTIMIZATION_KEYS.NVIDIA_P0_STATE,
+    tier: OPTIMIZATION_TIERS.RISKY,
+    category: 'display',
+    label: 'NVIDIA P0 State',
+    hint: 'Force maximum GPU power state',
+    tooltip: {
+      title: 'NVIDIA P0 State (Force Max Performance)',
+      // FR33THY: Eliminates GPU frequency fluctuations during gaming
+      desc: 'Forces NVIDIA GPU to stay at maximum performance state (P0)',
+      pros: [
+        'Eliminates P-state transitions during gaming',
+        'More consistent frame times',
+        'No power-saving dips',
+      ],
+      cons: [
+        'Much higher idle power consumption',
+        'Increased GPU temperatures',
+        'May shorten GPU lifespan',
+        'NVIDIA GPUs only',
+      ],
+    },
+    defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.B,
+    evidence: {
+      level: EVIDENCE_LEVELS.MEDIUM,
+      sources: ['https://github.com/FR33THYFR33THY/Ultimate-Windows-Optimization-Guide'],
+      // FR33THY 8 Advanced/3 P0 State Nvidia.ps1
+      note: 'FR33THY: DisableDynamicPstate=1 forces constant GPU clocks. Use with caution.',
+    },
   },
   {
     key: OPTIMIZATION_KEYS.ULTIMATE_PERF,
@@ -1419,6 +1564,37 @@ const RISKY_OPTIMIZATIONS: readonly OptimizationDef[] = [
     defaultChecked: false,
     rank: EFFECTIVENESS_RANKS.C,
   },
+  {
+    key: OPTIMIZATION_KEYS.NETWORK_BINDING_STRIP,
+    tier: OPTIMIZATION_TIERS.RISKY,
+    category: 'network',
+    label: 'Network Binding Strip',
+    hint: 'Disable unused network protocols',
+    tooltip: {
+      title: 'Network Binding Strip',
+      // FR33THY: Disables 8 bindings leaving only IPv4
+      desc: 'Removes unnecessary network adapter bindings to reduce stack overhead',
+      pros: [
+        'Reduces network stack processing',
+        'Cleaner adapter configuration',
+        'May reduce latency jitter',
+      ],
+      cons: [
+        '**BREAKS file/printer sharing**',
+        '**BREAKS network discovery**',
+        'May break IPv6-only networks',
+        'Requires manual re-enable if needed',
+      ],
+    },
+    defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.B,
+    evidence: {
+      level: EVIDENCE_LEVELS.MEDIUM,
+      sources: ['https://github.com/FR33THYFR33THY/Ultimate-Windows-Optimization-Guide'],
+      // FR33THY 8 Advanced/1 Network Adapter.ps1
+      note: 'FR33THY: Strips 8 bindings. WARNING: Breaks file sharing, printers, discovery.',
+    },
+  },
 ]
 
 const LUDICROUS_OPTIMIZATIONS: readonly OptimizationDef[] = [
@@ -1643,6 +1819,7 @@ const PROFILE_OPTIMIZATIONS: Record<ProfileId, readonly OptimizationKey[]> = {
     'dns',
     'nagle',
     'mouse_accel',
+    'background_polling', // FR33THY: Full polling in background windows
     'gamedvr',
     'background_apps',
     'edge_debloat',
@@ -1694,6 +1871,7 @@ const PROFILE_OPTIMIZATIONS: Record<ProfileId, readonly OptimizationKey[]> = {
     'dns',
     'nagle',
     'mouse_accel',
+    'background_polling', // FR33THY: Full polling in background windows
     'keyboard_response',
     'accessibility_shortcuts',
     'display_perf',
