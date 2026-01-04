@@ -53,25 +53,34 @@ const NEXT_STEPS_BY_PRESET: Record<PresetType, readonly string[]> = {
     'DISPLAY: Set refresh rate to max (Settings > Display > Advanced)',
     'GPU: Low Latency Mode = On, Power = Max Performance',
     'DISCORD: Disable Hardware Acceleration (Settings > Advanced)',
+    'INPUT LAG: Cap FPS 3% below refresh (e.g., 139 for 144Hz) to keep GPU < 95%',
+    'G-SYNC: V-Sync ON in NVCP, OFF in-game. FPS cap prevents tearing + low latency',
   ],
   pro_gamer: [
     'DISPLAY: Set refresh rate to max (Settings > Display > Advanced)',
-    'GPU: Low Latency Mode = Ultra, Power = Max Performance',
-    'DISCORD: Disable Hardware Acceleration (Settings > Advanced)',
+    'FPS CAP: Use in-game limiter > Reflex > RTSS > NVCP (in-game is fastest)',
+    'GPU HEADROOM: Keep utilization < 95% — at 99% input lag spikes significantly',
+    'REFLEX: Only enable if GPU at 99%+. If capped below 95%, turn Reflex OFF',
     'RGB: Disable all RGB software overlays',
     'TIMER: Use option [2] in the menu to run timer before gaming',
+    'G-SYNC: V-Sync ON in NVCP + cap FPS 3% below refresh = zero tearing + low latency',
+    'NETWORK: Test bufferbloat at waveform.com — if grade < B, enable SQM on router',
   ],
   streamer: [
     'OBS: Set encoder to NVENC/AMF, Quality preset',
     'OBS: Enable Game Capture over Display Capture',
     'AUDIO: Configure VoiceMeeter for stream/game split',
     'GPU: Enable capture mode in NVIDIA/AMD settings',
+    'INPUT LAG: Cap FPS to keep GPU < 95% — leaves headroom for encoding',
+    'REFLEX: Keep ON while streaming if GPU-bound, OFF if you have headroom',
   ],
   benchmarker: [
     'CAPFRAMEX: Capture baseline before/after for comparisons',
     'LATENCYMON: Verify DPC latency < 500us, no red flags',
     'HWINFO: Log temps/power during benchmark runs',
     'TIMER: Use option [2] in the menu for accurate frametime capture',
+    'METHODOLOGY: Test at fixed FPS cap, measure 1% lows and frametimes',
+    'GPU HEADROOM: Compare results at 99% vs 90% GPU utilization',
   ],
 }
 
@@ -1465,6 +1474,56 @@ function generatePreflightScan(selected: Set<string>, _hardware: HardwareProfile
     lines.push('else { Add-ScanResult "Mouse buffer size" "$val" "32" "CHANGE" }')
   }
 
+  if (selected.has('background_polling')) {
+    lines.push('# Scan: Background polling unlock (FR33THY)')
+    lines.push('$val = Get-RegValue "HKCU:\\Control Panel\\Mouse" "RawMouseThrottleEnabled"')
+    lines.push('if ($val -eq 0) { Add-ScanResult "Background polling" "Unlocked" "Unlocked" "OK" }')
+    lines.push('else { Add-ScanResult "Background polling" "Throttled" "Unlocked" "CHANGE" }')
+  }
+
+  // === GPU-SPECIFIC OPTIMIZATIONS (FR33THY) ===
+  if (selected.has('amd_ulps_disable')) {
+    lines.push('# Scan: AMD ULPS (FR33THY)')
+    lines.push('$amdUlps = $false')
+    lines.push(
+      '$gpuPath = "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e968-e325-11ce-bfc1-08002be10318}"',
+    )
+    lines.push('Get-ChildItem $gpuPath -ErrorAction SilentlyContinue | ForEach-Object {')
+    lines.push(
+      '  $desc = Get-ItemPropertyValue $_.PSPath "DriverDesc" -ErrorAction SilentlyContinue',
+    )
+    lines.push('  if ($desc -match "AMD|Radeon") {')
+    lines.push(
+      '    $val = Get-ItemPropertyValue $_.PSPath "EnableUlps" -ErrorAction SilentlyContinue',
+    )
+    lines.push('    if ($val -eq 0) { $amdUlps = $true }')
+    lines.push('  }')
+    lines.push('}')
+    lines.push('if ($amdUlps) { Add-ScanResult "AMD ULPS" "Disabled" "Disabled" "OK" }')
+    lines.push('else { Add-ScanResult "AMD ULPS" "Enabled" "Disabled" "CHANGE" }')
+  }
+
+  if (selected.has('nvidia_p0_state')) {
+    lines.push('# Scan: NVIDIA P0 State (FR33THY)')
+    lines.push('$nvidiaP0 = $false')
+    lines.push(
+      '$gpuPath = "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e968-e325-11ce-bfc1-08002be10318}"',
+    )
+    lines.push('Get-ChildItem $gpuPath -ErrorAction SilentlyContinue | ForEach-Object {')
+    lines.push(
+      '  $desc = Get-ItemPropertyValue $_.PSPath "DriverDesc" -ErrorAction SilentlyContinue',
+    )
+    lines.push('  if ($desc -match "NVIDIA|GeForce") {')
+    lines.push(
+      '    $val = Get-ItemPropertyValue $_.PSPath "DisableDynamicPstate" -ErrorAction SilentlyContinue',
+    )
+    lines.push('    if ($val -eq 1) { $nvidiaP0 = $true }')
+    lines.push('  }')
+    lines.push('}')
+    lines.push('if ($nvidiaP0) { Add-ScanResult "NVIDIA P0 State" "Forced" "Forced" "OK" }')
+    lines.push('else { Add-ScanResult "NVIDIA P0 State" "Dynamic" "Forced" "CHANGE" }')
+  }
+
   // === PERFORMANCE OPTIMIZATIONS ===
   if (selected.has('gamedvr')) {
     lines.push('# Scan: Game DVR')
@@ -2044,6 +2103,12 @@ function generatePreflightScan(selected: Set<string>, _hardware: HardwareProfile
     lines.push('Add-ScanResult "[RISKY] TCP Optimizer" "(per-adapter)" "Tuned" "CHANGE"')
   }
 
+  if (selected.has('network_binding_strip')) {
+    lines.push('# Scan: Network Binding Strip (FR33THY)')
+    lines.push('# WARNING: This will break file sharing, printer sharing, and network discovery!')
+    lines.push('Add-ScanResult "[RISKY] Network Binding Strip" "(8 bindings)" "Stripped" "CHANGE"')
+  }
+
   // === NEW PRIVACY DETECTIONS ===
   if (selected.has('background_apps')) {
     lines.push('# Scan: Background Apps')
@@ -2294,6 +2359,10 @@ function generatePreflightScan(selected: Set<string>, _hardware: HardwareProfile
     'accessibility_shortcuts',
     'filesystem_perf',
     'dwm_perf',
+    'background_polling',
+    // GPU-specific (FR33THY)
+    'amd_ulps_disable',
+    'nvidia_p0_state',
     'ps7_telemetry',
     'explorer_cleanup',
     'mmcss_gaming',
@@ -2318,6 +2387,7 @@ function generatePreflightScan(selected: Set<string>, _hardware: HardwareProfile
     'rsc_disable',
     'ipv4_prefer',
     'tcp_optimizer',
+    'network_binding_strip',
     // NEW - Privacy
     'background_apps',
     'edge_debloat',
@@ -2540,6 +2610,13 @@ function generateSystemOpts(selected: Set<string>): string[] {
     lines.push('Write-OK "DWM performance optimized"')
   }
 
+  if (selected.has('background_polling')) {
+    lines.push('# [SAFE] Unlock background mouse polling (FR33THY)')
+    lines.push('# Removes Windows throttling of mouse input when windows are in background')
+    lines.push('Set-Reg "HKCU:\\Control Panel\\Mouse" "RawMouseThrottleEnabled" 0')
+    lines.push('Write-OK "Background mouse polling unlocked"')
+  }
+
   return lines
 }
 
@@ -2641,6 +2718,51 @@ function generatePerformanceOpts(selected: Set<string>, hardware: HardwareProfil
     lines.push('# Disable Multiplane Overlay')
     lines.push('Set-Reg "HKLM:\\SOFTWARE\\Microsoft\\Windows\\Dwm" "OverlayTestMode" 5')
     lines.push('Write-OK "Multiplane Overlay disabled"')
+  }
+
+  // === GPU-SPECIFIC OPTIMIZATIONS (FR33THY) ===
+  if (selected.has('amd_ulps_disable')) {
+    lines.push('# [CAUTION] Disable AMD ULPS (FR33THY)')
+    lines.push('# Prevents AMD GPU from entering ultra-low power state')
+    lines.push(
+      '$gpuPath = "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e968-e325-11ce-bfc1-08002be10318}"',
+    )
+    lines.push('$amdFound = $false')
+    lines.push('Get-ChildItem $gpuPath -ErrorAction SilentlyContinue | ForEach-Object {')
+    lines.push(
+      '  $desc = Get-ItemPropertyValue $_.PSPath "DriverDesc" -ErrorAction SilentlyContinue',
+    )
+    lines.push('  if ($desc -match "AMD|Radeon") {')
+    lines.push(
+      '    Set-ItemProperty -Path $_.PSPath -Name "EnableUlps" -Value 0 -Type DWord -Force',
+    )
+    lines.push('    $amdFound = $true')
+    lines.push('  }')
+    lines.push('}')
+    lines.push('if ($amdFound) { Write-OK "AMD ULPS disabled (faster GPU wake)" }')
+    lines.push('else { Write-Warning "AMD GPU not found, skipping ULPS" }')
+  }
+
+  if (selected.has('nvidia_p0_state')) {
+    lines.push('# [RISKY] Force NVIDIA P0 State (FR33THY)')
+    lines.push('# Forces GPU to stay at maximum performance - increases power and heat!')
+    lines.push(
+      '$gpuPath = "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e968-e325-11ce-bfc1-08002be10318}"',
+    )
+    lines.push('$nvidiaFound = $false')
+    lines.push('Get-ChildItem $gpuPath -ErrorAction SilentlyContinue | ForEach-Object {')
+    lines.push(
+      '  $desc = Get-ItemPropertyValue $_.PSPath "DriverDesc" -ErrorAction SilentlyContinue',
+    )
+    lines.push('  if ($desc -match "NVIDIA|GeForce") {')
+    lines.push(
+      '    Set-ItemProperty -Path $_.PSPath -Name "DisableDynamicPstate" -Value 1 -Type DWord -Force',
+    )
+    lines.push('    $nvidiaFound = $true')
+    lines.push('  }')
+    lines.push('}')
+    lines.push('if ($nvidiaFound) { Write-OK "NVIDIA P0 state forced (constant max clocks)" }')
+    lines.push('else { Write-Warning "NVIDIA GPU not found, skipping P0 state" }')
   }
 
   if (selected.has('process_mitigation')) {
@@ -3011,6 +3133,41 @@ function generateNetworkOpts(selected: Set<string>, dnsProvider: string): string
     lines.push('}')
     lines.push('if ($rscCount -gt 0) { Write-OK "RSC disabled on $rscCount adapter(s)" }')
     lines.push('else { Write-Warn "RSC: No adapters supported or already disabled" }')
+  }
+
+  if (selected.has('network_binding_strip')) {
+    lines.push('# [RISKY] Network Binding Strip (FR33THY)')
+    lines.push('# WARNING: This WILL break file sharing, printer sharing, and network discovery!')
+    lines.push('Write-Host "  [!!] WARNING: Stripping network bindings!" -ForegroundColor Red')
+    lines.push(
+      'Write-Host "       This breaks: File sharing, printers, network discovery" -ForegroundColor Red',
+    )
+    lines.push('$bindings = @(')
+    lines.push('    "ms_lldp",      # Link Layer Discovery Protocol')
+    lines.push('    "ms_lltdio",    # Link Layer Topology Discovery Mapper I/O')
+    lines.push('    "ms_implat",    # Microsoft Network Adapter Multiplexor Protocol')
+    lines.push('    "ms_rspndr",    # Link Layer Topology Discovery Responder')
+    lines.push('    "ms_tcpip6",    # IPv6')
+    lines.push('    "ms_server",    # File and Printer Sharing')
+    lines.push('    "ms_msclient",  # Client for Microsoft Networks')
+    lines.push('    "ms_pacer"      # QoS Packet Scheduler')
+    lines.push(')')
+    lines.push('$adapters = Get-NetAdapter | Where-Object {$_.Status -eq "Up"}')
+    lines.push('$strippedCount = 0')
+    lines.push('foreach ($adapter in $adapters) {')
+    lines.push('    foreach ($binding in $bindings) {')
+    lines.push('        try {')
+    lines.push(
+      '            Disable-NetAdapterBinding -Name $adapter.Name -ComponentID $binding -EA Stop',
+    )
+    lines.push('            $strippedCount++')
+    lines.push('        } catch { }')
+    lines.push('    }')
+    lines.push('}')
+    lines.push(
+      'if ($strippedCount -gt 0) { Write-OK "Stripped $strippedCount network bindings (IPv4 only)" }',
+    )
+    lines.push('else { Write-Warn "Network bindings: Already stripped or not present" }')
   }
 
   if (selected.has('adapter_power')) {
