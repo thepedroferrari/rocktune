@@ -51,18 +51,8 @@
 
   import HeroSection from './components/HeroSection.svelte'
   import PresetSection from './components/PresetSection.svelte'
-  import HardwareSection from './components/HardwareSection.svelte'
-  import PeripheralsSection from './components/PeripheralsSection.svelte'
-  import OptimizationsSection from './components/OptimizationsSection.svelte'
-  import ForgeSection from './components/ForgeSection.svelte'
-  import ManualStepsSection from './components/ManualStepsSection.svelte'
 
 
-  import SoftwareGrid from './components/SoftwareGrid.svelte'
-  import Filters from './components/Filters.svelte'
-
-
-  import PreviewModal from './components/PreviewModal.svelte'
   import SRAnnounce from './components/SRAnnounce.svelte'
   import Toast from './components/Toast.svelte'
   import { showToast } from '$lib/toast.svelte'
@@ -384,7 +374,9 @@
     </a>
   </nav>
 
-  <HardwareSection />
+  {#await import('./components/HardwareSection.svelte') then { default: HardwareSection }}
+    <HardwareSection />
+  {/await}
 
   <nav class="wizard-nav" aria-label="Continue to Peripherals">
     <a
@@ -402,7 +394,9 @@
     </a>
   </nav>
 
-  <PeripheralsSection />
+  {#await import('./components/PeripheralsSection.svelte') then { default: PeripheralsSection }}
+    <PeripheralsSection />
+  {/await}
 
   <nav class="wizard-nav" aria-label="Continue to Tweaks">
     <a
@@ -420,7 +414,9 @@
     </a>
   </nav>
 
-  <OptimizationsSection />
+  {#await import('./components/OptimizationsSection.svelte') then { default: OptimizationsSection }}
+    <OptimizationsSection />
+  {/await}
 
   <nav class="wizard-nav" aria-label="Continue to Arsenal">
     <a
@@ -488,8 +484,12 @@
         <button type="button" onclick={hydrateCatalog}>Retry</button>
       </output>
     {:else}
-      <Filters {recommendedPreset} />
-      <SoftwareGrid />
+      {#await import('./components/Filters.svelte') then { default: Filters }}
+        <Filters {recommendedPreset} />
+      {/await}
+      {#await import('./components/SoftwareGrid.svelte') then { default: SoftwareGrid }}
+        <SoftwareGrid />
+      {/await}
     {/if}
   </section>
 
@@ -509,13 +509,21 @@
     </a>
   </nav>
 
-  <ForgeSection />
+  {#await import('./components/ForgeSection.svelte') then { default: ForgeSection }}
+    <ForgeSection />
+  {/await}
 
-  <ManualStepsSection />
+  {#await import('./components/ManualStepsSection.svelte') then { default: ManualStepsSection }}
+    <ManualStepsSection />
+  {/await}
 </main>
 
 
-<PreviewModal />
+{#if app.ui.previewModalOpen}
+  {#await import('./components/PreviewModal.svelte') then { default: PreviewModal }}
+    <PreviewModal />
+  {/await}
+{/if}
 <Toast />
 
 

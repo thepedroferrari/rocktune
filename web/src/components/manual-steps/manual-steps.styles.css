@@ -9,11 +9,6 @@
       clip-path: var(--clip-cyber-sm);
     }
 
-    .step-banner {
-      margin-block-start: 0;
-      margin-inline: calc(-1 * var(--space-lg));
-    }
-
     .manual-steps__header {
       margin-block-end: var(--space-lg);
     }

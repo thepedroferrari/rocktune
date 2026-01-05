@@ -46,6 +46,7 @@ export default defineConfig({
       output: {
         manualChunks: {
           vendor: ['svelte', 'zod'],
+          diff: ['diff'],
         },
       },
     },
