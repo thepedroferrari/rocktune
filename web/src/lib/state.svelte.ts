@@ -386,13 +386,6 @@ export function setOptimizations(keys: readonly OptimizationKey[]): void {
 }
 
 /**
- * Get all enabled optimizations
- */
-export function getOptimizations(): OptimizationKey[] {
-  return Array.from(app.optimizations)
-}
-
-/**
  * Toggle a peripheral brand on/off
  */
 export function togglePeripheral(type: PeripheralType): boolean {

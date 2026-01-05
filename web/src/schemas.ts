@@ -1,12 +1,5 @@
 import { z } from 'zod'
-import {
-  CATEGORIES,
-  CPU_TYPES,
-  GPU_TYPES,
-  MONITOR_SOFTWARE_TYPES,
-  PERIPHERAL_TYPES,
-  PROFILE_VERSION,
-} from './lib/types'
+import { CATEGORIES } from './lib/types'
 
 /**
  * Package key schema - branded string for catalog keys
@@ -39,29 +32,6 @@ const WingetIdSchema = z
 const CategorySchema = z
   .enum(CATEGORIES)
   .describe('Software category for filtering and organization')
-
-const CpuTypeSchema = z
-  .enum([CPU_TYPES.AMD_X3D, CPU_TYPES.AMD, CPU_TYPES.INTEL])
-  .describe('CPU manufacturer/type for hardware-specific optimizations')
-
-const GpuTypeSchema = z
-  .enum([GPU_TYPES.NVIDIA, GPU_TYPES.AMD, GPU_TYPES.INTEL])
-  .describe('GPU manufacturer for driver-specific settings')
-
-const PeripheralTypeSchema = z
-  .enum([
-    PERIPHERAL_TYPES.LOGITECH,
-    PERIPHERAL_TYPES.RAZER,
-    PERIPHERAL_TYPES.CORSAIR,
-    PERIPHERAL_TYPES.STEELSERIES,
-    PERIPHERAL_TYPES.ASUS,
-    PERIPHERAL_TYPES.WOOTING,
-  ])
-  .describe('Peripheral manufacturer for software recommendations')
-
-const MonitorSoftwareTypeSchema = z
-  .enum([MONITOR_SOFTWARE_TYPES.DELL, MONITOR_SOFTWARE_TYPES.LG, MONITOR_SOFTWARE_TYPES.HP])
-  .describe('Monitor software brand for auto-install recommendations')
 
 /**
  * Trimmed non-empty string - removes whitespace and validates
@@ -130,48 +100,8 @@ const SoftwareCatalogSchema = z
   )
   .describe('Complete software catalog with package definitions')
 
-const HardwareProfileSchema = z
-  .object({
-    cpu: CpuTypeSchema,
-    gpu: GpuTypeSchema,
-    peripherals: z
-      .array(PeripheralTypeSchema)
-      .max(6, 'Maximum 6 peripherals allowed')
-      .refine((arr) => new Set(arr).size === arr.length, 'Duplicate peripherals are not allowed')
-      .default([])
-      .describe('Selected peripheral manufacturers'),
-    monitorSoftware: z
-      .array(MonitorSoftwareTypeSchema)
-      .max(3, 'Maximum 3 monitor software entries allowed')
-      .refine((arr) => new Set(arr).size === arr.length, 'Duplicate monitor software not allowed')
-      .default([])
-      .describe('Selected monitor software brands'),
-  })
-  .describe('Hardware configuration for optimization targeting')
-
-/**
- * Date schema that transforms string to Date object
- */
-const DateStringSchema = z
-  .string()
-  .datetime({ message: 'Invalid ISO date format' })
-  .or(z.string().min(1))
-  .describe('ISO 8601 date string')
-
-const SavedProfileSchema = z
-  .object({
-    version: z.literal(PROFILE_VERSION).describe('Profile schema version'),
-    created: DateStringSchema,
-    hardware: HardwareProfileSchema,
-    optimizations: z.array(z.string().min(1)).describe('Selected optimization keys'),
-    software: z.array(z.string().min(1)).describe('Selected software package keys'),
-  })
-  .describe('Saved user profile for persistence')
-
 export type ValidatedPackage = z.infer<typeof SoftwarePackageSchema>
 export type ValidatedCatalog = z.infer<typeof SoftwareCatalogSchema>
-export type ValidatedHardware = z.infer<typeof HardwareProfileSchema>
-export type ValidatedProfile = z.infer<typeof SavedProfileSchema>
 
 type ParseSuccess<T> = { readonly success: true; readonly data: T }
 type ParseFailure = { readonly success: false; readonly error: z.ZodError }
@@ -183,13 +113,6 @@ export function isParseSuccess<T>(result: ParseResult<T>): result is ParseSucces
 
 export function safeParseCatalog(data: unknown): ParseResult<ValidatedCatalog> {
   const result = SoftwareCatalogSchema.safeParse(data)
-  return result.success
-    ? { success: true, data: result.data }
-    : { success: false, error: result.error }
-}
-
-export function safeParseProfile(data: unknown): ParseResult<ValidatedProfile> {
-  const result = SavedProfileSchema.safeParse(data)
   return result.success
     ? { success: true, data: result.data }
     : { success: false, error: result.error }

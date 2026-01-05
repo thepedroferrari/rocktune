@@ -450,16 +450,6 @@ export interface Preset {
   readonly software: readonly PackageKey[]
 }
 
-export const PROFILE_VERSION = '1.0' as const
-
-export interface SavedProfile {
-  readonly version: typeof PROFILE_VERSION
-  readonly created: string
-  readonly hardware: HardwareProfile
-  readonly optimizations: readonly string[]
-  readonly software: readonly string[]
-}
-
 export const SCRIPT_FILENAME = 'rocktune-setup.ps1' as const
 
 export interface ScriptConfig {

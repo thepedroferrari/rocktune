@@ -5,7 +5,6 @@
    * Final section with:
    * - Status indicator
    * - Preflight checks
-   * - Profile save/load
    * - Preview and Download actions
    * - SHA256 checksum for verification
    */
@@ -27,7 +26,6 @@
   } from "$lib/script-generator";
   import Summary from "./Summary.svelte";
   import PreflightChecks from "./PreflightChecks.svelte";
-  import ProfileActions from "./ProfileActions.svelte";
   import ShareModal from "./ShareModal.svelte";
   import TroubleshootModal from "./TroubleshootModal.svelte";
 
@@ -132,7 +130,6 @@
   <Summary />
 
   <PreflightChecks />
-  <ProfileActions />
 
   <section class="transparency-zone" id="download">
     <span class="corner corner--tl"></span>

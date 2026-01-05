@@ -20,11 +20,3 @@ export function downloadText(content: string, filename: string): void {
 
   window.setTimeout(() => URL.revokeObjectURL(url), 100)
 }
-
-/**
- * Download JSON content as a file
- */
-export function downloadJson(data: unknown, filename: string): void {
-  const content = JSON.stringify(data, null, 2)
-  downloadText(content, filename)
-}

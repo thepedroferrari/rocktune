@@ -1,9 +1,0 @@
-@layer components {
-  @scope (.profile-actions) {
-    :scope {
-      display: flex;
-      gap: var(--space-sm);
-      margin-block-end: var(--space-md);
-    }
-  }
-}
