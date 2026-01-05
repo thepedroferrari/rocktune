@@ -60,5 +60,11 @@ deno task build
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
-    Permissions-Policy = "geolocation=(), microphone=(), camera=()"
+
+    # Permissions-Policy: Disable unnecessary browser APIs to reduce attack surface
+    # DISABLED: Motion sensors (accelerometer, gyroscope, magnetometer), media (camera, microphone, autoplay, encrypted-media, picture-in-picture),
+    #           hardware access (usb, midi, battery, screen-wake-lock), geolocation, payment, fullscreen, display-capture, WebAuthn, VR/AR, web-share, document-domain
+    # ENABLED: clipboard-write (needed for copy buttons to copy generated PowerShell scripts)
+    Permissions-Policy = "accelerometer=(), ambient-light-sensor=(), autoplay=(), battery=(), camera=(), display-capture=(), document-domain=(), encrypted-media=(), fullscreen=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), usb=(), web-share=(), xr-spatial-tracking=(), clipboard-write=(self)"
+
     Content-Security-Policy = "default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://cdn.simpleicons.org; script-src 'self'; connect-src 'self'"
