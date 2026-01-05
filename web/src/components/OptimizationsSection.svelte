@@ -177,6 +177,7 @@
             class="cyber-toggle-input"
             checked={app.ui.wizardMode}
             autocomplete="off"
+            aria-label="Enable wizard mode to review each optimization change"
             onchange={handleWizardToggle}
           />
           <label for="wizard-mode" class="cyber-toggle-label">

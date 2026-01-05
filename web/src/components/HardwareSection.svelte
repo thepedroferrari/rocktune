@@ -43,7 +43,7 @@
 
   <div id="hardware-help" popover class="hardware-help-panel">
     <section class="help-section">
-      <h4>How to find your CPU</h4>
+      <h3>How to find your CPU</h3>
       <p>
         Press <kbd>Win</kbd> + <kbd>Pause</kbd> or search
         <strong>"System Information"</strong> in Start
@@ -58,7 +58,7 @@
       </p>
     </section>
     <section class="help-section">
-      <h4>How to find your GPU</h4>
+      <h3>How to find your GPU</h3>
       <p>
         Press <kbd>Win</kbd> + <kbd>X</kbd> →
         <strong>Device Manager</strong> →

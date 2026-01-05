@@ -326,6 +326,7 @@
             value={shareURL}
             readonly
             autocomplete="off"
+            aria-label="Shareable build URL"
             onclick={(e) => e.currentTarget.select()}
           />
           <button

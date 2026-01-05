@@ -105,6 +105,9 @@
     font-size: var(--text-sm);
     border-top: 1px solid var(--border);
     margin-top: var(--space-3xl);
+    min-height: 80px;
+    content-visibility: auto;
+    contain-intrinsic-size: auto 80px;
 
     & p {
       margin: 0;

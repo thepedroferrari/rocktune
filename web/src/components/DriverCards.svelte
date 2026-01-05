@@ -46,7 +46,7 @@
       data-driver={card.id}
     >
       <span class="badge {card.badge}">{card.badge.toUpperCase()}</span>
-      <h4>{card.title}</h4>
+      <h3>{card.title}</h3>
       <p>{card.description}</p>
       {#if card.links.length === 1}
         <a href={card.links[0].url} target="_blank" rel="noopener">

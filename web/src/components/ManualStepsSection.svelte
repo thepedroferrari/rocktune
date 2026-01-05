@@ -657,7 +657,7 @@
 
           {#if group.videos && group.videos.length > 0}
             <div class="manual-steps__videos">
-              <h4 class="manual-steps__videos-title">
+              <h3 class="manual-steps__videos-title">
                 <svg
                   class="icon"
                   viewBox="0 0 24 24"
@@ -669,7 +669,7 @@
                   <rect x="1" y="5" width="15" height="14" rx="2" />
                 </svg>
                 Learn More
-              </h4>
+              </h3>
               <div class="manual-steps__videos-grid">
                 {#each group.videos as video (video.id)}
                   <a

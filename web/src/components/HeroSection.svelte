@@ -186,36 +186,31 @@
         <dl class="stats-list">
           <div class="stat-line">
             <dt class="stat-label">Network lag</dt>
-            <span class="stat-dots" aria-hidden="true"></span>
-            <dd class="stat-value">OPTIMIZED</dd>
+            <dd class="stat-value"><span class="stat-dots" aria-hidden="true"></span>OPTIMIZED</dd>
           </div>
           <div class="stat-line">
             <dt class="stat-label">Background noise</dt>
-            <span class="stat-dots" aria-hidden="true"></span>
-            <dd class="stat-value">REDUCED</dd>
+            <dd class="stat-value"><span class="stat-dots" aria-hidden="true"></span>REDUCED</dd>
           </div>
           <div class="stat-line">
             <dt class="stat-label">Windows tracking</dt>
-            <span class="stat-dots" aria-hidden="true"></span>
-            <dd class="stat-value">BLOCKED</dd>
+            <dd class="stat-value"><span class="stat-dots" aria-hidden="true"></span>BLOCKED</dd>
           </div>
 
-          <div class="stat-divider" role="presentation"></div>
+          <dt class="stat-divider" aria-hidden="true"></dt>
+          <dd class="stat-divider" aria-hidden="true"></dd>
 
           <div class="stat-line stat-line--highlight">
             <dt class="stat-label">Micro-stutters</dt>
-            <span class="stat-dots" aria-hidden="true"></span>
-            <dd class="stat-value stat-value--accent">MINIMIZED</dd>
+            <dd class="stat-value stat-value--accent"><span class="stat-dots" aria-hidden="true"></span>MINIMIZED</dd>
           </div>
           <div class="stat-line stat-line--highlight">
             <dt class="stat-label">Frame times</dt>
-            <span class="stat-dots" aria-hidden="true"></span>
-            <dd class="stat-value stat-value--accent">SMOOTHER</dd>
+            <dd class="stat-value stat-value--accent"><span class="stat-dots" aria-hidden="true"></span>SMOOTHER</dd>
           </div>
           <div class="stat-line stat-line--highlight">
             <dt class="stat-label">Input delay</dt>
-            <span class="stat-dots" aria-hidden="true"></span>
-            <dd class="stat-value stat-value--accent">FASTER</dd>
+            <dd class="stat-value stat-value--accent"><span class="stat-dots" aria-hidden="true"></span>FASTER</dd>
           </div>
         </dl>
 
@@ -739,6 +734,10 @@
   }
 
   .stat-value {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    flex: 1;
     color: var(--fold-safe);
     font-weight: 700;
     font-size: 0.85rem;
@@ -746,7 +745,7 @@
     text-shadow: 0 0 8px var(--fold-safe-glow);
   }
 
-  .stat-divider {
+  dt.stat-divider {
     height: 1px;
     background: linear-gradient(
       90deg,
@@ -756,6 +755,10 @@
       transparent
     );
     margin: var(--space-xs) 0;
+  }
+
+  dd.stat-divider {
+    display: none;
   }
 
   .stat-value--accent {
