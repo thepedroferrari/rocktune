@@ -367,7 +367,7 @@
   .hero-logo {
     font-family: var(--font-logo);
     font-size: clamp(3rem, 8vw, 5rem);
-    font-weight: 900;
+    font-weight: 800;
     letter-spacing: 0.06em;
     line-height: 1;
     color: var(--fold-accent);

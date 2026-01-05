@@ -15,27 +15,53 @@
 
   
   let gridEl: HTMLDivElement | undefined = $state()
-  let columnsPerRow = $state(6) 
+  let columnsPerRow = $state(6)
+  let resizeRaf: number | null = null
 
   
   $effect(() => {
     if (!gridEl) return
 
-    const updateColumns = () => {
-      const gridWidth = gridEl!.clientWidth
-      
+    let pendingWidth = 0
+
+    const updateColumns = (gridWidth: number) => {
       const minCardWidth = 120
       const gap = 16
-      
-      columnsPerRow = Math.floor((gridWidth + gap) / (minCardWidth + gap))
+      const nextColumns = Math.max(
+        1,
+        Math.floor((gridWidth + gap) / (minCardWidth + gap))
+      )
+
+      if (nextColumns !== columnsPerRow) {
+        columnsPerRow = nextColumns
+      }
     }
 
-    updateColumns()
+    const scheduleUpdate = (gridWidth: number) => {
+      pendingWidth = gridWidth
+      if (resizeRaf !== null) return
+      resizeRaf = requestAnimationFrame(() => {
+        resizeRaf = null
+        updateColumns(pendingWidth)
+      })
+    }
 
-    const observer = new ResizeObserver(updateColumns)
+    scheduleUpdate(gridEl.clientWidth)
+
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0]
+      if (!entry) return
+      scheduleUpdate(entry.contentRect.width)
+    })
     observer.observe(gridEl)
 
-    return () => observer.disconnect()
+    return () => {
+      observer.disconnect()
+      if (resizeRaf !== null) {
+        cancelAnimationFrame(resizeRaf)
+        resizeRaf = null
+      }
+    }
   })
 
   
@@ -77,5 +103,3 @@
     </div>
   {/if}
 </div>
-
-

@@ -19,7 +19,7 @@
   inset-inline-start: 50%;
   transform: translate(-50%, -50%);
   z-index: var(--z-modal, 1000);
-  display: flex;
+  display: none;
   flex-direction: column;
   max-inline-size: var(--_width);
   inline-size: calc(100% - 2rem);
@@ -29,8 +29,8 @@
   clip-path: var(--_clip);
   padding: 0;
   overflow: hidden;
-  opacity: 1;
-  scale: 1;
+  opacity: 0;
+  scale: 0.95;
   transition:
     opacity var(--duration-normal) var(--ease-out-expo),
     scale var(--duration-normal) var(--ease-out-expo),
@@ -42,15 +42,18 @@
     backdrop-filter: blur(var(--_backdrop-blur));
   }
 
+  pointer-events: none;
+}
+
+.modal-base[open] {
+  display: flex;
+  opacity: 1;
+  scale: 1;
+  pointer-events: auto;
+
   @starting-style {
     opacity: 0;
     scale: 0.95;
-  }
-
-  &:not([open]) {
-    opacity: 0;
-    scale: 0.95;
-    pointer-events: none;
   }
 }
 

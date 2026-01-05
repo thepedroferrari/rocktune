@@ -23,6 +23,7 @@
       box-shadow: var(--_shadow);
       display: flex;
       flex-direction: column;
+      contain: layout;
 
       &:has(input:focus-visible) {
         outline: none;
