@@ -645,7 +645,9 @@ export function generateTwitterText(build: BuildToEncode): string {
   if (stats.length > 0) parts.push(stats.join(', '))
 
   const highlight = getShareHighlights(build)[0]
-  const tagline = highlight ? `Windows gaming loadout · ${highlight.toLowerCase()}` : 'My Windows gaming loadout'
+  const tagline = highlight
+    ? `Windows gaming loadout · ${highlight.toLowerCase()}`
+    : 'My Windows gaming loadout'
   const hashtags = '#RockTune #WindowsGaming'
 
   // Build message, respecting 280 char limit minus URL length
