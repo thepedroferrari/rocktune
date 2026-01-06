@@ -24,7 +24,6 @@
     type EncodeResult,
     type OneLinerResult,
   } from "$lib/share";
-  import { PRESET_META } from "$lib/presets";
   import { copyToClipboard } from "$lib/checksum";
   import { showToast } from "$lib/toast.svelte";
   import Modal from "./ui/Modal.svelte";
@@ -81,9 +80,6 @@
         ? redditText
         : discordText,
   );
-
-  let presetMeta = $derived(app.activePreset ? PRESET_META[app.activePreset] : null);
-  let shareHighlights = $derived(getShareHighlights(currentBuild));
 
   // Check if Web Share API is available
   let canWebShare = $state(false);
@@ -162,89 +158,6 @@
       // User cancelled or share failed - ignore
     }
   }
-
-  type ShareCardTheme = {
-    accent: string;
-    accentSoft: string;
-    badgeBg: string;
-    badgeText: string;
-    bgTop: string;
-    bgBottom: string;
-    border: string;
-  };
-
-  const SHARE_CARD_THEMES: Record<string, ShareCardTheme> = {
-    legendary: {
-      accent: "#ffb24a",
-      accentSoft: "rgba(255, 178, 74, 0.25)",
-      badgeBg: "#ffb24a",
-      badgeText: "#1b1206",
-      bgTop: "#120704",
-      bgBottom: "#0b0c14",
-      border: "rgba(255, 178, 74, 0.5)",
-    },
-    epic: {
-      accent: "#b678ff",
-      accentSoft: "rgba(182, 120, 255, 0.24)",
-      badgeBg: "#b678ff",
-      badgeText: "#140824",
-      bgTop: "#090612",
-      bgBottom: "#090c16",
-      border: "rgba(182, 120, 255, 0.5)",
-    },
-    rare: {
-      accent: "#5dd1ff",
-      accentSoft: "rgba(93, 209, 255, 0.22)",
-      badgeBg: "#5dd1ff",
-      badgeText: "#061826",
-      bgTop: "#06101c",
-      bgBottom: "#091019",
-      border: "rgba(93, 209, 255, 0.45)",
-    },
-    uncommon: {
-      accent: "#5cf2b0",
-      accentSoft: "rgba(92, 242, 176, 0.2)",
-      badgeBg: "#5cf2b0",
-      badgeText: "#062115",
-      bgTop: "#04120c",
-      bgBottom: "#081318",
-      border: "rgba(92, 242, 176, 0.42)",
-    },
-    common: {
-      accent: "#a8a8a8",
-      accentSoft: "rgba(168, 168, 168, 0.2)",
-      badgeBg: "#2b2b2b",
-      badgeText: "#e6e6e6",
-      bgTop: "#0b0b0f",
-      bgBottom: "#0c0c14",
-      border: "rgba(255, 255, 255, 0.16)",
-    },
-  };
-
-  function getShareCardTheme(): ShareCardTheme {
-    if (presetMeta?.rarity && SHARE_CARD_THEMES[presetMeta.rarity]) {
-      return SHARE_CARD_THEMES[presetMeta.rarity];
-    }
-    return SHARE_CARD_THEMES.common;
-  }
-
-  function trimText(value: string, max: number): string {
-    if (value.length <= max) return value;
-    return `${value.slice(0, Math.max(0, max - 3))}...`;
-  }
-
-  function escapeSvgText(value: string): string {
-    return value
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
-  }
-
-  function shortenUrl(value: string): string {
-    const normalized = value.replace(/^https?:\/\//, "");
-    return trimText(normalized, 42);
-  }
-
 </script>
 
 <Modal {open} {onclose} size="lg" class="share-modal">
@@ -1515,7 +1428,6 @@
     width: 16px;
     height: 16px;
   }
-
 
   @media (max-width: 640px) {
     :global(.share-modal) {
