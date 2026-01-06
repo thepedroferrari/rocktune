@@ -11,6 +11,8 @@
 
   import { slide } from "svelte/transition";
   import ShareModal from "./ShareModal.svelte";
+  import { preloadSection, type SectionId } from "../lib/preload";
+  import { scrollToSection } from "../lib/scroll";
 
   let shareModalOpen = $state(false);
   let menuOpen = $state(false);
@@ -83,14 +85,24 @@
     };
   });
 
-  function handleClick(event: MouseEvent, link: NavLink) {
-    const target = document.querySelector(link.href);
-    if (target) {
-      event.preventDefault();
-      target.scrollIntoView({ behavior: "smooth", block: "start" });
-      activeStep = link.step;
-      closeMenu();
-    }
+  function handlePreload(link: NavLink) {
+    const sectionId = link.href.replace("#", "") as SectionId;
+    preloadSection(sectionId);
+  }
+
+  async function handleClick(event: MouseEvent, link: NavLink) {
+    event.preventDefault();
+    const sectionId = link.href.replace("#", "") as SectionId;
+
+    // Trigger preload if not already done
+    preloadSection(sectionId);
+
+    // Update active state optimistically
+    activeStep = link.step;
+    closeMenu();
+
+    // Scroll with wait-for-render
+    await scrollToSection({ sectionId });
   }
 
   function handleMobileShare() {
@@ -126,6 +138,8 @@
           class="nav-link"
           class:active={activeStep === link.step}
           data-step={link.step}
+          onmouseenter={() => handlePreload(link)}
+          onfocusin={() => handlePreload(link)}
           onclick={(e) => handleClick(e, link)}
         >
           {link.label}
@@ -185,6 +199,8 @@
               href={link.href}
               class="mobile-link"
               class:active={activeStep === link.step}
+              onmouseenter={() => handlePreload(link)}
+              onfocusin={() => handlePreload(link)}
               onclick={(e) => handleClick(e, link)}
             >
               {link.label}

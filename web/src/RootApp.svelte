@@ -27,6 +27,8 @@
   import { safeParseCatalog, isParseSuccess, formatZodErrors } from './schemas'
   import type { SoftwareCatalog } from '$lib/types'
   import { getDefaultOptimizations } from '$lib/optimizations'
+  import { scrollToSection } from '$lib/scroll'
+  import SectionSkeleton from './components/SectionSkeleton.svelte'
   import {
     hasShareHash,
     getShareHash,
@@ -362,9 +364,9 @@
     <a
       href="#hardware"
       class="wizard-next-btn"
-      onclick={(e) => {
+      onclick={async (e) => {
         e.preventDefault();
-        document.getElementById('hardware')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        await scrollToSection({ sectionId: 'hardware' });
       }}
     >
       <span class="wizard-next-text">Next: Hardware</span>
@@ -374,7 +376,9 @@
     </a>
   </nav>
 
-  {#await import('./components/HardwareSection.svelte') then { default: HardwareSection }}
+  {#await import('./components/HardwareSection.svelte')}
+    <SectionSkeleton height="400px" />
+  {:then { default: HardwareSection }}
     <HardwareSection />
   {/await}
 
@@ -382,9 +386,9 @@
     <a
       href="#peripherals"
       class="wizard-next-btn"
-      onclick={(e) => {
+      onclick={async (e) => {
         e.preventDefault();
-        document.getElementById('peripherals')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        await scrollToSection({ sectionId: 'peripherals' });
       }}
     >
       <span class="wizard-next-text">Next: Peripherals</span>
@@ -394,7 +398,9 @@
     </a>
   </nav>
 
-  {#await import('./components/PeripheralsSection.svelte') then { default: PeripheralsSection }}
+  {#await import('./components/PeripheralsSection.svelte')}
+    <SectionSkeleton height="350px" />
+  {:then { default: PeripheralsSection }}
     <PeripheralsSection />
   {/await}
 
@@ -402,9 +408,9 @@
     <a
       href="#optimizations"
       class="wizard-next-btn"
-      onclick={(e) => {
+      onclick={async (e) => {
         e.preventDefault();
-        document.getElementById('optimizations')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        await scrollToSection({ sectionId: 'optimizations' });
       }}
     >
       <span class="wizard-next-text">Next: Tweaks</span>
@@ -414,7 +420,9 @@
     </a>
   </nav>
 
-  {#await import('./components/OptimizationsSection.svelte') then { default: OptimizationsSection }}
+  {#await import('./components/OptimizationsSection.svelte')}
+    <SectionSkeleton height="800px" />
+  {:then { default: OptimizationsSection }}
     <OptimizationsSection />
   {/await}
 
@@ -422,9 +430,9 @@
     <a
       href="#software"
       class="wizard-next-btn"
-      onclick={(e) => {
+      onclick={async (e) => {
         e.preventDefault();
-        document.getElementById('software')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        await scrollToSection({ sectionId: 'software' });
       }}
     >
       <span class="wizard-next-text">Next: Arsenal</span>
@@ -484,10 +492,14 @@
         <button type="button" onclick={hydrateCatalog}>Retry</button>
       </output>
     {:else}
-      {#await import('./components/Filters.svelte') then { default: Filters }}
+      {#await import('./components/Filters.svelte')}
+        <SectionSkeleton height="100px" />
+      {:then { default: Filters }}
         <Filters {recommendedPreset} />
       {/await}
-      {#await import('./components/SoftwareGrid.svelte') then { default: SoftwareGrid }}
+      {#await import('./components/SoftwareGrid.svelte')}
+        <SectionSkeleton height="600px" />
+      {:then { default: SoftwareGrid }}
         <SoftwareGrid />
       {/await}
     {/if}
@@ -497,9 +509,9 @@
     <a
       href="#generate"
       class="wizard-next-btn"
-      onclick={(e) => {
+      onclick={async (e) => {
         e.preventDefault();
-        document.getElementById('generate')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        await scrollToSection({ sectionId: 'generate' });
       }}
     >
       <span class="wizard-next-text">Next: Forge Script</span>
@@ -509,11 +521,15 @@
     </a>
   </nav>
 
-  {#await import('./components/ForgeSection.svelte') then { default: ForgeSection }}
+  {#await import('./components/ForgeSection.svelte')}
+    <SectionSkeleton height="600px" />
+  {:then { default: ForgeSection }}
     <ForgeSection />
   {/await}
 
-  {#await import('./components/ManualStepsSection.svelte') then { default: ManualStepsSection }}
+  {#await import('./components/ManualStepsSection.svelte')}
+    <SectionSkeleton height="500px" />
+  {:then { default: ManualStepsSection }}
     <ManualStepsSection />
   {/await}
 </main>

@@ -82,9 +82,9 @@ deno task build
 
     # Permissions-Policy: Disable unnecessary browser APIs to reduce attack surface
     # DISABLED: Motion sensors (accelerometer, gyroscope, magnetometer), media (camera, microphone, autoplay, encrypted-media, picture-in-picture),
-    #           hardware access (usb, midi, battery, screen-wake-lock), geolocation, payment, fullscreen, display-capture, WebAuthn, VR/AR, web-share, document-domain
+    #           hardware access (usb, midi, screen-wake-lock), geolocation, payment, fullscreen, display-capture, WebAuthn, VR/AR, web-share
     # ENABLED: clipboard-write (needed for copy buttons to copy generated PowerShell scripts)
-    Permissions-Policy = "accelerometer=(), ambient-light-sensor=(), autoplay=(), battery=(), camera=(), display-capture=(), document-domain=(), encrypted-media=(), fullscreen=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), usb=(), web-share=(), xr-spatial-tracking=(), clipboard-write=(self)"
+    Permissions-Policy = "accelerometer=(), autoplay=(), camera=(), display-capture=(), encrypted-media=(), fullscreen=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), usb=(), web-share=(), xr-spatial-tracking=(), clipboard-write=(self)"
 
-    # Update CSP to allow /og endpoint for images
-    Content-Security-Policy = "default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://cdn.simpleicons.org /og; script-src 'self'; connect-src 'self'"
+    # Update CSP to allow /og endpoint and YouTube thumbnails for images
+    Content-Security-Policy = "default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://cdn.simpleicons.org https://img.youtube.com https://i.ytimg.com; script-src 'self'; connect-src 'self'"
