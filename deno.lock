@@ -1,0 +1,8 @@
+{
+  "version": "5",
+  "remote": {
+    "https://deno.land/x/resvg_wasm@0.2.0/lib/resvg_wasm.generated.js": "29247e1c473c35f302d8c3741d369e2e999df6b3978cf2c975f701d2fb39c63e",
+    "https://deno.land/x/resvg_wasm@0.2.0/mod.ts": "be79306e8e038f6ac8a1151127b7a29d52125e4b4b671bf8c4a248d85c41c7fd",
+    "https://esm.sh/lz-string@1.5.0": "dea8909e240e2de1893fbd1b5740570560bae6ceda48e584b57d6728b51910fc"
+  }
+}
