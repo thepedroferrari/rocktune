@@ -1242,13 +1242,14 @@
        &::before {
          content: '';
          position: absolute;
-         top: -1px;
+         top: -11px;
          right: -1px;
-         width: 10px;
-         height: 10px;
-         background: linear-gradient(135deg, transparent 50%, var(--control-accent) 50%);
-         opacity: 0.4;
-         transition: opacity 0.2s;
+         width: 25px;
+         height: 25px;
+         background: linear-gradient(135deg, transparent 48%, var(--control-accent) 50%);
+         opacity: .4;
+         transition: opacity .4s ease-in-out;
+         transform: rotate(-90deg);
        }
 
        &:hover {
