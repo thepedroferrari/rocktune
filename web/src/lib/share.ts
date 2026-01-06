@@ -4,8 +4,9 @@
  * Compresses build state into URL-safe strings for sharing.
  * Uses stable ID registry for backward compatibility.
  *
- * URL format: site.com/#b={version}.{compressed_data}
- * Example: rocktune.pedroferrari.com/#b=1.eJxLTc7PLShKLS5RBABJtQPi
+ * URL format: site.com/?b={version}.{compressed_data}
+ * Example: rocktune.pedroferrari.com/?b=1.eJxLTc7PLShKLS5RBABJtQPi
+ * Legacy format: site.com/#b=... (still supported for backward compatibility)
  */
 
 import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from 'lz-string'
@@ -389,19 +390,28 @@ function decodeV1(data: ShareDataV1): DecodeResult {
 }
 
 /**
- * Check if current URL has a share hash
+ * Check if current URL has a share hash or query param
  */
 export function hasShareHash(): boolean {
   if (typeof window === 'undefined') return false
+  // Check query param first (new format)
+  const searchParams = new URLSearchParams(window.location.search)
+  if (searchParams.has('b')) return true
+  // Check hash (legacy format)
   const hash = window.location.hash
   return hash.startsWith('#b=')
 }
 
 /**
- * Get share hash from current URL
+ * Get share hash from current URL (checks both query param and hash)
  */
 export function getShareHash(): string | null {
   if (typeof window === 'undefined') return null
+  // Check query param first (new format)
+  const searchParams = new URLSearchParams(window.location.search)
+  const queryB = searchParams.get('b')
+  if (queryB) return `b=${queryB}`
+  // Check hash (legacy format)
   const hash = window.location.hash
   if (!hash.startsWith('#b=')) return null
   return hash
@@ -434,7 +444,8 @@ export function getFullShareURLWithMeta(build: BuildToEncode): EncodeResult {
   const hash = encodeShareURL(build)
   const baseURL =
     typeof window !== 'undefined' ? window.location.origin : 'https://rocktune.pedroferrari.com'
-  const url = `${baseURL}/#${hash}`
+  // Use query param instead of hash for OG image support
+  const url = `${baseURL}/?${hash}`
 
   return {
     hash,
@@ -592,6 +603,22 @@ const PRESET_LABELS: Record<string, string> = {
   gamer: 'Gamer',
 }
 
+const PRESET_HIGHLIGHTS: Record<PresetType, readonly string[]> = {
+  benchmarker: ['Full telemetry', 'Repeatable runs', 'Deep diagnostics'],
+  pro_gamer: ['Lower input lag', 'Stable frame times', 'Minimal background noise'],
+  streamer: ['Capture-safe performance', 'Clean audio chain', 'Smooth frame pacing'],
+  gamer: ['Smoother frame times', 'Stable daily driver', 'Low overhead'],
+}
+
+const DEFAULT_HIGHLIGHTS = ['Lower input lag', 'Smoother frame times', 'Cleaner background load']
+
+export function getShareHighlights(build: BuildToEncode): readonly string[] {
+  if (build.preset && PRESET_HIGHLIGHTS[build.preset]) {
+    return PRESET_HIGHLIGHTS[build.preset]
+  }
+  return DEFAULT_HIGHLIGHTS
+}
+
 /**
  * Generate Twitter-optimized share text (280 char limit)
  * Format: Short, punchy, with hashtags
@@ -617,7 +644,8 @@ export function generateTwitterText(build: BuildToEncode): string {
   if (build.packages.length > 0) stats.push(`${build.packages.length} apps`)
   if (stats.length > 0) parts.push(stats.join(', '))
 
-  const tagline = 'My Windows gaming loadout'
+  const highlight = getShareHighlights(build)[0]
+  const tagline = highlight ? `Windows gaming loadout · ${highlight.toLowerCase()}` : 'My Windows gaming loadout'
   const hashtags = '#RockTune #WindowsGaming'
 
   // Build message, respecting 280 char limit minus URL length
@@ -643,6 +671,7 @@ export function generateTwitterText(build: BuildToEncode): string {
 export function generateRedditText(build: BuildToEncode): string {
   const url = getFullShareURL(build)
   const lines: string[] = []
+  const highlights = getShareHighlights(build)
 
   // Title
   const presetLabel = build.preset ? ` [${PRESET_LABELS[build.preset] || build.preset}]` : ''
@@ -677,6 +706,12 @@ export function generateRedditText(build: BuildToEncode): string {
   }
 
   lines.push('')
+  lines.push('**Highlights**')
+  lines.push('')
+  for (const highlight of highlights) {
+    lines.push(`- ${highlight}`)
+  }
+  lines.push('')
   lines.push(`**Import link:** ${url}`)
   lines.push('')
   lines.push('---')
@@ -694,6 +729,7 @@ export function generateRedditText(build: BuildToEncode): string {
 export function generateDiscordText(build: BuildToEncode): string {
   const url = getFullShareURL(build)
   const lines: string[] = []
+  const highlights = getShareHighlights(build)
 
   // Header with preset
   const presetLabel = build.preset ? ` · ${PRESET_LABELS[build.preset] || build.preset}` : ''
@@ -709,10 +745,11 @@ export function generateDiscordText(build: BuildToEncode): string {
   const stats: string[] = []
   if (build.optimizations.length > 0) stats.push(`${build.optimizations.length} optimizations`)
   if (build.packages.length > 0) stats.push(`${build.packages.length} packages`)
-  if (stats.length > 0) lines.push(`> ${stats.join(' · ')}`)
+  if (stats.length > 0) lines.push(`• ${stats.join(' · ')}`)
+  if (highlights.length > 0) lines.push(`• Highlights: ${highlights.join(' · ')}`)
 
   lines.push('')
-  lines.push(url)
+  lines.push(`Share link: ${url}`)
 
   return lines.join('\n')
 }

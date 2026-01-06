@@ -30,6 +30,8 @@ export interface PresetMeta {
   readonly description: string
   readonly bestFor: string
   readonly traits: readonly string[]
+  readonly badge: string
+  readonly icon: string
   readonly rarity: 'legendary' | 'epic' | 'rare' | 'uncommon' | 'common'
   readonly intensity: number
   readonly risk: 'low' | 'medium' | 'high'
@@ -113,6 +115,8 @@ function toPresetMeta(persona: PersonaRaw): PresetMeta {
     description: persona.card_blurb,
     bestFor: persona.best_for,
     traits: persona.constraints.slice(0, 2),
+    badge: persona.card_badge,
+    icon: persona.card_icon,
     rarity: rarityByBadge[persona.card_badge] ?? 'common',
     intensity: toIntensity(persona.intensity),
     risk: persona.risk,

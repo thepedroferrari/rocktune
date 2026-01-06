@@ -15,6 +15,7 @@
     getFullShareURLWithMeta,
     getOneLinerWithMeta,
     getBuildSummary,
+    getShareHighlights,
     getSocialShareURLs,
     generateTwitterText,
     generateRedditText,
@@ -23,6 +24,7 @@
     type EncodeResult,
     type OneLinerResult,
   } from "$lib/share";
+  import { PRESET_META } from "$lib/presets";
   import { copyToClipboard } from "$lib/checksum";
   import { showToast } from "$lib/toast.svelte";
   import Modal from "./ui/Modal.svelte";
@@ -79,6 +81,14 @@
         ? redditText
         : discordText,
   );
+
+  let presetMeta = $derived(app.activePreset ? PRESET_META[app.activePreset] : null);
+  let shareHighlights = $derived(getShareHighlights(currentBuild));
+  let shareCardSvgUrl = $state<string | null>(null);
+  let shareCardPngUrl = $state<string | null>(null);
+  let shareCardLoading = $state(false);
+  let shareCardError = $state<string | null>(null);
+  let shareCardAutoTriggered = $state(false);
 
   // Check if Web Share API is available
   let canWebShare = $state(false);
@@ -157,6 +167,292 @@
       // User cancelled or share failed - ignore
     }
   }
+
+  type ShareCardTheme = {
+    accent: string;
+    accentSoft: string;
+    badgeBg: string;
+    badgeText: string;
+    bgTop: string;
+    bgBottom: string;
+    border: string;
+  };
+
+  const SHARE_CARD_THEMES: Record<string, ShareCardTheme> = {
+    legendary: {
+      accent: "#ffb24a",
+      accentSoft: "rgba(255, 178, 74, 0.25)",
+      badgeBg: "#ffb24a",
+      badgeText: "#1b1206",
+      bgTop: "#120704",
+      bgBottom: "#0b0c14",
+      border: "rgba(255, 178, 74, 0.5)",
+    },
+    epic: {
+      accent: "#b678ff",
+      accentSoft: "rgba(182, 120, 255, 0.24)",
+      badgeBg: "#b678ff",
+      badgeText: "#140824",
+      bgTop: "#090612",
+      bgBottom: "#090c16",
+      border: "rgba(182, 120, 255, 0.5)",
+    },
+    rare: {
+      accent: "#5dd1ff",
+      accentSoft: "rgba(93, 209, 255, 0.22)",
+      badgeBg: "#5dd1ff",
+      badgeText: "#061826",
+      bgTop: "#06101c",
+      bgBottom: "#091019",
+      border: "rgba(93, 209, 255, 0.45)",
+    },
+    uncommon: {
+      accent: "#5cf2b0",
+      accentSoft: "rgba(92, 242, 176, 0.2)",
+      badgeBg: "#5cf2b0",
+      badgeText: "#062115",
+      bgTop: "#04120c",
+      bgBottom: "#081318",
+      border: "rgba(92, 242, 176, 0.42)",
+    },
+    common: {
+      accent: "#a8a8a8",
+      accentSoft: "rgba(168, 168, 168, 0.2)",
+      badgeBg: "#2b2b2b",
+      badgeText: "#e6e6e6",
+      bgTop: "#0b0b0f",
+      bgBottom: "#0c0c14",
+      border: "rgba(255, 255, 255, 0.16)",
+    },
+  };
+
+  function getShareCardTheme(): ShareCardTheme {
+    if (presetMeta?.rarity && SHARE_CARD_THEMES[presetMeta.rarity]) {
+      return SHARE_CARD_THEMES[presetMeta.rarity];
+    }
+    return SHARE_CARD_THEMES.common;
+  }
+
+  function trimText(value: string, max: number): string {
+    if (value.length <= max) return value;
+    return `${value.slice(0, Math.max(0, max - 3))}...`;
+  }
+
+  function escapeSvgText(value: string): string {
+    return value
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
+  function shortenUrl(value: string): string {
+    const normalized = value.replace(/^https?:\/\//, "");
+    return trimText(normalized, 42);
+  }
+
+  function buildShareCardSvg(): string {
+    const width = 1200;
+    const height = 630;
+    const theme = getShareCardTheme();
+    const personaLabel = escapeSvgText(buildSummary.preset ?? "Custom Build");
+    const badgeLabel = escapeSvgText(presetMeta?.label ?? "Custom Build");
+    const subtitle = escapeSvgText(presetMeta?.subtitle ?? "Personalized loadout");
+    const highlights = shareHighlights.slice(0, 3);
+    const displayUrl = escapeSvgText(shortenUrl(shareURL));
+    const statsLine = escapeSvgText(
+      `${buildSummary.optimizationCount} optimizations · ${buildSummary.packageCount} apps`,
+    );
+    const hardwareLine = escapeSvgText(`${buildSummary.cpu} + ${buildSummary.gpu}`);
+    const badgeX = width - 330;
+    const badgeY = 90;
+    const badgeW = 236;
+    const badgeH = 52;
+    const badgeNotch = 18;
+
+    const highlightLines = highlights.map((highlight, index) => {
+      const y = 392 + index * 32;
+      return `
+  <circle cx="98" cy="${y - 6}" r="4" fill="${theme.accent}" />
+  <text x="112" y="${y}" fill="#d7dbe6" font-size="22">${escapeSvgText(highlight)}</text>`;
+    });
+
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+  <defs>
+    <linearGradient id="share-bg" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="${theme.bgTop}" />
+      <stop offset="100%" stop-color="${theme.bgBottom}" />
+    </linearGradient>
+    <linearGradient id="share-panel" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0%" stop-color="${theme.accent}" stop-opacity="0.18" />
+      <stop offset="55%" stop-color="${theme.accent}" stop-opacity="0.04" />
+      <stop offset="100%" stop-color="${theme.accent}" stop-opacity="0.28" />
+    </linearGradient>
+    <linearGradient id="share-accent" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0%" stop-color="${theme.accent}" stop-opacity="0.15" />
+      <stop offset="100%" stop-color="${theme.accent}" stop-opacity="0.45" />
+    </linearGradient>
+    <radialGradient id="share-glow" cx="0.12" cy="0.1" r="0.6">
+      <stop offset="0%" stop-color="${theme.accent}" stop-opacity="0.6" />
+      <stop offset="60%" stop-color="${theme.accent}" stop-opacity="0.12" />
+      <stop offset="100%" stop-color="${theme.accent}" stop-opacity="0" />
+    </radialGradient>
+    <pattern id="grid" width="36" height="36" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255, 255, 255, 0.06)" stroke-width="1" />
+    </pattern>
+    <pattern id="scanlines" width="5" height="5" patternUnits="userSpaceOnUse">
+      <rect width="5" height="1" fill="rgba(255, 255, 255, 0.08)" />
+    </pattern>
+    <pattern id="diagonals" width="20" height="20" patternUnits="userSpaceOnUse" patternTransform="rotate(25)">
+      <line x1="0" y1="0" x2="0" y2="20" stroke="rgba(255, 255, 255, 0.08)" stroke-width="2" />
+    </pattern>
+    <filter id="soft-glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="14" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="${width}" height="${height}" rx="32" fill="url(#share-bg)" />
+  <rect width="${width}" height="${height}" rx="32" fill="url(#share-glow)" />
+  <rect width="${width}" height="${height}" rx="32" fill="url(#grid)" opacity="0.35" />
+  <rect width="${width}" height="${height}" rx="32" fill="url(#scanlines)" opacity="0.16" />
+
+  <rect x="26" y="26" width="${width - 52}" height="${height - 52}" rx="28" fill="none" stroke="${theme.border}" stroke-width="2" />
+  <rect x="58" y="58" width="${width - 116}" height="150" rx="22" fill="url(#share-panel)" />
+  <polygon points="70,70 1008,70 1140,160 1140,208 70,208" fill="rgba(8, 8, 16, 0.5)" />
+  <rect x="${width - 232}" y="58" width="174" height="150" fill="url(#diagonals)" opacity="0.5" />
+
+  <text x="84" y="116" fill="#f3f4f8" font-family="JetBrains Mono, monospace" font-size="30" letter-spacing="3">ROCKTUNE</text>
+  <text x="84" y="154" fill="${theme.accent}" font-family="JetBrains Mono, monospace" font-size="22">${subtitle}</text>
+  <text x="84" y="190" fill="#c8cedc" font-family="JetBrains Mono, monospace" font-size="16" letter-spacing="2">CS2-READY LOADOUT</text>
+  <path d="M 84 210 H 360" stroke="${theme.accent}" stroke-width="3" stroke-linecap="round" fill="none" />
+
+  <path d="M ${badgeX + badgeNotch} ${badgeY} H ${badgeX + badgeW} L ${badgeX + badgeW + badgeNotch} ${badgeY + badgeH / 2} L ${badgeX + badgeW} ${badgeY + badgeH} H ${badgeX + badgeNotch} L ${badgeX} ${badgeY + badgeH / 2} Z" fill="${theme.badgeBg}" filter="url(#soft-glow)" />
+  <text x="${badgeX + badgeW / 2 + badgeNotch / 2}" y="${badgeY + 34}" fill="${theme.badgeText}" font-family="JetBrains Mono, monospace" font-size="16" text-anchor="middle" letter-spacing="1">${badgeLabel}</text>
+
+  <text x="84" y="272" fill="#f3f4f8" font-family="JetBrains Mono, monospace" font-size="40">${personaLabel}</text>
+  <text x="84" y="314" fill="#b9bfcd" font-family="JetBrains Mono, monospace" font-size="24">${hardwareLine}</text>
+  <text x="84" y="350" fill="#b9bfcd" font-family="JetBrains Mono, monospace" font-size="20">${statsLine}</text>
+
+  <text x="84" y="382" fill="#f3f4f8" font-family="JetBrains Mono, monospace" font-size="19" letter-spacing="2">PERFORMANCE HIGHLIGHTS</text>
+  ${highlightLines.join("\n")}
+
+  <rect x="58" y="${height - 120}" width="${width - 116}" height="78" rx="18" fill="rgba(10, 12, 20, 0.72)" stroke="rgba(255, 255, 255, 0.08)" />
+  <path d="M 96 ${height - 82} H 220" stroke="${theme.accent}" stroke-width="2" stroke-linecap="round" fill="none" />
+  <text x="84" y="${height - 70}" fill="#cbd1dd" font-family="JetBrains Mono, monospace" font-size="18" letter-spacing="1">SHARE LINK</text>
+  <text x="240" y="${height - 70}" fill="${theme.accent}" font-family="JetBrains Mono, monospace" font-size="20">${displayUrl}</text>
+  <path d="M ${width - 160} ${height - 96} L ${width - 110} ${height - 96} L ${width - 80} ${height - 66}" stroke="${theme.accent}" stroke-width="2" fill="none" />
+</svg>`;
+  }
+
+  async function svgToPng(svg: string, width: number, height: number): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const svgBlob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
+      const svgUrl = URL.createObjectURL(svgBlob);
+      let settled = false;
+      const timeout = globalThis.setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        URL.revokeObjectURL(svgUrl);
+        reject(new Error("Image render timeout"));
+      }, 6000);
+
+      const img = new Image();
+      img.onload = () => {
+        if (settled) return;
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          settled = true;
+          globalThis.clearTimeout(timeout);
+          URL.revokeObjectURL(svgUrl);
+          reject(new Error("Canvas unavailable"));
+          return;
+        }
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => {
+            if (settled) return;
+            settled = true;
+            globalThis.clearTimeout(timeout);
+            URL.revokeObjectURL(svgUrl);
+            if (!blob) {
+              try {
+                resolve(canvas.toDataURL("image/png"));
+              } catch (err) {
+                reject(new Error("PNG export failed"));
+              }
+              return;
+            }
+            const pngUrl = URL.createObjectURL(blob);
+            resolve(pngUrl);
+          },
+          "image/png",
+          0.95,
+        );
+      };
+      img.onerror = () => {
+        if (settled) return;
+        settled = true;
+        globalThis.clearTimeout(timeout);
+        URL.revokeObjectURL(svgUrl);
+        reject(new Error("Failed to render image"));
+      };
+      img.src = svgUrl;
+    });
+  }
+
+  async function handleGenerateShareCard() {
+    if (shareCardLoading) return;
+    shareCardLoading = true;
+    shareCardError = null;
+    const svg = buildShareCardSvg();
+    shareCardSvgUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+    if (shareCardPngUrl) {
+      URL.revokeObjectURL(shareCardPngUrl);
+      shareCardPngUrl = null;
+    }
+    try {
+      const pngPromise = svgToPng(svg, 1200, 630);
+      const timeoutPromise = new Promise<string>((_, reject) => {
+        const timeoutId = globalThis.setTimeout(() => {
+          reject(new Error("PNG generation timeout"));
+        }, 7000);
+        pngPromise.finally(() => globalThis.clearTimeout(timeoutId));
+      });
+      shareCardPngUrl = await Promise.race([pngPromise, timeoutPromise]);
+    } catch (err) {
+      shareCardError = "Unable to generate share image. Please try again.";
+    } finally {
+      shareCardLoading = false;
+    }
+  }
+
+  $effect(() => {
+    void currentBuild;
+    shareCardSvgUrl = null;
+    if (shareCardPngUrl) {
+      URL.revokeObjectURL(shareCardPngUrl);
+      shareCardPngUrl = null;
+    }
+    shareCardAutoTriggered = false;
+  });
+
+  $effect(() => {
+    if (activeTab !== "social") return;
+    if (!shareCardSvgUrl) {
+      const svg = buildShareCardSvg();
+      shareCardSvgUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+    }
+    if (!shareCardAutoTriggered && !shareCardPngUrl && !shareCardLoading) {
+      shareCardAutoTriggered = true;
+      void handleGenerateShareCard();
+    }
+  });
 </script>
 
 <Modal {open} {onclose} size="lg" class="share-modal">
@@ -778,6 +1074,51 @@
               {/if}
             </p>
           </div>
+          <div class="share-panel__section">
+            <div class="share-panel__section-header">
+              <h3 class="share-panel__section-title">Share image</h3>
+              <p class="share-panel__desc">
+                Generate a share card with your persona badge and color profile.
+              </p>
+            </div>
+            <div class="share-card-preview">
+              {#if shareCardSvgUrl}
+                <img
+                  src={shareCardSvgUrl}
+                  alt="RockTune share card"
+                  class="share-card-preview__image"
+                />
+              {:else}
+                <div class="share-card-preview__placeholder">
+                  No image generated yet.
+                </div>
+              {/if}
+            </div>
+            <div class="share-card-actions">
+              <button
+                type="button"
+                class="share-card-btn share-card-btn--primary"
+                onclick={handleGenerateShareCard}
+                disabled={shareCardLoading}
+              >
+                {shareCardLoading ? "Generating..." : "Generate image"}
+              </button>
+              <a
+                class="share-card-btn share-card-btn--secondary"
+                href={shareCardPngUrl ?? "#"}
+                download="rocktune-loadout.png"
+                aria-disabled={!shareCardPngUrl}
+                onclick={(event) => {
+                  if (!shareCardPngUrl) event.preventDefault();
+                }}
+              >
+                Download PNG
+              </a>
+            </div>
+            {#if shareCardError}
+              <p class="share-card-error">{shareCardError}</p>
+            {/if}
+          </div>
         </div>
       {/if}
     </div>
@@ -980,7 +1321,8 @@
   .share-url-copy,
   .benchmark-copy,
   .share-oneliner-copy,
-  .platform-text-copy {
+  .platform-text-copy,
+  .share-card-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -1426,6 +1768,102 @@
   .platform-text-copy .icon {
     width: 16px;
     height: 16px;
+  }
+
+  .share-card-preview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 220px;
+    padding: var(--space-sm);
+    background:
+      linear-gradient(135deg, rgba(8, 10, 18, 0.92), rgba(10, 12, 20, 0.6)),
+      radial-gradient(circle at 20% 20%, rgba(124, 72, 200, 0.2), transparent 55%);
+    border: 1px solid color-mix(in oklch, var(--share-accent) 40%, var(--share-border));
+    border-radius: var(--radius-md);
+    aspect-ratio: 1200 / 630;
+    position: relative;
+    overflow: hidden;
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+      0 12px 32px rgba(0, 0, 0, 0.35);
+  }
+
+  .share-card-preview::before {
+    content: "";
+    position: absolute;
+    inset: 10px;
+    border-radius: var(--radius-sm);
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+    pointer-events: none;
+  }
+
+  .share-card-preview::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+    background-size: 42px 42px;
+    opacity: 0.15;
+    pointer-events: none;
+  }
+
+  .share-card-preview__image {
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius-sm);
+    display: block;
+    position: relative;
+    z-index: 1;
+  }
+
+  .share-card-preview__placeholder {
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+  }
+
+  .share-card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+  }
+
+  .share-card-btn--primary {
+    background: var(--share-accent);
+    border: none;
+    color: var(--share-ink);
+  }
+
+  .share-card-btn--primary:hover {
+    background: color-mix(in oklch, var(--share-accent) 85%, white 15%);
+  }
+
+  .share-card-btn--secondary {
+    background: var(--share-surface-raised);
+    border: 1px solid var(--share-border-soft);
+    color: var(--text-secondary);
+    text-decoration: none;
+  }
+
+  .share-card-btn--secondary:hover {
+    background: color-mix(in oklch, var(--share-surface-raised) 75%, var(--share-accent) 25%);
+    border-color: var(--share-accent-border);
+    color: var(--text-primary);
+  }
+
+  .share-card-btn[disabled],
+  .share-card-btn[aria-disabled="true"] {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  .share-card-error {
+    margin: 0;
+    font-size: var(--text-xs);
+    color: var(--caution);
   }
 
   @media (max-width: 640px) {

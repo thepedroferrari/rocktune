@@ -55,3 +55,6 @@ web/deno.lock
 web/purge-report.json
 web/purge-report.summary.json
 web/purge-checklist.md
+
+# Local Netlify folder
+.netlify
