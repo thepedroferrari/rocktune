@@ -12,142 +12,150 @@
     acknowledgeLudicrous,
     acknowledgeRestorePointDisable,
     toggleOptimization,
-  } from '$lib/state.svelte'
+  } from "$lib/state.svelte";
   import {
     OPTIMIZATIONS,
     getOptimizationsByTierAndCategory,
     getCategoriesForTier,
     type OptimizationCategory,
     type OptimizationDef,
-  } from '$lib/optimizations'
-  import { OPTIMIZATION_TIERS, OPTIMIZATION_KEYS, type OptimizationTier, type OptimizationKey, type BreakingChange } from '$lib/types'
-  import OptimizationCheckbox from './OptimizationCheckbox.svelte'
-  import DnsProviderSelector from './DnsProviderSelector.svelte'
-  import TierLegendDialog from './TierLegendDialog.svelte'
+  } from "$lib/optimizations";
+  import {
+    OPTIMIZATION_TIERS,
+    OPTIMIZATION_KEYS,
+    type OptimizationTier,
+    type OptimizationKey,
+    type BreakingChange,
+  } from "$lib/types";
+  import OptimizationCheckbox from "./OptimizationCheckbox.svelte";
+  import DnsProviderSelector from "./DnsProviderSelector.svelte";
+  import TierLegendDialog from "./TierLegendDialog.svelte";
 
   /** Category display names */
   const CATEGORY_LABELS: Record<OptimizationCategory, string> = {
-    system: 'System',
-    power: 'Power',
-    network: 'Network',
-    input: 'Input',
-    display: 'Display',
-    privacy: 'Privacy',
-    audio: 'Audio',
-  }
+    system: "System",
+    power: "Power",
+    network: "Network",
+    input: "Input",
+    display: "Display",
+    privacy: "Privacy",
+    audio: "Audio",
+  };
 
   /** Tier order for rendering - LUDICROUS excluded from normal flow */
   const NORMAL_TIERS: readonly OptimizationTier[] = [
     OPTIMIZATION_TIERS.SAFE,
     OPTIMIZATION_TIERS.CAUTION,
     OPTIMIZATION_TIERS.RISKY,
-  ] as const
+  ] as const;
 
   /** Tier display names */
   const TIER_LABELS: Record<OptimizationTier, string> = {
-    [OPTIMIZATION_TIERS.SAFE]: 'Safe',
-    [OPTIMIZATION_TIERS.CAUTION]: 'Caution',
-    [OPTIMIZATION_TIERS.RISKY]: 'Risky',
-    [OPTIMIZATION_TIERS.LUDICROUS]: 'Ludicrous',
-  }
+    [OPTIMIZATION_TIERS.SAFE]: "Safe",
+    [OPTIMIZATION_TIERS.CAUTION]: "Caution",
+    [OPTIMIZATION_TIERS.RISKY]: "Risky",
+    [OPTIMIZATION_TIERS.LUDICROUS]: "Ludicrous",
+  };
 
   /** Reference to LUDICROUS dialog element */
-  let ludicrousDialog: HTMLDialogElement | null = $state(null)
+  let ludicrousDialog: HTMLDialogElement | null = $state(null);
   /** Reference to restore point dialog element */
-  let restorePointDialog: HTMLDialogElement | null = $state(null)
+  let restorePointDialog: HTMLDialogElement | null = $state(null);
   /** Reference to breaking changes dialog element */
-  let breakingChangesDialog: HTMLDialogElement | null = $state(null)
+  let breakingChangesDialog: HTMLDialogElement | null = $state(null);
   /** Pending optimization with breaking changes */
-  let pendingBreakingOpt: OptimizationDef | null = $state(null)
+  let pendingBreakingOpt: OptimizationDef | null = $state(null);
   /** Tier legend dialog open state */
-  let tierLegendOpen = $state(false)
+  let tierLegendOpen = $state(false);
 
   function openTierLegend() {
-    tierLegendOpen = true
+    tierLegendOpen = true;
   }
 
   function closeTierLegend() {
-    tierLegendOpen = false
+    tierLegendOpen = false;
   }
 
   function handleWizardToggle() {
-    toggleWizardMode()
+    toggleWizardMode();
   }
 
   function openLudicrousModal() {
-    const scrollY = window.scrollY
-    ludicrousDialog?.showModal()
-    window.scrollTo({ top: scrollY, behavior: 'instant' })
+    const scrollY = window.scrollY;
+    ludicrousDialog?.showModal();
+    window.scrollTo({ top: scrollY, behavior: "instant" });
   }
 
   function closeLudicrousModal() {
-    ludicrousDialog?.close()
+    ludicrousDialog?.close();
   }
 
   function confirmLudicrous() {
-    acknowledgeLudicrous()
-    ludicrousDialog?.close()
+    acknowledgeLudicrous();
+    ludicrousDialog?.close();
   }
 
-
   function openRestorePointModal() {
-    const scrollY = window.scrollY
-    restorePointDialog?.showModal()
-    window.scrollTo({ top: scrollY, behavior: 'instant' })
+    const scrollY = window.scrollY;
+    restorePointDialog?.showModal();
+    window.scrollTo({ top: scrollY, behavior: "instant" });
   }
 
   function closeRestorePointModal() {
-    restorePointDialog?.close()
+    restorePointDialog?.close();
   }
 
   function confirmRestorePointDisable() {
-    acknowledgeRestorePointDisable()
-    toggleOptimization(OPTIMIZATION_KEYS.RESTORE_POINT)
-    restorePointDialog?.close()
+    acknowledgeRestorePointDisable();
+    toggleOptimization(OPTIMIZATION_KEYS.RESTORE_POINT);
+    restorePointDialog?.close();
   }
 
   function openBreakingChangesModal(opt: OptimizationDef) {
-    const scrollY = window.scrollY
-    pendingBreakingOpt = opt
-    breakingChangesDialog?.showModal()
-    window.scrollTo({ top: scrollY, behavior: 'instant' })
+    const scrollY = window.scrollY;
+    pendingBreakingOpt = opt;
+    breakingChangesDialog?.showModal();
+    window.scrollTo({ top: scrollY, behavior: "instant" });
   }
 
   function closeBreakingChangesModal() {
-    pendingBreakingOpt = null
-    breakingChangesDialog?.close()
+    pendingBreakingOpt = null;
+    breakingChangesDialog?.close();
   }
 
   function confirmBreakingChanges() {
     if (pendingBreakingOpt) {
-      toggleOptimization(pendingBreakingOpt.key)
+      toggleOptimization(pendingBreakingOpt.key);
     }
-    pendingBreakingOpt = null
-    breakingChangesDialog?.close()
+    pendingBreakingOpt = null;
+    breakingChangesDialog?.close();
   }
 
   /**
    * Intercept toggle for restore_point and items with breaking changes
    */
-  function handleBeforeToggle(key: OptimizationKey, isCurrentlyChecked: boolean): boolean {
+  function handleBeforeToggle(
+    key: OptimizationKey,
+    isCurrentlyChecked: boolean,
+  ): boolean {
     // Restore point special handling
     if (key === OPTIMIZATION_KEYS.RESTORE_POINT && isCurrentlyChecked) {
       if (!app.ui.restorePointAcknowledged) {
-        openRestorePointModal()
-        return false
+        openRestorePointModal();
+        return false;
       }
     }
 
     // Breaking changes warning - only when enabling (not currently checked)
     if (!isCurrentlyChecked) {
-      const opt = OPTIMIZATIONS.find(o => o.key === key)
+      const opt = OPTIMIZATIONS.find((o) => o.key === key);
       if (opt?.breakingChanges && opt.breakingChanges.length > 0) {
-        openBreakingChangesModal(opt)
-        return false
+        openBreakingChangesModal(opt);
+        return false;
       }
     }
 
-    return true
+    return true;
   }
 </script>
 
@@ -157,11 +165,29 @@
     <div class="step-banner__content">
       <h2 class="step-banner__title">
         Upgrades
-        <button type="button" onclick={openTierLegend} title="What do the tier letters mean?">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+        <button
+          type="button"
+          onclick={openTierLegend}
+          title="What do the tier letters mean?"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            width="18"
+            height="18"
+            ><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path
+              d="M12 8h.01"
+            /></svg
+          >
         </button>
       </h2>
-      <p class="step-banner__subtitle">Safe options enabled by default — hover for details</p>
+      <p class="step-banner__subtitle">
+        Safe options enabled by default — hover for details
+      </p>
     </div>
     <div class="step-banner__actions">
       <div class="wizard-toggle wizard-toggle--banner">
@@ -192,7 +218,12 @@
                 {#each Array(10) as _, row}
                   <g class="pixel-row">
                     {#each Array(11) as _, col}
-                      <rect x={4 + col * 2} y={4 + row * 2} width="2" height="2" />
+                      <rect
+                        x={4 + col * 2}
+                        y={4 + row * 2}
+                        width="2"
+                        height="2"
+                      />
                     {/each}
                   </g>
                 {/each}
@@ -203,7 +234,6 @@
       </div>
     </div>
   </header>
-
 
   <dialog id="wizard-modal" class="modal-base wizard-modal">
     <div class="modal-body wizard-modal__body">
@@ -220,8 +250,16 @@
       </div>
     </div>
     <footer class="modal-footer wizard-modal__footer">
-      <button type="button" id="wizard-cancel" class="cyber-btn cyber-btn--ghost">Cancel</button>
-      <button type="button" id="wizard-confirm" class="cyber-btn cyber-btn--primary download-btn">
+      <button
+        type="button"
+        id="wizard-cancel"
+        class="cyber-btn cyber-btn--ghost">Cancel</button
+      >
+      <button
+        type="button"
+        id="wizard-confirm"
+        class="cyber-btn cyber-btn--primary"
+      >
         <span class="text">Enable This</span>
       </button>
     </footer>
@@ -249,26 +287,41 @@
     {/each}
   </div>
 
-
   <div class="ludicrous-section">
     {#if app.ui.ludicrousAcknowledged}
-
       <article class="ludicrous-placard-v2">
         <header class="placard-header-grid">
           <div class="placard-header-left">
+            <svg
+              class="placard-skull-icon"
+              viewBox="0 0 64 64"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M32 4C18 4 8 16 8 28c0 8 4 15 10 19v9c0 2 2 4 4 4h20c2 0 4-2 4-4v-9c6-4 10-11 10-19 0-12-10-24-24-24z"
+                fill="currentColor"
+                opacity="0.15"
+              />
+              <path
+                d="M32 4C18 4 8 16 8 28c0 8 4 15 10 19v9c0 2 2 4 4 4h20c2 0 4-2 4-4v-9c6-4 10-11 10-19 0-12-10-24-24-24z"
+                stroke="currentColor"
+                stroke-width="2"
+                fill="none"
+              />
 
-            <svg class="placard-skull-icon" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <ellipse cx="22" cy="28" rx="6" ry="7" fill="currentColor" />
 
-              <path d="M32 4C18 4 8 16 8 28c0 8 4 15 10 19v9c0 2 2 4 4 4h20c2 0 4-2 4-4v-9c6-4 10-11 10-19 0-12-10-24-24-24z" fill="currentColor" opacity="0.15"/>
-              <path d="M32 4C18 4 8 16 8 28c0 8 4 15 10 19v9c0 2 2 4 4 4h20c2 0 4-2 4-4v-9c6-4 10-11 10-19 0-12-10-24-24-24z" stroke="currentColor" stroke-width="2" fill="none"/>
+              <ellipse cx="42" cy="28" rx="6" ry="7" fill="currentColor" />
 
-              <ellipse cx="22" cy="28" rx="6" ry="7" fill="currentColor"/>
+              <path d="M32 36l-4 8h8l-4-8z" fill="currentColor" />
 
-              <ellipse cx="42" cy="28" rx="6" ry="7" fill="currentColor"/>
-
-              <path d="M32 36l-4 8h8l-4-8z" fill="currentColor"/>
-
-              <path d="M22 52v4M27 52v4M32 52v4M37 52v4M42 52v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path
+                d="M22 52v4M27 52v4M32 52v4M37 52v4M42 52v4"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
             </svg>
           </div>
           <div class="placard-header-right">
@@ -340,14 +393,14 @@
         </footer>
       </article>
     {:else}
-
       <div class="ludicrous-locked">
         <article class="ludicrous-warning-card">
           <div class="ludicrous-warning-copy">
             <span class="warning-eyebrow">Restricted Section</span>
             <h3>Dangerous Options Locked</h3>
             <p class="warning-desc">
-              These disable CPU security mitigations (Spectre/Meltdown class). Only for offline benchmark rigs.
+              These disable CPU security mitigations (Spectre/Meltdown class).
+              Only for offline benchmark rigs.
             </p>
             <div class="warning-tags">
               <span>Offline-only</span>
@@ -355,18 +408,29 @@
               <span>At your own risk</span>
             </div>
           </div>
-          <button type="button" class="ludicrous-unlock-btn" onclick={openLudicrousModal}>
-            <svg class="unlock-icon" viewBox="0 0 24 24" width="32" height="32" fill="currentColor">
-              <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+          <button
+            type="button"
+            class="ludicrous-unlock-btn"
+            onclick={openLudicrousModal}
+          >
+            <svg
+              class="unlock-icon"
+              viewBox="0 0 24 24"
+              width="32"
+              height="32"
+              fill="currentColor"
+            >
+              <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" />
             </svg>
             <span class="unlock-text">Reveal Dangerous Options</span>
-            <span class="unlock-hint">Disable CPU security mitigations (not recommended)</span>
+            <span class="unlock-hint"
+              >Disable CPU security mitigations (not recommended)</span
+            >
           </button>
         </article>
       </div>
     {/if}
   </div>
-
 
   <dialog
     bind:this={ludicrousDialog}
@@ -375,30 +439,45 @@
   >
     <header class="modal-header">
       <svg class="modal-icon" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+        <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" />
       </svg>
-      <h3 id="ludicrous-dialog-title" class="modal-title">Warning: Dangerous Optimizations</h3>
+      <h3 id="ludicrous-dialog-title" class="modal-title">
+        Warning: Dangerous Optimizations
+      </h3>
     </header>
 
     <div class="modal-body danger-content">
       <p class="danger-intro">
-        <strong>These options disable real security features.</strong> This is not a joke or exaggeration.
-        Anyone who knows you have these disabled can attack your computer.
+        <strong>These options disable real security features.</strong> This is not
+        a joke or exaggeration. Anyone who knows you have these disabled can attack
+        your computer.
       </p>
 
       <section class="cve-section">
         <h4>CVEs You Will Be Vulnerable To:</h4>
         <ul class="cve-list">
           <li>
-            <a href="https://nvd.nist.gov/vuln/detail/CVE-2017-5753" target="_blank" rel="noopener">CVE-2017-5753</a>
+            <a
+              href="https://nvd.nist.gov/vuln/detail/CVE-2017-5753"
+              target="_blank"
+              rel="noopener">CVE-2017-5753</a
+            >
             <span class="cve-name">(Spectre V1)</span> — Bounds check bypass
           </li>
           <li>
-            <a href="https://nvd.nist.gov/vuln/detail/CVE-2017-5715" target="_blank" rel="noopener">CVE-2017-5715</a>
+            <a
+              href="https://nvd.nist.gov/vuln/detail/CVE-2017-5715"
+              target="_blank"
+              rel="noopener">CVE-2017-5715</a
+            >
             <span class="cve-name">(Spectre V2)</span> — Branch target injection
           </li>
           <li>
-            <a href="https://nvd.nist.gov/vuln/detail/CVE-2017-5754" target="_blank" rel="noopener">CVE-2017-5754</a>
+            <a
+              href="https://nvd.nist.gov/vuln/detail/CVE-2017-5754"
+              target="_blank"
+              rel="noopener">CVE-2017-5754</a
+            >
             <span class="cve-name">(Meltdown)</span> — Rogue data cache load
           </li>
         </ul>
@@ -407,7 +486,9 @@
       <section class="attack-vectors">
         <h4>How You Can Be Attacked:</h4>
         <ul>
-          <li><strong>Any website</strong> can read your passwords from memory</li>
+          <li>
+            <strong>Any website</strong> can read your passwords from memory
+          </li>
           <li><strong>Any JavaScript</strong> can access other tabs' data</li>
           <li><strong>Any game with mods</strong> can take full control</li>
           <li><strong>Anti-cheat bypasses</strong> become trivial</li>
@@ -417,25 +498,44 @@
       <section class="only-for">
         <h4>Only Use These If:</h4>
         <ul>
-          <li>This is a dedicated, <strong>completely offline</strong> benchmarking PC</li>
-          <li>You will <strong>never</strong> browse the web on this machine</li>
+          <li>
+            This is a dedicated, <strong>completely offline</strong> benchmarking
+            PC
+          </li>
+          <li>
+            You will <strong>never</strong> browse the web on this machine
+          </li>
           <li>You will <strong>never</strong> run untrusted executables</li>
-          <li>You understand <strong>you are responsible</strong> for the consequences</li>
+          <li>
+            You understand <strong>you are responsible</strong> for the consequences
+          </li>
         </ul>
       </section>
 
       <div class="research-links">
         <span>Research before proceeding:</span>
-        <a href="https://meltdownattack.com" target="_blank" rel="noopener">meltdownattack.com</a>
-        <a href="https://spectreattack.com" target="_blank" rel="noopener">spectreattack.com</a>
+        <a href="https://meltdownattack.com" target="_blank" rel="noopener"
+          >meltdownattack.com</a
+        >
+        <a href="https://spectreattack.com" target="_blank" rel="noopener"
+          >spectreattack.com</a
+        >
       </div>
     </div>
 
     <footer class="modal-footer">
-      <button type="button" class="cyber-btn cyber-btn--ghost" onclick={closeLudicrousModal}>
+      <button
+        type="button"
+        class="cyber-btn cyber-btn--ghost"
+        onclick={closeLudicrousModal}
+      >
         Cancel (Stay Safe)
       </button>
-      <button type="button" class="cyber-btn cyber-btn--outline-danger" onclick={confirmLudicrous}>
+      <button
+        type="button"
+        class="cyber-btn cyber-btn--outline-danger"
+        onclick={confirmLudicrous}
+      >
         I Understand the Risks
       </button>
     </footer>
@@ -448,9 +548,16 @@
   >
     <header class="modal-header">
       <svg class="modal-icon" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+        <path
+          d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+        />
       </svg>
-      <h3 id="restore-point-dialog-title" class="modal-title modal-title--sentence">Disabling Restore Point?</h3>
+      <h3
+        id="restore-point-dialog-title"
+        class="modal-title modal-title--sentence"
+      >
+        Disabling Restore Point?
+      </h3>
     </header>
 
     <div class="modal-body">
@@ -467,10 +574,18 @@
     </div>
 
     <footer class="modal-footer modal-footer--stack">
-      <button type="button" class="cyber-btn cyber-btn--ghost" onclick={closeRestorePointModal}>
+      <button
+        type="button"
+        class="cyber-btn cyber-btn--ghost"
+        onclick={closeRestorePointModal}
+      >
         Keep restore point ON
       </button>
-      <button type="button" class="cyber-btn cyber-btn--outline-caution" onclick={confirmRestorePointDisable}>
+      <button
+        type="button"
+        class="cyber-btn cyber-btn--outline-caution"
+        onclick={confirmRestorePointDisable}
+      >
         I know the risks, disable restore point
       </button>
     </footer>
@@ -483,10 +598,13 @@
   >
     <header class="modal-header">
       <svg class="modal-icon" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+        <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" />
       </svg>
-      <h3 id="breaking-changes-dialog-title" class="modal-title modal-title--sentence">
-        {pendingBreakingOpt?.label ?? 'Optimization'} — Breaking Changes
+      <h3
+        id="breaking-changes-dialog-title"
+        class="modal-title modal-title--sentence"
+      >
+        {pendingBreakingOpt?.label ?? "Optimization"} — Breaking Changes
       </h3>
     </header>
 
@@ -512,10 +630,18 @@
     </div>
 
     <footer class="modal-footer">
-      <button type="button" class="cyber-btn cyber-btn--ghost" onclick={closeBreakingChangesModal}>
+      <button
+        type="button"
+        class="cyber-btn cyber-btn--ghost"
+        onclick={closeBreakingChangesModal}
+      >
         Cancel
       </button>
-      <button type="button" class="cyber-btn cyber-btn--outline-caution" onclick={confirmBreakingChanges}>
+      <button
+        type="button"
+        class="cyber-btn cyber-btn--outline-caution"
+        onclick={confirmBreakingChanges}
+      >
         Enable Anyway
       </button>
     </footer>

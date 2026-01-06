@@ -1,37 +1,4 @@
 @layer components {
-  .download-btn {
-    --_bg: linear-gradient(135deg, oklch(0.92 0.18 102), oklch(0.85 0.16 102));
-    --_bg-hover: linear-gradient(135deg, oklch(0.95 0.2 102), oklch(0.88 0.18 102));
-    --_border: oklch(0.95 0.2 102 / 0.6);
-    --_color: oklch(0.15 0.02 102);
-    --_glow-hover: oklch(0.85 0.18 102 / 0.5);
-    --_clip: none;
-
-    border-radius: var(--radius-sm);
-    box-shadow:
-      0 0 0 1px var(--_border),
-      0 2px 12px oklch(0.85 0.18 102 / 0.35);
-
-    &:hover {
-      box-shadow:
-        0 0 0 2px oklch(0.95 0.2 102),
-        0 4px 20px var(--_glow-hover);
-    }
-
-    &:focus-visible {
-      outline: 3px solid oklch(0.95 0.2 102);
-      outline-offset: 3px;
-    }
-
-    & .text {
-      display: flex;
-      align-items: center;
-      gap: var(--space-xs);
-      position: relative;
-      z-index: 1;
-    }
-  }
-
   .btn-icon {
     inline-size: var(--icon-sm);
     block-size: var(--icon-sm);

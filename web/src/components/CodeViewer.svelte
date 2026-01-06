@@ -306,7 +306,7 @@
         <button type="button" class="btn-secondary" onclick={handleCopy}>
           {copyText}
         </button>
-        <button type="button" class="download-btn" onclick={handleDownload}>
+        <button type="button" class="cyber-btn cyber-btn--primary" onclick={handleDownload}>
           <span class="text">Download</span>
         </button>
       </div>

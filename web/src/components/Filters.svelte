@@ -82,6 +82,7 @@
             type="button"
             class="filter filter--recommended"
             class:active={activeFilter === FILTER_RECOMMENDED}
+            aria-pressed={activeFilter === FILTER_RECOMMENDED}
             style:animation-delay="0ms"
             onclick={() => handleFilterClick(FILTER_RECOMMENDED)}
           >
@@ -93,6 +94,7 @@
           type="button"
           class="filter"
           class:active={activeFilter === FILTER_ALL}
+          aria-pressed={activeFilter === FILTER_ALL}
           style:animation-delay="{presetOffset * FILTER_ANIMATION_DELAY_MS}ms"
           data-filter="*"
           onclick={() => handleFilterClick(FILTER_ALL)}
@@ -105,6 +107,7 @@
             type="button"
             class="filter"
             class:active={activeFilter === category}
+            aria-pressed={activeFilter === category}
             style:animation-delay="{(presetOffset + 1 + i) *
               FILTER_ANIMATION_DELAY_MS}ms"
             data-filter={category}
@@ -123,6 +126,7 @@
         class:active={activeFilter === FILTER_SELECTED}
         data-count={selectedCount}
         aria-label="Show {selectedCount} selected items"
+        aria-pressed={activeFilter === FILTER_SELECTED}
         onclick={() => handleFilterClick(FILTER_SELECTED)}
       >
         <svg
