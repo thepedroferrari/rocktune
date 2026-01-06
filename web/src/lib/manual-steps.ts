@@ -759,36 +759,12 @@ const BROWSERS_ALL: ManualStepSection = {
   note: 'Best practice: Close browsers before gaming. Use a lightweight browser (Brave) or mobile for Discord/Twitch.',
   items: [
     {
-      id: 'chrome-bg-apps',
-      browser: 'Chrome/Edge',
-      path: 'Settings > System',
-      setting: 'Continue running background apps when closed',
-      value: 'Off',
-      why: 'Chrome stays in RAM otherwise.',
-    },
-    {
       id: 'chrome-hw-accel',
       browser: 'Chrome/Edge',
       path: 'Settings > System',
       setting: 'Use hardware acceleration',
       value: 'Off when gaming',
       why: 'Can conflict with game GPU usage.',
-    },
-    {
-      id: 'edge-startup-boost',
-      browser: 'Edge',
-      path: 'Settings > System',
-      setting: 'Startup boost',
-      value: 'Off',
-      why: 'Edge preloads at Windows startup. Wasteful.',
-    },
-    {
-      id: 'edge-bg-extensions',
-      browser: 'Edge',
-      path: 'Settings > System',
-      setting: 'Continue running background extensions',
-      value: 'Off',
-      why: 'Extensions run even after close.',
     },
     {
       id: 'firefox-hw-accel',
@@ -1170,12 +1146,6 @@ const PERIPHERAL_MOUSE_ALL: ManualStepSection = {
       why: 'Artificial straightening = bad for raw aim',
     },
     {
-      id: 'mouse-acceleration',
-      setting: 'Acceleration',
-      value: 'Off (both Windows and mouse software)',
-      why: 'Inconsistent movement speed breaks muscle memory',
-    },
-    {
       id: 'mouse-lod',
       setting: 'LOD (Lift-off Distance)',
       value: 'Low/1mm if available',
@@ -1322,85 +1292,6 @@ const PERIPHERAL_AUDIO_PRO: ManualStepSection = {
       setting: 'Audio Enhancements',
       value: 'All Off',
       why: 'Pure unprocessed signal to headphones',
-    },
-  ] as const,
-} as const
-
-const NETWORK_ADAPTER_ALL: ManualStepSection = {
-  id: 'network-adapter-all',
-  title: 'Network Adapter Settings',
-  description: 'Device Manager → Network adapters → Your NIC → Properties → Advanced',
-  note: "Setting names vary by manufacturer (Intel, Realtek, Killer). Use PowerShell: Get-NetAdapterAdvancedProperty -Name 'Ethernet' to see available options.",
-  items: [
-    {
-      id: 'nic-interrupt-mod',
-      setting: 'Interrupt Moderation',
-      value: 'Disabled',
-      why: 'Reduces latency by not batching interrupts. May slightly increase CPU usage.',
-    },
-    {
-      id: 'nic-interrupt-rate',
-      setting: 'Interrupt Moderation Rate',
-      value: 'Off/Minimal',
-      why: 'Same as above, for adapters with a rate setting instead of on/off.',
-    },
-    {
-      id: 'nic-flow-control',
-      setting: 'Flow Control',
-      value: 'Disabled',
-      why: 'Prevents network pausing. Can improve latency slightly.',
-    },
-    {
-      id: 'nic-eee',
-      setting: 'Energy Efficient Ethernet',
-      value: 'Disabled',
-      why: 'Prevents power saving on NIC that can cause latency spikes.',
-    },
-    {
-      id: 'nic-green',
-      setting: 'Green Ethernet',
-      value: 'Disabled',
-      why: 'Same as above, different manufacturer name.',
-    },
-    {
-      id: 'nic-speed-duplex',
-      setting: 'Speed & Duplex',
-      value: '1 Gbps Full Duplex (if wired)',
-      why: "Don't auto-negotiate if you know your connection speed.",
-    },
-  ] as const,
-} as const
-
-const NETWORK_ADAPTER_PRO: ManualStepSection = {
-  id: 'network-adapter-pro',
-  title: 'Network (Pro)',
-  description: 'Additional NIC settings for competitive',
-  personas: ['pro_gamer'],
-  note: 'These settings may increase CPU usage slightly but reduce network latency.',
-  items: [
-    {
-      id: 'nic-pro-lso',
-      setting: 'Large Send Offload (LSO) v1/v2',
-      value: 'Disabled',
-      why: 'Reduces CPU usage but adds latency. Disable for lowest ping.',
-    },
-    {
-      id: 'nic-pro-rx-buffers',
-      setting: 'Receive Buffers',
-      value: 'Maximum (e.g., 2048)',
-      why: 'More buffer = handle traffic bursts better.',
-    },
-    {
-      id: 'nic-pro-tx-buffers',
-      setting: 'Transmit Buffers',
-      value: 'Maximum',
-      why: 'Same for outgoing traffic.',
-    },
-    {
-      id: 'nic-pro-master-slave',
-      setting: 'Gigabit Master Slave Mode',
-      value: 'Auto or Force Master',
-      why: 'Some NICs default to slave mode, which has worse latency.',
     },
   ] as const,
 } as const
@@ -1934,12 +1825,6 @@ const SECTION_GROUPS: readonly SectionGroup[] = [
       PERIPHERAL_AUDIO_ALL,
       PERIPHERAL_AUDIO_PRO,
     ],
-  },
-  {
-    id: 'network',
-    title: 'Network Adapter',
-    icon: 'wifi',
-    sections: [NETWORK_ADAPTER_ALL, NETWORK_ADAPTER_PRO],
   },
   {
     id: 'preflight',

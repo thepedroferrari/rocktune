@@ -160,25 +160,25 @@ $PRESETS = @{
         name = 'Casual Gamer'
         desc = 'Safe defaults for everyday gaming'
         color = 'Green'
-        opts = @('2','4','10','11','13','20','26','28','29')
+        opts = @('2','4','10','11','13','20','26','28','29','105','106','107','108')
     }
     'pro_gamer' = @{
         name = 'Competitive Gamer'
         desc = 'Maximum performance for esports'
         color = 'Cyan'
-        opts = @('2','4','5','6','8','10','11','13','20','25','26','28','29','43','52','54','63','64','104')
+        opts = @('2','4','5','6','8','10','11','13','20','25','26','28','29','43','52','54','63','64','104','105','106','107','108')
     }
     'streamer' = @{
         name = 'Content Creator'
         desc = 'Balanced for streaming + gaming'
         color = 'Magenta'
-        opts = @('2','4','10','11','13','20','26','28','29','60')
+        opts = @('2','4','10','11','13','20','26','28','29','60','105','106','107','108')
     }
     'benchmarker' = @{
         name = 'Benchmarker'
         desc = 'Absolute maximum performance'
         color = 'Yellow'
-        opts = @('2','4','5','6','8','10','11','13','20','25','26','28','29','43','50','51','52','53','54','55','63','64','65','66','104')
+        opts = @('2','4','5','6','8','10','11','13','20','25','26','28','29','43','50','51','52','53','54','55','63','64','65','66','104','105','106','107','108')
     }
 }
 
@@ -209,6 +209,10 @@ $OPT_DESCRIPTIONS = @{
     '65' = @{ name='Core Parking'; tier='CAUTION'; desc='Disable core parking' }
     '66' = @{ name='Timer Registry'; tier='CAUTION'; desc='Enable timer requests' }
     '104' = @{ name='Background Polling'; tier='SAFE'; desc='Full mouse rate in background' }
+    '105' = @{ name='NIC Interrupt Mod'; tier='SAFE'; desc='Disable interrupt moderation' }
+    '106' = @{ name='NIC Flow Control'; tier='SAFE'; desc='Disable flow control' }
+    '107' = @{ name='NIC Energy Efficient'; tier='SAFE'; desc='Disable EEE/Green Ethernet' }
+    '108' = @{ name='Browser Background'; tier='SAFE'; desc='Disable Chrome/Edge background' }
 }
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -346,6 +350,53 @@ $OPT_FUNCTIONS = @{
         if (Set-Reg "HKCU:\Control Panel\Mouse" "RawMouseThrottleEnabled" 0 -PassThru) {
             Write-OK "Background mouse polling unlocked"
         }
+    }
+    '105' = {
+        $adapter = Get-NetAdapter | Where-Object {$_.Status -eq "Up" -and ($_.InterfaceDescription -like "*Ethernet*" -or $_.InterfaceDescription -like "*Wi-Fi*")} | Select-Object -First 1
+        if ($adapter) {
+            try {
+                Set-NetAdapterAdvancedProperty -Name $adapter.Name -RegistryKeyword "*InterruptModeration" -RegistryValue "0" -ErrorAction SilentlyContinue
+                Write-OK "NIC interrupt moderation disabled"
+            } catch { Write-Warn "NIC property not supported" }
+        }
+    }
+    '106' = {
+        $adapter = Get-NetAdapter | Where-Object {$_.Status -eq "Up" -and ($_.InterfaceDescription -like "*Ethernet*" -or $_.InterfaceDescription -like "*Wi-Fi*")} | Select-Object -First 1
+        if ($adapter) {
+            try {
+                Set-NetAdapterAdvancedProperty -Name $adapter.Name -RegistryKeyword "*FlowControl" -RegistryValue "0" -ErrorAction SilentlyContinue
+                Write-OK "NIC flow control disabled"
+            } catch { Write-Warn "NIC property not supported" }
+        }
+    }
+    '107' = {
+        $adapter = Get-NetAdapter | Where-Object {$_.Status -eq "Up" -and ($_.InterfaceDescription -like "*Ethernet*" -or $_.InterfaceDescription -like "*Wi-Fi*")} | Select-Object -First 1
+        if ($adapter) {
+            try {
+                Set-NetAdapterAdvancedProperty -Name $adapter.Name -RegistryKeyword "EEELinkAdvertisement" -RegistryValue "0" -ErrorAction SilentlyContinue
+                Write-OK "NIC energy efficient ethernet disabled"
+            } catch {
+                try {
+                    Set-NetAdapterAdvancedProperty -Name $adapter.Name -RegistryKeyword "GreenEthernet" -RegistryValue "0" -ErrorAction SilentlyContinue
+                    Write-OK "NIC green ethernet disabled"
+                } catch { Write-Warn "NIC energy property not supported" }
+            }
+        }
+    }
+    '108' = {
+        # Chrome
+        if (-not (Test-Path "HKLM:\SOFTWARE\Policies\Google\Chrome")) {
+            New-Item -Path "HKLM:\SOFTWARE\Policies\Google\Chrome" -Force | Out-Null
+        }
+        Set-Reg "HKLM:\SOFTWARE\Policies\Google\Chrome" "BackgroundModeEnabled" 0
+        # Edge
+        if (-not (Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Edge")) {
+            New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Edge" -Force | Out-Null
+        }
+        Set-Reg "HKLM:\SOFTWARE\Policies\Microsoft\Edge" "StartupBoostEnabled" 0
+        Set-Reg "HKLM:\SOFTWARE\Policies\Microsoft\Edge" "BackgroundModeEnabled" 0
+        Set-Reg "HKLM:\SOFTWARE\Policies\Microsoft\Edge" "BackgroundExtensionsEnabled" 0
+        Write-OK "Browser background apps disabled"
     }
 }
 

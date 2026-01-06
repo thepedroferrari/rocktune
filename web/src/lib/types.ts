@@ -337,6 +337,11 @@ const SAFE_OPTIMIZATIONS = {
   FILESYSTEM_PERF: 'filesystem_perf',
   DWM_PERF: 'dwm_perf',
   BACKGROUND_POLLING: 'background_polling',
+
+  NIC_INTERRUPT_MOD: 'nic_interrupt_mod',
+  NIC_FLOW_CONTROL: 'nic_flow_control',
+  NIC_ENERGY_EFFICIENT: 'nic_energy_efficient',
+  BROWSER_BACKGROUND: 'browser_background',
 } as const
 
 const CAUTION_OPTIMIZATIONS = {

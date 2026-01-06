@@ -1684,6 +1684,59 @@ function generatePreflightScan(selected: Set<string>, _hardware: HardwareProfile
     lines.push('else { Add-ScanResult "Teredo tunneling" "Enabled" "Disabled" "CHANGE" }')
   }
 
+  if (selected.has('nic_interrupt_mod')) {
+    lines.push('# Scan: NIC Interrupt Moderation')
+    lines.push(
+      '$adapter = Get-NetAdapter | Where-Object {$_.Status -eq "Up"} | Select-Object -First 1',
+    )
+    lines.push('if ($adapter) {')
+    lines.push(
+      '  $prop = Get-NetAdapterAdvancedProperty -Name $adapter.Name -RegistryKeyword "*InterruptModeration" -EA SilentlyContinue',
+    )
+    lines.push(
+      '  if ($prop -and $prop.RegistryValue -eq "0") { Add-ScanResult "NIC Interrupt Moderation" "Disabled" "Disabled" "OK" }',
+    )
+    lines.push('  else { Add-ScanResult "NIC Interrupt Moderation" "Enabled" "Disabled" "CHANGE" }')
+    lines.push('} else { Add-ScanResult "NIC Interrupt Moderation" "N/A" "Disabled" "N/A" }')
+  }
+
+  if (selected.has('nic_flow_control')) {
+    lines.push('# Scan: NIC Flow Control')
+    lines.push(
+      '$adapter = Get-NetAdapter | Where-Object {$_.Status -eq "Up"} | Select-Object -First 1',
+    )
+    lines.push('if ($adapter) {')
+    lines.push(
+      '  $prop = Get-NetAdapterAdvancedProperty -Name $adapter.Name -RegistryKeyword "*FlowControl" -EA SilentlyContinue',
+    )
+    lines.push(
+      '  if ($prop -and $prop.RegistryValue -eq "0") { Add-ScanResult "NIC Flow Control" "Disabled" "Disabled" "OK" }',
+    )
+    lines.push('  else { Add-ScanResult "NIC Flow Control" "Enabled" "Disabled" "CHANGE" }')
+    lines.push('} else { Add-ScanResult "NIC Flow Control" "N/A" "Disabled" "N/A" }')
+  }
+
+  if (selected.has('nic_energy_efficient')) {
+    lines.push('# Scan: NIC Energy Efficient Ethernet')
+    lines.push(
+      '$adapter = Get-NetAdapter | Where-Object {$_.Status -eq "Up"} | Select-Object -First 1',
+    )
+    lines.push('if ($adapter) {')
+    lines.push(
+      '  $prop = Get-NetAdapterAdvancedProperty -Name $adapter.Name -RegistryKeyword "*EEE" -EA SilentlyContinue',
+    )
+    lines.push(
+      '  if (-not $prop) { $prop = Get-NetAdapterAdvancedProperty -Name $adapter.Name -RegistryKeyword "EEELinkAdvertisement" -EA SilentlyContinue }',
+    )
+    lines.push(
+      '  if ($prop -and $prop.RegistryValue -eq "0") { Add-ScanResult "NIC Energy Efficient Ethernet" "Disabled" "Disabled" "OK" }',
+    )
+    lines.push(
+      '  else { Add-ScanResult "NIC Energy Efficient Ethernet" "Enabled" "Disabled" "CHANGE" }',
+    )
+    lines.push('} else { Add-ScanResult "NIC Energy Efficient Ethernet" "N/A" "Disabled" "N/A" }')
+  }
+
   // === PRIVACY OPTIMIZATIONS ===
   if (selected.has('ads_off')) {
     lines.push('# Scan: Windows ads')
@@ -1726,6 +1779,35 @@ function generatePreflightScan(selected: Set<string>, _hardware: HardwareProfile
     )
     lines.push('if ($val -eq 0) { Add-ScanResult "Cortana" "Disabled" "Disabled" "OK" }')
     lines.push('else { Add-ScanResult "Cortana" "Enabled" "Disabled" "CHANGE" }')
+  }
+
+  if (selected.has('browser_background')) {
+    lines.push('# Scan: Browser Background Apps')
+    lines.push(
+      '$chromeVal = Get-RegValue "HKLM:\\SOFTWARE\\Policies\\Google\\Chrome" "BackgroundModeEnabled"',
+    )
+    lines.push(
+      '$edgeVal = Get-RegValue "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Edge" "BackgroundModeEnabled"',
+    )
+    lines.push(
+      '$edgeBoost = Get-RegValue "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Edge" "StartupBoostEnabled"',
+    )
+    lines.push('$browserOk = 0')
+    lines.push('$browserTotal = 0')
+    lines.push(
+      'if ($chromeVal -ne $null) { $browserTotal++; if ($chromeVal -eq 0) { $browserOk++ } }',
+    )
+    lines.push('if ($edgeVal -ne $null) { $browserTotal++; if ($edgeVal -eq 0) { $browserOk++ } }')
+    lines.push(
+      'if ($edgeBoost -ne $null) { $browserTotal++; if ($edgeBoost -eq 0) { $browserOk++ } }',
+    )
+    lines.push(
+      'if ($browserTotal -eq 0) { Add-ScanResult "Browser Background Apps" "N/A" "Disabled" "N/A" }',
+    )
+    lines.push(
+      'elseif ($browserOk -eq $browserTotal) { Add-ScanResult "Browser Background Apps" "Disabled" "Disabled" "OK" }',
+    )
+    lines.push('else { Add-ScanResult "Browser Background Apps" "Enabled" "Disabled" "CHANGE" }')
   }
 
   // === SERVICE OPTIMIZATIONS ===
@@ -2388,10 +2470,14 @@ function generatePreflightScan(selected: Set<string>, _hardware: HardwareProfile
     'ipv4_prefer',
     'tcp_optimizer',
     'network_binding_strip',
+    'nic_interrupt_mod',
+    'nic_flow_control',
+    'nic_energy_efficient',
     // NEW - Privacy
     'background_apps',
     'edge_debloat',
     'copilot_disable',
+    'browser_background',
     'delivery_opt',
     'wer_disable',
     'wifi_sense',
@@ -3125,6 +3211,81 @@ function generateNetworkOpts(selected: Set<string>, dnsProvider: string): string
     lines.push('else { Write-Warn "RSS: No adapters supported or already enabled" }')
   }
 
+  if (selected.has('nic_interrupt_mod')) {
+    lines.push('# [SAFE] Disable NIC interrupt moderation for lower latency')
+    lines.push('$nicCount = 0')
+    lines.push(
+      '$adapters = Get-NetAdapter | Where-Object {$_.Status -eq "Up" -and ($_.InterfaceDescription -like "*Ethernet*" -or $_.InterfaceDescription -like "*Wi-Fi*")}',
+    )
+    lines.push('foreach ($adapter in $adapters) {')
+    lines.push('    try {')
+    lines.push(
+      '        Set-NetAdapterAdvancedProperty -Name $adapter.Name -RegistryKeyword "*InterruptModeration" -RegistryValue "0" -EA Stop',
+    )
+    lines.push('        $nicCount++')
+    lines.push('    } catch { }')
+    lines.push('}')
+    lines.push(
+      'if ($nicCount -gt 0) { Write-OK "NIC interrupt moderation disabled on $nicCount adapter(s)" }',
+    )
+    lines.push('else { Write-Warn "NIC interrupt moderation: Not supported or already disabled" }')
+  }
+
+  if (selected.has('nic_flow_control')) {
+    lines.push('# [SAFE] Disable NIC flow control for lower latency')
+    lines.push('$nicCount = 0')
+    lines.push(
+      '$adapters = Get-NetAdapter | Where-Object {$_.Status -eq "Up" -and ($_.InterfaceDescription -like "*Ethernet*" -or $_.InterfaceDescription -like "*Wi-Fi*")}',
+    )
+    lines.push('foreach ($adapter in $adapters) {')
+    lines.push('    try {')
+    lines.push(
+      '        Set-NetAdapterAdvancedProperty -Name $adapter.Name -RegistryKeyword "*FlowControl" -RegistryValue "0" -EA Stop',
+    )
+    lines.push('        $nicCount++')
+    lines.push('    } catch { }')
+    lines.push('}')
+    lines.push(
+      'if ($nicCount -gt 0) { Write-OK "NIC flow control disabled on $nicCount adapter(s)" }',
+    )
+    lines.push('else { Write-Warn "NIC flow control: Not supported or already disabled" }')
+  }
+
+  if (selected.has('nic_energy_efficient')) {
+    lines.push('# [SAFE] Disable NIC Energy Efficient Ethernet for lower latency')
+    lines.push('$nicCount = 0')
+    lines.push(
+      '$adapters = Get-NetAdapter | Where-Object {$_.Status -eq "Up" -and ($_.InterfaceDescription -like "*Ethernet*" -or $_.InterfaceDescription -like "*Wi-Fi*")}',
+    )
+    lines.push('foreach ($adapter in $adapters) {')
+    lines.push('    try {')
+    lines.push(
+      '        $prop = Get-NetAdapterAdvancedProperty -Name $adapter.Name -RegistryKeyword "*EEE" -EA SilentlyContinue',
+    )
+    lines.push('        if ($prop) {')
+    lines.push(
+      '            Set-NetAdapterAdvancedProperty -Name $adapter.Name -RegistryKeyword "*EEE" -RegistryValue "0" -EA Stop',
+    )
+    lines.push('            $nicCount++')
+    lines.push('        } else {')
+    lines.push(
+      '            $prop = Get-NetAdapterAdvancedProperty -Name $adapter.Name -RegistryKeyword "EEELinkAdvertisement" -EA SilentlyContinue',
+    )
+    lines.push('            if ($prop) {')
+    lines.push(
+      '                Set-NetAdapterAdvancedProperty -Name $adapter.Name -RegistryKeyword "EEELinkAdvertisement" -RegistryValue "0" -EA Stop',
+    )
+    lines.push('                $nicCount++')
+    lines.push('            }')
+    lines.push('        }')
+    lines.push('    } catch { }')
+    lines.push('}')
+    lines.push(
+      'if ($nicCount -gt 0) { Write-OK "NIC Energy Efficient Ethernet disabled on $nicCount adapter(s)" }',
+    )
+    lines.push('else { Write-Warn "NIC EEE: Not supported or already disabled" }')
+  }
+
   if (selected.has('rsc_disable')) {
     lines.push('# [CAUTION] Disable Receive Segment Coalescing - may increase CPU usage')
     lines.push('$rscCount = 0')
@@ -3375,6 +3536,27 @@ function generatePrivacyOpts(selected: Set<string>): string[] {
     )
     lines.push('Set-Reg "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Edge" "WebWidgetAllowed" 0')
     lines.push('Write-OK "Edge debloated"')
+  }
+
+  if (selected.has('browser_background')) {
+    lines.push('# [SAFE] Disable browser background apps via Group Policy')
+    lines.push('$browserCount = 0')
+    lines.push('# Chrome background apps')
+    lines.push('$chromePath = "HKLM:\\SOFTWARE\\Policies\\Google\\Chrome"')
+    lines.push('if (-not (Test-Path $chromePath)) { New-Item -Path $chromePath -Force | Out-Null }')
+    lines.push('if (Set-Reg $chromePath "BackgroundModeEnabled" 0 -PassThru) { $browserCount++ }')
+    lines.push('# Edge background apps and startup boost')
+    lines.push('$edgePath = "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Edge"')
+    lines.push('if (-not (Test-Path $edgePath)) { New-Item -Path $edgePath -Force | Out-Null }')
+    lines.push('if (Set-Reg $edgePath "BackgroundModeEnabled" 0 -PassThru) { $browserCount++ }')
+    lines.push('if (Set-Reg $edgePath "StartupBoostEnabled" 0 -PassThru) { $browserCount++ }')
+    lines.push(
+      'if (Set-Reg $edgePath "BackgroundExtensionsEnabled" 0 -PassThru) { $browserCount++ }',
+    )
+    lines.push(
+      'if ($browserCount -gt 0) { Write-OK "Browser background apps disabled ($browserCount policies)" }',
+    )
+    lines.push('else { Write-Warn "Browser policies: Already configured" }')
   }
 
   if (selected.has('razer_block')) {

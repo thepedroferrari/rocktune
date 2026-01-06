@@ -73,6 +73,8 @@ Import-Module (Join-Path $ScriptRoot "modules\optimizations\network.psm1") -Forc
 Import-Module (Join-Path $ScriptRoot "modules\optimizations\audio.psm1") -Force -Global
 Import-Module (Join-Path $ScriptRoot "modules\optimizations\privacy.psm1") -Force -Global
 Import-Module (Join-Path $ScriptRoot "modules\optimizations\gpu.psm1") -Force -Global
+Import-Module (Join-Path $ScriptRoot "modules\optimizations\peripherals.psm1") -Force -Global
+Import-Module (Join-Path $ScriptRoot "modules\optimizations\browsers.psm1") -Force -Global
 Import-Module (Join-Path $ScriptRoot "modules\software\installer.psm1") -Force -Global
 
 Write-Host "All modules loaded successfully" -ForegroundColor Green
@@ -170,7 +172,23 @@ $sections = @(
         TestFunction = "Test-NetworkOptimizations"
         Condition = $null
         Weight = 10
-        Description = "DNS provider, RSS enabled, IPv4 prefer/Teredo toggle, QoS opt-in"
+        Description = "DNS provider, RSS enabled, adapter advanced properties (Interrupt Moderation, Flow Control, EEE), IPv4 prefer/Teredo toggle, QoS opt-in"
+    },
+    @{
+        Name = "Peripheral Optimizations"
+        Function = "Invoke-PeripheralOptimizations"
+        TestFunction = "Test-MouseAcceleration"
+        Condition = $null
+        Weight = 5
+        Description = "Mouse acceleration disabled (Enhance pointer precision off)"
+    },
+    @{
+        Name = "Browser Optimizations"
+        Function = "Invoke-BrowserOptimizations"
+        TestFunction = "Test-BrowserBackgroundApps"
+        Condition = $null
+        Weight = 5
+        Description = "Chrome/Edge background apps disabled, Edge startup boost disabled"
     },
     @{
         Name = "Audio Optimizations"

@@ -592,6 +592,218 @@ function Remove-NetworkBindings {
 }
 
 
+function Set-NetworkAdapterAdvancedSettings {
+    <#
+    .SYNOPSIS
+        Configures network adapter Device Manager advanced properties for gaming.
+    .DESCRIPTION
+        Disables Interrupt Moderation, Flow Control, Energy Efficient Ethernet,
+        and optionally disables LSO and maximizes buffers for pro gamers.
+        These are the settings typically found in Device Manager > Network Adapter > Advanced tab.
+    .PARAMETER DisableInterruptModeration
+        Disables interrupt moderation for lower latency (slight CPU increase).
+    .PARAMETER DisableFlowControl
+        Disables flow control (no network pausing).
+    .PARAMETER DisableEEE
+        Disables Energy Efficient Ethernet (prevents wake latency).
+    .PARAMETER DisableLSO
+        Disables Large Send Offload v1/v2 (opt-in for pro_gamer, increases CPU).
+    .PARAMETER MaximizeBuffers
+        Sets Receive/Transmit buffers to maximum (opt-in for pro_gamer).
+    .OUTPUTS
+        None.
+    .NOTES
+        Property names vary by NIC vendor (Intel, Realtek, Killer, etc.).
+        This function attempts multiple common property names for compatibility.
+    #>
+    param(
+        [bool]$DisableInterruptModeration = $true,
+        [bool]$DisableFlowControl = $true,
+        [bool]$DisableEEE = $true,
+        [bool]$DisableLSO = $false,
+        [bool]$MaximizeBuffers = $false
+    )
+
+    try {
+        $adapter = Get-ActiveNetworkAdapter
+        if (-not $adapter) { return }
+
+        Write-Log "Configuring network adapter advanced properties..." "INFO"
+
+        # Helper function to set adapter property with fallback names
+        function Set-AdapterProperty {
+            param(
+                [string]$AdapterName,
+                [string[]]$PropertyNames,
+                [string]$Value,
+                [string]$Description
+            )
+
+            $set = $false
+            foreach ($propName in $PropertyNames) {
+                try {
+                    $currentProp = Get-NetAdapterAdvancedProperty -Name $AdapterName -RegistryKeyword $propName -ErrorAction SilentlyContinue
+                    if ($currentProp) {
+                        Set-NetAdapterAdvancedProperty -Name $AdapterName -RegistryKeyword $propName -RegistryValue $Value -ErrorAction Stop
+                        Write-Log "$Description set to $Value" "SUCCESS"
+                        $set = $true
+                        break
+                    }
+                } catch {
+                    # Try next property name
+                }
+            }
+
+            if (-not $set) {
+                Write-Log "$Description not found on this adapter (may not support it)" "INFO"
+            }
+        }
+
+        # Interrupt Moderation
+        if ($DisableInterruptModeration) {
+            Set-AdapterProperty -AdapterName $adapter.Name `
+                -PropertyNames @("*InterruptModeration", "ITR") `
+                -Value "0" `
+                -Description "Interrupt Moderation"
+        }
+
+        # Flow Control
+        if ($DisableFlowControl) {
+            Set-AdapterProperty -AdapterName $adapter.Name `
+                -PropertyNames @("*FlowControl", "FlowControl") `
+                -Value "0" `
+                -Description "Flow Control"
+        }
+
+        # Energy Efficient Ethernet
+        if ($DisableEEE) {
+            Set-AdapterProperty -AdapterName $adapter.Name `
+                -PropertyNames @("EEELinkAdvertisement", "EnergyEfficientEthernet", "GreenEthernet", "*EEE") `
+                -Value "0" `
+                -Description "Energy Efficient Ethernet"
+        }
+
+        # Large Send Offload (opt-in for pro gamers)
+        if ($DisableLSO) {
+            Set-AdapterProperty -AdapterName $adapter.Name `
+                -PropertyNames @("*LsoV2IPv4") `
+                -Value "0" `
+                -Description "Large Send Offload v2 (IPv4)"
+
+            Set-AdapterProperty -AdapterName $adapter.Name `
+                -PropertyNames @("*LsoV2IPv6") `
+                -Value "0" `
+                -Description "Large Send Offload v2 (IPv6)"
+        }
+
+        # Maximize Buffers (opt-in for pro gamers)
+        if ($MaximizeBuffers) {
+            # Try to set buffers to maximum supported value
+            try {
+                $rxBuffer = Get-NetAdapterAdvancedProperty -Name $adapter.Name -RegistryKeyword "*ReceiveBuffers" -ErrorAction SilentlyContinue
+                if ($rxBuffer) {
+                    # Get max value from ValidDisplayValues
+                    $maxRx = ($rxBuffer.ValidDisplayValues | Measure-Object -Maximum).Maximum
+                    if ($maxRx) {
+                        Set-NetAdapterAdvancedProperty -Name $adapter.Name -RegistryKeyword "*ReceiveBuffers" -RegistryValue $maxRx -ErrorAction Stop
+                        Write-Log "Receive Buffers set to maximum ($maxRx)" "SUCCESS"
+                    }
+                }
+            } catch {
+                Write-Log "Could not maximize Receive Buffers" "INFO"
+            }
+
+            try {
+                $txBuffer = Get-NetAdapterAdvancedProperty -Name $adapter.Name -RegistryKeyword "*TransmitBuffers" -ErrorAction SilentlyContinue
+                if ($txBuffer) {
+                    $maxTx = ($txBuffer.ValidDisplayValues | Measure-Object -Maximum).Maximum
+                    if ($maxTx) {
+                        Set-NetAdapterAdvancedProperty -Name $adapter.Name -RegistryKeyword "*TransmitBuffers" -RegistryValue $maxTx -ErrorAction Stop
+                        Write-Log "Transmit Buffers set to maximum ($maxTx)" "SUCCESS"
+                    }
+                }
+            } catch {
+                Write-Log "Could not maximize Transmit Buffers" "INFO"
+            }
+        }
+
+        Write-Log "Network adapter advanced properties configured" "SUCCESS"
+        Write-Log "Note: Changes may require network adapter restart to take effect" "INFO"
+
+    } catch {
+        Write-Log "Error configuring network adapter advanced properties: $_" "ERROR"
+        throw
+    }
+}
+
+
+function Test-NetworkAdapterAdvancedSettings {
+    <#
+    .SYNOPSIS
+        Verifies network adapter advanced property settings.
+    .DESCRIPTION
+        Checks that Interrupt Moderation, Flow Control, and EEE are disabled.
+    .OUTPUTS
+        [bool] True when checks pass, else false.
+    #>
+    $allPassed = $true
+
+    Write-Log "Verifying network adapter advanced settings..." "INFO"
+
+    try {
+        $adapter = Get-ActiveNetworkAdapter
+        if (-not $adapter) { return $false }
+
+        function Check-AdapterProperty {
+            param(
+                [string]$AdapterName,
+                [string[]]$PropertyNames,
+                [string]$ExpectedValue,
+                [string]$Description
+            )
+
+            foreach ($propName in $PropertyNames) {
+                try {
+                    $prop = Get-NetAdapterAdvancedProperty -Name $AdapterName -RegistryKeyword $propName -ErrorAction SilentlyContinue
+                    if ($prop) {
+                        if ($prop.RegistryValue -eq $ExpectedValue) {
+                            Write-Log "✓ $Description disabled" "SUCCESS"
+                            return $true
+                        } else {
+                            Write-Log "✗ $Description not disabled (current: $($prop.RegistryValue))" "ERROR"
+                            return $false
+                        }
+                    }
+                } catch {
+                    # Try next property name
+                }
+            }
+
+            Write-Log "○ $Description not found on this adapter" "INFO"
+            return $true  # Don't fail if property doesn't exist
+        }
+
+        if (-not (Check-AdapterProperty -AdapterName $adapter.Name -PropertyNames @("*InterruptModeration", "ITR") -ExpectedValue "0" -Description "Interrupt Moderation")) {
+            $allPassed = $false
+        }
+
+        if (-not (Check-AdapterProperty -AdapterName $adapter.Name -PropertyNames @("*FlowControl") -ExpectedValue "0" -Description "Flow Control")) {
+            $allPassed = $false
+        }
+
+        if (-not (Check-AdapterProperty -AdapterName $adapter.Name -PropertyNames @("EEELinkAdvertisement", "EnergyEfficientEthernet", "GreenEthernet") -ExpectedValue "0" -Description "Energy Efficient Ethernet")) {
+            $allPassed = $false
+        }
+
+    } catch {
+        Write-Log "Error verifying adapter settings: $_" "ERROR"
+        return $false
+    }
+
+    return $allPassed
+}
+
+
 function Invoke-NetworkOptimizations {
     <#
     .SYNOPSIS
@@ -610,6 +822,12 @@ function Invoke-NetworkOptimizations {
         Enables per-game QoS policies when true.
     .PARAMETER GameExecutables
         Executable names for per-game QoS policy creation.
+    .PARAMETER EnableAdapterAdvanced
+        Enables network adapter advanced property optimizations when true.
+    .PARAMETER DisableLSO
+        Disables LSO when adapter advanced settings are enabled (opt-in).
+    .PARAMETER MaximizeBuffers
+        Maximizes adapter buffers when adapter advanced settings are enabled (opt-in).
     .OUTPUTS
         None.
     #>
@@ -625,13 +843,28 @@ function Invoke-NetworkOptimizations {
 
         [bool]$EnableQoS = $false,
 
-        [string[]]$GameExecutables = @("cs2.exe", "dota2.exe", "helldivers2.exe", "SpaceMarine2.exe")
+        [string[]]$GameExecutables = @("cs2.exe", "dota2.exe", "helldivers2.exe", "SpaceMarine2.exe"),
+
+        [bool]$EnableAdapterAdvanced = $true,
+
+        [bool]$DisableLSO = $false,
+
+        [bool]$MaximizeBuffers = $false
     )
 
     Write-Log "Applying network optimizations..." "INFO"
 
     try {
         Set-NetworkAdapterOptimizations -DisableRSC $DisableRSC
+
+        if ($EnableAdapterAdvanced) {
+            Set-NetworkAdapterAdvancedSettings `
+                -DisableInterruptModeration $true `
+                -DisableFlowControl $true `
+                -DisableEEE $true `
+                -DisableLSO $DisableLSO `
+                -MaximizeBuffers $MaximizeBuffers
+        }
 
         Set-DNSProvider -Provider $DNSProvider
 
@@ -709,6 +942,8 @@ function Undo-NetworkOptimizations {
 Export-ModuleMember -Function @(
     'Get-ActiveNetworkAdapter',
     'Set-NetworkAdapterOptimizations',
+    'Set-NetworkAdapterAdvancedSettings',
+    'Test-NetworkAdapterAdvancedSettings',
     'Set-DNSProvider',
     'Set-IPv4Preference',
     'Disable-Teredo',
