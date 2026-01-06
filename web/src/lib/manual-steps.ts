@@ -1724,6 +1724,52 @@ const DIAGNOSTIC_TOOLS_CRASHES: ManualStepSection = {
   ] as const,
 } as const
 
+const UBIQUITI_GAMING: ManualStepSection = {
+  id: 'ubiquiti-gaming',
+  title: 'Ubiquiti/UniFi Router (Gaming)',
+  description: 'Router settings for optimal gaming latency',
+  location: 'UniFi Network App → Settings',
+  note: 'Ethernet > WiFi always. If WiFi, use 5GHz on a clear channel.',
+  items: [
+    {
+      id: 'unifi-sqm',
+      setting: 'Smart Queues (Traffic Management)',
+      value: 'Enable on WAN with fq_codel algorithm',
+      why: 'Eliminates bufferbloat - the #1 cause of latency spikes under load. Set to 90-95% of true upload/download speeds.',
+    },
+    {
+      id: 'unifi-dscp',
+      setting: 'Traffic Management → DSCP Tagging',
+      value: 'Tag gaming traffic as EF (46) or CS6 (48)',
+      why: 'Prioritizes game packets over downloads/streaming when bandwidth is constrained.',
+    },
+    {
+      id: 'unifi-wifi-channel',
+      setting: 'WiFi → Channel Optimization',
+      value: '5GHz: 80MHz width on clear DFS channel, 2.4GHz: 20MHz width channel 1/6/11',
+      why: 'Wider = faster but more interference. Use WiFi analyzer to find cleanest channels. DFS channels often less congested.',
+    },
+    {
+      id: 'unifi-band-steering',
+      setting: 'WiFi → Band Steering',
+      value: 'Prefer 5GHz',
+      why: 'Forces capable devices to faster, less congested 5GHz band with lower latency.',
+    },
+    {
+      id: 'unifi-disable-features',
+      setting: 'Disable unnecessary features',
+      value: 'Turn off: Deep Packet Inspection (DPI), IDS/IPS (if not needed), Guest Portal',
+      why: 'Each feature adds CPU processing overhead and latency. Enable only what you actively use.',
+    },
+    {
+      id: 'unifi-bufferbloat-test',
+      setting: 'Verify setup',
+      value: 'Test at waveform.com/tools/bufferbloat after configuring Smart Queues',
+      why: 'Should achieve A or A+ grade with <20ms bufferbloat under load. If not, adjust SQM bandwidth limits.',
+    },
+  ] as const,
+} as const
+
 export type SectionCategory =
   | 'windows'
   | 'gpu'
@@ -1825,6 +1871,12 @@ const SECTION_GROUPS: readonly SectionGroup[] = [
       PERIPHERAL_AUDIO_ALL,
       PERIPHERAL_AUDIO_PRO,
     ],
+  },
+  {
+    id: 'network',
+    title: 'Network Configuration',
+    icon: 'network',
+    sections: [UBIQUITI_GAMING],
   },
   {
     id: 'preflight',

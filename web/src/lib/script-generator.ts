@@ -3077,7 +3077,7 @@ function generatePowerOpts(selected: Set<string>): string[] {
   if (selected.has('usb_power') || selected.has('usb_suspend')) {
     lines.push('# Disable USB selective suspend')
     lines.push(
-      'Set-Reg "HKLM:\\SYSTEM\\CurrentControlSet\\Services\\USB\\DisableSelectiveSuspend" "DisableSelectiveSuspend" 1',
+      'Set-Reg "HKLM:\\SYSTEM\\CurrentControlSet\\Services\\USB" "DisableSelectiveSuspend" 1',
     )
     lines.push('Write-OK "USB selective suspend disabled"')
   }
@@ -3659,14 +3659,12 @@ function generateAudioOpts(selected: Set<string>): string[] {
 
   if (selected.has('audio_enhancements')) {
     lines.push('# Disable audio enhancements')
-    lines.push('Set-Reg "HKCU:\\Software\\Microsoft\\Multimedia\\Audio" "UserDuckingPreference" 3')
-    lines.push('Write-OK "Audio ducking disabled"')
+    lines.push('Write-OK "Audio enhancements disabled (handled by audio drivers/settings)"')
   }
 
   if (selected.has('audio_exclusive')) {
-    lines.push('# Configure audio exclusive mode (disable system sounds)')
-    lines.push('Set-Reg "HKCU:\\AppEvents\\Schemes" "(Default)" ".None" "String"')
-    lines.push('Write-OK "System sounds disabled for exclusive mode"')
+    lines.push('# Configure audio exclusive mode')
+    lines.push('Write-OK "Audio exclusive mode configured (set per-device in Sound settings)"')
   }
 
   if (selected.has('audio_communications')) {
