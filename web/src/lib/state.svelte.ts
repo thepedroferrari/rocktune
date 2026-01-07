@@ -257,7 +257,9 @@ export function toggleSoftware(key: PackageKey): boolean {
 
   app.selected = new Set(app.selected)
 
-  emitAppEvent('software-selection-changed', { selected: Array.from(app.selected) })
+  emitAppEvent('software-selection-changed', {
+    selected: Array.from(app.selected),
+  })
   return !wasSelected
 }
 
@@ -274,7 +276,9 @@ export function clearSelection(): void {
  */
 export function setSelection(keys: readonly PackageKey[]): void {
   app.selected = new Set(keys)
-  emitAppEvent('software-selection-changed', { selected: Array.from(app.selected) })
+  emitAppEvent('software-selection-changed', {
+    selected: Array.from(app.selected),
+  })
 }
 
 /**
@@ -300,7 +304,9 @@ export function setSoftware(catalog: SoftwareCatalog): void {
   }
 
   app.selected = mergedSelection
-  emitAppEvent('software-selection-changed', { selected: Array.from(app.selected) })
+  emitAppEvent('software-selection-changed', {
+    selected: Array.from(app.selected),
+  })
 }
 
 /**
@@ -431,17 +437,6 @@ export function setMonitorSoftware(types: readonly MonitorSoftwareType[]): void 
   app.monitorSoftware = new Set(types)
 }
 
-export function setScriptMode(mode: ScriptMode): void {
-  app.script.mode = mode
-}
-
-/**
- * Set the user-edited script content
- */
-export function setEditedScript(script: string | null): void {
-  app.script.edited = script
-}
-
 /**
  * Mark script as downloaded
  */
@@ -453,14 +448,14 @@ export function setScriptDownloaded(downloaded: boolean): void {
  * Open the preview modal
  */
 export function openPreviewModal(): void {
-  app.ui.previewModalOpen = true
+  app.ui = { ...app.ui, previewModalOpen: true }
 }
 
 /**
  * Close the preview modal
  */
 export function closePreviewModal(): void {
-  app.ui.previewModalOpen = false
+  app.ui = { ...app.ui, previewModalOpen: false }
 }
 
 /**
@@ -501,10 +496,24 @@ export function setIncludeManualSteps(include: boolean): void {
 }
 
 /**
- * Set whether to create backup before applying optimizations
+ * Set whether to create backup of current settings
  */
 export function setCreateBackup(create: boolean): void {
   app.buildOptions = { ...app.buildOptions, createBackup: create }
+}
+
+/**
+ * Set the script view mode (current, diff, edit)
+ */
+export function setScriptMode(mode: ScriptMode): void {
+  app.script = { ...app.script, mode }
+}
+
+/**
+ * Set the user-edited script content
+ */
+export function setEditedScript(script: string | null): void {
+  app.script = { ...app.script, edited: script }
 }
 
 /**
