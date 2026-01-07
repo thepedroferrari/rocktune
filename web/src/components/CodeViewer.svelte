@@ -134,6 +134,18 @@
   
   let showNav = $derived(activeMode === 'diff' && diffTargets.length > 0)
 
+  
+  $effect(() => {
+    const count = diffTargets.length
+    if (count === 0) {
+      diffIndex = 0
+      return
+    }
+    if (diffIndex < 0 || diffIndex >= count) {
+      diffIndex = 0
+    }
+  })
+
   function setMode(newMode: ScriptMode) {
     localModeOverride = newMode
     onModeChange?.(newMode)
@@ -174,7 +186,7 @@
     const target = diffTargets[diffIndex]
     if (!target) return
 
-    const lineEls = diffPaneEl.querySelectorAll('.cv-line')
+    const lineEls = diffPaneEl.querySelectorAll('.line')
     const targetEl = lineEls[target.index]
     targetEl?.scrollIntoView({ block: 'center', behavior: 'smooth' })
   }
