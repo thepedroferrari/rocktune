@@ -33,6 +33,7 @@
   let copied = $state(false);
   let shareModalOpen = $state(false);
   let troubleshootModalOpen = $state(false);
+  let checksumRequestId = 0;
 
   function openShareModal() {
     shareModalOpen = true;
@@ -44,8 +45,10 @@
 
   $effect(() => {
     const script = app.script.edited ?? generateCurrentScript();
+    const requestId = ++checksumRequestId;
     if (script.trim()) {
       generateSHA256(script, { includeBom: true }).then((hash) => {
+        if (requestId !== checksumRequestId) return;
         checksum = hash;
       });
     } else {
