@@ -6,6 +6,7 @@
  */
 
 import type { StructuredTooltip } from '../utils/tooltips'
+import type { PersonaId } from './persona-registry'
 import type {
   BreakingChange,
   EffectivenessRank,
@@ -1510,7 +1511,10 @@ const RISKY_OPTIMIZATIONS: readonly OptimizationDef[] = [
       note: 'Real privacy improvement, but breaks functionality',
     },
     breakingChanges: [
-      { feature: 'Game Pass', impact: 'Cannot download or play Game Pass games' },
+      {
+        feature: 'Game Pass',
+        impact: 'Cannot download or play Game Pass games',
+      },
       { feature: 'Xbox App', impact: 'Xbox app may not function properly' },
       { feature: 'MS Store', impact: 'Store updates may fail' },
     ],
@@ -1564,8 +1568,14 @@ const RISKY_OPTIMIZATIONS: readonly OptimizationDef[] = [
       note: 'Removes overhead, but breaks Xbox features',
     },
     breakingChanges: [
-      { feature: 'Xbox Party Chat', impact: 'Voice chat in Xbox parties may not work' },
-      { feature: 'P2P Games', impact: 'Some peer-to-peer multiplayer games affected' },
+      {
+        feature: 'Xbox Party Chat',
+        impact: 'Voice chat in Xbox parties may not work',
+      },
+      {
+        feature: 'P2P Games',
+        impact: 'Some peer-to-peer multiplayer games affected',
+      },
     ],
   },
   {
@@ -1690,7 +1700,10 @@ const LUDICROUS_OPTIMIZATIONS: readonly OptimizationDef[] = [
       note: 'Documented 5-15% FPS improvement, but removes critical security',
     },
     breakingChanges: [
-      { feature: 'Security', impact: 'Malware can inject kernel code; rootkits trivial' },
+      {
+        feature: 'Security',
+        impact: 'Malware can inject kernel code; rootkits trivial',
+      },
     ],
   },
   {
@@ -1720,8 +1733,14 @@ const LUDICROUS_OPTIMIZATIONS: readonly OptimizationDef[] = [
       note: 'Real 5-30% gains, but exposes CPU to known exploits',
     },
     breakingChanges: [
-      { feature: 'Security', impact: 'Any website JavaScript can read passwords and secrets' },
-      { feature: 'Network Safety', impact: 'NEVER connect to internet with this enabled' },
+      {
+        feature: 'Security',
+        impact: 'Any website JavaScript can read passwords and secrets',
+      },
+      {
+        feature: 'Network Safety',
+        impact: 'NEVER connect to internet with this enabled',
+      },
     ],
   },
   {
@@ -1800,6 +1819,8 @@ export function getDefaultOptimizations(): OptimizationKey[] {
   return OPTIMIZATIONS.filter((opt) => opt.defaultChecked).map((opt) => opt.key)
 }
 
+import { getPersonaOptimizations } from './persona-config'
+
 /** Profile types for optimization matrix */
 export const PROFILE_IDS = [
   'minimal_default',
@@ -1812,204 +1833,29 @@ export const PROFILE_IDS = [
 export type ProfileId = (typeof PROFILE_IDS)[number]
 
 /**
- * Profile → Optimization matrix
- * Defines which optimizations are enabled by default for each profile.
- * minimal_default is the internal baseline (not a visible preset).
+ * Internal baseline optimizations for minimal_default profile
+ * Not a visible preset - used as foundation
  */
-const PROFILE_OPTIMIZATIONS: Record<ProfileId, readonly OptimizationKey[]> = {
-  minimal_default: [
-    'pagefile',
-    'fastboot',
-    'restore_point',
-    'power_plan',
-    'usb_power',
-    'pcie_power',
-    'audio_enhancements',
-    'game_mode',
-  ],
+const MINIMAL_DEFAULT_OPTIMIZATIONS: readonly OptimizationKey[] = [
+  'pagefile',
+  'fastboot',
+  'restore_point',
+  'power_plan',
+  'usb_power',
+  'pcie_power',
+  'audio_enhancements',
+  'game_mode',
+] as const
 
-  gamer: [
-    'pagefile',
-    'fastboot',
-    'restore_point',
-    'power_plan',
-    'usb_power',
-    'pcie_power',
-    'dns',
-    'nagle',
-    'nic_interrupt_mod',
-    'nic_flow_control',
-    'nic_energy_efficient',
-    'gamedvr',
-    'background_apps',
-    'edge_debloat',
-    'copilot_disable',
-    'browser_background',
-    'audio_enhancements',
-    'audio_communications',
-    'timer',
-    'end_task',
-    'game_mode',
-    'delivery_opt',
-    'feedback_disable',
-  ],
-
-  streamer: [
-    'pagefile',
-    'fastboot',
-    'restore_point',
-    'power_plan',
-    'usb_power',
-    'pcie_power',
-    'dns',
-    'nagle',
-    'nic_interrupt_mod',
-    'nic_flow_control',
-    'nic_energy_efficient',
-    'edge_debloat',
-    'copilot_disable',
-    'browser_background',
-    'audio_enhancements',
-    'audio_communications',
-    'game_mode',
-    'delivery_opt',
-    'feedback_disable',
-    'timer',
-  ],
-
-  pro_gamer: [
-    // Core optimizations (high evidence)
-    'pagefile',
-    'fastboot',
-    'timer',
-    'restore_point',
-    'notifications_off',
-    'power_plan',
-    'usb_power',
-    'pcie_power',
-    'usb_suspend',
-    'dns',
-    'nagle',
-    'nic_interrupt_mod',
-    'nic_flow_control',
-    'nic_energy_efficient',
-    'mouse_accel',
-    'background_polling', // FR33THY: Full polling in background windows
-    'gamedvr',
-    'background_apps',
-    'edge_debloat',
-    'copilot_disable',
-    'browser_background',
-    'audio_enhancements',
-    'audio_communications',
-    'audio_system_sounds',
-    'accessibility_shortcuts',
-    // Caution tier (medium evidence, test recommended)
-    'msi_mode',
-    'fso_disable',
-    'ultimate_perf',
-    'services_trim',
-    'services_search_off',
-    'wpbt_disable',
-    'qos_gaming',
-    'network_throttling',
-    'interrupt_affinity',
-    'end_task',
-    'game_mode',
-    'mmcss_gaming',
-    'timer_registry',
-    'min_processor_state',
-    'delivery_opt',
-    'feedback_disable',
-    'rss_enable',
-    // Removed: keyboard_response (only affects key repeat, not gaming input)
-    // Removed: display_perf (minimal impact in fullscreen games)
-    // Removed: scheduler_opt (subtle/placebo-level effect)
-  ],
-
-  benchmarker: [
-    'pagefile',
-    'fastboot',
-    'timer',
-    'explorer_speed',
-    'temp_purge',
-    'restore_point',
-    'classic_menu',
-    'storage_sense',
-    'end_task',
-    'explorer_cleanup',
-    'notifications_off',
-    'ps7_telemetry',
-    'power_plan',
-    'usb_power',
-    'pcie_power',
-    'usb_suspend',
-    'dns',
-    'nagle',
-    'nic_interrupt_mod',
-    'nic_flow_control',
-    'nic_energy_efficient',
-    'mouse_accel',
-    'background_polling', // FR33THY: Full polling in background windows
-    'keyboard_response',
-    'accessibility_shortcuts',
-    'display_perf',
-    'multiplane_overlay',
-    'gamedvr',
-    'background_apps',
-    'edge_debloat',
-    'copilot_disable',
-    'browser_background',
-    'audio_enhancements',
-    'audio_communications',
-    'audio_system_sounds',
-
-    'game_mode',
-    'min_processor_state',
-    'hibernation_disable',
-    'rss_enable',
-    'adapter_power',
-    'delivery_opt',
-    'wer_disable',
-    'wifi_sense',
-    'spotlight_disable',
-    'feedback_disable',
-    'clipboard_sync',
-
-    'msi_mode',
-    'hpet',
-    'hags',
-    'fso_disable',
-    'ultimate_perf',
-    'services_trim',
-    'services_search_off',
-    'disk_cleanup',
-    'wpbt_disable',
-    'qos_gaming',
-    'network_throttling',
-    'interrupt_affinity',
-
-    'mmcss_gaming',
-    'scheduler_opt',
-    'core_parking',
-    'timer_registry',
-    'rsc_disable',
-    'sysmain_disable',
-
-    'privacy_tier1',
-    'privacy_tier2',
-    'privacy_tier3',
-    'bloatware',
-    'ipv4_prefer',
-    'teredo_disable',
-    'native_nvme',
-    'smt_disable',
-    'audio_exclusive',
-    'tcp_optimizer',
-  ],
-} as const
-
-/** Get optimizations for a profile */
+/**
+ * Get optimizations for a profile
+ * Delegates to persona-config.ts for persona profiles
+ */
 export function getOptimizationsForProfile(profile: ProfileId): readonly OptimizationKey[] {
-  return PROFILE_OPTIMIZATIONS[profile] ?? []
+  if (profile === 'minimal_default') {
+    return MINIMAL_DEFAULT_OPTIMIZATIONS
+  }
+
+  // All other profiles are personas - delegate to persona-config
+  return getPersonaOptimizations(profile as PersonaId)
 }
