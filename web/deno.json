@@ -15,13 +15,15 @@
     "catalog:audit": "deno run --allow-read --unstable-sloppy-imports ./scripts/audit-catalog.ts",
     "share:audit": "deno run --allow-read --unstable-sloppy-imports ./scripts/audit-share-registry.ts",
     "build:sprite": "deno run --allow-read --allow-write ./scripts/build-sprite.ts",
-    "test": "deno test --allow-read ./src"
+    "test": "deno test --allow-read --allow-env --unstable-sloppy-imports ./src",
+    "test:watch": "deno test --watch --allow-read --allow-env --unstable-sloppy-imports ./src"
   },
   "compilerOptions": {
     "lib": [
       "dom",
       "dom.iterable",
-      "esnext"
+      "esnext",
+      "deno.ns"
     ],
     "strict": true
   },
