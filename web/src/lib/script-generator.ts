@@ -5,7 +5,12 @@
  * Scripts work offline without network dependencies.
  */
 
+// Build-time globals injected by Vite
+declare const __BUILD_COMMIT__: string
+declare const __BUILD_DATE__: string
+
 import { OPTIMIZATIONS } from './optimizations'
+import { PERSONA_NEXT_STEPS } from './persona-config'
 import type {
   HardwareProfile,
   MonitorSoftwareType,
@@ -47,42 +52,10 @@ const TIER_PRIORITY: Record<OptimizationTier, number> = {
   [OPTIMIZATION_TIERS.LUDICROUS]: 3,
 }
 
-/** Curated next steps per persona - shown after script completion */
-const NEXT_STEPS_BY_PRESET: Record<PresetType, readonly string[]> = {
-  gamer: [
-    'DISPLAY: Set refresh rate to max (Settings > Display > Advanced)',
-    'GPU: Low Latency Mode = On, Power = Max Performance',
-    'DISCORD: Disable Hardware Acceleration (Settings > Advanced)',
-    'INPUT LAG: Cap FPS 3% below refresh (e.g., 139 for 144Hz) to keep GPU < 95%',
-    'G-SYNC: V-Sync ON in NVCP, OFF in-game. FPS cap prevents tearing + low latency',
-  ],
-  pro_gamer: [
-    'DISPLAY: Set refresh rate to max (Settings > Display > Advanced)',
-    'FPS CAP: Use in-game limiter > Reflex > RTSS > NVCP (in-game is fastest)',
-    'GPU HEADROOM: Keep utilization < 95% — at 99% input lag spikes significantly',
-    'REFLEX: Only enable if GPU at 99%+. If capped below 95%, turn Reflex OFF',
-    'RGB: Disable all RGB software overlays',
-    'TIMER: Use option [2] in the menu to run timer before gaming',
-    'G-SYNC: V-Sync ON in NVCP + cap FPS 3% below refresh = zero tearing + low latency',
-    'NETWORK: Test bufferbloat at waveform.com — if grade < B, enable SQM on router',
-  ],
-  streamer: [
-    'OBS: Set encoder to NVENC/AMF, Quality preset',
-    'OBS: Enable Game Capture over Display Capture',
-    'AUDIO: Configure VoiceMeeter for stream/game split',
-    'GPU: Enable capture mode in NVIDIA/AMD settings',
-    'INPUT LAG: Cap FPS to keep GPU < 95% — leaves headroom for encoding',
-    'REFLEX: Keep ON while streaming if GPU-bound, OFF if you have headroom',
-  ],
-  benchmarker: [
-    'CAPFRAMEX: Capture baseline before/after for comparisons',
-    'LATENCYMON: Verify DPC latency < 500us, no red flags',
-    'HWINFO: Log temps/power during benchmark runs',
-    'TIMER: Use option [2] in the menu for accurate frametime capture',
-    'METHODOLOGY: Test at fixed FPS cap, measure 1% lows and frametimes',
-    'GPU HEADROOM: Compare results at 99% vs 90% GPU utilization',
-  ],
-}
+/**
+ * NOTE: NEXT_STEPS moved to persona-config.ts for centralized management
+ * Use PERSONA_NEXT_STEPS imported from persona-config instead
+ */
 
 /** Embedded timer tool code (from timer-tool.ps1) */
 const TIMER_TOOL_CODE = `
@@ -653,7 +626,7 @@ const GPU_NEXT_STEPS: Record<string, string> = {
  */
 function generateNextStepsBlock(preset: PresetType | null, gpu?: string): string[] {
   const lines: string[] = []
-  const baseSteps = [...NEXT_STEPS_BY_PRESET[preset ?? 'gamer']]
+  const baseSteps = [...PERSONA_NEXT_STEPS[preset ?? 'gamer']]
   const presetLabel = (preset ?? 'gamer').toUpperCase().replace('_', ' ')
 
   // Add GPU-specific step if we have GPU info
@@ -667,7 +640,9 @@ function generateNextStepsBlock(preset: PresetType | null, gpu?: string): string
     'Write-Host "  ╔════════════════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan',
   )
   lines.push(
-    `Write-Host "  ║                           NEXT STEPS: ${presetLabel.padEnd(24)}          ║" -ForegroundColor Cyan`,
+    `Write-Host "  ║                           NEXT STEPS: ${presetLabel.padEnd(
+      24,
+    )}          ║" -ForegroundColor Cyan`,
   )
   lines.push(
     'Write-Host "  ╠════════════════════════════════════════════════════════════════════════════╣" -ForegroundColor Cyan',
