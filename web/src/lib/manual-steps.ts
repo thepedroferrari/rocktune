@@ -212,6 +212,24 @@ const NVIDIA_GAMER: ManualStepSection = {
       value: '3 below monitor refresh (e.g., 141 for 144Hz)',
       why: 'Keeps you in VRR range, prevents tearing at cap.',
     },
+    {
+      id: 'nv-fan-curve',
+      setting: 'GPU Fan Curve (MSI Afterburner / vendor tool)',
+      value: 'More aggressive curve (e.g., 60% at 60°C, 80% at 70°C)',
+      why: 'Lower temps = higher sustained boost clocks. Trade some noise for performance.',
+    },
+    {
+      id: 'nv-power-limit',
+      setting: 'Power Limit Slider',
+      value: 'Max (110-120% if available)',
+      why: "Doesn't force higher clocks but helps sustain them under load. Monitor temps.",
+    },
+    {
+      id: 'nv-driver-strategy',
+      setting: 'Driver Updates',
+      value: 'Update when new game requires it, otherwise wait for stability reports',
+      why: 'Day-1 drivers can be buggy. If stable, no need to chase newest. Roll back if issues appear.',
+    },
   ] as const,
 } as const
 
@@ -393,7 +411,12 @@ const AMD_GAMER: ManualStepSection = {
       value: 'Off',
       why: 'Can cause stuttering. Use FreeSync instead.',
     },
-    { id: 'amd-freesync', setting: 'FreeSync', value: 'Enabled', why: 'VRR for tear-free gaming.' },
+    {
+      id: 'amd-freesync',
+      setting: 'FreeSync',
+      value: 'Enabled',
+      why: 'VRR for tear-free gaming.',
+    },
     {
       id: 'amd-vsync',
       setting: 'Wait for Vertical Refresh',
@@ -405,6 +428,24 @@ const AMD_GAMER: ManualStepSection = {
       setting: 'Frame Rate Target Control',
       value: '3 below refresh (e.g., 141)',
       why: 'Stay in FreeSync range.',
+    },
+    {
+      id: 'amd-fan-curve',
+      setting: 'GPU Fan Curve (AMD Software / Afterburner)',
+      value: 'More aggressive curve (e.g., 60% at 60°C, 80% at 70°C)',
+      why: 'Lower temps = higher sustained boost clocks. Trade some noise for performance.',
+    },
+    {
+      id: 'amd-power-limit',
+      setting: 'Power Limit Slider',
+      value: 'Max (typically +15-20%)',
+      why: "Doesn't force higher clocks but helps sustain them under load. Monitor temps.",
+    },
+    {
+      id: 'amd-driver-strategy',
+      setting: 'Driver Updates',
+      value: 'Update when new game requires it, otherwise wait for stability reports',
+      why: 'Day-1 drivers can be buggy. If stable, no need to chase newest. Roll back if issues appear.',
     },
   ] as const,
 } as const
@@ -550,6 +591,12 @@ const BIOS_AMD_X3D: ManualStepSection = {
       setting: 'Core Performance Boost',
       value: 'Enabled',
       why: 'Allows boost clocks.',
+    },
+    {
+      id: 'bios-x3d-power-plan',
+      setting: 'Windows Power Plan (Multi-CCD X3D only)',
+      value: "Avoid 'Prefer maximum performance' on 7950X3D/7900X3D/9950X3D/9900X3D",
+      why: 'Multi-CCD X3D: Max performance can push games onto the wrong CCD (non-V-Cache). Single-CCD (7800X3D/9800X3D) is fine with any power plan.',
     },
   ] as const,
 } as const
@@ -826,6 +873,33 @@ const RGB_GAMER: ManualStepSection = {
   ] as const,
 } as const
 
+const COOLING_ADVANCED: ManualStepSection = {
+  id: 'cooling-advanced',
+  title: 'Advanced Cooling',
+  description: 'Case fan optimization for better sustained performance',
+  note: 'Lower GPU/CPU temps = higher sustained boost clocks under load',
+  items: [
+    {
+      id: 'cooling-fan-control',
+      setting: 'Case Fans → GPU Temperature',
+      value: 'Use Fan Control app to tie case fans to GPU temp (not just CPU)',
+      why: 'Case fans exhaust GPU heat faster, keeping temps lower during gaming. Lower GPU temp = higher boost clocks sustained longer.',
+    },
+    {
+      id: 'cooling-fan-curve-strategy',
+      setting: 'Fan Curve Strategy',
+      value: "Use 'max of CPU/GPU temp' rule so fans follow whichever component is hotter",
+      why: 'Ensures adequate cooling for both CPU and GPU workloads without manual switching.',
+    },
+    {
+      id: 'cooling-airflow-check',
+      setting: 'Case Airflow',
+      value: 'Ensure case can actually exhaust GPU heat (add intake/exhaust fans if needed)',
+      why: "Even aggressive GPU fan curves won't help if hot air just recirculates inside the case.",
+    },
+  ] as const,
+} as const
+
 const PREFLIGHT_ALL: ManualStepSection = {
   id: 'preflight-all',
   title: 'Pre-Flight Checklist',
@@ -878,6 +952,12 @@ const PREFLIGHT_ALL: ManualStepSection = {
       check: 'Drivers up to date?',
       how: 'GeForce Experience / AMD Software / Windows Update',
       fail: 'Old drivers = bugs, missing optimizations',
+    },
+    {
+      id: 'preflight-antivirus',
+      check: 'Using lightweight antivirus?',
+      how: 'Check system tray - prefer Windows Defender over heavy third-party AV',
+      fail: 'Norton/McAfee/Avast can add significant CPU/disk overhead during gaming',
     },
   ] as const,
 } as const
@@ -1522,7 +1602,12 @@ const OBS_ADVANCED: ManualStepSection = {
       value: 'NV12',
       why: 'Standard for streaming, hardware encoder native format',
     },
-    { id: 'obs-color-space', setting: 'Color Space', value: '709', why: 'HD standard color space' },
+    {
+      id: 'obs-color-space',
+      setting: 'Color Space',
+      value: '709',
+      why: 'HD standard color space',
+    },
     {
       id: 'obs-color-range',
       setting: 'Color Range',
@@ -1857,6 +1942,7 @@ const SECTION_GROUPS: readonly SectionGroup[] = [
       BROWSERS_ALL,
       RGB_PRO_GAMER,
       RGB_GAMER,
+      COOLING_ADVANCED,
     ],
   },
   {
