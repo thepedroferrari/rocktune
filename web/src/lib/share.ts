@@ -70,6 +70,7 @@ type ShareData = ShareDataV1
  */
 const MAX_ARRAY_LENGTH = 100
 const URL_LENGTH_WARNING_THRESHOLD = 2000
+const MAX_COMPRESSED_LENGTH = 5000
 
 /**
  * LUDICROUS optimization keys - blocked from sharing
@@ -231,6 +232,10 @@ export function decodeShareURL(hash: string): DecodeResult {
 
     if (Number.isNaN(version) || version < 1) {
       return { success: false, error: 'Invalid URL format: invalid version' }
+    }
+
+    if (compressed.length > MAX_COMPRESSED_LENGTH) {
+      return { success: false, error: 'Share URL is too long to process safely' }
     }
 
     const json = decompressFromEncodedURIComponent(compressed)
@@ -428,6 +433,7 @@ export function clearShareHash(): void {
   if (typeof window === 'undefined') return
   const url = new URL(window.location.href)
   url.hash = ''
+  url.searchParams.delete('b')
   window.history.replaceState(null, '', url.toString())
 }
 
@@ -447,9 +453,11 @@ export function getFullShareURLWithMeta(build: BuildToEncode): EncodeResult {
   const { blockedCount } = filterBlockedOptimizations(build.optimizations)
   const hash = encodeShareURL(build)
   const baseURL =
-    typeof window !== 'undefined' ? window.location.origin : 'https://rocktune.pedroferrari.com'
+    typeof window !== 'undefined'
+      ? new URL(import.meta.env.BASE_URL, window.location.origin)
+      : new URL('https://rocktune.pedroferrari.com/')
   // Use query param instead of hash for OG image support
-  const url = `${baseURL}/?${hash}`
+  const url = new URL(`?${hash}`, baseURL).toString()
 
   return {
     hash,
