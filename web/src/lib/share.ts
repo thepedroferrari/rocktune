@@ -10,6 +10,7 @@
  */
 
 import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from 'lz-string'
+import { PERSONA_META } from './persona-registry'
 import {
   CPU_ID_TO_VALUE,
   CPU_VALUE_TO_ID,
@@ -219,7 +220,10 @@ export function decodeShareURL(hash: string): DecodeResult {
 
     const dotIndex = cleanHash.indexOf('.')
     if (dotIndex === -1) {
-      return { success: false, error: 'Invalid URL format: missing version separator' }
+      return {
+        success: false,
+        error: 'Invalid URL format: missing version separator',
+      }
     }
 
     const version = Number.parseInt(cleanHash.slice(0, dotIndex), 10)
@@ -595,13 +599,11 @@ const GPU_LABELS: Record<string, string> = {
 
 /**
  * Human-readable labels for preset types
+ * Sourced from persona-registry.ts for centralized management
  */
-const PRESET_LABELS: Record<string, string> = {
-  benchmarker: 'Benchmarker',
-  pro_gamer: 'Pro Gamer',
-  streamer: 'Streamer',
-  gamer: 'Gamer',
-}
+const PRESET_LABELS: Record<string, string> = Object.fromEntries(
+  Object.entries(PERSONA_META).map(([id, meta]) => [id, meta.display_name]),
+)
 
 const PRESET_HIGHLIGHTS: Record<PresetType, readonly string[]> = {
   benchmarker: ['Full telemetry', 'Repeatable runs', 'Deep diagnostics'],
@@ -640,7 +642,9 @@ export function generateTwitterText(build: BuildToEncode): string {
 
   // Stats
   const stats: string[] = []
-  if (build.optimizations.length > 0) stats.push(`${build.optimizations.length} tweaks`)
+  if (build.optimizations.length > 0) {
+    stats.push(`${build.optimizations.length} tweaks`)
+  }
   if (build.packages.length > 0) stats.push(`${build.packages.length} apps`)
   if (stats.length > 0) parts.push(stats.join(', '))
 
@@ -703,7 +707,9 @@ export function generateRedditText(build: BuildToEncode): string {
   }
   if (build.peripherals.length > 0) {
     lines.push(
-      `| Peripherals | ${build.peripherals.map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join(', ')} |`,
+      `| Peripherals | ${build.peripherals
+        .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
+        .join(', ')} |`,
     )
   }
 
@@ -745,10 +751,16 @@ export function generateDiscordText(build: BuildToEncode): string {
 
   // Stats
   const stats: string[] = []
-  if (build.optimizations.length > 0) stats.push(`${build.optimizations.length} optimizations`)
-  if (build.packages.length > 0) stats.push(`${build.packages.length} packages`)
+  if (build.optimizations.length > 0) {
+    stats.push(`${build.optimizations.length} optimizations`)
+  }
+  if (build.packages.length > 0) {
+    stats.push(`${build.packages.length} packages`)
+  }
   if (stats.length > 0) lines.push(`• ${stats.join(' · ')}`)
-  if (highlights.length > 0) lines.push(`• Highlights: ${highlights.join(' · ')}`)
+  if (highlights.length > 0) {
+    lines.push(`• Highlights: ${highlights.join(' · ')}`)
+  }
 
   lines.push('')
   lines.push(`Share link: ${url}`)
@@ -802,8 +814,12 @@ export function getSocialShareURLs(build: BuildToEncode): SocialShareURLs {
   const title = `My RockTune Windows Gaming Loadout${presetLabel}`
 
   return {
-    twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(twitterText)}&url=${encodeURIComponent(shareURL)}`,
-    reddit: `https://reddit.com/submit?url=${encodeURIComponent(shareURL)}&title=${encodeURIComponent(title)}`,
+    twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+      twitterText,
+    )}&url=${encodeURIComponent(shareURL)}`,
+    reddit: `https://reddit.com/submit?url=${encodeURIComponent(
+      shareURL,
+    )}&title=${encodeURIComponent(title)}`,
     linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareURL)}`,
   }
 }
