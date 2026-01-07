@@ -1,6 +1,6 @@
 <script lang="ts">
   /**
-   * ManualStepsSection - Persona-aware manual steps checklist
+   * ManualStepsSection - Redesigned with sidebar TOC, compact cards, and metadata badges
    *
    * Displays settings that cannot be scripted but are essential
    * for optimal gaming performance. Filtered by:
@@ -25,6 +25,9 @@
     type StreamingTroubleshootItem,
     type DiagnosticTool,
     type VideoResource,
+    type ImpactLevel,
+    type DifficultyLevel,
+    type SafetyLevel,
   } from "$lib/manual-steps";
   import {
     isCompleted,
@@ -35,22 +38,22 @@
     getProgressData,
   } from "$lib/progress.svelte";
 
-  /**
-   * Get YouTube thumbnail URL from video ID
-   * Using mqdefault (320x180) for good quality without being too large
-   */
   function getYouTubeThumbnail(videoId: string): string {
     return `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
   }
 
-  /**
-   * Get YouTube video URL
-   */
   function getYouTubeUrl(videoId: string): string {
     return `https://www.youtube.com/watch?v=${videoId}`;
   }
 
-  let expandedGroups = $state<Set<string>>(new Set(["windows", "preflight"]));
+  type SortOption = "category" | "impact" | "difficulty";
+  type FilterOption = "all" | "incomplete" | "quick-wins" | "high-impact";
+
+  let activeGroupId = $state<string | null>(null);
+  let sortBy = $state<SortOption>("category");
+  let filterBy = $state<FilterOption>("all");
+  let searchQuery = $state("");
+  let expandedItems = $state<Set<string>>(new Set());
 
   let filteredGroups = $derived.by(() => {
     const persona = app.activePreset ?? "gamer";
@@ -64,27 +67,16 @@
     return countTotalItems(persona, gpu);
   });
 
-  function toggleGroup(groupId: string) {
-    const next = new Set(expandedGroups);
-    if (next.has(groupId)) {
-      next.delete(groupId);
-    } else {
-      next.add(groupId);
+  $effect(() => {
+    if (filteredGroups.length > 0 && !activeGroupId) {
+      activeGroupId = filteredGroups[0].id;
     }
-    expandedGroups = next;
-  }
-
-  function expandAll() {
-    expandedGroups = new Set(filteredGroups.map((g) => g.id));
-  }
-
-  function collapseAll() {
-    expandedGroups = new Set();
-  }
+  });
 
   let progressData = $derived(getProgressData());
 
-  function handleCheckbox(sectionId: string, itemId: string) {
+  function handleCheckbox(sectionId: string, itemId: string, event: Event) {
+    event.stopPropagation();
     toggleItem(sectionId, itemId);
   }
 
@@ -211,6 +203,55 @@
     return "tool" in item && "use" in item;
   }
 
+  function getItemTitle(item: AnyItem): string {
+    if (isManualStepItem(item)) return item.check;
+    if (isSettingItem(item)) return item.setting;
+    if (isSoftwareSettingItem(item)) return item.path.split(">").pop()?.trim() ?? item.path;
+    if (isBrowserSettingItem(item)) return item.setting;
+    if (isRgbSettingItem(item)) return item.software;
+    if (isPreflightCheck(item)) return item.check;
+    if (isTroubleshootingItem(item)) return item.problem;
+    if (isGameLaunchItem(item)) return item.game;
+    if (isStreamingTroubleshootItem(item)) return item.problem;
+    if (isDiagnosticTool(item)) return item.tool;
+    return item.id;
+  }
+
+  function getItemValue(item: AnyItem): string | undefined {
+    if (isManualStepItem(item)) return undefined;
+    if (isSettingItem(item)) return item.value;
+    if (isSoftwareSettingItem(item)) return item.value;
+    if (isBrowserSettingItem(item)) return item.value;
+    if (isRgbSettingItem(item)) return item.action;
+    if (isPreflightCheck(item)) return undefined;
+    if (isTroubleshootingItem(item)) return undefined;
+    if (isGameLaunchItem(item)) return item.launchOptions;
+    if (isStreamingTroubleshootItem(item)) return item.solution;
+    if (isDiagnosticTool(item)) return undefined;
+    return undefined;
+  }
+
+  function getItemWhy(item: AnyItem): string {
+    if ("why" in item) return item.why;
+    if (isPreflightCheck(item)) return `${item.how}\n\nIf not: ${item.fail}`;
+    if (isTroubleshootingItem(item)) return item.quickFix;
+    if (isGameLaunchItem(item)) return item.notes.join("\n");
+    if (isDiagnosticTool(item)) return item.use;
+    return "";
+  }
+
+  function getImpact(item: AnyItem): ImpactLevel {
+    return (item as { impact?: ImpactLevel }).impact ?? "medium";
+  }
+
+  function getDifficulty(item: AnyItem): DifficultyLevel {
+    return (item as { difficulty?: DifficultyLevel }).difficulty ?? "moderate";
+  }
+
+  function getSafety(item: AnyItem): SafetyLevel {
+    return (item as { safety?: SafetyLevel }).safety ?? "safe";
+  }
+
   let copiedId = $state<string | null>(null);
 
   async function copyLaunchOptions(launchOptions: string, gameId: string) {
@@ -232,6 +273,77 @@
         copiedId = null;
       }, 2000);
     }
+  }
+
+  function scrollToGroup(groupId: string) {
+    activeGroupId = groupId;
+    const element = document.getElementById(`guide-${groupId}`);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }
+
+  function toggleItemExpanded(itemKey: string) {
+    const next = new Set(expandedItems);
+    if (next.has(itemKey)) {
+      next.delete(itemKey);
+    } else {
+      next.add(itemKey);
+    }
+    expandedItems = next;
+  }
+
+  function handlePrint() {
+    window.print();
+  }
+
+  const impactOrder: Record<ImpactLevel, number> = { high: 0, medium: 1, low: 2 };
+  const difficultyOrder: Record<DifficultyLevel, number> = { quick: 0, moderate: 1, advanced: 2 };
+
+  function matchesFilter(sectionId: string, item: AnyItem): boolean {
+    const itemId = getItemId(item);
+    const itemDone = isDone(sectionId, itemId);
+    const impact = getImpact(item);
+    const difficulty = getDifficulty(item);
+
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      const title = getItemTitle(item).toLowerCase();
+      const value = getItemValue(item)?.toLowerCase() ?? "";
+      const why = getItemWhy(item).toLowerCase();
+      if (!title.includes(query) && !value.includes(query) && !why.includes(query)) {
+        return false;
+      }
+    }
+
+    switch (filterBy) {
+      case "incomplete":
+        return !itemDone;
+      case "quick-wins":
+        return difficulty === "quick" && !itemDone;
+      case "high-impact":
+        return impact === "high" && !itemDone;
+      default:
+        return true;
+    }
+  }
+
+  function getSortedItems(sectionId: string, items: readonly AnyItem[]): AnyItem[] {
+    const filtered = items.filter((item) => matchesFilter(sectionId, item));
+
+    if (sortBy === "category") {
+      return [...filtered];
+    }
+
+    return [...filtered].sort((a, b) => {
+      if (sortBy === "impact") {
+        return impactOrder[getImpact(a)] - impactOrder[getImpact(b)];
+      }
+      if (sortBy === "difficulty") {
+        return difficultyOrder[getDifficulty(a)] - difficultyOrder[getDifficulty(b)];
+      }
+      return 0;
+    });
   }
 
   function getGroupIcon(groupId: string): string {
@@ -262,13 +374,9 @@
         return "M12 2L2 7l10 5 10-5-10-5z";
     }
   }
-
-  function handlePrint() {
-    window.print();
-  }
 </script>
 
-<section id="guide" class="step step--guide manual-steps">
+<section id="guide" class="step step--guide guide">
   <header class="step-banner">
     <div class="step-banner__marker">6</div>
     <div class="step-banner__content">
@@ -282,429 +390,292 @@
     </div>
   </header>
 
-  <div class="manual-steps__controls">
-    <button type="button" class="manual-steps__btn" onclick={expandAll}>
-      Expand All
-    </button>
-    <button type="button" class="manual-steps__btn" onclick={collapseAll}>
-      Collapse All
-    </button>
-    <button
-      type="button"
-      class="manual-steps__btn manual-steps__btn--print"
-      onclick={handlePrint}
-    >
-      <svg
-        class="icon"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-      >
-        <path d="M6 9V2h12v7" />
-        <path
-          d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"
-        />
-        <rect x="6" y="14" width="12" height="8" />
-      </svg>
-      Print
-    </button>
-  </div>
-
-  <div class="manual-steps__groups">
-    {#each filteredGroups as group (group.id)}
-      {@const groupProgress = getGroupProgress(group.sections)}
-      {@const isSingleSectionGroup = group.sections.length === 1}
-      {@const groupSubtitle = isSingleSectionGroup
-        ? (group.sections[0]?.description ?? group.sections[0]?.title)
-        : undefined}
-
-      <details
-        class="manual-steps__group"
-        open={expandedGroups.has(group.id)}
-        ontoggle={(e) => {
-          const target = e.currentTarget as HTMLDetailsElement;
-          if (target.open && !expandedGroups.has(group.id)) {
-            expandedGroups = new Set([...expandedGroups, group.id]);
-          } else if (!target.open && expandedGroups.has(group.id)) {
-            const next = new Set(expandedGroups);
-            next.delete(group.id);
-            expandedGroups = next;
-          }
-        }}
-      >
-        <summary class="manual-steps__group-header">
-          <svg
-            class="manual-steps__group-icon"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
+  <div class="guide__layout">
+    <!-- Sidebar TOC -->
+    <aside class="guide__sidebar">
+      <nav class="guide__toc">
+        {#each filteredGroups as group (group.id)}
+          {@const groupProgress = getGroupProgress(group.sections)}
+          <button
+            type="button"
+            class="guide__toc-item"
+            class:active={activeGroupId === group.id}
+            onclick={() => scrollToGroup(group.id)}
           >
-            <path d={getGroupIcon(group.id)} />
-          </svg>
-          <div class="manual-steps__group-heading">
-            <span class="manual-steps__group-title">{group.title}</span>
-            {#if groupSubtitle}
-              <span class="manual-steps__group-subtitle">{groupSubtitle}</span>
-            {/if}
-          </div>
-          <div class="manual-steps__group-progress">
-            <progress
-              class="manual-steps__progress-meter manual-steps__progress-meter--group"
-              class:complete={groupProgress.percent === 100}
-              value={groupProgress.completed}
-              max={groupProgress.total}
-            ></progress>
-            <span class="manual-steps__progress-text">
+            <svg
+              class="guide__toc-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d={getGroupIcon(group.id)} />
+            </svg>
+            <span class="guide__toc-label">{group.title}</span>
+            <span class="guide__toc-progress" class:complete={groupProgress.percent === 100}>
               {groupProgress.completed}/{groupProgress.total}
             </span>
-          </div>
-          <svg
-            class="manual-steps__chevron"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <path d="m6 9 6 6 6-6" />
+          </button>
+        {/each}
+      </nav>
+      <div class="guide__sidebar-actions">
+        <button type="button" class="guide__sidebar-btn" onclick={handlePrint}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M6 9V2h12v7" />
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+            <rect x="6" y="14" width="12" height="8" />
           </svg>
-        </summary>
+          Print
+        </button>
+      </div>
+    </aside>
 
-        <div class="manual-steps__group-content">
-          {#each group.sections as section (section.id)}
-            {@const progress = getProgress(
-              section.id,
-              section.items as readonly AnyItem[],
-            )}
-            <div class="manual-steps__section">
-              {#if !isSingleSectionGroup}
-                <div class="manual-steps__section-header">
-                  <h4 class="manual-steps__section-title">{section.title}</h4>
-                  <div class="manual-steps__progress">
-                    <span class="manual-steps__progress-text">
-                      {progress.completed}/{progress.total}
-                    </span>
-                    {#if progress.completed > 0}
-                      <button
-                        type="button"
-                        class="manual-steps__reset-btn"
-                        title="Reset section progress"
-                        onclick={() => handleResetSection(section.id)}
-                      >
-                        <svg
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2"
-                        >
-                          <path
-                            d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"
-                          />
-                          <path d="M3 3v5h5" />
-                        </svg>
-                      </button>
-                    {/if}
-                  </div>
-                </div>
-              {:else if progress.completed > 0}
-                <div class="manual-steps__section-reset">
+    <!-- Main content -->
+    <div class="guide__main">
+      <!-- Toolbar -->
+      <div class="guide__toolbar">
+        <div class="guide__search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.35-4.35" />
+          </svg>
+          <input
+            type="search"
+            placeholder="Search settings..."
+            bind:value={searchQuery}
+            class="guide__search-input"
+          />
+        </div>
+        <div class="guide__filters">
+          <select bind:value={sortBy} class="guide__select">
+            <option value="category">Sort: Category</option>
+            <option value="impact">Sort: Impact</option>
+            <option value="difficulty">Sort: Difficulty</option>
+          </select>
+          <select bind:value={filterBy} class="guide__select">
+            <option value="all">Show: All</option>
+            <option value="incomplete">Show: Incomplete</option>
+            <option value="quick-wins">Show: Quick Wins</option>
+            <option value="high-impact">Show: High Impact</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Content groups -->
+      <div class="guide__groups">
+        {#each filteredGroups as group (group.id)}
+          {@const groupProgress = getGroupProgress(group.sections)}
+          <div
+            id="guide-{group.id}"
+            class="guide__group"
+          >
+            <div class="guide__group-header">
+              <svg
+                class="guide__group-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d={getGroupIcon(group.id)} />
+              </svg>
+              <h3 class="guide__group-title">{group.title}</h3>
+              <div class="guide__group-meta">
+                <span class="guide__group-count">{groupProgress.completed}/{groupProgress.total}</span>
+                {#if groupProgress.completed > 0}
                   <button
                     type="button"
-                    class="manual-steps__reset-btn"
-                    title="Reset section progress"
-                    onclick={() => handleResetSection(section.id)}
+                    class="guide__reset-btn"
+                    title="Reset all in this category"
+                    onclick={() => {
+                      group.sections.forEach((s) => handleResetSection(s.id));
+                    }}
                   >
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                    >
-                      <path
-                        d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"
-                      />
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
                       <path d="M3 3v5h5" />
                     </svg>
                   </button>
-                </div>
-              {/if}
-              {#if section.description && !isSingleSectionGroup}
-                <p class="manual-steps__section-desc">{section.description}</p>
-              {/if}
-              {#if section.location}
-                <p class="manual-steps__section-location">
-                  <svg
-                    class="icon"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                    <circle cx="12" cy="10" r="3" />
-                  </svg>
-                  {section.location}
-                </p>
-              {/if}
+                {/if}
+              </div>
+            </div>
 
-              <ul class="manual-steps__items">
-                {#each section.items as item}
-                  {@const itemId = getItemId(item as AnyItem)}
-                  {@const itemDone = isDone(section.id, itemId)}
-                  <li class="manual-steps__item" class:completed={itemDone}>
-                    <label class="manual-steps__item-label">
-                      <input
-                        type="checkbox"
-                        name="manual-step-{section.id}-{itemId}"
-                        class="manual-steps__checkbox"
-                        checked={itemDone}
-                        autocomplete="off"
-                        onchange={() => handleCheckbox(section.id, itemId)}
-                      />
-                      <span class="manual-steps__checkbox-visual"></span>
-                      <div class="manual-steps__item-content">
-                        {#if isManualStepItem(item)}
-                          <div class="manual-steps__item-main">
-                            <span class="manual-steps__step">{item.step}</span>
-                            <span class="manual-steps__check">{item.check}</span
-                            >
-                          </div>
-                          <p class="manual-steps__why">{item.why}</p>
-                        {:else if isSettingItem(item)}
-                          <div class="manual-steps__item-main">
-                            <span class="manual-steps__setting"
-                              >{item.setting}</span
-                            >
-                            <span class="manual-steps__value">{item.value}</span
-                            >
-                          </div>
-                          <p class="manual-steps__why">{item.why}</p>
-                        {:else if isSoftwareSettingItem(item)}
-                          <div class="manual-steps__item-main">
-                            <span class="manual-steps__path">{item.path}</span>
-                            <span class="manual-steps__value">{item.value}</span
-                            >
-                          </div>
-                          <p class="manual-steps__why">{item.why}</p>
-                        {:else if isBrowserSettingItem(item)}
-                          <div class="manual-steps__item-main">
-                            <span class="manual-steps__browser"
-                              >{item.browser}</span
-                            >
-                            <span class="manual-steps__path"
-                              >{item.path} &gt; {item.setting}</span
-                            >
-                            <span class="manual-steps__value">{item.value}</span
-                            >
-                          </div>
-                          <p class="manual-steps__why">{item.why}</p>
-                        {:else if isRgbSettingItem(item)}
-                          <div class="manual-steps__item-main">
-                            <span class="manual-steps__software"
-                              >{item.software}</span
-                            >
-                            <span class="manual-steps__action"
-                              >{item.action}</span
-                            >
-                          </div>
-                          <p class="manual-steps__why">{item.why}</p>
-                        {:else if isPreflightCheck(item)}
-                          <div class="manual-steps__item-main">
-                            <span class="manual-steps__check-question"
-                              >{item.check}</span
-                            >
-                          </div>
-                          <p class="manual-steps__how">
-                            <strong>How:</strong>
-                            {item.how}
-                          </p>
-                          <p class="manual-steps__fail">
-                            <strong>If not:</strong>
-                            {item.fail}
-                          </p>
-                        {:else if isTroubleshootingItem(item)}
-                          <div class="manual-steps__item-main">
-                            <span class="manual-steps__problem"
-                              >{item.problem}</span
-                            >
-                          </div>
-                          <div class="manual-steps__causes">
-                            <strong>Possible causes:</strong>
-                            <ul>
-                              {#each item.causes as cause}
-                                <li>{cause}</li>
-                              {/each}
-                            </ul>
-                          </div>
-                          <p class="manual-steps__quickfix">
-                            <strong>Quick fix:</strong>
-                            {item.quickFix}
-                          </p>
-                        {:else if isGameLaunchItem(item)}
-                          <div class="manual-steps__game-header">
-                            <span class="manual-steps__game-name"
-                              >{item.game}</span
-                            >
-                            <span class="manual-steps__game-platform"
-                              >{item.platform}</span
-                            >
-                          </div>
-                          {#if item.launchOptions}
-                            <div class="manual-steps__launch-options">
-                              <code class="manual-steps__launch-code"
-                                >{item.launchOptions}</code
-                              >
-                              <button
-                                type="button"
-                                class="manual-steps__copy-btn"
-                                class:copied={copiedId === item.game}
-                                onclick={() =>
-                                  copyLaunchOptions(
-                                    item.launchOptions!,
-                                    item.game,
-                                  )}
-                              >
-                                {#if copiedId === item.game}
-                                  <svg
-                                    class="icon"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                  >
-                                    <path d="M20 6L9 17l-5-5" />
-                                  </svg>
-                                  Copied!
-                                {:else}
-                                  <svg
-                                    class="icon"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                  >
-                                    <rect
-                                      x="9"
-                                      y="9"
-                                      width="13"
-                                      height="13"
-                                      rx="2"
-                                    />
-                                    <path
-                                      d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
-                                    />
-                                  </svg>
-                                  Copy
-                                {/if}
-                              </button>
-                            </div>
-                          {/if}
-                          <ul class="manual-steps__game-notes">
-                            {#each item.notes as note}
-                              <li>{note}</li>
-                            {/each}
-                          </ul>
-                        {:else if isStreamingTroubleshootItem(item)}
-                          <div class="manual-steps__item-main">
-                            <span class="manual-steps__problem"
-                              >{item.problem}</span
-                            >
-                          </div>
-                          <p class="manual-steps__solution">
-                            <strong>Solution:</strong>
-                            {item.solution}
-                          </p>
-                          <p class="manual-steps__why">{item.why}</p>
-                        {:else if isDiagnosticTool(item)}
-                          <div class="manual-steps__item-main">
-                            <span class="manual-steps__tool-name"
-                              >{item.tool}</span
-                            >
-                            {#if item.arsenalKey}
-                              <span
-                                class="manual-steps__arsenal-badge"
-                                title="Available in Arsenal">Arsenal</span
-                              >
+            {#each group.sections as section (section.id)}
+              {@const items = getSortedItems(section.id, section.items as readonly AnyItem[])}
+              {#if items.length > 0}
+                <div class="guide__section">
+                  {#if group.sections.length > 1}
+                    <h4 class="guide__section-title">{section.title}</h4>
+                    {#if section.description}
+                      <p class="guide__section-desc">{section.description}</p>
+                    {/if}
+                  {/if}
+
+                  {#if section.location}
+                    <div class="guide__section-location">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                        <circle cx="12" cy="10" r="3" />
+                      </svg>
+                      {section.location}
+                    </div>
+                  {/if}
+
+                  <div class="guide__cards">
+                    {#each items as item (getItemId(item))}
+                      {@const itemId = getItemId(item)}
+                      {@const itemDone = isDone(section.id, itemId)}
+                      {@const itemKey = `${section.id}:${itemId}`}
+                      {@const isExpanded = expandedItems.has(itemKey)}
+                      {@const impact = getImpact(item)}
+                      {@const difficulty = getDifficulty(item)}
+                      {@const safety = getSafety(item)}
+                      {@const title = getItemTitle(item)}
+                      {@const value = getItemValue(item)}
+                      {@const why = getItemWhy(item)}
+                      {@const isComplex = isTroubleshootingItem(item) || isGameLaunchItem(item)}
+
+                      <div
+                        class="guide__card"
+                        class:completed={itemDone}
+                        class:expanded={isExpanded}
+                        class:complex={isComplex}
+                      >
+                        <div class="guide__card-header">
+                          <label class="guide__card-check">
+                            <input
+                              type="checkbox"
+                              checked={itemDone}
+                              onchange={(e) => handleCheckbox(section.id, itemId, e)}
+                            />
+                            <span class="guide__checkbox"></span>
+                          </label>
+                          <button
+                            type="button"
+                            class="guide__card-content"
+                            onclick={() => toggleItemExpanded(itemKey)}
+                          >
+                            <span class="guide__card-title">{title}</span>
+                            {#if value && !isComplex}
+                              <span class="guide__card-value">{value}</span>
+                            {/if}
+                          </button>
+                          <div class="guide__card-badges">
+                            <span class="guide__badge guide__badge--{impact}" title="Impact: {impact}">
+                              {impact === "high" ? "↑↑" : impact === "medium" ? "↑" : "−"}
+                            </span>
+                            <span class="guide__badge guide__badge--{difficulty}" title="Difficulty: {difficulty}">
+                              {difficulty === "quick" ? "⚡" : difficulty === "moderate" ? "⏱" : "🔧"}
+                            </span>
+                            {#if safety !== "safe"}
+                              <span class="guide__badge guide__badge--{safety}" title="Safety: {safety}">
+                                {safety === "moderate" ? "⚠" : "⚡"}
+                              </span>
                             {/if}
                           </div>
-                          <p class="manual-steps__tool-use">{item.use}</p>
+                        </div>
+
+                        {#if isExpanded || isComplex}
+                          <div class="guide__card-details">
+                            {#if isTroubleshootingItem(item)}
+                              <div class="guide__troubleshoot">
+                                <div class="guide__causes">
+                                  <strong>Possible causes:</strong>
+                                  <ul>
+                                    {#each item.causes as cause}
+                                      <li>{cause}</li>
+                                    {/each}
+                                  </ul>
+                                </div>
+                                <div class="guide__quickfix">
+                                  <strong>Quick fix:</strong> {item.quickFix}
+                                </div>
+                              </div>
+                            {:else if isGameLaunchItem(item)}
+                              <div class="guide__game">
+                                <span class="guide__game-platform">{item.platform}</span>
+                                {#if item.launchOptions}
+                                  <div class="guide__launch-options">
+                                    <code>{item.launchOptions}</code>
+                                    <button
+                                      type="button"
+                                      class="guide__copy-btn"
+                                      class:copied={copiedId === item.game}
+                                      onclick={() => copyLaunchOptions(item.launchOptions!, item.game)}
+                                    >
+                                      {copiedId === item.game ? "✓" : "Copy"}
+                                    </button>
+                                  </div>
+                                {/if}
+                                <ul class="guide__game-notes">
+                                  {#each item.notes as note}
+                                    <li>{note}</li>
+                                  {/each}
+                                </ul>
+                              </div>
+                            {:else if isPreflightCheck(item)}
+                              <div class="guide__preflight">
+                                <p class="guide__how"><strong>How:</strong> {item.how}</p>
+                                <p class="guide__fail"><strong>If not:</strong> {item.fail}</p>
+                              </div>
+                            {:else}
+                              <p class="guide__why">{why}</p>
+                            {/if}
+                          </div>
                         {/if}
                       </div>
-                    </label>
-                  </li>
-                {/each}
-              </ul>
+                    {/each}
+                  </div>
 
-              {#if section.note}
-                <p class="manual-steps__note">
-                  <svg
-                    class="icon"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <circle cx="12" cy="12" r="10" />
-                    <line x1="12" y1="16" x2="12" y2="12" />
-                    <line x1="12" y1="8" x2="12.01" y2="8" />
-                  </svg>
-                  {section.note}
-                </p>
+                  {#if section.note}
+                    <div class="guide__note">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="16" x2="12" y2="12" />
+                        <line x1="12" y1="8" x2="12.01" y2="8" />
+                      </svg>
+                      {section.note}
+                    </div>
+                  {/if}
+                </div>
               {/if}
-            </div>
-          {/each}
+            {/each}
 
-          {#if group.videos && group.videos.length > 0}
-            <div class="manual-steps__videos">
-              <h3 class="manual-steps__videos-title">
-                <svg
-                  class="icon"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <polygon points="23 7 16 12 23 17 23 7" />
-                  <rect x="1" y="5" width="15" height="14" rx="2" />
-                </svg>
-                Learn More
-              </h3>
-              <div class="manual-steps__videos-grid">
-                {#each group.videos as video (video.id)}
-                  <a
-                    href={getYouTubeUrl(video.videoId)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="video-card"
-                  >
-                    <div class="video-card__thumbnail">
+            {#if group.videos && group.videos.length > 0}
+              <div class="guide__videos">
+                <h4 class="guide__videos-title">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="23 7 16 12 23 17 23 7" />
+                    <rect x="1" y="5" width="15" height="14" rx="2" />
+                  </svg>
+                  Learn More
+                </h4>
+                <div class="guide__videos-list">
+                  {#each group.videos as video (video.id)}
+                    <a
+                      href={getYouTubeUrl(video.videoId)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="guide__video-card"
+                    >
                       <img
                         src={getYouTubeThumbnail(video.videoId)}
                         alt={video.title}
                         loading="lazy"
+                        class="guide__video-thumb"
                       />
-                      <div class="video-card__play">
-                        <svg viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M8 5v14l11-7z" />
-                        </svg>
+                      <div class="guide__video-info">
+                        <span class="guide__video-title">{video.title}</span>
+                        <span class="guide__video-creator">{video.creator}</span>
                       </div>
-                    </div>
-                    <div class="video-card__info">
-                      <span class="video-card__title">{video.title}</span>
-                      <span class="video-card__creator">{video.creator}</span>
-                      {#if video.description}
-                        <span class="video-card__desc">{video.description}</span
-                        >
-                      {/if}
-                    </div>
-                  </a>
-                {/each}
+                    </a>
+                  {/each}
+                </div>
               </div>
-            </div>
-          {/if}
-        </div>
-      </details>
-    {/each}
+            {/if}
+          </div>
+        {/each}
+      </div>
+    </div>
   </div>
 </section>
