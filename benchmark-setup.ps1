@@ -82,7 +82,30 @@ $script:ConsentFilePath = Join-Path $script:ConsentRoot "benchmark-consent.json"
 
 # Progress tracking
 $script:SectionIndex = 0
-$script:SectionTotal = 10  # Total number of Write-Section calls in main flow
+$script:SectionTotal = 0
+
+function Get-SectionTotal {
+    <#
+    .SYNOPSIS
+        Counts the number of Write-Section calls in the main script.
+    #>
+    param(
+        [string]$ScriptPath = $PSCommandPath
+    )
+
+    if (-not $ScriptPath) {
+        $ScriptPath = $MyInvocation.MyCommand.Path
+    }
+
+    if (-not $ScriptPath -or -not (Test-Path $ScriptPath)) {
+        return 1
+    }
+
+    $matches = Select-String -Path $ScriptPath -Pattern 'Write-Section\s+["\']' -AllMatches
+    return [math]::Max(1, $matches.Count)
+}
+
+$script:SectionTotal = Get-SectionTotal
 
 function Write-Section {
     <#
