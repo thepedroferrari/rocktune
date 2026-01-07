@@ -1,4 +1,4 @@
-import type { ConfigContext, ConfigFile } from "../config-generator";
+import type { ConfigContext, ConfigFile } from '../config-generator'
 
 /**
  * Generate UniFi network QoS configuration template
@@ -6,9 +6,9 @@ import type { ConfigContext, ConfigFile } from "../config-generator";
  * User must manually configure these settings in UniFi Controller
  */
 export function generateUniFiConfig(context: ConfigContext): ConfigFile[] {
-  const { persona } = context;
+  const { persona } = context
 
-  const config = generateUniFiJSON(persona);
+  const config = generateUniFiJSON(persona)
 
   const instructions = `UNIFI QoS CONFIGURATION GUIDE
 
@@ -110,115 +110,116 @@ Do NOT attempt to import this file - use it as a reference guide.
 SUPPORT RESOURCES:
 - UniFi Forum: https://community.ui.com
 - Bufferbloat Info: https://www.bufferbloat.net
-- Gaming Optimization: https://www.reddit.com/r/Ubiquiti`;
+- Gaming Optimization: https://www.reddit.com/r/Ubiquiti`
 
   return [
     {
       filename: `rocktune-unifi-qos-template-${persona}.json`,
       content: config,
-      format: "json",
+      format: 'json',
       instructions,
     },
-  ];
+  ]
 }
 
 function getPersonaStrategy(persona: string): string {
   switch (persona) {
-    case "gamer":
+    case 'gamer':
       return `Focus: Low latency gaming
 - Smart Queues at 90% bandwidth (balance)
 - Gaming traffic: EF (46) DSCP tag
-- Basic WiFi optimization`;
+- Basic WiFi optimization`
 
-    case "pro_gamer":
+    case 'pro_gamer':
       return `Focus: Ultra-low latency competitive gaming
 - Smart Queues at 95% bandwidth (aggressive)
 - Gaming traffic: EF (46) DSCP tag (highest priority)
 - Disable ALL DPI/IDS/IPS
 - Wired connection MANDATORY
-- 5GHz WiFi only if wired impossible`;
+- 5GHz WiFi only if wired impossible`
 
-    case "streamer":
+    case 'streamer':
       return `Focus: Stable upload for streaming
 - Smart Queues at 90% bandwidth
 - Gaming: EF (46) tag
 - Streaming: AF41 (34) tag
 - Upload bandwidth management critical
-- Test stream while gaming`;
+- Test stream while gaming`
 
-    case "benchmarker":
+    case 'benchmarker':
       return `Focus: Consistent performance testing
 - Smart Queues at 85% (conservative)
 - Minimal QoS rules (reduce variables)
-- Wired connection for reproducibility`;
+- Wired connection for reproducibility`
 
     default:
-      return "Balanced low-latency configuration";
+      return 'Balanced low-latency configuration'
   }
 }
 
 function generateUniFiJSON(persona: string): string {
-  const bandwidthPercent = persona === "pro_gamer" ? 95 : 90;
+  const bandwidthPercent = persona === 'pro_gamer' ? 95 : 90
 
   return JSON.stringify(
     {
       _note:
-        "REFERENCE TEMPLATE - Do not attempt to import. Configure manually in UniFi Controller.",
-      generated_by: "RockTune",
-      url: "https://rocktune.pedroferrari.com",
+        'REFERENCE TEMPLATE - Do not attempt to import. Configure manually in UniFi Controller.',
+      generated_by: 'RockTune',
+      url: 'https://rocktune.pedroferrari.com',
       persona,
 
       smart_queues: {
         enabled: true,
         download_limit_percent: bandwidthPercent,
         upload_limit_percent: bandwidthPercent,
-        note: "Set to 90-95% of your actual speed test results",
-        algorithm: "fq_codel",
+        note: 'Set to 90-95% of your actual speed test results',
+        algorithm: 'fq_codel',
       },
 
       traffic_rules: {
         gaming: {
-          name: "Gaming Priority",
-          dscp_tag: "EF (46)",
+          name: 'Gaming Priority',
+          dscp_tag: 'EF (46)',
           ports: {
-            udp: ["3074-3100", "27000-27100", "7777-7878"],
-            tcp: ["80", "443"],
+            udp: ['3074-3100', '27000-27100', '7777-7878'],
+            tcp: ['80', '443'],
           },
         },
-        streaming: persona === "streamer"
-          ? {
-            name: "Streaming Priority",
-            dscp_tag: "AF41 (34)",
-            ports: {
-              tcp: ["1935", "443"],
-            },
-          }
-          : undefined,
+        streaming:
+          persona === 'streamer'
+            ? {
+                name: 'Streaming Priority',
+                dscp_tag: 'AF41 (34)',
+                ports: {
+                  tcp: ['1935', '443'],
+                },
+              }
+            : undefined,
       },
 
       wifi_settings: {
         band_steering: true,
         dfs_channels: true,
         channel_width: {
-          "2.4ghz": "20MHz",
-          "5ghz": "80MHz",
+          '2.4ghz': '20MHz',
+          '5ghz': '80MHz',
         },
-        transmit_power: "medium-high",
+        transmit_power: 'medium-high',
       },
 
       disable_features: {
         deep_packet_inspection: false,
         ids_ips: false,
         multicast_dns: false,
-        note: "These features add latency - disable for gaming",
+        note: 'These features add latency - disable for gaming',
       },
 
       testing: {
-        bufferbloat_test: "https://www.waveform.com/tools/bufferbloat",
-        target_grade: "A or B",
+        bufferbloat_test: 'https://www.waveform.com/tools/bufferbloat',
+        target_grade: 'A or B',
       },
     },
     null,
     2,
-  );
+  )
 }
