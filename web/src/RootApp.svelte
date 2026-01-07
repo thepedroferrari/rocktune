@@ -115,7 +115,11 @@
         const age = Date.now() - new Date(cache.timestamp).getTime()
 
         if (age < SEVEN_DAYS_MS && cache.version === CATALOG_CACHE_VERSION) {
-          return cache.catalog
+          const result = safeParseCatalog(cache.catalog)
+          if (isParseSuccess(result)) {
+            return result.data
+          }
+          localStorage.removeItem(CATALOG_CACHE_KEY)
         }
       }
       return null
@@ -142,7 +146,13 @@
     const timeoutId = setTimeout(() => controller.abort(), 10000)
 
     try {
-      const response = await fetch('/catalog.json', { signal: controller.signal })
+      const baseURL =
+        typeof window !== 'undefined'
+          ? new URL(import.meta.env.BASE_URL, window.location.origin)
+          : new URL('https://rocktune.pedroferrari.com/')
+      const catalogURL = new URL('catalog.json', baseURL).toString()
+
+      const response = await fetch(catalogURL, { signal: controller.signal })
       clearTimeout(timeoutId)
 
       if (!response.ok) {
@@ -541,5 +551,4 @@
 {/if}
 
 <Toast />
-
 
