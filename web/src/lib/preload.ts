@@ -11,7 +11,7 @@ const preloadCache = new Map<string, Promise<unknown>>()
  * Map of section IDs to their dynamic import functions
  * Must match the section IDs used in RootApp.svelte
  */
-export const SECTION_IMPORTS = {
+const SECTION_IMPORTS = {
   hardware: () => import('../components/HardwareSection.svelte'),
   peripherals: () => import('../components/PeripheralsSection.svelte'),
   optimizations: () => import('../components/OptimizationsSection.svelte'),
@@ -47,20 +47,4 @@ export function preloadSection(sectionId: SectionId): void {
     const promise = importFn()
     preloadCache.set(sectionId, promise)
   }
-}
-
-/**
- * Check if a section has been preloaded
- * @param sectionId - Section identifier
- * @returns true if section import is in cache
- */
-export function isPreloaded(sectionId: SectionId): boolean {
-  return preloadCache.has(sectionId)
-}
-
-/**
- * Clear preload cache (useful for testing)
- */
-export function clearPreloadCache(): void {
-  preloadCache.clear()
 }
