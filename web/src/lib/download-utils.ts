@@ -1,28 +1,5 @@
 import type { ConfigFile } from './config-generator'
-
-/**
- * Download a single config file to user's browser
- * Creates a Blob, triggers download via temporary anchor element
- * Internal helper for downloadConfigs()
- */
-function downloadConfigFile(content: string, filename: string): void {
-  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
-  const url = URL.createObjectURL(blob)
-
-  const anchor = document.createElement('a')
-  anchor.href = url
-  anchor.download = filename
-  anchor.style.display = 'none'
-
-  document.body.appendChild(anchor)
-  anchor.click()
-
-  // Cleanup after download
-  setTimeout(() => {
-    document.body.removeChild(anchor)
-    URL.revokeObjectURL(url)
-  }, 100)
-}
+import { downloadText } from '../utils/download'
 
 /**
  * Download multiple config files sequentially
@@ -36,7 +13,7 @@ export async function downloadConfigs(files: readonly ConfigFile[]): Promise<voi
   // Download each file with a small delay to prevent browser blocking
   for (let i = 0; i < files.length; i++) {
     const file = files[i]
-    downloadConfigFile(file.content, file.filename)
+    downloadText(file.content, file.filename)
 
     // Wait 300ms between downloads to prevent browser blocking multiple downloads
     if (i < files.length - 1) {
