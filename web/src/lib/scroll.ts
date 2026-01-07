@@ -87,13 +87,3 @@ export async function scrollToSection({
     })
   })
 }
-
-/**
- * Check if an element exists and has rendered height
- * @param elementId - Element ID (without #)
- * @returns true if element exists and has height > 0
- */
-export function isElementReady(elementId: string): boolean {
-  const el = document.getElementById(elementId)
-  return Boolean(el && el.offsetHeight > 0)
-}
