@@ -142,19 +142,34 @@ function Get-LogSummary {
             ErrorCount = 0
             SuccessCount = 0
             WarningCount = 0
+            InfoCount = 0
             TotalLines = 0
+            Error = 0
+            Success = 0
+            Warning = 0
+            Info = 0
         }
     }
 
     $logContent = Get-Content $script:LogPath
 
+    $errorCount = ($logContent | Select-String '\[ERROR\]').Count
+    $successCount = ($logContent | Select-String '\[SUCCESS\]').Count
+    $warningCount = ($logContent | Select-String '\[WARNING\]').Count
+    $infoCount = ($logContent | Select-String '\[INFO\]').Count
+
     return @{
         Duration = $duration
-        ErrorCount = ($logContent | Select-String '\[ERROR\]').Count
-        SuccessCount = ($logContent | Select-String '\[SUCCESS\]').Count
-        WarningCount = ($logContent | Select-String '\[WARNING\]').Count
+        ErrorCount = $errorCount
+        SuccessCount = $successCount
+        WarningCount = $warningCount
+        InfoCount = $infoCount
         TotalLines = $logContent.Count
         LogPath = $script:LogPath
+        Error = $errorCount
+        Success = $successCount
+        Warning = $warningCount
+        Info = $infoCount
     }
 }
 
