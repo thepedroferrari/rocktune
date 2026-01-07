@@ -5,6 +5,8 @@
  * Users can verify downloaded scripts match the displayed hash.
  */
 
+import { copyToClipboard as copyWithFallback } from '../utils/clipboard'
+
 /**
  * Generate SHA256 checksum of a string
  * Returns lowercase hex string (64 characters)
@@ -30,10 +32,5 @@ export async function generateSHA256(
  * Returns true if successful
  */
 export async function copyToClipboard(text: string): Promise<boolean> {
-  try {
-    await navigator.clipboard.writeText(text)
-    return true
-  } catch {
-    return false
-  }
+  return copyWithFallback(text)
 }
