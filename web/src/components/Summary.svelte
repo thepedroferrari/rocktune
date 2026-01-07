@@ -10,7 +10,7 @@
 
   
   let softwareCount = $derived(getSelectedCount())
-  let optimizationCount = $derived(app.optimizationCount)
+  let optimizationCount = $derived(app.optimizations.size)
 
   const cpuLabels: Record<CpuType, string> = {
     amd_x3d: 'X3D',
