@@ -38,6 +38,13 @@
     getProgressData,
   } from "$lib/progress.svelte";
   import { tooltip, type StructuredTooltip } from "../utils/tooltips";
+  import {
+    generateToolConfig,
+    getSectionConfigTool,
+    isToolAvailable,
+  } from "$lib/config-generator";
+  import type { ConfigTool } from "$lib/types";
+  import { downloadConfigs } from "$lib/download-utils";
 
   function getYouTubeThumbnail(videoId: string): string {
     return `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
@@ -54,6 +61,9 @@
   let sortBy = $state<SortOption>("category");
   let filterBy = $state<FilterOption>("all");
   let searchQuery = $state("");
+  let downloadingSection = $state<string | null>(null);
+  let showInstructions = $state(false);
+  let instructionsText = $state("");
 
   // Impact badge tooltips
   const IMPACT_TOOLTIPS: Record<ImpactLevel, StructuredTooltip> = {
@@ -151,6 +161,47 @@
   function handleResetAll() {
     if (confirm("Reset all progress? This cannot be undone.")) {
       resetAll();
+    }
+  }
+
+  async function handleDownloadConfig(sectionId: string) {
+    const tool = getSectionConfigTool(sectionId);
+    if (!tool) return;
+
+    const persona = app.activePreset ?? "gamer";
+    const hardware = app.hardware;
+
+    // Check if tool is available for current persona/hardware
+    if (!isToolAvailable(tool, persona, hardware.gpu)) {
+      return;
+    }
+
+    downloadingSection = sectionId;
+
+    try {
+      const context = {
+        persona,
+        hardware,
+        dnsProvider: app.dnsProvider,
+        timestamp: new Date().toISOString(),
+      };
+
+      const configs = generateToolConfig(tool, context);
+      if (!configs || configs.length === 0) {
+        throw new Error("No configs generated");
+      }
+
+      // Download the config file(s)
+      await downloadConfigs(configs);
+
+      // Show instructions in a simple alert for now (modal coming next)
+      instructionsText = configs[0].instructions;
+      showInstructions = true;
+    } catch (error) {
+      console.error("Config download failed:", error);
+      alert("Failed to download config. Please try again.");
+    } finally {
+      downloadingSection = null;
     }
   }
 
@@ -273,7 +324,7 @@
     if (isGameLaunchItem(item)) return item.game;
     if (isStreamingTroubleshootItem(item)) return item.problem;
     if (isDiagnosticTool(item)) return item.tool;
-    return item.id;
+    return (item as { id: string }).id;
   }
 
   function getItemValue(item: AnyItem): string | undefined {
@@ -808,10 +859,32 @@
 
               {#each group.sections as section (section.id)}
                 {@const items = getFilteredItems(section.id, section.items as readonly AnyItem[])}
+                {@const configTool = getSectionConfigTool(section.id)}
+                {@const persona = app.activePreset ?? "gamer"}
+                {@const canDownload = configTool && isToolAvailable(configTool, persona, app.hardware.gpu)}
+                {@const isDownloading = downloadingSection === section.id}
                 {#if items.length > 0}
                   <div class="guide__section">
-                    {#if group.sections.length > 1}
-                      <h4 class="guide__section-title">{section.title}</h4>
+                    {#if group.sections.length > 1 || canDownload}
+                      <div class="guide__section-header">
+                        <h4 class="guide__section-title">{section.title}</h4>
+                        {#if canDownload}
+                          <button
+                            type="button"
+                            class="guide__download-btn"
+                            class:loading={isDownloading}
+                            onclick={() => handleDownloadConfig(section.id)}
+                            disabled={isDownloading}
+                          >
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                              <polyline points="7 10 12 15 17 10"/>
+                              <line x1="12" y1="15" x2="12" y2="3"/>
+                            </svg>
+                            {isDownloading ? "Downloading..." : "Download Config"}
+                          </button>
+                        {/if}
+                      </div>
                       {#if section.description}
                         <p class="guide__section-desc">{section.description}</p>
               {/if}
@@ -985,3 +1058,31 @@
     </div>
   </div>
 </section>
+
+{#if showInstructions}
+  <!-- svelte-ignore a11y_click_events_have_key_events -->
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <div class="instructions-modal" onclick={() => (showInstructions = false)} role="button" tabindex="-1">
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div class="instructions-modal__content" onclick={(e) => e.stopPropagation()} role="dialog" aria-labelledby="modal-title" tabindex="-1">
+      <header class="instructions-modal__header">
+        <h3 id="modal-title">Import Instructions</h3>
+        <button type="button" class="instructions-modal__close" onclick={() => (showInstructions = false)} aria-label="Close modal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </header>
+      <div class="instructions-modal__body">
+        <pre>{instructionsText}</pre>
+      </div>
+      <footer class="instructions-modal__footer">
+        <button type="button" class="instructions-modal__btn" onclick={() => (showInstructions = false)}>
+          Got it!
+        </button>
+      </footer>
+    </div>
+  </div>
+{/if}
