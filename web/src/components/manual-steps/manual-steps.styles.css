@@ -62,7 +62,7 @@
         }
       }
 
-      &--high {
+      &.guide__toc-item--high {
         & .guide__toc-icon {
           color: var(--cyber-yellow);
         }
@@ -73,13 +73,13 @@
         }
       }
 
-      &--medium {
+      &.guide__toc-item--medium {
         & .guide__toc-icon {
           color: var(--cyber-cyan);
         }
       }
 
-      &--low {
+      &.guide__toc-item--low {
         & .guide__toc-icon {
           color: var(--text-dim);
         }
@@ -90,7 +90,7 @@
         }
       }
 
-      &--quick {
+      &.guide__toc-item--quick {
         & .guide__toc-icon {
           color: var(--safe);
         }
@@ -101,7 +101,7 @@
         }
       }
 
-      &--moderate {
+      &.guide__toc-item--moderate {
         & .guide__toc-icon {
           color: var(--caution);
         }
@@ -112,7 +112,7 @@
         }
       }
 
-      &--advanced {
+      &.guide__toc-item--advanced {
         & .guide__toc-icon {
           color: var(--danger);
         }
@@ -336,7 +336,7 @@
     .guide__group {
       scroll-margin-top: var(--space-lg);
 
-      &--high .guide__group-header {
+      &.guide__group--high .guide__group-header {
         border-color: var(--cyber-yellow);
 
         & .guide__group-icon {
@@ -344,7 +344,7 @@
         }
       }
 
-      &--medium .guide__group-header {
+      &.guide__group--medium .guide__group-header {
         border-color: var(--cyber-cyan);
 
         & .guide__group-icon {
@@ -352,7 +352,7 @@
         }
       }
 
-      &--low .guide__group-header {
+      &.guide__group--low .guide__group-header {
         border-color: var(--text-dim);
 
         & .guide__group-icon {
@@ -361,7 +361,7 @@
       }
 
       /* Difficulty level group styling */
-      &--quick .guide__group-header {
+      &.guide__group--quick .guide__group-header {
         border-color: var(--safe);
 
         & .guide__group-icon {
@@ -369,7 +369,7 @@
         }
       }
 
-      &--moderate .guide__group-header {
+      &.guide__group--moderate .guide__group-header {
         border-color: var(--caution);
 
         & .guide__group-icon {
@@ -377,7 +377,7 @@
         }
       }
 
-      &--advanced .guide__group-header {
+      &.guide__group--advanced .guide__group-header {
         border-color: var(--danger);
 
         & .guide__group-icon {
@@ -816,32 +816,32 @@
         transform: scale(1.15);
       }
 
-      &--high {
+      &.guide__badge--high {
         background: color-mix(in oklch, var(--cyber-yellow) 20%, transparent);
         color: var(--cyber-yellow);
       }
 
-      &--medium {
+      &.guide__badge--medium {
         background: color-mix(in oklch, var(--cyber-cyan) 15%, transparent);
         color: var(--cyber-cyan);
       }
 
-      &--low {
+      &.guide__badge--low {
         background: var(--bg-primary);
         color: var(--text-dim);
       }
 
-      &--safe {
+      &.guide__badge--safe {
         background: color-mix(in oklch, var(--safe) 15%, transparent);
         color: var(--safe);
       }
 
-      &--moderate {
+      &.guide__badge--moderate {
         background: color-mix(in oklch, var(--caution) 15%, transparent);
         color: var(--caution);
       }
 
-      &--expert {
+      &.guide__badge--expert {
         background: color-mix(in oklch, var(--risky) 15%, transparent);
         color: var(--risky);
       }
