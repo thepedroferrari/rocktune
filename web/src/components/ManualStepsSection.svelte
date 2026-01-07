@@ -45,6 +45,7 @@
   } from "$lib/config-generator";
   import type { ConfigTool } from "$lib/types";
   import { downloadConfigs } from "$lib/download-utils";
+  import { buildSectionId } from "$lib/section-ids";
 
   function getYouTubeThumbnail(videoId: string): string {
     return `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
@@ -165,7 +166,7 @@
   }
 
   async function handleDownloadConfig(sectionId: string) {
-    const tool = getSectionConfigTool(sectionId);
+    const tool = getSectionConfigTool(buildSectionId(sectionId));
     if (!tool) return;
 
     const persona = app.activePreset ?? "gamer";
@@ -859,7 +860,7 @@
 
               {#each group.sections as section (section.id)}
                 {@const items = getFilteredItems(section.id, section.items as readonly AnyItem[])}
-                {@const configTool = getSectionConfigTool(section.id)}
+                {@const configTool = getSectionConfigTool(buildSectionId(section.id))}
                 {@const persona = app.activePreset ?? "gamer"}
                 {@const canDownload = configTool && isToolAvailable(configTool, persona, app.hardware.gpu)}
                 {@const isDownloading = downloadingSection === section.id}
