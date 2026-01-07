@@ -1,5 +1,10 @@
 {
-  "entry": ["src/main.ts", "src/RootApp.svelte", "scripts/*.ts"],
+  "entry": [
+    "src/main.ts",
+    "src/RootApp.svelte",
+    "src/components/PreviewModal.svelte",
+    "scripts/*.ts"
+  ],
   "project": ["src/**/*.{ts,svelte}", "scripts/**/*.ts"],
   "ignore": ["src/**/*.test.ts", "src/**/*.spec.ts"]
 }
