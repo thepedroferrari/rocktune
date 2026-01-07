@@ -37,6 +37,7 @@
     createItemId,
     getProgressData,
   } from "$lib/progress.svelte";
+  import { tooltip, type StructuredTooltip } from "../utils/tooltips";
 
   function getYouTubeThumbnail(videoId: string): string {
     return `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
@@ -53,7 +54,70 @@
   let sortBy = $state<SortOption>("category");
   let filterBy = $state<FilterOption>("all");
   let searchQuery = $state("");
-  let expandedItems = $state<Set<string>>(new Set());
+
+  // Impact badge tooltips
+  const IMPACT_TOOLTIPS: Record<ImpactLevel, StructuredTooltip> = {
+    high: {
+      title: "High Impact",
+      desc: "This setting significantly affects FPS, latency, or system stability.",
+      pros: ["Noticeable improvement", "Worth the effort"],
+      cons: ["May require more setup time"],
+    },
+    medium: {
+      title: "Medium Impact",
+      desc: "Moderate improvement to performance or quality.",
+      pros: ["Good balance of effort vs reward"],
+      cons: ["Effects vary by system"],
+    },
+    low: {
+      title: "Low Impact",
+      desc: "Minor optimization, nice to have but not critical.",
+      pros: ["Quick to apply", "Low risk"],
+      cons: ["Subtle improvements"],
+    },
+  };
+
+  const DIFFICULTY_TOOLTIPS: Record<DifficultyLevel, StructuredTooltip> = {
+    quick: {
+      title: "Quick Win",
+      desc: "Fast to complete, simple settings change.",
+      pros: ["Under 1 minute", "No expertise needed"],
+      cons: [],
+    },
+    moderate: {
+      title: "Moderate Effort",
+      desc: "Takes a few minutes, may require navigating menus.",
+      pros: ["Straightforward process"],
+      cons: ["Takes 2-5 minutes"],
+    },
+    advanced: {
+      title: "Advanced",
+      desc: "Requires technical knowledge or multiple steps.",
+      pros: ["Maximum control"],
+      cons: ["May need research", "10+ minutes"],
+    },
+  };
+
+  const SAFETY_TOOLTIPS: Record<SafetyLevel, StructuredTooltip> = {
+    safe: {
+      title: "Safe",
+      desc: "Fully reversible, no risk of system issues.",
+      pros: ["Can undo anytime", "No side effects"],
+      cons: [],
+    },
+    moderate: {
+      title: "Use Caution",
+      desc: "Generally safe but may affect other settings or features.",
+      pros: ["Reversible with effort"],
+      cons: ["May require reboot", "Could affect other apps"],
+    },
+    expert: {
+      title: "Expert Only",
+      desc: "Could cause instability if misconfigured. Create a restore point first.",
+      pros: ["Maximum performance gains"],
+      cons: ["Risk of issues", "Hard to troubleshoot"],
+    },
+  };
 
   let filteredGroups = $derived.by(() => {
     const persona = app.activePreset ?? "gamer";
@@ -74,11 +138,6 @@
   });
 
   let progressData = $derived(getProgressData());
-
-  function handleCheckbox(sectionId: string, itemId: string, event: Event) {
-    event.stopPropagation();
-    toggleItem(sectionId, itemId);
-  }
 
   function isDone(sectionId: string, itemId: string): boolean {
     const _ = progressData.lastUpdated;
@@ -283,22 +342,91 @@
     }
   }
 
-  function toggleItemExpanded(itemKey: string) {
-    const next = new Set(expandedItems);
-    if (next.has(itemKey)) {
-      next.delete(itemKey);
-    } else {
-      next.add(itemKey);
-    }
-    expandedItems = next;
-  }
-
   function handlePrint() {
     window.print();
   }
 
-  const impactOrder: Record<ImpactLevel, number> = { high: 0, medium: 1, low: 2 };
-  const difficultyOrder: Record<DifficultyLevel, number> = { quick: 0, moderate: 1, advanced: 2 };
+  function buildItemTooltip(item: AnyItem): StructuredTooltip {
+    const title = getItemTitle(item);
+    const why = getItemWhy(item);
+    const impact = getImpact(item);
+    const safety = getSafety(item);
+
+    const pros: string[] = [];
+    const cons: string[] = [];
+
+    let desc = why || "Optimize your system with this setting.";
+
+    // For items without "why" text, build meaningful description
+    if (!why) {
+      if (isTroubleshootingItem(item)) {
+        desc = `Common issue: ${item.problem}. Quick fix: ${item.quickFix}`;
+      } else if (isGameLaunchItem(item)) {
+        desc = item.notes.length > 0 ? item.notes.join(" · ") : `Launch options for ${item.game}`;
+      } else if (isDiagnosticTool(item)) {
+        desc = item.use || `Diagnostic tool: ${item.tool}`;
+      } else if (isStreamingTroubleshootItem(item)) {
+        desc = `Streaming issue: ${item.problem}. Solution: ${item.solution}`;
+      }
+    }
+
+    // Impact-based pros
+    if (impact === "high") pros.push("High performance impact");
+    else if (impact === "medium") pros.push("Moderate improvement");
+
+    // Troubleshooting items
+    if (isTroubleshootingItem(item)) {
+      pros.push(`Quick fix: ${item.quickFix}`);
+      item.causes.forEach(c => cons.push(c));
+    }
+
+    // Preflight checks
+    if (isPreflightCheck(item)) {
+      pros.push(item.how);
+      cons.push(`If not: ${item.fail}`);
+    }
+
+    // Safety-based cons
+    if (safety === "moderate") cons.push("Use caution when applying");
+    else if (safety === "expert") cons.push("Expert setting - create restore point first");
+
+    return {
+      title,
+      desc,
+      pros: pros.length > 0 ? pros : ["Improves gaming experience"],
+      cons: cons.length > 0 ? cons : [],
+    };
+  }
+
+  const IMPACT_LABELS: Record<ImpactLevel, string> = {
+    high: "High Impact",
+    medium: "Medium Impact",
+    low: "Low Impact",
+  };
+
+  const DIFFICULTY_LABELS: Record<DifficultyLevel, string> = {
+    quick: "Quick Wins",
+    moderate: "Moderate Effort",
+    advanced: "Advanced",
+  };
+
+  const IMPACT_ICONS: Record<ImpactLevel, string> = {
+    high: "M13 10V3L4 14h7v7l9-11h-7z", // Lightning bolt
+    medium: "M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5",
+    low: "M5 12h14M12 5v14", // Plus
+  };
+
+  const DIFFICULTY_ICONS: Record<DifficultyLevel, string> = {
+    quick: "M13 10V3L4 14h7v7l9-11h-7z", // Lightning
+    moderate: "M12 2v20M2 12h20", // Clock-like
+    advanced: "M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z", // Wrench
+  };
+
+  /** Item with its original section ID for tracking */
+  interface FlatItem {
+    item: AnyItem;
+    sectionId: string;
+  }
 
   function matchesFilter(sectionId: string, item: AnyItem): boolean {
     const itemId = getItemId(item);
@@ -328,22 +456,72 @@
     }
   }
 
-  function getSortedItems(sectionId: string, items: readonly AnyItem[]): AnyItem[] {
-    const filtered = items.filter((item) => matchesFilter(sectionId, item));
-
-    if (sortBy === "category") {
-      return [...filtered];
+  /** Flatten all items from all groups with their section IDs */
+  function flattenAllItems(): FlatItem[] {
+    const result: FlatItem[] = [];
+    for (const group of filteredGroups) {
+      for (const section of group.sections) {
+        for (const item of section.items) {
+          if (matchesFilter(section.id, item as AnyItem)) {
+            result.push({ item: item as AnyItem, sectionId: section.id });
+          }
+        }
+      }
     }
+    return result;
+  }
 
-    return [...filtered].sort((a, b) => {
-      if (sortBy === "impact") {
-        return impactOrder[getImpact(a)] - impactOrder[getImpact(b)];
-      }
-      if (sortBy === "difficulty") {
-        return difficultyOrder[getDifficulty(a)] - difficultyOrder[getDifficulty(b)];
-      }
-      return 0;
-    });
+  /** Group items by impact level */
+  function groupByImpact(items: FlatItem[]): Array<{ id: ImpactLevel; title: string; icon: string; items: FlatItem[] }> {
+    const groups: Record<ImpactLevel, FlatItem[]> = { high: [], medium: [], low: [] };
+    for (const flatItem of items) {
+      const impact = getImpact(flatItem.item);
+      groups[impact].push(flatItem);
+    }
+    return (["high", "medium", "low"] as ImpactLevel[])
+      .filter(level => groups[level].length > 0)
+      .map(level => ({
+        id: level,
+        title: IMPACT_LABELS[level],
+        icon: IMPACT_ICONS[level],
+        items: groups[level],
+      }));
+  }
+
+  /** Group items by difficulty level */
+  function groupByDifficulty(items: FlatItem[]): Array<{ id: DifficultyLevel; title: string; icon: string; items: FlatItem[] }> {
+    const groups: Record<DifficultyLevel, FlatItem[]> = { quick: [], moderate: [], advanced: [] };
+    for (const flatItem of items) {
+      const difficulty = getDifficulty(flatItem.item);
+      groups[difficulty].push(flatItem);
+    }
+    return (["quick", "moderate", "advanced"] as DifficultyLevel[])
+      .filter(level => groups[level].length > 0)
+      .map(level => ({
+        id: level,
+        title: DIFFICULTY_LABELS[level],
+        icon: DIFFICULTY_ICONS[level],
+        items: groups[level],
+      }));
+  }
+
+  /** Derived: groups organized by the current sort option */
+  let displayGroups = $derived.by(() => {
+    if (sortBy === "category") {
+      return null; // Use original filteredGroups
+    }
+    const allItems = flattenAllItems();
+    if (sortBy === "impact") {
+      return groupByImpact(allItems);
+    }
+    if (sortBy === "difficulty") {
+      return groupByDifficulty(allItems);
+    }
+    return null;
+  });
+
+  function getFilteredItems(sectionId: string, items: readonly AnyItem[]): AnyItem[] {
+    return items.filter((item) => matchesFilter(sectionId, item));
   }
 
   function getGroupIcon(groupId: string): string {
@@ -394,40 +572,53 @@
     <!-- Sidebar TOC -->
     <aside class="guide__sidebar">
       <nav class="guide__toc">
-        {#each filteredGroups as group (group.id)}
-          {@const groupProgress = getGroupProgress(group.sections)}
-          <button
-            type="button"
-            class="guide__toc-item"
-            class:active={activeGroupId === group.id}
-            onclick={() => scrollToGroup(group.id)}
-          >
-            <svg
-              class="guide__toc-icon"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
+        {#if displayGroups}
+          <!-- Sorted by Impact/Difficulty -->
+          {#each displayGroups as group (group.id)}
+            <button
+              type="button"
+              class="guide__toc-item guide__toc-item--{group.id}"
+              class:active={activeGroupId === group.id}
+              onclick={() => scrollToGroup(group.id)}
             >
-              <path d={getGroupIcon(group.id)} />
-            </svg>
-            <span class="guide__toc-label">{group.title}</span>
-            <span class="guide__toc-progress" class:complete={groupProgress.percent === 100}>
-              {groupProgress.completed}/{groupProgress.total}
-            </span>
-          </button>
-        {/each}
+              <svg class="guide__toc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d={group.icon} />
+              </svg>
+              <span class="guide__toc-label">{group.title}</span>
+              <span class="guide__toc-progress">{group.items.length}</span>
+    </button>
+          {/each}
+        {:else}
+          <!-- Category view -->
+          {#each filteredGroups as group (group.id)}
+            {@const groupProgress = getGroupProgress(group.sections)}
+    <button
+      type="button"
+              class="guide__toc-item"
+              class:active={activeGroupId === group.id}
+              onclick={() => scrollToGroup(group.id)}
+            >
+              <svg class="guide__toc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d={getGroupIcon(group.id)} />
+              </svg>
+              <span class="guide__toc-label">{group.title}</span>
+              <span class="guide__toc-progress" class:complete={groupProgress.percent === 100}>
+                {groupProgress.completed}/{groupProgress.total}
+              </span>
+            </button>
+          {/each}
+        {/if}
       </nav>
       <div class="guide__sidebar-actions">
         <button type="button" class="guide__sidebar-btn" onclick={handlePrint}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M6 9V2h12v7" />
+        <path d="M6 9V2h12v7" />
             <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
-            <rect x="6" y="14" width="12" height="8" />
-          </svg>
-          Print
-        </button>
-      </div>
+        <rect x="6" y="14" width="12" height="8" />
+      </svg>
+      Print
+    </button>
+  </div>
     </aside>
 
     <!-- Main content -->
@@ -441,240 +632,355 @@
           </svg>
           <input
             type="search"
+            id="guide-search"
+            name="guide-search"
             placeholder="Search settings..."
             bind:value={searchQuery}
             class="guide__search-input"
           />
         </div>
         <div class="guide__filters">
-          <select bind:value={sortBy} class="guide__select">
+          <select id="guide-sort" name="guide-sort" bind:value={sortBy} class="guide__select">
             <option value="category">Sort: Category</option>
             <option value="impact">Sort: Impact</option>
             <option value="difficulty">Sort: Difficulty</option>
           </select>
-          <select bind:value={filterBy} class="guide__select">
+          <select id="guide-filter" name="guide-filter" bind:value={filterBy} class="guide__select">
             <option value="all">Show: All</option>
             <option value="incomplete">Show: Incomplete</option>
             <option value="quick-wins">Show: Quick Wins</option>
             <option value="high-impact">Show: High Impact</option>
           </select>
-        </div>
-      </div>
+          </div>
+          </div>
 
       <!-- Content groups -->
       <div class="guide__groups">
-        {#each filteredGroups as group (group.id)}
-          {@const groupProgress = getGroupProgress(group.sections)}
-          <div
-            id="guide-{group.id}"
-            class="guide__group"
-          >
-            <div class="guide__group-header">
-              <svg
-                class="guide__group-icon"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <path d={getGroupIcon(group.id)} />
-              </svg>
-              <h3 class="guide__group-title">{group.title}</h3>
-              <div class="guide__group-meta">
-                <span class="guide__group-count">{groupProgress.completed}/{groupProgress.total}</span>
-                {#if groupProgress.completed > 0}
+        {#if displayGroups}
+          <!-- Sorted by Impact/Difficulty view -->
+          {#each displayGroups as group (group.id)}
+            <div id="guide-{group.id}" class="guide__group guide__group--{group.id}">
+              <div class="guide__group-header">
+                <svg class="guide__group-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d={group.icon} />
+          </svg>
+                <h3 class="guide__group-title">{group.title}</h3>
+                <span class="guide__group-count">{group.items.length} items</span>
+              </div>
+
+              <div class="guide__cards">
+                {#each group.items as flatItem (getItemId(flatItem.item))}
+                  {@const item = flatItem.item}
+                  {@const sectionId = flatItem.sectionId}
+                  {@const itemId = getItemId(item)}
+                  {@const itemDone = isDone(sectionId, itemId)}
+                  {@const impact = getImpact(item)}
+                  {@const safety = getSafety(item)}
+                  {@const title = getItemTitle(item)}
+                  {@const value = getItemValue(item)}
+                  {@const isComplex = isTroubleshootingItem(item) || isGameLaunchItem(item)}
+                  {@const itemTooltip = buildItemTooltip(item)}
+
+                  {#if isComplex}
+                    <div class="guide__card guide__card--complex" class:completed={itemDone}>
+                      <label class="guide__card-header" use:tooltip={itemTooltip}>
+                        <input
+                          type="checkbox"
+                          id="guide-item-{sectionId}-{itemId}"
+                          name="guide-item-{sectionId}"
+                          checked={itemDone}
+                          onchange={() => toggleItem(sectionId, itemId)}
+                          class="guide__checkbox-input"
+                        />
+                        <span class="guide__checkbox"></span>
+                        <span class="guide__card-content">
+                          <span class="guide__card-title">{title}</span>
+                        </span>
+                        <span class="guide__card-badges">
+                          <span class="guide__badge guide__badge--{impact}" use:tooltip={IMPACT_TOOLTIPS[impact]}>
+                            {impact === "high" ? "↑↑" : impact === "medium" ? "↑" : "−"}
+                          </span>
+                          <span class="guide__badge guide__badge--{safety}" use:tooltip={SAFETY_TOOLTIPS[safety]}>
+                            {safety === "safe" ? "✓" : safety === "moderate" ? "◎" : "△"}
+                          </span>
+                    </span>
+                      </label>
+                      <div class="guide__card-details">
+                        {#if isTroubleshootingItem(item)}
+                          <div class="guide__troubleshoot">
+                            <div class="guide__causes">
+                              <strong>Possible causes:</strong>
+                              <ul>
+                                {#each item.causes as cause}
+                                  <li>{cause}</li>
+                                {/each}
+                              </ul>
+                            </div>
+                            <div class="guide__quickfix">
+                              <strong>Quick fix:</strong> {item.quickFix}
+                            </div>
+                          </div>
+                        {:else if isGameLaunchItem(item)}
+                          <div class="guide__game">
+                            <span class="guide__game-platform">{item.platform}</span>
+                            {#if item.launchOptions}
+                              <div class="guide__launch-options">
+                                <code>{item.launchOptions}</code>
+                      <button
+                        type="button"
+                                  class="guide__copy-btn"
+                                  class:copied={copiedId === item.game}
+                                  onclick={() => copyLaunchOptions(item.launchOptions!, item.game)}
+                                >
+                                  {copiedId === item.game ? "✓" : "Copy"}
+                      </button>
+                              </div>
+                            {/if}
+                            <ul class="guide__game-notes">
+                              {#each item.notes as note}
+                                <li>{note}</li>
+                              {/each}
+                            </ul>
+                          </div>
+                    {/if}
+                  </div>
+                </div>
+                  {:else}
+                    <label class="guide__card" class:completed={itemDone} use:tooltip={itemTooltip}>
+                      <input
+                        type="checkbox"
+                        id="guide-item-{sectionId}-{itemId}"
+                        name="guide-item-{sectionId}"
+                        checked={itemDone}
+                        onchange={() => toggleItem(sectionId, itemId)}
+                        class="guide__checkbox-input"
+                      />
+                      <span class="guide__checkbox"></span>
+                      <span class="guide__card-content">
+                        <span class="guide__card-title">{title}</span>
+                        {#if value}
+                          <span class="guide__card-value">{value}</span>
+                        {/if}
+                      </span>
+                      <span class="guide__card-badges">
+                        <span class="guide__badge guide__badge--{impact}" use:tooltip={IMPACT_TOOLTIPS[impact]}>
+                          {impact === "high" ? "↑↑" : impact === "medium" ? "↑" : "−"}
+                        </span>
+                        <span class="guide__badge guide__badge--{safety}" use:tooltip={SAFETY_TOOLTIPS[safety]}>
+                          {safety === "safe" ? "✓" : safety === "moderate" ? "◎" : "△"}
+                        </span>
+                      </span>
+                    </label>
+                  {/if}
+                {/each}
+              </div>
+            </div>
+          {/each}
+        {:else}
+          <!-- Category view (default) -->
+          {#each filteredGroups as group (group.id)}
+            {@const groupProgress = getGroupProgress(group.sections)}
+            <div id="guide-{group.id}" class="guide__group">
+              <div class="guide__group-header">
+                <svg class="guide__group-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d={getGroupIcon(group.id)} />
+                </svg>
+                <h3 class="guide__group-title">{group.title}</h3>
+                <div class="guide__group-meta">
+                  <span class="guide__group-count">{groupProgress.completed}/{groupProgress.total}</span>
+                  {#if groupProgress.completed > 0}
                   <button
                     type="button"
-                    class="guide__reset-btn"
-                    title="Reset all in this category"
-                    onclick={() => {
-                      group.sections.forEach((s) => handleResetSection(s.id));
-                    }}
-                  >
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                      class="guide__reset-btn"
+                      title="Reset all in this category"
+                      onclick={() => {
+                        group.sections.forEach((s) => handleResetSection(s.id));
+                      }}
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
                       <path d="M3 3v5h5" />
                     </svg>
                   </button>
-                {/if}
-              </div>
-            </div>
-
-            {#each group.sections as section (section.id)}
-              {@const items = getSortedItems(section.id, section.items as readonly AnyItem[])}
-              {#if items.length > 0}
-                <div class="guide__section">
-                  {#if group.sections.length > 1}
-                    <h4 class="guide__section-title">{section.title}</h4>
-                    {#if section.description}
-                      <p class="guide__section-desc">{section.description}</p>
-                    {/if}
-                  {/if}
-
-                  {#if section.location}
-                    <div class="guide__section-location">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                        <circle cx="12" cy="10" r="3" />
-                      </svg>
-                      {section.location}
-                    </div>
-                  {/if}
-
-                  <div class="guide__cards">
-                    {#each items as item (getItemId(item))}
-                      {@const itemId = getItemId(item)}
-                      {@const itemDone = isDone(section.id, itemId)}
-                      {@const itemKey = `${section.id}:${itemId}`}
-                      {@const isExpanded = expandedItems.has(itemKey)}
-                      {@const impact = getImpact(item)}
-                      {@const difficulty = getDifficulty(item)}
-                      {@const safety = getSafety(item)}
-                      {@const title = getItemTitle(item)}
-                      {@const value = getItemValue(item)}
-                      {@const why = getItemWhy(item)}
-                      {@const isComplex = isTroubleshootingItem(item) || isGameLaunchItem(item)}
-
-                      <div
-                        class="guide__card"
-                        class:completed={itemDone}
-                        class:expanded={isExpanded}
-                        class:complex={isComplex}
-                      >
-                        <div class="guide__card-header">
-                          <label class="guide__card-check">
-                            <input
-                              type="checkbox"
-                              checked={itemDone}
-                              onchange={(e) => handleCheckbox(section.id, itemId, e)}
-                            />
-                            <span class="guide__checkbox"></span>
-                          </label>
-                          <button
-                            type="button"
-                            class="guide__card-content"
-                            onclick={() => toggleItemExpanded(itemKey)}
-                          >
-                            <span class="guide__card-title">{title}</span>
-                            {#if value && !isComplex}
-                              <span class="guide__card-value">{value}</span>
-                            {/if}
-                          </button>
-                          <div class="guide__card-badges">
-                            <span class="guide__badge guide__badge--{impact}" title="Impact: {impact}">
-                              {impact === "high" ? "↑↑" : impact === "medium" ? "↑" : "−"}
-                            </span>
-                            <span class="guide__badge guide__badge--{difficulty}" title="Difficulty: {difficulty}">
-                              {difficulty === "quick" ? "⚡" : difficulty === "moderate" ? "⏱" : "🔧"}
-                            </span>
-                            {#if safety !== "safe"}
-                              <span class="guide__badge guide__badge--{safety}" title="Safety: {safety}">
-                                {safety === "moderate" ? "⚠" : "⚡"}
-                              </span>
-                            {/if}
-                          </div>
-                        </div>
-
-                        {#if isExpanded || isComplex}
-                          <div class="guide__card-details">
-                            {#if isTroubleshootingItem(item)}
-                              <div class="guide__troubleshoot">
-                                <div class="guide__causes">
-                                  <strong>Possible causes:</strong>
-                                  <ul>
-                                    {#each item.causes as cause}
-                                      <li>{cause}</li>
-                                    {/each}
-                                  </ul>
-                                </div>
-                                <div class="guide__quickfix">
-                                  <strong>Quick fix:</strong> {item.quickFix}
-                                </div>
-                              </div>
-                            {:else if isGameLaunchItem(item)}
-                              <div class="guide__game">
-                                <span class="guide__game-platform">{item.platform}</span>
-                                {#if item.launchOptions}
-                                  <div class="guide__launch-options">
-                                    <code>{item.launchOptions}</code>
-                                    <button
-                                      type="button"
-                                      class="guide__copy-btn"
-                                      class:copied={copiedId === item.game}
-                                      onclick={() => copyLaunchOptions(item.launchOptions!, item.game)}
-                                    >
-                                      {copiedId === item.game ? "✓" : "Copy"}
-                                    </button>
-                                  </div>
-                                {/if}
-                                <ul class="guide__game-notes">
-                                  {#each item.notes as note}
-                                    <li>{note}</li>
-                                  {/each}
-                                </ul>
-                              </div>
-                            {:else if isPreflightCheck(item)}
-                              <div class="guide__preflight">
-                                <p class="guide__how"><strong>How:</strong> {item.how}</p>
-                                <p class="guide__fail"><strong>If not:</strong> {item.fail}</p>
-                              </div>
-                            {:else}
-                              <p class="guide__why">{why}</p>
-                            {/if}
-                          </div>
-                        {/if}
-                      </div>
-                    {/each}
-                  </div>
-
-                  {#if section.note}
-                    <div class="guide__note">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10" />
-                        <line x1="12" y1="16" x2="12" y2="12" />
-                        <line x1="12" y1="8" x2="12.01" y2="8" />
-                      </svg>
-                      {section.note}
-                    </div>
                   {/if}
                 </div>
-              {/if}
-            {/each}
+              </div>
 
-            {#if group.videos && group.videos.length > 0}
-              <div class="guide__videos">
-                <h4 class="guide__videos-title">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polygon points="23 7 16 12 23 17 23 7" />
-                    <rect x="1" y="5" width="15" height="14" rx="2" />
+              {#each group.sections as section (section.id)}
+                {@const items = getFilteredItems(section.id, section.items as readonly AnyItem[])}
+                {#if items.length > 0}
+                  <div class="guide__section">
+                    {#if group.sections.length > 1}
+                      <h4 class="guide__section-title">{section.title}</h4>
+                      {#if section.description}
+                        <p class="guide__section-desc">{section.description}</p>
+              {/if}
+              {/if}
+
+              {#if section.location}
+                      <div class="guide__section-location">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                    <circle cx="12" cy="10" r="3" />
                   </svg>
-                  Learn More
-                </h4>
-                <div class="guide__videos-list">
-                  {#each group.videos as video (video.id)}
-                    <a
-                      href={getYouTubeUrl(video.videoId)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      class="guide__video-card"
-                    >
+                  {section.location}
+                      </div>
+              {/if}
+
+                    <div class="guide__cards">
+                      {#each items as item (getItemId(item))}
+                        {@const itemId = getItemId(item)}
+                  {@const itemDone = isDone(section.id, itemId)}
+                        {@const impact = getImpact(item)}
+                        {@const safety = getSafety(item)}
+                        {@const title = getItemTitle(item)}
+                        {@const value = getItemValue(item)}
+                        {@const isComplex = isTroubleshootingItem(item) || isGameLaunchItem(item)}
+                        {@const itemTooltip = buildItemTooltip(item)}
+
+                        {#if isComplex}
+                          <div class="guide__card guide__card--complex" class:completed={itemDone}>
+                            <label class="guide__card-header" use:tooltip={itemTooltip}>
+                      <input
+                        type="checkbox"
+                                id="guide-item-{section.id}-{itemId}"
+                                name="guide-item-{section.id}"
+                        checked={itemDone}
+                                onchange={() => toggleItem(section.id, itemId)}
+                                class="guide__checkbox-input"
+                              />
+                              <span class="guide__checkbox"></span>
+                              <span class="guide__card-content">
+                                <span class="guide__card-title">{title}</span>
+                              </span>
+                              <span class="guide__card-badges">
+                                <span class="guide__badge guide__badge--{impact}" use:tooltip={IMPACT_TOOLTIPS[impact]}>
+                                  {impact === "high" ? "↑↑" : impact === "medium" ? "↑" : "−"}
+                                </span>
+                                <span class="guide__badge guide__badge--{safety}" use:tooltip={SAFETY_TOOLTIPS[safety]}>
+                                  {safety === "safe" ? "✓" : safety === "moderate" ? "◎" : "△"}
+                                </span>
+                              </span>
+                            </label>
+                            <div class="guide__card-details">
+                              {#if isTroubleshootingItem(item)}
+                                <div class="guide__troubleshoot">
+                                  <div class="guide__causes">
+                            <strong>Possible causes:</strong>
+                            <ul>
+                              {#each item.causes as cause}
+                                <li>{cause}</li>
+                              {/each}
+                            </ul>
+                          </div>
+                                  <div class="guide__quickfix">
+                                    <strong>Quick fix:</strong> {item.quickFix}
+                                  </div>
+                                </div>
+                        {:else if isGameLaunchItem(item)}
+                                <div class="guide__game">
+                                  <span class="guide__game-platform">{item.platform}</span>
+                          {#if item.launchOptions}
+                                    <div class="guide__launch-options">
+                                      <code>{item.launchOptions}</code>
+                              <button
+                                type="button"
+                                        class="guide__copy-btn"
+                                class:copied={copiedId === item.game}
+                                        onclick={() => copyLaunchOptions(item.launchOptions!, item.game)}
+                                      >
+                                        {copiedId === item.game ? "✓" : "Copy"}
+                              </button>
+                            </div>
+                          {/if}
+                                  <ul class="guide__game-notes">
+                            {#each item.notes as note}
+                              <li>{note}</li>
+                            {/each}
+                          </ul>
+                          </div>
+                            {/if}
+                            </div>
+                          </div>
+                        {:else}
+                          <label class="guide__card" class:completed={itemDone} use:tooltip={itemTooltip}>
+                            <input
+                              type="checkbox"
+                              id="guide-item-{section.id}-{itemId}"
+                              name="guide-item-{section.id}"
+                              checked={itemDone}
+                              onchange={() => toggleItem(section.id, itemId)}
+                              class="guide__checkbox-input"
+                            />
+                            <span class="guide__checkbox"></span>
+                            <span class="guide__card-content">
+                              <span class="guide__card-title">{title}</span>
+                              {#if value}
+                                <span class="guide__card-value">{value}</span>
+                              {/if}
+                            </span>
+                            <span class="guide__card-badges">
+                              <span class="guide__badge guide__badge--{impact}" use:tooltip={IMPACT_TOOLTIPS[impact]}>
+                                {impact === "high" ? "↑↑" : impact === "medium" ? "↑" : "−"}
+                              </span>
+                              <span class="guide__badge guide__badge--{safety}" use:tooltip={SAFETY_TOOLTIPS[safety]}>
+                                {safety === "safe" ? "✓" : safety === "moderate" ? "◎" : "△"}
+                              </span>
+                            </span>
+                          </label>
+                        {/if}
+                      {/each}
+                      </div>
+
+              {#if section.note}
+                      <div class="guide__note">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="16" x2="12" y2="12" />
+                    <line x1="12" y1="8" x2="12.01" y2="8" />
+                  </svg>
+                  {section.note}
+                      </div>
+              {/if}
+            </div>
+                {/if}
+          {/each}
+
+          {#if group.videos && group.videos.length > 0}
+                <div class="guide__videos">
+                  <h4 class="guide__videos-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="23 7 16 12 23 17 23 7" />
+                  <rect x="1" y="5" width="15" height="14" rx="2" />
+                </svg>
+                Learn More
+                  </h4>
+                  <div class="guide__videos-list">
+                {#each group.videos as video (video.id)}
+                  <a
+                    href={getYouTubeUrl(video.videoId)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                        class="guide__video-card"
+                  >
                       <img
                         src={getYouTubeThumbnail(video.videoId)}
                         alt={video.title}
                         loading="lazy"
-                        class="guide__video-thumb"
-                      />
-                      <div class="guide__video-info">
-                        <span class="guide__video-title">{video.title}</span>
-                        <span class="guide__video-creator">{video.creator}</span>
-                      </div>
-                    </a>
-                  {/each}
-                </div>
+                          class="guide__video-thumb"
+                        />
+                        <div class="guide__video-info">
+                          <span class="guide__video-title">{video.title}</span>
+                          <span class="guide__video-creator">{video.creator}</span>
+                    </div>
+                  </a>
+                {/each}
               </div>
-            {/if}
-          </div>
-        {/each}
+            </div>
+          {/if}
+        </div>
+    {/each}
+        {/if}
       </div>
     </div>
   </div>
