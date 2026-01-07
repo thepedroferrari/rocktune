@@ -252,8 +252,8 @@ Write-Host "SmartScreen and Windows Update remain ENABLED (security)" -Foregroun
 Write-Host ""
 
 if (-not $DryRun -and -not $SkipConfirmation) {
-    $confirm = Read-Host "Apply these optimizations? (Y/N)"
-    if ($confirm -ne "Y") {
+    $confirm = (Read-Host "Apply these optimizations? (Y/N)").Trim()
+    if ($confirm -notmatch '^(?i:y|yes)$') {
         Write-Log "User cancelled script" "INFO"
         Write-Host "Script cancelled by user" -ForegroundColor Yellow
         exit 0
