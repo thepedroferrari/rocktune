@@ -3,8 +3,9 @@ import type { ConfigFile } from './config-generator'
 /**
  * Download a single config file to user's browser
  * Creates a Blob, triggers download via temporary anchor element
+ * Internal helper for downloadConfigs()
  */
-export function downloadConfigFile(content: string, filename: string): void {
+function downloadConfigFile(content: string, filename: string): void {
   const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
   const url = URL.createObjectURL(blob)
 
