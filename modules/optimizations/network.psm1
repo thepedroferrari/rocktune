@@ -229,10 +229,17 @@ function Set-IPv4Preference {
     }
 
     try {
-        $path = "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip6\Parameters"
-        Backup-RegistryKey -Path $path
-        Set-RegistryValue -Path $path -Name "DisabledComponents" -Value 32 -Type "DWORD"
-        Write-Log "Set IPv4 preference over IPv6 (reboot required)" "SUCCESS"
+        Write-Log "Setting IPv4 preference..." "INFO"
+
+        $ipv6Path = "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip6\Parameters"
+        Backup-RegistryKey -Path $ipv6Path
+
+        # Value 32 = Prefer IPv4 over IPv6 (see Microsoft KB 929852)
+        Set-RegistryValue -Path $ipv6Path -Name "DisabledComponents" -Value 32 -Type "DWORD"
+
+        Write-Log "IPv4 preferred over IPv6" "SUCCESS"
+        Write-Log "Warning: May break IPv6-only paths or Xbox/Store features" "INFO"
+        Write-Log "Requires reboot to take effect" "INFO"
     } catch {
         Write-Log "Error setting IPv4 preference: $_" "ERROR"
     }
@@ -260,8 +267,25 @@ function Disable-Teredo {
     }
 
     try {
-        netsh interface teredo set state disabled 2>&1 | Out-Null
-        Write-Log "Teredo disabled (reboot recommended)" "SUCCESS"
+        Write-Log "Disabling Teredo IPv6 tunneling..." "INFO"
+
+        $result = netsh interface teredo set state disabled 2>&1
+        if ($LASTEXITCODE -eq 0) {
+            Write-Log "Teredo disabled via netsh" "SUCCESS"
+        }
+
+        $ipv6Path = "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip6\Parameters"
+        Backup-RegistryKey -Path $ipv6Path
+
+        $currentValue = Get-RegistryValue -Path $ipv6Path -Name "DisabledComponents"
+        if ($null -eq $currentValue) { $currentValue = 0 }
+
+        $newValue = $currentValue -bor 1
+        Set-RegistryValue -Path $ipv6Path -Name "DisabledComponents" -Value $newValue -Type "DWORD"
+
+        Write-Log "Teredo IPv6 tunneling disabled" "SUCCESS"
+        Write-Log "Warning: May break Xbox Live connectivity" "INFO"
+        Write-Log "Requires reboot to take effect" "INFO"
     } catch {
         Write-Log "Error disabling Teredo: $_" "ERROR"
     }
@@ -305,72 +329,6 @@ function Set-QoSConfiguration {
 }
 
 
-
-
-function Set-IPv4Preference {
-    <#
-    .SYNOPSIS
-        Prefers IPv4 over IPv6 (registry-based).
-    .DESCRIPTION
-        Writes DisabledComponents to prefer IPv4 and warns about feature impact.
-    .OUTPUTS
-        None.
-    #>
-    try {
-        Write-Log "Setting IPv4 preference..." "INFO"
-
-        $ipv6Path = "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip6\Parameters"
-        Backup-RegistryKey -Path $ipv6Path
-
-        # Value 32 = Prefer IPv4 over IPv6 (see Microsoft KB 929852)
-        Set-RegistryValue -Path $ipv6Path -Name "DisabledComponents" -Value 32 -Type "DWORD"
-
-        Write-Log "IPv4 preferred over IPv6" "SUCCESS"
-        Write-Log "Warning: May break IPv6-only paths or Xbox/Store features" "INFO"
-        Write-Log "Requires reboot to take effect" "INFO"
-
-    } catch {
-        Write-Log "Error setting IPv4 preference: $_" "ERROR"
-        throw
-    }
-}
-
-
-function Disable-Teredo {
-    <#
-    .SYNOPSIS
-        Disables Teredo IPv6 tunneling (registry + netsh).
-    .DESCRIPTION
-        Disables Teredo and updates DisabledComponents to prevent tunneling.
-    .OUTPUTS
-        None.
-    #>
-    try {
-        Write-Log "Disabling Teredo IPv6 tunneling..." "INFO"
-
-        $result = netsh interface teredo set state disabled 2>&1
-        if ($LASTEXITCODE -eq 0) {
-            Write-Log "Teredo disabled via netsh" "SUCCESS"
-        }
-
-        $ipv6Path = "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip6\Parameters"
-        Backup-RegistryKey -Path $ipv6Path
-
-        $currentValue = Get-RegistryValue -Path $ipv6Path -Name "DisabledComponents"
-        if ($null -eq $currentValue) { $currentValue = 0 }
-
-        $newValue = $currentValue -bor 1
-        Set-RegistryValue -Path $ipv6Path -Name "DisabledComponents" -Value $newValue -Type "DWORD"
-
-        Write-Log "Teredo IPv6 tunneling disabled" "SUCCESS"
-        Write-Log "Warning: May break Xbox Live connectivity" "INFO"
-        Write-Log "Requires reboot to take effect" "INFO"
-
-    } catch {
-        Write-Log "Error disabling Teredo: $_" "ERROR"
-        throw
-    }
-}
 
 
 function Enable-QoSGaming {
@@ -874,14 +832,6 @@ function Invoke-NetworkOptimizations {
 
         if ($EnableQoS) {
             Set-QoSConfiguration -GameExecutables $GameExecutables
-        }
-
-        if ($PreferIPv4) {
-            Set-IPv4Preference
-        }
-
-        if ($DisableTeredo) {
-            Disable-Teredo
         }
 
         Write-Log "Network optimizations complete" "SUCCESS"
