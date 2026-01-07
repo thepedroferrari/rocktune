@@ -991,9 +991,7 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
   )
   lines.push(`${indent}Write-Host "  CPU: $cpu" -ForegroundColor White`)
   lines.push(`${indent}Write-Host "  GPU: $gpu" -ForegroundColor White`)
-
-  // biome-ignore lint/style/useTemplate: preserve PowerShell $ram variable
-  lines.push(`${indent}Write-Host "  RAM: ` + '$ram' + `GB" -ForegroundColor White`)
+  lines.push(`${indent}Write-Host "  RAM: $ram GB" -ForegroundColor White`)
   lines.push(`${indent}Write-Host "  Windows: Build $script:WinBuild" -ForegroundColor Gray`)
   lines.push('')
 
@@ -2028,16 +2026,27 @@ function generatePreflightScan(selected: Set<string>, _hardware: HardwareProfile
   }
 
   // === NEW POWER DETECTIONS ===
-  if (selected.has('power_plan')) {
+  if (selected.has('ultimate_perf')) {
     lines.push('# Scan: Power Plan')
     lines.push('$plan = powercfg /getactivescheme 2>$null')
     lines.push(
-      'if ($plan -match "Balanced\\+|Gaming") { Add-ScanResult "[SAFE] Balanced+ Power Plan" "Active" "Active" "OK" }',
+      'if ($plan -match "Ultimate Performance") { Add-ScanResult "[CAUTION] Ultimate Performance" "Active" "Active" "OK" }',
     )
     lines.push(
-      'elseif ($plan -match "High performance") { Add-ScanResult "[SAFE] Balanced+ Power Plan" "High Perf" "Balanced+" "CHANGE" }',
+      'elseif ($plan -match "High performance") { Add-ScanResult "[CAUTION] Ultimate Performance" "High Perf" "Ultimate Perf" "CHANGE" }',
     )
-    lines.push('else { Add-ScanResult "[SAFE] Balanced+ Power Plan" "Other" "Balanced+" "CHANGE" }')
+    lines.push(
+      'else { Add-ScanResult "[CAUTION] Ultimate Performance" "Other" "Ultimate Perf" "CHANGE" }',
+    )
+  } else if (selected.has('power_plan')) {
+    lines.push('# Scan: Power Plan')
+    lines.push('$plan = powercfg /getactivescheme 2>$null')
+    lines.push(
+      'if ($plan -match "High performance") { Add-ScanResult "[SAFE] High Performance Plan" "Active" "Active" "OK" }',
+    )
+    lines.push(
+      'else { Add-ScanResult "[SAFE] High Performance Plan" "Other" "High Perf" "CHANGE" }',
+    )
   }
 
   if (selected.has('usb_suspend')) {

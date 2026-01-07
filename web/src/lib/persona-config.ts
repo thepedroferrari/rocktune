@@ -29,7 +29,6 @@ const BASE_OPTIMIZATIONS: readonly OptimizationKey[] = [
   'pagefile',
   'fastboot',
   'restore_point',
-  'power_plan',
   'usb_power',
   'pcie_power',
   'audio_enhancements',
@@ -47,9 +46,10 @@ const BASE_OPTIMIZATIONS: readonly OptimizationKey[] = [
 const PERSONA_ADDITIONS: Record<PersonaId, readonly OptimizationKey[]> = {
   /**
    * GAMER: Balanced gaming performance
-   * Base + common gaming optimizations
+   * Base + common gaming optimizations + High Performance power plan
    */
   gamer: [
+    'power_plan',
     'dns',
     'nagle',
     'nic_interrupt_mod',
@@ -115,6 +115,7 @@ const PERSONA_ADDITIONS: Record<PersonaId, readonly OptimizationKey[]> = {
    * Gamer - gamedvr (breaks OBS) + streaming-safe settings
    */
   streamer: [
+    'power_plan',
     'dns',
     'nagle',
     'nic_interrupt_mod',
@@ -128,7 +129,7 @@ const PERSONA_ADDITIONS: Record<PersonaId, readonly OptimizationKey[]> = {
     'feedback_disable',
     'timer',
     // NOTE: NO gamedvr - breaks OBS capture
-    // NOTE: NO aggressive power settings - adaptive for streaming
+    // NOTE: High Performance (not Ultimate) - balanced for streaming
   ],
 
   /**
