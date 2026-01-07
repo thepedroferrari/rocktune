@@ -105,7 +105,7 @@ function Get-SoftwareCatalog {
         [PSCustomObject] Catalog data or $null on failure.
     #>
     try {
-        $catalogPath = Join-Path $PSScriptRoot "..\..\web\catalog.json"
+        $catalogPath = Join-Path $PSScriptRoot "..\..\data\software-catalog.json"
 
         if (-not (Test-Path $catalogPath)) {
             Write-Log "Software catalog not found: $catalogPath" "ERROR"
