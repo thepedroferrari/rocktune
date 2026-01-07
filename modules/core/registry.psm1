@@ -11,6 +11,118 @@
 
 Import-Module (Join-Path $PSScriptRoot "logger.psm1") -Force
 
+$script:RegistryBackupIndexPath = Join-Path $PSScriptRoot "..\..\config\registry-backups.json"
+$script:RegistryBackupIndex = $null
+
+function Get-RegistryBackupIndex {
+    if ($null -ne $script:RegistryBackupIndex) {
+        return $script:RegistryBackupIndex
+    }
+
+    if (-not (Test-Path $script:RegistryBackupIndexPath)) {
+        $script:RegistryBackupIndex = @{}
+        return $script:RegistryBackupIndex
+    }
+
+    try {
+        $json = Get-Content $script:RegistryBackupIndexPath -Raw | ConvertFrom-Json
+        $index = @{}
+        if ($null -ne $json) {
+            foreach ($property in $json.PSObject.Properties) {
+                $index[$property.Name] = $property.Value
+            }
+        }
+        $script:RegistryBackupIndex = $index
+        return $script:RegistryBackupIndex
+    } catch {
+        Write-Log "Failed to load registry backup index: $_" "WARNING"
+        $script:RegistryBackupIndex = @{}
+        return $script:RegistryBackupIndex
+    }
+}
+
+function Save-RegistryBackupIndex {
+    if ($null -eq $script:RegistryBackupIndex) {
+        return
+    }
+
+    try {
+        $indexDir = Split-Path $script:RegistryBackupIndexPath -Parent
+        if ($indexDir -and -not (Test-Path $indexDir)) {
+            New-Item -ItemType Directory -Path $indexDir -Force | Out-Null
+        }
+
+        $json = $script:RegistryBackupIndex | ConvertTo-Json -Depth 6
+        Set-Content -Path $script:RegistryBackupIndexPath -Value $json -Force
+    } catch {
+        Write-Log "Failed to save registry backup index: $_" "WARNING"
+    }
+}
+
+function Register-RegistryBackup {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$Path,
+
+        [Parameter(Mandatory=$true)]
+        [string]$BackupPath,
+
+        [Parameter(Mandatory=$true)]
+        [string]$BackupDir
+    )
+
+    $index = Get-RegistryBackupIndex
+    $index[$Path] = @{
+        LastBackup = $BackupPath
+        BackupDir = $BackupDir
+        UpdatedAt = (Get-Date).ToString('o')
+    }
+
+    $script:RegistryBackupIndex = $index
+    Save-RegistryBackupIndex
+}
+
+function Resolve-RegistryBackupPath {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$Path,
+
+        [string]$BackupDir = $null
+    )
+
+    $index = Get-RegistryBackupIndex
+    if ($index.ContainsKey($Path)) {
+        $entry = $index[$Path]
+        if ($entry.LastBackup -and (Test-Path $entry.LastBackup)) {
+            return $entry.LastBackup
+        }
+        if (-not $BackupDir -and $entry.BackupDir) {
+            $BackupDir = $entry.BackupDir
+        }
+    }
+
+    if (-not $BackupDir) {
+        $BackupDir = "$env:TEMP\RegistryBackup"
+    }
+
+    if (-not (Test-Path $BackupDir)) {
+        return $null
+    }
+
+    $safeName = $Path.Replace('\', '_').Replace(':', '')
+    $backup = Get-ChildItem -Path $BackupDir -Filter "Backup-*$safeName.reg" -ErrorAction SilentlyContinue |
+        Sort-Object LastWriteTime -Descending |
+        Select-Object -First 1
+
+    if ($backup) {
+        return $backup.FullName
+    }
+
+    return $null
+}
+
 
 function Backup-RegistryKey {
     <#
@@ -55,6 +167,7 @@ function Backup-RegistryKey {
 
         if ($LASTEXITCODE -eq 0) {
             Write-Log "Backed up registry key: $Path -> $backupPath" "SUCCESS"
+            Register-RegistryBackup -Path $Path -BackupPath $backupPath -BackupDir $BackupDir
             return $backupPath
         } else {
             Write-Log "Failed to backup registry key: $Path (Exit code: $LASTEXITCODE)" "ERROR"
@@ -75,6 +188,8 @@ function Restore-RegistryKey {
         Uses reg.exe to import a .reg file. Logs success or failure.
     .PARAMETER BackupPath
         Path to the .reg file produced by Backup-RegistryKey.
+    .PARAMETER Path
+        Registry key path (HKLM:\ or HKCU:\) to resolve the latest backup.
     .OUTPUTS
         [bool] True on success, false on failure.
     .NOTES
@@ -84,32 +199,42 @@ function Restore-RegistryKey {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true)]
+        [Alias('Path')]
         [string]$BackupPath
     )
 
-    if (-not (Test-Path $BackupPath)) {
-        Write-Log "Backup file not found: $BackupPath" "ERROR"
+    $resolvedBackupPath = $BackupPath
+    if ($BackupPath -match '^(HKLM|HKCU):\\') {
+        $resolvedBackupPath = Resolve-RegistryBackupPath -Path $BackupPath
+        if (-not $resolvedBackupPath) {
+            Write-Log "No registry backup found for key: $BackupPath" "ERROR"
+            return $false
+        }
+    }
+
+    if (-not (Test-Path $resolvedBackupPath)) {
+        Write-Log "Backup file not found: $resolvedBackupPath" "ERROR"
         return $false
     }
 
     try {
         # Suppress errors from reg.exe output (it writes success to stderr)
-        $null = reg import $BackupPath 2>&1
+        $null = reg import $resolvedBackupPath 2>&1
 
         if ($LASTEXITCODE -eq 0) {
-            Write-Log "Restored registry from backup: $BackupPath" "SUCCESS"
+            Write-Log "Restored registry from backup: $resolvedBackupPath" "SUCCESS"
             return $true
         } else {
-            Write-Log "Failed to restore registry from backup: $BackupPath (Exit code: $LASTEXITCODE)" "ERROR"
+            Write-Log "Failed to restore registry from backup: $resolvedBackupPath (Exit code: $LASTEXITCODE)" "ERROR"
             return $false
         }
 
     } catch {
         if ($LASTEXITCODE -eq 0) {
-            Write-Log "Restored registry from backup: $BackupPath" "SUCCESS"
+            Write-Log "Restored registry from backup: $resolvedBackupPath" "SUCCESS"
             return $true
         } else {
-            Write-Log "Exception restoring registry from backup $BackupPath : $_" "ERROR"
+            Write-Log "Exception restoring registry from backup $resolvedBackupPath : $_" "ERROR"
             return $false
         }
     }
