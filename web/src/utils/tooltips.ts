@@ -148,7 +148,17 @@ function renderStructuredTooltip(content: StructuredTooltip): string {
  * Format inline markdown (bold)
  */
 function formatInline(text: string): string {
-  return text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+  const escaped = escapeHtml(text)
+  return escaped.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+}
+
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
 }
 
 /**
