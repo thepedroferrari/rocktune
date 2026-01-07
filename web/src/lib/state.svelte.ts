@@ -90,7 +90,6 @@ interface AppStore {
   dnsProvider: DnsProviderType
   script: ScriptState
   ui: UIState
-  optimizationCount: number
   /** Build options for script generation */
   buildOptions: ScriptBuildOptions
 }
@@ -177,9 +176,6 @@ export const app: AppStore = $state({
   /** UI state for modals and panels */
   ui: { ...DEFAULT_UI },
 
-  /** Number of enabled optimizations (derived from optimizations.size) */
-  optimizationCount: 0,
-
   /** Build options for script generation */
   buildOptions: { ...DEFAULT_BUILD_OPTIONS },
 })
@@ -231,11 +227,9 @@ export function getFiltered(): [PackageKey, SoftwarePackage][] {
 /** Category counts for filter badges */
 export function getCategoryCounts(): Record<string, number> {
   const packages = Object.values(app.software)
-  const grouped = Object.groupBy(packages, (pkg) => pkg.category)
-
   const counts: Record<string, number> = { all: packages.length }
-  for (const [category, pkgs] of Object.entries(grouped)) {
-    counts[category] = pkgs?.length ?? 0
+  for (const pkg of packages) {
+    counts[pkg.category] = (counts[pkg.category] ?? 0) + 1
   }
   counts.selected = app.selected.size
 
@@ -379,7 +373,6 @@ export function toggleOptimization(key: OptimizationKey): boolean {
   }
 
   app.optimizations = new Set(app.optimizations)
-  app.optimizationCount = app.optimizations.size
   return !wasEnabled
 }
 
@@ -388,7 +381,6 @@ export function toggleOptimization(key: OptimizationKey): boolean {
  */
 export function setOptimizations(keys: readonly OptimizationKey[]): void {
   app.optimizations = new Set(keys)
-  app.optimizationCount = app.optimizations.size
 }
 
 /**
