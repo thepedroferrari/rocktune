@@ -53,20 +53,7 @@ deno task build
     Cache-Control = "no-store"
     Content-Type = "text/plain; charset=utf-8"
 
-# OG Image Edge Function
-[[edge_functions]]
-  function = "og"
-  path = "/og"
-
-# Cache OG images aggressively (deterministic based on URL)
-[[headers]]
-  for = "/og"
-  [headers.values]
-    Cache-Control = "public, max-age=86400, stale-while-revalidate=604800"
-    CDN-Cache-Control = "public, max-age=604800"
-    Content-Type = "image/png"
-
-# OG fallback images
+# OG images (static)
 [[headers]]
   for = "/og/*"
   [headers.values]
@@ -86,5 +73,5 @@ deno task build
     # ENABLED: clipboard-write (needed for copy buttons to copy generated PowerShell scripts)
     Permissions-Policy = "accelerometer=(), autoplay=(), camera=(), display-capture=(), encrypted-media=(), fullscreen=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), usb=(), web-share=(), xr-spatial-tracking=(), clipboard-write=(self)"
 
-    # Update CSP to allow /og endpoint and YouTube thumbnails for images
+    # Content Security Policy
     Content-Security-Policy = "default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://cdn.simpleicons.org https://img.youtube.com https://i.ytimg.com; script-src 'self'; connect-src 'self'"
