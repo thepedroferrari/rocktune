@@ -5,6 +5,7 @@
  * are essential for optimal gaming performance.
  */
 
+import { buildPersonaSectionId, buildSectionId, SECTION_PREFIXES } from './section-ids'
 import type { GpuType, PresetType } from './types'
 import { GPU_TYPES } from './types'
 
@@ -123,7 +124,7 @@ export interface ManualStepSection {
 }
 
 const WINDOWS_DISPLAY_ALL: ManualStepSection = {
-  id: 'windows-display',
+  id: buildSectionId('windows-display'),
   title: 'Windows Display Settings',
   description: 'Classic mistakes that cost people frames without them knowing',
   items: [
@@ -176,7 +177,7 @@ const WINDOWS_DISPLAY_ALL: ManualStepSection = {
 } as const
 
 const WINDOWS_DISPLAY_PRO: ManualStepSection = {
-  id: 'windows-display-pro',
+  id: buildSectionId('windows-display-pro'),
   title: 'Windows Display (Pro)',
   description: 'Additional display settings for competitive players',
   personas: ['pro_gamer'],
@@ -194,7 +195,7 @@ const WINDOWS_DISPLAY_PRO: ManualStepSection = {
 } as const
 
 const NVIDIA_GAMER: ManualStepSection = {
-  id: 'nvidia-gamer',
+  id: buildPersonaSectionId(SECTION_PREFIXES.NVIDIA, 'gamer'),
   title: 'NVIDIA Control Panel',
   description: 'Right-click desktop > NVIDIA Control Panel',
   hardware: GPU_TYPES.NVIDIA,
@@ -294,7 +295,7 @@ const NVIDIA_GAMER: ManualStepSection = {
 } as const
 
 const NVIDIA_PRO_GAMER: ManualStepSection = {
-  id: 'nvidia-pro-gamer',
+  id: buildPersonaSectionId(SECTION_PREFIXES.NVIDIA, 'pro_gamer'),
   title: 'NVIDIA Control Panel',
   description: 'Right-click desktop > NVIDIA Control Panel',
   hardware: GPU_TYPES.NVIDIA,
@@ -386,7 +387,7 @@ const NVIDIA_PRO_GAMER: ManualStepSection = {
 } as const
 
 const NVIDIA_STREAMER: ManualStepSection = {
-  id: 'nvidia-streamer',
+  id: buildPersonaSectionId(SECTION_PREFIXES.NVIDIA, 'streamer'),
   title: 'NVIDIA Control Panel',
   description: 'Right-click desktop > NVIDIA Control Panel',
   hardware: GPU_TYPES.NVIDIA,
@@ -442,7 +443,7 @@ const NVIDIA_STREAMER: ManualStepSection = {
 } as const
 
 const NVIDIA_BENCHMARKER: ManualStepSection = {
-  id: 'nvidia-benchmarker',
+  id: buildPersonaSectionId(SECTION_PREFIXES.NVIDIA, 'benchmarker'),
   title: 'NVIDIA Control Panel',
   description: 'Right-click desktop > NVIDIA Control Panel',
   hardware: GPU_TYPES.NVIDIA,
@@ -507,7 +508,7 @@ const NVIDIA_BENCHMARKER: ManualStepSection = {
 } as const
 
 const AMD_GAMER: ManualStepSection = {
-  id: 'amd-gamer',
+  id: buildPersonaSectionId(SECTION_PREFIXES.AMD, 'gamer'),
   title: 'AMD Adrenalin Settings',
   description: 'Right-click desktop > AMD Software: Adrenalin Edition',
   hardware: GPU_TYPES.AMD,
@@ -598,7 +599,7 @@ const AMD_GAMER: ManualStepSection = {
 } as const
 
 const AMD_PRO_GAMER: ManualStepSection = {
-  id: 'amd-pro-gamer',
+  id: buildPersonaSectionId(SECTION_PREFIXES.AMD, 'pro_gamer'),
   title: 'AMD Adrenalin Settings',
   description: 'Right-click desktop > AMD Software: Adrenalin Edition',
   hardware: GPU_TYPES.AMD,
@@ -662,7 +663,7 @@ const AMD_PRO_GAMER: ManualStepSection = {
 } as const
 
 const AMD_STREAMER: ManualStepSection = {
-  id: 'amd-streamer',
+  id: buildPersonaSectionId(SECTION_PREFIXES.AMD, 'streamer'),
   title: 'AMD Adrenalin Settings',
   description: 'Right-click desktop > AMD Software: Adrenalin Edition',
   hardware: GPU_TYPES.AMD,
@@ -708,7 +709,7 @@ const AMD_STREAMER: ManualStepSection = {
 } as const
 
 const BIOS_ALL: ManualStepSection = {
-  id: 'bios-all',
+  id: buildSectionId('bios-all'),
   title: 'BIOS Settings',
   description: 'Restart > DEL/F2 during POST > Enter BIOS',
   items: [
@@ -752,7 +753,7 @@ const BIOS_ALL: ManualStepSection = {
 } as const
 
 const BIOS_AMD_X3D: ManualStepSection = {
-  id: 'bios-amd-x3d',
+  id: buildSectionId('bios-amd-x3d'),
   title: 'AMD X3D CPU Settings',
   description: 'For 7800X3D, 9800X3D, and similar V-Cache CPUs',
   note: "X3D users: Game Mode in Windows + Game Bar enabled = V-Cache optimizer works. Don't disable Game Bar!",
@@ -806,7 +807,7 @@ const BIOS_AMD_X3D: ManualStepSection = {
 } as const
 
 const BIOS_INTEL: ManualStepSection = {
-  id: 'bios-intel',
+  id: buildSectionId('bios-intel'),
   title: 'Intel CPU Settings',
   items: [
     {
@@ -840,7 +841,7 @@ const BIOS_INTEL: ManualStepSection = {
 } as const
 
 const DISCORD_GAMER: ManualStepSection = {
-  id: 'discord-gamer',
+  id: buildPersonaSectionId(SECTION_PREFIXES.DISCORD, 'gamer'),
   title: 'Discord',
   location: 'Settings (gear icon)',
   personas: ['gamer'],
@@ -876,7 +877,7 @@ const DISCORD_GAMER: ManualStepSection = {
 } as const
 
 const DISCORD_PRO_GAMER: ManualStepSection = {
-  id: 'discord-pro-gamer',
+  id: buildPersonaSectionId(SECTION_PREFIXES.DISCORD, 'pro_gamer'),
   title: 'Discord',
   location: 'Settings (gear icon)',
   personas: ['pro_gamer'],
@@ -940,7 +941,7 @@ const DISCORD_PRO_GAMER: ManualStepSection = {
 } as const
 
 const DISCORD_STREAMER: ManualStepSection = {
-  id: 'discord-streamer',
+  id: buildPersonaSectionId(SECTION_PREFIXES.DISCORD, 'streamer'),
   title: 'Discord',
   location: 'Settings (gear icon)',
   personas: ['streamer'],
@@ -976,7 +977,7 @@ const DISCORD_STREAMER: ManualStepSection = {
 } as const
 
 const STEAM_GAMER: ManualStepSection = {
-  id: 'steam-gamer',
+  id: buildPersonaSectionId(SECTION_PREFIXES.STEAM, 'gamer'),
   title: 'Steam',
   location: 'Steam > Settings',
   personas: ['gamer'],
@@ -1021,7 +1022,7 @@ const STEAM_GAMER: ManualStepSection = {
 } as const
 
 const STEAM_PRO_GAMER: ManualStepSection = {
-  id: 'steam-pro-gamer',
+  id: buildPersonaSectionId(SECTION_PREFIXES.STEAM, 'pro_gamer'),
   title: 'Steam',
   location: 'Steam > Settings',
   personas: ['pro_gamer'],
@@ -1076,7 +1077,7 @@ const STEAM_PRO_GAMER: ManualStepSection = {
 } as const
 
 const BROWSERS_ALL: ManualStepSection = {
-  id: 'browsers-all',
+  id: buildSectionId('browsers-all'),
   title: 'Browser Settings',
   description: "Browsers eat resources even when 'closed'",
   note: 'Best practice: Close browsers before gaming. Use a lightweight browser (Brave) or mobile for Discord/Twitch.',
@@ -1107,7 +1108,7 @@ const BROWSERS_ALL: ManualStepSection = {
 } as const
 
 const RGB_PRO_GAMER: ManualStepSection = {
-  id: 'rgb-pro-gamer',
+  id: buildPersonaSectionId('rgb', 'pro_gamer'),
   title: 'RGB Software',
   description: 'Pretty lights, ugly overhead',
   personas: ['pro_gamer'],
@@ -1153,7 +1154,7 @@ const RGB_PRO_GAMER: ManualStepSection = {
 } as const
 
 const RGB_GAMER: ManualStepSection = {
-  id: 'rgb-gamer',
+  id: buildPersonaSectionId('rgb', 'gamer'),
   title: 'RGB Software',
   description: 'Pretty lights, ugly overhead',
   personas: ['gamer'],
@@ -1171,7 +1172,7 @@ const RGB_GAMER: ManualStepSection = {
 } as const
 
 const COOLING_ADVANCED: ManualStepSection = {
-  id: 'cooling-advanced',
+  id: buildSectionId(SECTION_PREFIXES.COOLING_ADVANCED),
   title: 'Advanced Cooling',
   description: 'Case fan optimization for better sustained performance',
   note: 'Lower GPU/CPU temps = higher sustained boost clocks under load',
@@ -1207,7 +1208,7 @@ const COOLING_ADVANCED: ManualStepSection = {
 } as const
 
 const PREFLIGHT_ALL: ManualStepSection = {
-  id: 'preflight-all',
+  id: buildSectionId('preflight-all'),
   title: 'Pre-Flight Checklist',
   description: 'Quick sanity checks before a gaming session',
   items: [
@@ -1296,7 +1297,7 @@ const PREFLIGHT_ALL: ManualStepSection = {
 } as const
 
 const PREFLIGHT_PRO: ManualStepSection = {
-  id: 'preflight-pro',
+  id: buildSectionId('preflight-pro'),
   title: 'Pre-Flight (Pro)',
   description: 'Extra checks for competitive players',
   personas: ['pro_gamer'],
@@ -1341,7 +1342,7 @@ const PREFLIGHT_PRO: ManualStepSection = {
 } as const
 
 const TROUBLESHOOTING_WIFI_BLUETOOTH: ManualStepSection = {
-  id: 'troubleshooting-wifi-bt',
+  id: buildSectionId('troubleshooting-wifi-bt'),
   title: 'Wireless/Bluetooth Stutter Fix',
   description:
     "Onboard WiFi/Bluetooth adapters can cause mouse-move stutters that don't appear in synthetic benchmarks",
@@ -1387,7 +1388,7 @@ const TROUBLESHOOTING_WIFI_BLUETOOTH: ManualStepSection = {
 } as const
 
 const TROUBLESHOOTING_PERFORMANCE: ManualStepSection = {
-  id: 'troubleshooting-performance',
+  id: buildSectionId('troubleshooting-performance'),
   title: 'Performance Issues',
   description: 'Common FPS and stuttering problems',
   items: [
@@ -1472,7 +1473,7 @@ const TROUBLESHOOTING_PERFORMANCE: ManualStepSection = {
 } as const
 
 const TROUBLESHOOTING_AUDIO: ManualStepSection = {
-  id: 'troubleshooting-audio',
+  id: buildSectionId('troubleshooting-audio'),
   title: 'Audio Issues',
   description: 'Crackling, directional audio, and mic problems',
   items: [
@@ -1515,7 +1516,7 @@ const TROUBLESHOOTING_AUDIO: ManualStepSection = {
 } as const
 
 const TROUBLESHOOTING_NETWORK: ManualStepSection = {
-  id: 'troubleshooting-network',
+  id: buildSectionId('troubleshooting-network'),
   title: 'Network Issues',
   description: 'Ping, packet loss, and connection problems',
   items: [
@@ -1558,7 +1559,7 @@ const TROUBLESHOOTING_NETWORK: ManualStepSection = {
 } as const
 
 const TROUBLESHOOTING_CRASHES: ManualStepSection = {
-  id: 'troubleshooting-crashes',
+  id: buildSectionId('troubleshooting-crashes'),
   title: 'Crashes & Stability',
   description: 'CTDs, blue screens, and random restarts',
   items: [
@@ -1605,7 +1606,7 @@ const TROUBLESHOOTING_CRASHES: ManualStepSection = {
 } as const
 
 const PERIPHERAL_MOUSE_ALL: ManualStepSection = {
-  id: 'peripheral-mouse-all',
+  id: buildSectionId('peripheral-mouse-all'),
   title: 'Mouse Settings',
   description: 'Essential mouse configuration for gaming',
   items: [
@@ -1658,7 +1659,7 @@ const PERIPHERAL_MOUSE_ALL: ManualStepSection = {
 } as const
 
 const PERIPHERAL_MOUSE_PRO: ManualStepSection = {
-  id: 'peripheral-mouse-pro',
+  id: buildSectionId('peripheral-mouse-pro'),
   title: 'Mouse (Pro)',
   description: 'Advanced mouse settings for competitive players',
   personas: ['pro_gamer'],
@@ -1694,7 +1695,7 @@ const PERIPHERAL_MOUSE_PRO: ManualStepSection = {
 } as const
 
 const PERIPHERAL_KEYBOARD_ALL: ManualStepSection = {
-  id: 'peripheral-keyboard-all',
+  id: buildSectionId('peripheral-keyboard-all'),
   title: 'Keyboard Settings',
   description: 'Essential keyboard configuration',
   items: [
@@ -1729,7 +1730,7 @@ const PERIPHERAL_KEYBOARD_ALL: ManualStepSection = {
 } as const
 
 const PERIPHERAL_KEYBOARD_PRO: ManualStepSection = {
-  id: 'peripheral-keyboard-pro',
+  id: buildSectionId('peripheral-keyboard-pro'),
   title: 'Keyboard (Pro)',
   description: 'Advanced keyboard settings for competitive players',
   personas: ['pro_gamer'],
@@ -1756,7 +1757,7 @@ const PERIPHERAL_KEYBOARD_PRO: ManualStepSection = {
 } as const
 
 const PERIPHERAL_AUDIO_ALL: ManualStepSection = {
-  id: 'peripheral-audio-all',
+  id: buildSectionId('peripheral-audio-all'),
   title: 'Audio/Headset Settings',
   description: 'Sound settings in Windows',
   location:
@@ -1802,7 +1803,7 @@ const PERIPHERAL_AUDIO_ALL: ManualStepSection = {
 } as const
 
 const PERIPHERAL_AUDIO_PRO: ManualStepSection = {
-  id: 'peripheral-audio-pro',
+  id: buildSectionId('peripheral-audio-pro'),
   title: 'Audio (Pro)',
   description: 'Competitive audio settings',
   personas: ['pro_gamer'],
@@ -1839,7 +1840,7 @@ const PERIPHERAL_AUDIO_PRO: ManualStepSection = {
 } as const
 
 const GAME_LAUNCH_FPS: ManualStepSection = {
-  id: 'game-launch-fps',
+  id: buildSectionId('game-launch-fps'),
   title: 'FPS / Shooter Games',
   description: 'Launch options for competitive shooters',
   items: [
@@ -1928,7 +1929,7 @@ const GAME_LAUNCH_FPS: ManualStepSection = {
 } as const
 
 const GAME_LAUNCH_MOBA: ManualStepSection = {
-  id: 'game-launch-moba',
+  id: buildSectionId('game-launch-moba'),
   title: 'MOBA / Strategy Games',
   description: 'Launch options for MOBAs and RTS games',
   items: [
@@ -1966,7 +1967,7 @@ const GAME_LAUNCH_MOBA: ManualStepSection = {
 } as const
 
 const OBS_OUTPUT: ManualStepSection = {
-  id: 'obs-output',
+  id: buildSectionId(SECTION_PREFIXES.OBS_OUTPUT),
   title: 'OBS Output Settings',
   description: 'Settings → Output → Streaming/Recording',
   personas: ['streamer'],
@@ -2056,7 +2057,7 @@ const OBS_OUTPUT: ManualStepSection = {
 } as const
 
 const OBS_VIDEO: ManualStepSection = {
-  id: 'obs-video',
+  id: buildSectionId(SECTION_PREFIXES.OBS_VIDEO),
   title: 'OBS Video Settings',
   description: 'Settings → Video',
   personas: ['streamer'],
@@ -2101,7 +2102,7 @@ const OBS_VIDEO: ManualStepSection = {
 } as const
 
 const OBS_ADVANCED: ManualStepSection = {
-  id: 'obs-advanced',
+  id: buildSectionId(SECTION_PREFIXES.OBS_ADVANCED),
   title: 'OBS Advanced Settings',
   description: 'Settings → Advanced',
   personas: ['streamer'],
@@ -2155,7 +2156,7 @@ const OBS_ADVANCED: ManualStepSection = {
 } as const
 
 const OBS_SOURCES: ManualStepSection = {
-  id: 'obs-sources',
+  id: buildSectionId(SECTION_PREFIXES.OBS_SOURCES),
   title: 'OBS Source Settings',
   description: 'When adding game sources',
   personas: ['streamer'],
@@ -2201,7 +2202,7 @@ const OBS_SOURCES: ManualStepSection = {
 } as const
 
 const OBS_TROUBLESHOOTING: ManualStepSection = {
-  id: 'obs-troubleshooting',
+  id: buildSectionId('obs-troubleshooting'),
   title: 'Common Streaming Issues',
   description: 'Quick fixes for OBS problems',
   personas: ['streamer'],
@@ -2255,7 +2256,7 @@ const OBS_TROUBLESHOOTING: ManualStepSection = {
 } as const
 
 const DIAGNOSTIC_TOOLS_PERFORMANCE: ManualStepSection = {
-  id: 'diagnostic-performance',
+  id: buildSectionId('diagnostic-performance'),
   title: 'Performance Diagnostics',
   description: 'Tools to diagnose FPS issues, stuttering, and system bottlenecks',
   items: [
@@ -2308,7 +2309,7 @@ const DIAGNOSTIC_TOOLS_PERFORMANCE: ManualStepSection = {
 } as const
 
 const DIAGNOSTIC_TOOLS_HARDWARE: ManualStepSection = {
-  id: 'diagnostic-hardware',
+  id: buildSectionId('diagnostic-hardware'),
   title: 'Hardware Diagnostics',
   description: 'Tools to test and verify hardware stability',
   items: [
@@ -2358,7 +2359,7 @@ const DIAGNOSTIC_TOOLS_HARDWARE: ManualStepSection = {
 } as const
 
 const DIAGNOSTIC_TOOLS_NETWORK: ManualStepSection = {
-  id: 'diagnostic-network',
+  id: buildSectionId('diagnostic-network'),
   title: 'Network Diagnostics',
   description: 'Tools to diagnose ping, packet loss, and connection issues',
   items: [
@@ -2390,7 +2391,7 @@ const DIAGNOSTIC_TOOLS_NETWORK: ManualStepSection = {
 } as const
 
 const DIAGNOSTIC_TOOLS_CRASHES: ManualStepSection = {
-  id: 'diagnostic-crashes',
+  id: buildSectionId('diagnostic-crashes'),
   title: 'Crash Diagnostics',
   description: 'Tools to analyze BSODs and game crashes',
   items: [
@@ -2422,7 +2423,7 @@ const DIAGNOSTIC_TOOLS_CRASHES: ManualStepSection = {
 } as const
 
 const UBIQUITI_GAMING: ManualStepSection = {
-  id: 'ubiquiti-gaming',
+  id: buildSectionId(SECTION_PREFIXES.UBIQUITI_GAMING),
   title: 'Ubiquiti/UniFi Router (Gaming)',
   description: 'Router settings for optimal gaming latency',
   location: 'UniFi Network App → Settings',
