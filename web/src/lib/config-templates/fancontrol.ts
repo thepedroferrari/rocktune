@@ -1,16 +1,17 @@
-import type { ConfigContext, ConfigFile } from "../config-generator";
+import type { ConfigContext, ConfigFile } from '../config-generator'
+import type { PersonaId } from '../persona-registry'
 
 /**
  * Generate Fan Control XML configuration
  * Links case fans to GPU temperature for optimal cooling
  */
 export function generateFanControlConfig(context: ConfigContext): ConfigFile[] {
-  const { persona, hardware } = context;
-  const gpuVendor = hardware.gpu;
+  const { persona, hardware } = context
+  const gpuVendor = hardware.gpu
 
   // Fan curve points: [temp, fanSpeed]
   // Same curves as Afterburner for consistency
-  const fanCurves = {
+  const fanCurves: Record<PersonaId, number[][]> = {
     gamer: [
       [30, 30],
       [40, 35],
@@ -42,13 +43,13 @@ export function generateFanControlConfig(context: ConfigContext): ConfigFile[] {
       [70, 85],
       [80, 100],
     ],
-  };
+  }
 
-  const curve = fanCurves[persona];
-  const gpuName = gpuVendor.toUpperCase();
+  const curve = fanCurves[persona]
+  const gpuName = gpuVendor.toUpperCase()
 
-  const config = generateFanControlXML(curve, gpuName, persona);
-  const filename = `rocktune-fancontrol-${persona}-${gpuVendor}.xml`;
+  const config = generateFanControlXML(curve, gpuName, persona)
+  const filename = `rocktune-fancontrol-${persona}-${gpuVendor}.xml`
 
   const instructions = `FAN CONTROL IMPORT INSTRUCTIONS
 
@@ -72,7 +73,7 @@ export function generateFanControlConfig(context: ConfigContext): ConfigFile[] {
    - Settings → "Start minimized"
    - Fan curve will activate automatically
 
-PERSONA: ${persona.replace(/_/g, " ").toUpperCase()}
+PERSONA: ${persona.replace(/_/g, ' ').toUpperCase()}
 GPU: ${gpuName}
 
 STRATEGY:
@@ -87,21 +88,17 @@ KEY FEATURES:
 SAFETY NOTES:
 - Monitor temps during first gaming session
 - Adjust curve if fans are too loud/quiet
-- ${
-    gpuVendor === "amd"
-      ? "AMD GPUs run hotter - this is normal"
-      : "NVIDIA GPUs throttle at 83°C"
-  }
-- Ensure case has adequate intake/exhaust`;
+- ${gpuVendor === 'amd' ? 'AMD GPUs run hotter - this is normal' : 'NVIDIA GPUs throttle at 83°C'}
+- Ensure case has adequate intake/exhaust`
 
   return [
     {
       filename,
       content: config,
-      format: "xml",
+      format: 'xml',
       instructions,
     },
-  ];
+  ]
 }
 
 function generateFanControlXML(
@@ -111,10 +108,11 @@ function generateFanControlXML(
 ): string {
   // Fan Control XML format
   const curvePoints = curve
-    .map(([temp, speed]) =>
-      `    <Point><Temperature>${temp}</Temperature><Speed>${speed}</Speed></Point>`
+    .map(
+      ([temp, speed]) =>
+        `    <Point><Temperature>${temp}</Temperature><Speed>${speed}</Speed></Point>`,
     )
-    .join("\n");
+    .join('\n')
 
   return `<?xml version="1.0" encoding="utf-8"?>
 <FanControlConfig xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -137,20 +135,20 @@ ${curvePoints}
     <MinimizeOnClose>true</MinimizeOnClose>
     <StartWithWindows>true</StartWithWindows>
   </Settings>
-</FanControlConfig>`;
+</FanControlConfig>`
 }
 
 function getPersonaStrategy(persona: string): string {
   switch (persona) {
-    case "gamer":
-      return "Balanced cooling - moderate noise, good temps";
-    case "pro_gamer":
-      return "Aggressive cooling - higher noise, best temps";
-    case "benchmarker":
-      return "Maximum cooling - high noise, lowest temps";
-    case "streamer":
-      return "Quiet operation - lower noise, acceptable temps";
+    case 'gamer':
+      return 'Balanced cooling - moderate noise, good temps'
+    case 'pro_gamer':
+      return 'Aggressive cooling - higher noise, best temps'
+    case 'benchmarker':
+      return 'Maximum cooling - high noise, lowest temps'
+    case 'streamer':
+      return 'Quiet operation - lower noise, acceptable temps'
     default:
-      return "Custom cooling curve";
+      return 'Custom cooling curve'
   }
 }

@@ -1,4 +1,4 @@
-import type { ConfigContext, ConfigFile } from "../config-generator";
+import type { ConfigContext, ConfigFile } from '../config-generator'
 
 /**
  * Generate NVIDIA Profile Inspector config file
@@ -6,16 +6,14 @@ import type { ConfigContext, ConfigFile } from "../config-generator";
  *
  * NOTE: .nip format is XML-based and can be imported via NVIDIA Inspector
  */
-export function generateNvidiaInspectorConfig(
-  context: ConfigContext,
-): ConfigFile[] {
-  const { persona } = context;
+export function generateNvidiaInspectorConfig(context: ConfigContext): ConfigFile[] {
+  const { persona } = context
 
   // Profile settings vary by persona
-  const profileSettings = getProfileSettings(persona);
+  const profileSettings = getProfileSettings(persona)
 
-  const config = generateNvidiaInspectorXML(profileSettings, persona);
-  const filename = `rocktune-nvidia-inspector-${persona}.nip`;
+  const config = generateNvidiaInspectorXML(profileSettings, persona)
+  const filename = `rocktune-nvidia-inspector-${persona}.nip`
 
   const instructions = `NVIDIA PROFILE INSPECTOR IMPORT INSTRUCTIONS
 
@@ -92,148 +90,139 @@ TROUBLESHOOTING
 
 RESOURCES:
 - NVIDIA Inspector Guide: https://github.com/Orbmu2k/nvidiaProfileInspector
-- Setting IDs Reference: https://github.com/Orbmu2k/nvidiaProfileInspector/wiki`;
+- Setting IDs Reference: https://github.com/Orbmu2k/nvidiaProfileInspector/wiki`
 
   return [
     {
       filename,
       content: config,
-      format: "nip",
+      format: 'nip',
       instructions,
     },
-  ];
+  ]
 }
 
 interface ProfileSettings {
-  lowLatencyMode: string;
-  powerManagement: string;
-  maxFrameRate: string;
-  textureFiltering: string;
-  threadedOptimization: string;
-  vSync: string;
-  tripleBuffering: string;
-  preRenderedFrames: string;
-  gSyncCompatible: string;
+  lowLatencyMode: string
+  powerManagement: string
+  maxFrameRate: string
+  textureFiltering: string
+  threadedOptimization: string
+  vSync: string
+  tripleBuffering: string
+  preRenderedFrames: string
+  gSyncCompatible: string
 }
 
 function getProfileSettings(persona: string): ProfileSettings {
   const baseSettings: ProfileSettings = {
-    lowLatencyMode: "0x00000001", // On
-    powerManagement: "0x00000001", // Prefer Maximum Performance
-    maxFrameRate: "0x00000000", // Application controlled (set per-game)
-    textureFiltering: "0x00000001", // Quality
-    threadedOptimization: "0x00000001", // Auto/On
-    vSync: "0x00000000", // Off (use G-SYNC instead)
-    tripleBuffering: "0x00000000", // Off
-    preRenderedFrames: "0x00000001", // 1 frame
-    gSyncCompatible: "0x00000001", // On
-  };
+    lowLatencyMode: '0x00000001', // On
+    powerManagement: '0x00000001', // Prefer Maximum Performance
+    maxFrameRate: '0x00000000', // Application controlled (set per-game)
+    textureFiltering: '0x00000001', // Quality
+    threadedOptimization: '0x00000001', // Auto/On
+    vSync: '0x00000000', // Off (use G-SYNC instead)
+    tripleBuffering: '0x00000000', // Off
+    preRenderedFrames: '0x00000001', // 1 frame
+    gSyncCompatible: '0x00000001', // On
+  }
 
   // Pro gamer: Ultra-low latency
-  if (persona === "pro_gamer") {
+  if (persona === 'pro_gamer') {
     return {
       ...baseSettings,
-      lowLatencyMode: "0x00000003", // Ultra (if driver supports)
-      preRenderedFrames: "0x00000001", // 1 frame (minimum latency)
-      maxFrameRate: "0x00000003", // 3 below refresh (e.g., 240Hz → 237fps)
-    };
+      lowLatencyMode: '0x00000003', // Ultra (if driver supports)
+      preRenderedFrames: '0x00000001', // 1 frame (minimum latency)
+      maxFrameRate: '0x00000003', // 3 below refresh (e.g., 240Hz → 237fps)
+    }
   }
 
   // Streamer: Balanced for streaming + gaming
-  if (persona === "streamer") {
+  if (persona === 'streamer') {
     return {
       ...baseSettings,
-      lowLatencyMode: "0x00000001", // On (not Ultra, less CPU overhead)
-      preRenderedFrames: "0x00000002", // 2 frames (smoother encoding)
-      powerManagement: "0x00000002", // Adaptive (reduce heat during stream)
-    };
+      lowLatencyMode: '0x00000001', // On (not Ultra, less CPU overhead)
+      preRenderedFrames: '0x00000002', // 2 frames (smoother encoding)
+      powerManagement: '0x00000002', // Adaptive (reduce heat during stream)
+    }
   }
 
   // Benchmarker: Maximum consistency
-  if (persona === "benchmarker") {
+  if (persona === 'benchmarker') {
     return {
       ...baseSettings,
-      powerManagement: "0x00000001", // Max performance
-      preRenderedFrames: "0x00000001", // Minimum latency
-      threadedOptimization: "0x00000000", // Off (reduce variables)
-    };
+      powerManagement: '0x00000001', // Max performance
+      preRenderedFrames: '0x00000001', // Minimum latency
+      threadedOptimization: '0x00000000', // Off (reduce variables)
+    }
   }
 
   // Gamer: Balanced
-  return baseSettings;
+  return baseSettings
 }
 
 function getPersonaStrategy(persona: string): string {
   switch (persona) {
-    case "gamer":
+    case 'gamer':
       return `Focus: Balanced gaming performance
 - Low Latency Mode: On (reduce input lag)
 - Power Management: Maximum Performance
 - V-Sync: Off (use G-SYNC/FreeSync instead)
-- Pre-rendered frames: 1 (low latency)`;
+- Pre-rendered frames: 1 (low latency)`
 
-    case "pro_gamer":
+    case 'pro_gamer':
       return `Focus: Ultra-low latency competitive gaming
 - Low Latency Mode: Ultra (NVIDIA Reflex equivalent)
 - Power Management: Maximum Performance (no throttling)
 - Pre-rendered frames: 1 (absolute minimum latency)
 - Max Frame Rate: 3 below monitor refresh (e.g., 240Hz → 237fps)
-- Every millisecond counts!`;
+- Every millisecond counts!`
 
-    case "streamer":
+    case 'streamer':
       return `Focus: Stable performance while streaming
 - Low Latency Mode: On (not Ultra - reduces CPU load)
 - Power Management: Adaptive (prevent GPU overheating during long streams)
 - Pre-rendered frames: 2 (smoother frame delivery to encoder)
-- Balance between gaming performance and encoding stability`;
+- Balance between gaming performance and encoding stability`
 
-    case "benchmarker":
+    case 'benchmarker':
       return `Focus: Consistent, reproducible performance
 - Low Latency Mode: On
 - Power Management: Maximum Performance (no variance)
 - Threaded Optimization: Off (reduce variables)
-- Minimize driver-level variability for accurate testing`;
+- Minimize driver-level variability for accurate testing`
 
     default:
-      return "Balanced gaming configuration";
+      return 'Balanced gaming configuration'
   }
 }
 
 function formatSettings(settings: ProfileSettings): string {
   return `✓ Low Latency Mode: ${
-    settings.lowLatencyMode === "0x00000003"
-      ? "Ultra"
-      : settings.lowLatencyMode === "0x00000001"
-      ? "On"
-      : "Off"
+    settings.lowLatencyMode === '0x00000003'
+      ? 'Ultra'
+      : settings.lowLatencyMode === '0x00000001'
+        ? 'On'
+        : 'Off'
   }
 ✓ Power Management: ${
-    settings.powerManagement === "0x00000001"
-      ? "Maximum Performance"
-      : "Adaptive"
+    settings.powerManagement === '0x00000001' ? 'Maximum Performance' : 'Adaptive'
   }
 ✓ Texture Filtering: Quality
-✓ Threaded Optimization: ${
-    settings.threadedOptimization === "0x00000001" ? "On" : "Off"
-  }
+✓ Threaded Optimization: ${settings.threadedOptimization === '0x00000001' ? 'On' : 'Off'}
 ✓ V-Sync: Off (use G-SYNC instead)
 ✓ Triple Buffering: Off
 ✓ Pre-rendered Frames: ${settings.preRenderedFrames}
-✓ G-SYNC: Enabled`;
+✓ G-SYNC: Enabled`
 }
 
-function generateNvidiaInspectorXML(
-  settings: ProfileSettings,
-  persona: string,
-): string {
+function generateNvidiaInspectorXML(settings: ProfileSettings, persona: string): string {
   // NVIDIA Profile Inspector uses XML format (.nip)
   // This creates a base profile that can be applied to any game
   return `<?xml version="1.0" encoding="utf-16"?>
 <ArrayOfProfile>
   <Profile>
-    <ProfileName>RockTune ${
-    persona.replace("_", " ").toUpperCase()
-  }</ProfileName>
+    <ProfileName>RockTune ${persona.replace('_', ' ').toUpperCase()}</ProfileName>
     <Executeables>
       <string>Global</string>
     </Executeables>
@@ -306,5 +295,5 @@ function generateNvidiaInspectorXML(
   3. Copy these settings to the game's profile
   4. Or create a new profile and add the game .exe
 -->
-`;
+`
 }

@@ -1,4 +1,5 @@
 import type { ConfigContext, ConfigFile } from '../config-generator'
+import type { PersonaId } from '../persona-registry'
 
 /**
  * Generate MSI Afterburner config file with persona-specific fan curves
@@ -12,7 +13,7 @@ export function generateAfterburnerConfig(context: ConfigContext): ConfigFile[] 
 
   // Fan curve points: [temp, fanSpeed]
   // More aggressive curves for pro/benchmarker personas
-  const fanCurves = {
+  const fanCurves: Record<PersonaId, number[][]> = {
     gamer: [
       [30, 30],
       [40, 35],
