@@ -1,47 +1,44 @@
 <script lang="ts">
-  /**
-   * PreviewModal - Script preview dialog
-   *
-   * Modal dialog that displays the generated PowerShell script
-   * with CodeViewer for viewing, comparing, and editing.
-   */
+/**
+ * PreviewModal - Script preview dialog
+ *
+ * Modal dialog that displays the generated PowerShell script
+ * with CodeViewer for viewing, comparing, and editing.
+ */
 
-  import {
-    app,
-    closePreviewModal,
-    setScriptMode,
-    setEditedScript,
-    generateCurrentScript,
-    setIncludeTimer,
-    setIncludeManualSteps,
-    setCreateBackup,
-    type ScriptMode,
-  } from "$lib/state.svelte";
-  import CodeViewer from "./CodeViewer.svelte";
-  import Modal from "./ui/Modal.svelte";
+import {
+  app,
+  setScriptMode,
+  setEditedScript,
+  generateCurrentScript,
+  setIncludeTimer,
+  setIncludeManualSteps,
+  setCreateBackup,
+  type ScriptMode,
+} from '$lib/state.svelte'
 
-  function handleTimerToggle() {
-    setIncludeTimer(!app.buildOptions.includeTimer);
-  }
+function _handleTimerToggle() {
+  setIncludeTimer(!app.buildOptions.includeTimer)
+}
 
-  function handleManualStepsToggle() {
-    setIncludeManualSteps(!app.buildOptions.includeManualSteps);
-  }
+function _handleManualStepsToggle() {
+  setIncludeManualSteps(!app.buildOptions.includeManualSteps)
+}
 
-  function handleBackupToggle() {
-    setCreateBackup(!app.buildOptions.createBackup);
-  }
+function _handleBackupToggle() {
+  setCreateBackup(!app.buildOptions.createBackup)
+}
 
-  function handleModeChange(mode: ScriptMode) {
-    setScriptMode(mode);
-  }
+function _handleModeChange(mode: ScriptMode) {
+  setScriptMode(mode)
+}
 
-  function handleEdit(content: string) {
-    setEditedScript(content);
-  }
+function _handleEdit(content: string) {
+  setEditedScript(content)
+}
 
-  let generatedScript = $derived(generateCurrentScript());
-  let activeScript = $derived(app.script.edited ?? generatedScript);
+const generatedScript = $derived(generateCurrentScript())
+const _activeScript = $derived(app.script.edited ?? generatedScript)
 </script>
 
 <Modal

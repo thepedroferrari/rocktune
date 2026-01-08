@@ -1,26 +1,29 @@
 <script lang="ts">
-  /**
-   * PresetCards - Holographic preset card grid
-   *
-   * Displays battle profile presets with holographic card effects.
-   * Each preset configures optimizations and software selections.
-   */
+/**
+ * PresetCards - Holographic preset card grid
+ *
+ * Displays battle profile presets with holographic card effects.
+ * Each preset configures optimizations and software selections.
+ */
 
-  import PresetCard from "./PresetCard.svelte";
-  import type { PresetType } from "$lib/types";
-  import type { PresetConfig } from "$lib/presets";
-  import { PRESET_META, PRESET_ORDER, PRESETS, getPresetTierBreakdown } from "$lib/presets";
+import type { PresetType } from '$lib/types'
+import type { PresetConfig } from '$lib/presets'
+// biome-ignore lint/correctness/noUnusedImports: All imports are used in Svelte template
+import { PRESETS, PRESET_ORDER, PRESET_META, getPresetTierBreakdown } from '$lib/presets'
+// biome-ignore lint/correctness/noUnusedImports: PresetCard is used in Svelte template
+import PresetCard from './PresetCard.svelte'
 
-  interface Props {
-    activePreset?: PresetType | null;
-    onPresetSelect?: (preset: PresetType, config: PresetConfig) => void;
-  }
+interface Props {
+  activePreset?: PresetType | null
+  onPresetSelect?: (preset: PresetType, config: PresetConfig) => void
+}
 
-  let { activePreset = null, onPresetSelect }: Props = $props();
+// biome-ignore lint/correctness/noUnusedVariables: activePreset is used in Svelte template
+const { activePreset = null, onPresetSelect }: Props = $props()
 
-  function handleSelect(preset: PresetType) {
-    onPresetSelect?.(preset, PRESETS[preset]);
-  }
+function _handleSelect(preset: PresetType) {
+  onPresetSelect?.(preset, PRESETS[preset])
+}
 </script>
 
 <div class="presets-scroll-container">
@@ -32,7 +35,6 @@
       <PresetCard
         {preset}
         label={meta.label}
-        subtitle={meta.subtitle}
         description={meta.description}
         bestFor={meta.bestFor}
         traits={meta.traits}
@@ -45,7 +47,7 @@
         optimizationCount={config.opts.length}
         {tierBreakdown}
         active={activePreset === preset}
-        onSelect={handleSelect}
+        onSelect={_handleSelect}
       />
     {/each}
   </div>

@@ -1,13 +1,10 @@
 <script lang="ts">
-  /**
-   * Hardware Section - CPU/GPU selection and driver recommendations
-   *
-   * Replaces the static HTML hardware section with reactive Svelte components.
-   */
+/**
+ * Hardware Section - CPU/GPU selection and driver recommendations
+ *
+ * Replaces the static HTML hardware section with reactive Svelte components.
+ */
 
-  import CpuSelector from './CpuSelector.svelte'
-  import GpuSelector from './GpuSelector.svelte'
-  import DriverCards from './DriverCards.svelte'
 </script>
 
 <section id="hardware" class="step">

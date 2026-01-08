@@ -1,75 +1,70 @@
 <script lang="ts">
-  import {
-    app,
-    setFilter,
-    getCategoryCounts,
-    getSelectedCount,
-    clearSelection,
-    setRecommendedPackages,
-    clearRecommendedPackages,
-  } from "$lib/state.svelte";
-  import type { FilterValue } from "$lib/types";
-  import type { RecommendedPreset } from "$lib/presets";
-  import {
-    CATEGORIES,
-    FILTER_ALL,
-    FILTER_SELECTED,
-    FILTER_RECOMMENDED,
-  } from "$lib/types";
+import {
+  app,
+  setFilter,
+  getCategoryCounts,
+  getSelectedCount,
+  clearSelection,
+  setRecommendedPackages,
+  clearRecommendedPackages,
+} from '$lib/state.svelte'
+import type { FilterValue } from '$lib/types'
+import type { RecommendedPreset } from '$lib/presets'
+import { CATEGORIES } from '$lib/types'
 
-  interface Props {
-    recommendedPreset?: RecommendedPreset | null;
-  }
+interface Props {
+  recommendedPreset?: RecommendedPreset | null
+}
 
-  let { recommendedPreset = null }: Props = $props();
+const { recommendedPreset = null }: Props = $props()
 
-  let counts = $derived(getCategoryCounts());
-  let selectedCount = $derived(getSelectedCount());
-  let activeFilter = $derived(app.filter);
+const counts = $derived(getCategoryCounts())
+const selectedCount = $derived(getSelectedCount())
+const _activeFilter = $derived(app.filter)
 
-  let visibleCategories = $derived(CATEGORIES.filter((cat) => counts[cat] > 0));
+const _visibleCategories = $derived(CATEGORIES.filter((cat) => counts[cat] > 0))
 
-  const FILTER_ANIMATION_DELAY_MS = 30;
-  let presetOffset = $derived(recommendedPreset ? 1 : 0);
+const _FILTER_ANIMATION_DELAY_MS = 30
+const _presetOffset = $derived(recommendedPreset ? 1 : 0)
 
-  let badgeRef: HTMLSpanElement | null = $state(null);
-  let prevCount = $state(0);
+const badgeRef: HTMLSpanElement | null = $state(null)
+let prevCount = $state(0)
 
-  $effect(() => {
-    const count = selectedCount;
-    if (count !== prevCount && badgeRef && prevCount !== 0) {
-      badgeRef.animate(
-        [
-          { transform: "scale(1.4)", textShadow: "0 0 12px var(--accent)" },
-          {
-            transform: "scale(1)",
-            textShadow: "var(--glow-sm) var(--accent-glow)",
-          },
-        ],
+$effect(() => {
+  const count = selectedCount
+  if (count !== prevCount && badgeRef && prevCount !== 0) {
+    badgeRef.animate(
+      [
+        { transform: 'scale(1.4)', textShadow: '0 0 12px var(--accent)' },
         {
-          duration: 250,
-          easing: "cubic-bezier(0.34, 1.56, 0.64, 1)",
+          transform: 'scale(1)',
+          textShadow: 'var(--glow-sm) var(--accent-glow)',
         },
-      );
-    }
-    prevCount = count;
-  });
-
-  $effect(() => {
-    if (recommendedPreset?.software) {
-      setRecommendedPackages(recommendedPreset.software);
-    } else {
-      clearRecommendedPackages();
-    }
-  });
-
-  function handleFilterClick(filter: FilterValue) {
-    setFilter(filter);
+      ],
+      {
+        duration: 250,
+        easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+      },
+    )
   }
+  prevCount = count
+})
 
-  function handleClearAll() {
-    clearSelection();
+$effect(() => {
+  if (recommendedPreset?.software) {
+    setRecommendedPackages(recommendedPreset.software)
+  } else {
+    clearRecommendedPackages()
   }
+})
+
+function _handleFilterClick(filter: FilterValue) {
+  setFilter(filter)
+}
+
+function _handleClearAll() {
+  clearSelection()
+}
 </script>
 
 <div class="arsenal-toolbar">

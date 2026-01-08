@@ -1,46 +1,45 @@
 <script lang="ts">
-  import PresetCards from './PresetCards.svelte'
-  import {
-    app,
-    setActivePreset,
-    setSelection,
-    setRecommendedPackages,
-    clearRecommendedPackages,
-    setFilter,
-    setOptimizations,
-  } from '$lib/state.svelte'
-  import { isPackageKey, type PackageKey, type PresetType, type OptimizationKey } from '$lib/types'
-  import type { PresetConfig } from '$lib/presets'
-  import { FILTER_ALL, FILTER_RECOMMENDED } from '$lib/types'
+import {
+  app,
+  setActivePreset,
+  setSelection,
+  setRecommendedPackages,
+  clearRecommendedPackages,
+  setFilter,
+  setOptimizations,
+} from '$lib/state.svelte'
+import { isPackageKey, type PackageKey, type PresetType, type OptimizationKey } from '$lib/types'
+import type { PresetConfig } from '$lib/presets'
+import { FILTER_ALL, FILTER_RECOMMENDED } from '$lib/types'
 
-  let activePreset = $derived(app.activePreset)
+const _activePreset = $derived(app.activePreset)
 
-  function applyOptimizations(keys: readonly OptimizationKey[]) {
-    if (keys.length === 0) return
-    setOptimizations(keys)
+function applyOptimizations(keys: readonly OptimizationKey[]) {
+  if (keys.length === 0) return
+  setOptimizations(keys)
+}
+
+function getDefaultSelection(): PackageKey[] {
+  return Object.entries(app.software)
+    .filter(([, pkg]) => pkg.selected)
+    .map(([key]) => key)
+    .filter((key): key is PackageKey => isPackageKey(app.software, key))
+}
+
+function _handlePresetSelect(preset: PresetType, config: PresetConfig) {
+  if (app.activePreset === preset) {
+    setActivePreset(null)
+    clearRecommendedPackages()
+    setFilter(FILTER_ALL)
+    return
   }
 
-  function getDefaultSelection(): PackageKey[] {
-    return Object.entries(app.software)
-      .filter(([, pkg]) => pkg.selected)
-      .map(([key]) => key)
-      .filter((key): key is PackageKey => isPackageKey(app.software, key))
-  }
-
-  function handlePresetSelect(preset: PresetType, config: PresetConfig) {
-    if (app.activePreset === preset) {
-      setActivePreset(null)
-      clearRecommendedPackages()
-      setFilter(FILTER_ALL)
-      return
-    }
-
-    setActivePreset(preset)
-    setSelection(getDefaultSelection())
-    setRecommendedPackages(config.software)
-    setFilter(FILTER_RECOMMENDED)
-    applyOptimizations(config.opts)
-  }
+  setActivePreset(preset)
+  setSelection(getDefaultSelection())
+  setRecommendedPackages(config.software)
+  setFilter(FILTER_RECOMMENDED)
+  applyOptimizations(config.opts)
+}
 </script>
 
 <PresetCards activePreset={activePreset} onPresetSelect={handlePresetSelect} />

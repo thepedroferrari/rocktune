@@ -1,81 +1,73 @@
 <script lang="ts">
-  /**
-   * HeroSection - Gaming Energy + Clarity
-   *
-   * ROG-style gaming energy with Node.js-level clarity.
-   * Sharp angles, neon glows, one bold message, instant understanding.
-   */
+/**
+ * HeroSection - Gaming Energy + Clarity
+ *
+ * ROG-style gaming energy with Node.js-level clarity.
+ * Sharp angles, neon glows, one bold message, instant understanding.
+ */
 
-  import { PRESETS, PRESET_META, PRESET_ORDER } from "$lib/presets";
-  import {
-    app,
-    setActivePreset,
-    setSelection,
-    setRecommendedPackages,
-    setFilter,
-    setOptimizations,
-  } from "$lib/state.svelte";
-  import {
-    isPackageKey,
-    type PackageKey,
-    type PresetType,
-    FILTER_RECOMMENDED,
-  } from "$lib/types";
+import { PRESETS, PRESET_META, PRESET_ORDER } from '$lib/presets'
+import {
+  app,
+  setActivePreset,
+  setSelection,
+  setRecommendedPackages,
+  setFilter,
+  setOptimizations,
+} from '$lib/state.svelte'
+import { isPackageKey, type PackageKey, type PresetType, FILTER_RECOMMENDED } from '$lib/types'
 
-  /** Profile badge data - GAMER is the default/highlighted choice */
-  const PROFILE_BADGES = PRESET_ORDER.map((id) => {
-    const meta = PRESET_META[id];
-    return {
-      id,
-      label: meta.label.toUpperCase(),
-      rarity: meta.rarity,
-      isDefault: id === "gamer",
-    };
-  });
-
-  function getDefaultSelection(): PackageKey[] {
-    return Object.entries(app.software)
-      .filter(([, pkg]) => pkg.selected)
-      .map(([key]) => key)
-      .filter((key): key is PackageKey => isPackageKey(app.software, key));
+/** Profile badge data - GAMER is the default/highlighted choice */
+const _PROFILE_BADGES = PRESET_ORDER.map((id) => {
+  const meta = PRESET_META[id]
+  return {
+    id,
+    label: meta.label.toUpperCase(),
+    rarity: meta.rarity,
+    isDefault: id === 'gamer',
   }
+})
 
-  /** Select a profile and scroll to the quick-start section */
-  function selectAndScroll(presetId: PresetType) {
-    const config = PRESETS[presetId];
+function getDefaultSelection(): PackageKey[] {
+  return Object.entries(app.software)
+    .filter(([, pkg]) => pkg.selected)
+    .map(([key]) => key)
+    .filter((key): key is PackageKey => isPackageKey(app.software, key))
+}
 
-    setActivePreset(presetId);
-    setSelection(getDefaultSelection());
-    setRecommendedPackages(config.software);
-    setFilter(FILTER_RECOMMENDED);
-    setOptimizations(config.opts);
+/** Select a profile and scroll to the quick-start section */
+function _selectAndScroll(presetId: PresetType) {
+  const config = PRESETS[presetId]
 
-    document
-      .getElementById("quick-start")
-      ?.scrollIntoView({ behavior: "smooth" });
-  }
+  setActivePreset(presetId)
+  setSelection(getDefaultSelection())
+  setRecommendedPackages(config.software)
+  setFilter(FILTER_RECOMMENDED)
+  setOptimizations(config.opts)
 
-  /** Check if user prefers reduced motion */
-  const prefersReducedMotion =
-    typeof window !== "undefined" &&
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  document.getElementById('quick-start')?.scrollIntoView({ behavior: 'smooth' })
+}
 
-  /** 3D tilt effect on mouse move (Codrops-style) */
-  function handleBadgeMouseMove(event: MouseEvent) {
-    if (prefersReducedMotion) return;
-    const el = event.currentTarget as HTMLElement;
-    const rect = el.getBoundingClientRect();
-    const x = (event.clientX - rect.left) / rect.width - 0.5;
-    const y = (event.clientY - rect.top) / rect.height - 0.5;
-    el.style.transform = `perspective(800px) rotateY(${x * 15}deg) rotateX(${-y * 15}deg) translateY(-3px)`;
-  }
+/** Check if user prefers reduced motion */
+const prefersReducedMotion =
+  typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-  /** Reset tilt on mouse leave */
-  function handleBadgeMouseLeave(event: MouseEvent) {
-    if (prefersReducedMotion) return;
-    const el = event.currentTarget as HTMLElement;
-    el.style.transform = "";
-  }
+/** 3D tilt effect on mouse move (Codrops-style) */
+function _handleBadgeMouseMove(event: MouseEvent) {
+  if (prefersReducedMotion) return
+  const el = event.currentTarget as HTMLElement
+  const rect = el.getBoundingClientRect()
+  const x = (event.clientX - rect.left) / rect.width - 0.5
+  const y = (event.clientY - rect.top) / rect.height - 0.5
+  el.style.transform = `perspective(800px) rotateY(${x * 15}deg) rotateX(${-y * 15}deg) translateY(-3px)`
+}
+
+/** Reset tilt on mouse leave */
+function _handleBadgeMouseLeave(event: MouseEvent) {
+  if (prefersReducedMotion) return
+  const el = event.currentTarget as HTMLElement
+  el.style.transform = ''
+}
 </script>
 
 <header class="hero-fold">

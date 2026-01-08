@@ -1,103 +1,98 @@
 <script lang="ts">
-  /**
-   * ForgeSection - Script generation section (Step 5)
-   *
-   * Final section with:
-   * - Status indicator
-   * - Preflight checks
-   * - Preview and Download actions
-   * - SHA256 checksum for verification
-   */
+/**
+ * ForgeSection - Script generation section (Step 5)
+ *
+ * Final section with:
+ * - Status indicator
+ * - Preflight checks
+ * - Preview and Download actions
+ * - SHA256 checksum for verification
+ */
 
-  import {
-    app,
-    openPreviewModal,
-    generateCurrentScript,
-    setScriptDownloaded,
-    setIncludeTimer,
-    setIncludeManualSteps,
-  } from "$lib/state.svelte";
-  import { SCRIPT_FILENAME } from "$lib/types";
-  import { generateSHA256, copyToClipboard } from "$lib/checksum";
-  import { downloadText } from "../utils/download";
-  import {
-    buildVerificationScript,
-    type SelectionState,
-  } from "$lib/script-generator";
-  import Summary from "./Summary.svelte";
-  import PreflightChecks from "./PreflightChecks.svelte";
-  import ShareModal from "./ShareModal.svelte";
-  import TroubleshootModal from "./TroubleshootModal.svelte";
+import {
+  app,
+  openPreviewModal,
+  generateCurrentScript,
+  setScriptDownloaded,
+  setIncludeTimer,
+  setIncludeManualSteps,
+} from '$lib/state.svelte'
+import { SCRIPT_FILENAME } from '$lib/types'
+import { generateSHA256, copyToClipboard } from '$lib/checksum'
+import { downloadText } from '../utils/download'
+import { buildVerificationScript, type SelectionState } from '$lib/script-generator'
 
-  let checksum = $state("");
-  let copied = $state(false);
-  let shareModalOpen = $state(false);
-  let troubleshootModalOpen = $state(false);
-  let checksumRequestId = 0;
+let checksum = $state('')
+let _copied = $state(false)
+let _shareModalOpen = $state(false)
+const _troubleshootModalOpen = $state(false)
+let checksumRequestId = 0
 
-  function openShareModal() {
-    shareModalOpen = true;
+function _openShareModal() {
+  _shareModalOpen = true
+}
+
+function _closeShareModal() {
+  _shareModalOpen = false
+}
+
+$effect(() => {
+  const script = app.script.edited ?? generateCurrentScript()
+  const requestId = ++checksumRequestId
+  if (script.trim()) {
+    generateSHA256(script, { includeBom: true }).then((hash) => {
+      if (requestId !== checksumRequestId) return
+      checksum = hash
+    })
+  } else {
+    checksum = ''
   }
+})
 
-  function closeShareModal() {
-    shareModalOpen = false;
+function _handlePreview() {
+  openPreviewModal()
+}
+
+function _handleDownload() {
+  const script = app.script.edited ?? generateCurrentScript()
+  if (!script.trim()) return
+  downloadText(script, SCRIPT_FILENAME)
+  setScriptDownloaded(true)
+}
+
+function _handleDownloadVerify() {
+  const selection: SelectionState = {
+    hardware: app.hardware,
+    optimizations: Array.from(app.optimizations),
+    packages: Array.from(app.selected),
+    missingPackages: [],
+    preset: app.activePreset,
+    includeTimer: app.buildOptions.includeTimer,
+    includeManualSteps: app.buildOptions.includeManualSteps,
+    createBackup: app.buildOptions.createBackup,
   }
+  const script = buildVerificationScript(selection)
+  downloadText(script, 'rocktune-verify.ps1')
+}
 
-  $effect(() => {
-    const script = app.script.edited ?? generateCurrentScript();
-    const requestId = ++checksumRequestId;
-    if (script.trim()) {
-      generateSHA256(script, { includeBom: true }).then((hash) => {
-        if (requestId !== checksumRequestId) return;
-        checksum = hash;
-      });
-    } else {
-      checksum = "";
-    }
-  });
+function _handleToggleTimer() {
+  setIncludeTimer(!app.buildOptions.includeTimer)
+}
 
-  function handlePreview() {
-    openPreviewModal();
+function _handleToggleManualSteps() {
+  setIncludeManualSteps(!app.buildOptions.includeManualSteps)
+}
+
+async function _handleCopyHash() {
+  if (!checksum) return
+  const success = await copyToClipboard(checksum)
+  if (success) {
+    _copied = true
+    setTimeout(() => {
+      _copied = false
+    }, 2000)
   }
-
-  function handleDownload() {
-    const script = app.script.edited ?? generateCurrentScript();
-    if (!script.trim()) return;
-    downloadText(script, SCRIPT_FILENAME);
-    setScriptDownloaded(true);
-  }
-
-  function handleDownloadVerify() {
-    const selection: SelectionState = {
-      hardware: app.hardware,
-      optimizations: Array.from(app.optimizations),
-      packages: Array.from(app.selected),
-      missingPackages: [],
-      preset: app.activePreset,
-      includeTimer: app.buildOptions.includeTimer,
-      includeManualSteps: app.buildOptions.includeManualSteps,
-      createBackup: app.buildOptions.createBackup,
-    };
-    const script = buildVerificationScript(selection);
-    downloadText(script, "rocktune-verify.ps1");
-  }
-
-  function handleToggleTimer() {
-    setIncludeTimer(!app.buildOptions.includeTimer);
-  }
-
-  function handleToggleManualSteps() {
-    setIncludeManualSteps(!app.buildOptions.includeManualSteps);
-  }
-
-  async function handleCopyHash() {
-    if (!checksum) return;
-    const success = await copyToClipboard(checksum);
-    if (success) {
-      copied = true;
-      setTimeout(() => (copied = false), 2000);
-    }
-  }
+}
 </script>
 
 <section id="generate" class="step step--forge">
@@ -380,10 +375,10 @@
             <button
               type="button"
               class="hash-panel__btn"
-              title={copied ? "Copied!" : "Copy SHA-256 hash"}
+              title={_copied ? "Copied!" : "Copy SHA-256 hash"}
               onclick={handleCopyHash}
             >
-              {#if copied}
+              {#if _copied}
                 <svg
                   class="icon"
                   viewBox="0 0 24 24"

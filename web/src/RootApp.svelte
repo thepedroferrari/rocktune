@@ -1,337 +1,317 @@
 <script lang="ts">
-  /**
-   * RockTune Root App - Svelte 5
-   *
-   * Single root component managing the entire application.
-   * All sections rendered from here - no HTML fallbacks.
-   */
+/**
+ * RockTune Root App - Svelte 5
+ *
+ * Single root component managing the entire application.
+ * All sections rendered from here - no HTML fallbacks.
+ */
 
-  import { onMount } from 'svelte'
-  import {
-    app,
-    setSoftware,
-    getSelectedCount,
-    getTotalCount,
-    setOptimizations,
-    setView,
-    setCpu,
-    setGpu,
-    setDnsProvider,
-    setPeripherals,
-    setMonitorSoftware,
-    setSelection,
-    setActivePreset,
-  } from '$lib/state.svelte'
-  import { VIEW_MODES, OPTIMIZATION_KEYS } from '$lib/types'
-  import { getRecommendedPreset } from '$lib/presets'
-  import { safeParseCatalog, isParseSuccess, formatZodErrors } from './schemas'
-  import type { SoftwareCatalog } from '$lib/types'
-  import { getDefaultOptimizations } from '$lib/optimizations'
-  import { scrollToSection } from '$lib/scroll'
-  import SectionSkeleton from './components/SectionSkeleton.svelte'
-  import {
-    hasShareHash,
-    getShareHash,
-    decodeShareURL,
-    clearShareHash,
-    validatePackages,
-    type DecodedBuild,
-  } from '$lib/share'
-  import type { PackageKey } from '$lib/types'
+import { onMount } from 'svelte'
+import {
+  app,
+  setSoftware,
+  getSelectedCount,
+  getTotalCount,
+  setOptimizations,
+  setView,
+  setCpu,
+  setGpu,
+  setDnsProvider,
+  setPeripherals,
+  setMonitorSoftware,
+  setSelection,
+  setActivePreset,
+} from '$lib/state.svelte'
+import { type VIEW_MODES, OPTIMIZATION_KEYS } from '$lib/types'
+import { getRecommendedPreset } from '$lib/presets'
+import { safeParseCatalog, isParseSuccess } from './schemas'
+import type { SoftwareCatalog } from '$lib/types'
+import { getDefaultOptimizations } from '$lib/optimizations'
+import {
+  hasShareHash,
+  getShareHash,
+  decodeShareURL,
+  clearShareHash,
+  validatePackages,
+  type DecodedBuild,
+} from '$lib/share'
+import type { PackageKey } from '$lib/types'
 
-  /** LUDICROUS optimization keys for danger zone detection */
-  const LUDICROUS_KEYS = [
-    OPTIMIZATION_KEYS.SPECTRE_MELTDOWN_OFF,
-    OPTIMIZATION_KEYS.CORE_ISOLATION_OFF,
-    OPTIMIZATION_KEYS.KERNEL_MITIGATIONS_OFF,
-    OPTIMIZATION_KEYS.DEP_OFF,
-  ] as const
+/** LUDICROUS optimization keys for danger zone detection */
+const LUDICROUS_KEYS = [
+  OPTIMIZATION_KEYS.SPECTRE_MELTDOWN_OFF,
+  OPTIMIZATION_KEYS.CORE_ISOLATION_OFF,
+  OPTIMIZATION_KEYS.KERNEL_MITIGATIONS_OFF,
+  OPTIMIZATION_KEYS.DEP_OFF,
+] as const
 
+import { showToast } from '$lib/toast.svelte'
 
-  import UnifiedNav from './components/UnifiedNav.svelte'
+let _loading = $state(true)
+let error = $state<string | null>(null)
 
+/** Pending packages from share URL (validated after catalog loads) */
+let pendingSharePackages = $state<PackageKey[] | null>(null)
 
-  import HeroSection from './components/HeroSection.svelte'
-  import PresetSection from './components/PresetSection.svelte'
+const _selectedCount = $derived(getSelectedCount())
+const _totalCount = $derived(getTotalCount())
+const _recommendedPreset = $derived(getRecommendedPreset(app.activePreset))
+const _activeView = $derived(app.view)
 
+/** Track if we loaded from a shared URL */
+let loadedFromShare = $state(false)
 
-  import SRAnnounce from './components/SRAnnounce.svelte'
-  import Toast from './components/Toast.svelte'
-  import { showToast } from '$lib/toast.svelte'
+/** Check if any LUDICROUS optimizations are selected */
+const hasLudicrousSelected = $derived(LUDICROUS_KEYS.some((key) => app.optimizations.has(key)))
 
+/** Show danger banner when LUDICROUS acknowledged AND items selected */
+const _showDangerBanner = $derived(app.ui.ludicrousAcknowledged && hasLudicrousSelected)
 
-  let loading = $state(true)
-  let error = $state<string | null>(null)
+function _handleViewToggle(view: typeof VIEW_MODES.GRID | typeof VIEW_MODES.LIST) {
+  setView(view)
+}
 
-  /** Pending packages from share URL (validated after catalog loads) */
-  let pendingSharePackages = $state<PackageKey[] | null>(null)
+const CATALOG_CACHE_KEY = 'rocktune_catalog_cache'
+const CATALOG_CACHE_VERSION = '1.0'
+const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000
 
-  let selectedCount = $derived(getSelectedCount())
-  let totalCount = $derived(getTotalCount())
-  let recommendedPreset = $derived(getRecommendedPreset(app.activePreset))
-  let activeView = $derived(app.view)
+interface CatalogCache {
+  version: string
+  timestamp: string
+  catalog: SoftwareCatalog
+}
 
-  /** Track if we loaded from a shared URL */
-  let loadedFromShare = $state(false)
+function getCachedCatalog(): SoftwareCatalog | null {
+  try {
+    const cached = localStorage.getItem(CATALOG_CACHE_KEY)
+    if (!cached) return null
 
-  /** Check if any LUDICROUS optimizations are selected */
-  let hasLudicrousSelected = $derived(
-    LUDICROUS_KEYS.some((key) => app.optimizations.has(key))
-  )
+    const data: unknown = JSON.parse(cached)
+    if (
+      typeof data === 'object' &&
+      data !== null &&
+      'version' in data &&
+      'timestamp' in data &&
+      'catalog' in data
+    ) {
+      const cache = data as CatalogCache
+      const age = Date.now() - new Date(cache.timestamp).getTime()
 
-  /** Show danger banner when LUDICROUS acknowledged AND items selected */
-  let showDangerBanner = $derived(
-    app.ui.ludicrousAcknowledged && hasLudicrousSelected
-  )
-
-  function handleViewToggle(view: typeof VIEW_MODES.GRID | typeof VIEW_MODES.LIST) {
-    setView(view)
-  }
-
-  const CATALOG_CACHE_KEY = 'rocktune_catalog_cache'
-  const CATALOG_CACHE_VERSION = '1.0'
-  const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000
-
-  interface CatalogCache {
-    version: string
-    timestamp: string
-    catalog: SoftwareCatalog
-  }
-
-  function getCachedCatalog(): SoftwareCatalog | null {
-    try {
-      const cached = localStorage.getItem(CATALOG_CACHE_KEY)
-      if (!cached) return null
-
-      const data: unknown = JSON.parse(cached)
-      if (
-        typeof data === 'object' &&
-        data !== null &&
-        'version' in data &&
-        'timestamp' in data &&
-        'catalog' in data
-      ) {
-        const cache = data as CatalogCache
-        const age = Date.now() - new Date(cache.timestamp).getTime()
-
-        if (age < SEVEN_DAYS_MS && cache.version === CATALOG_CACHE_VERSION) {
-          const result = safeParseCatalog(cache.catalog)
-          if (isParseSuccess(result)) {
-            return result.data
-          }
-          localStorage.removeItem(CATALOG_CACHE_KEY)
+      if (age < SEVEN_DAYS_MS && cache.version === CATALOG_CACHE_VERSION) {
+        const result = safeParseCatalog(cache.catalog)
+        if (isParseSuccess(result)) {
+          return result.data
         }
+        localStorage.removeItem(CATALOG_CACHE_KEY)
       }
-      return null
-    } catch {
-      return null
     }
+    return null
+  } catch {
+    return null
   }
+}
 
-  function saveCatalogCache(catalog: SoftwareCatalog): void {
-    try {
-      const cache: CatalogCache = {
-        version: CATALOG_CACHE_VERSION,
-        timestamp: new Date().toISOString(),
-        catalog,
-      }
-      localStorage.setItem(CATALOG_CACHE_KEY, JSON.stringify(cache))
-    } catch {
-      // Fail silently (quota exceeded, private browsing)
+function saveCatalogCache(catalog: SoftwareCatalog): void {
+  try {
+    const cache: CatalogCache = {
+      version: CATALOG_CACHE_VERSION,
+      timestamp: new Date().toISOString(),
+      catalog,
     }
+    localStorage.setItem(CATALOG_CACHE_KEY, JSON.stringify(cache))
+  } catch {
+    // Fail silently (quota exceeded, private browsing)
   }
+}
 
-  async function loadCatalog(): Promise<SoftwareCatalog> {
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 10000)
+async function loadCatalog(): Promise<SoftwareCatalog> {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 10000)
 
-    try {
-      const baseURL =
-        typeof window !== 'undefined'
-          ? new URL(import.meta.env.BASE_URL, window.location.origin)
-          : new URL('https://rocktune.pedroferrari.com/')
-      const catalogURL = new URL('catalog.json', baseURL).toString()
+  try {
+    const baseURL =
+      typeof window !== 'undefined'
+        ? new URL(import.meta.env.BASE_URL, window.location.origin)
+        : new URL('https://rocktune.pedroferrari.com/')
+    const catalogURL = new URL('catalog.json', baseURL).toString()
 
-      const response = await fetch(catalogURL, { signal: controller.signal })
-      clearTimeout(timeoutId)
+    const response = await fetch(catalogURL, { signal: controller.signal })
+    clearTimeout(timeoutId)
 
-      if (!response.ok) {
-        if (response.status === 404) throw new Error('CATALOG_NOT_FOUND')
-        if (response.status >= 500) throw new Error('SERVER_ERROR')
-        throw new Error('NETWORK_ERROR')
-      }
-
-      const rawData: unknown = await response.json()
-      const result = safeParseCatalog(rawData)
-
-      if (!isParseSuccess(result)) {
-        throw new Error('INVALID_FORMAT')
-      }
-
-      saveCatalogCache(result.data)
-      return result.data
-    } catch (err) {
-      clearTimeout(timeoutId)
-
-      if (err instanceof Error && err.name === 'AbortError') {
-        throw new Error('TIMEOUT')
-      }
-
-      if (!navigator.onLine) {
-        throw new Error('OFFLINE')
-      }
-
-      throw err
+    if (!response.ok) {
+      if (response.status === 404) throw new Error('CATALOG_NOT_FOUND')
+      if (response.status >= 500) throw new Error('SERVER_ERROR')
+      throw new Error('NETWORK_ERROR')
     }
+
+    const rawData: unknown = await response.json()
+    const result = safeParseCatalog(rawData)
+
+    if (!isParseSuccess(result)) {
+      throw new Error('INVALID_FORMAT')
+    }
+
+    saveCatalogCache(result.data)
+    return result.data
+  } catch (err) {
+    clearTimeout(timeoutId)
+
+    if (err instanceof Error && err.name === 'AbortError') {
+      throw new Error('TIMEOUT')
+    }
+
+    if (!navigator.onLine) {
+      throw new Error('OFFLINE')
+    }
+
+    throw err
   }
+}
 
-  async function hydrateCatalog() {
-    loading = true
-    error = null
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Catalog hydration requires complex state coordination and error handling
+async function hydrateCatalog() {
+  _loading = true
+  error = null
 
-    try {
-      const catalog = await loadCatalog()
-      setSoftware(catalog)
+  try {
+    const catalog = await loadCatalog()
+    setSoftware(catalog)
 
-      if (!loadedFromShare) {
-        const defaults = getDefaultOptimizations()
-        setOptimizations(defaults)
+    if (!loadedFromShare) {
+      const defaults = getDefaultOptimizations()
+      setOptimizations(defaults)
+    }
+
+    applyPendingSharePackages(catalog)
+  } catch (e) {
+    const cached = getCachedCatalog()
+
+    if (e instanceof Error) {
+      switch (e.message) {
+        case 'OFFLINE':
+          error = cached
+            ? "📡 You're offline. Using cached catalog."
+            : '📡 No internet connection. Please connect and try again.'
+          break
+
+        case 'TIMEOUT':
+          error = cached
+            ? '⏱️ Catalog is taking too long. Using cached version.'
+            : '⏱️ Connection timeout. Check your internet and try again.'
+          break
+
+        case 'CATALOG_NOT_FOUND':
+          error = '🔍 Catalog not found. Try reloading the page.'
+          break
+
+        case 'SERVER_ERROR':
+          error = cached
+            ? '🚨 Server error. Using cached catalog.'
+            : '🚨 Server error. Please try again in a few minutes.'
+          break
+
+        case 'INVALID_FORMAT':
+          error = '⚠️ Catalog format error. Please reload the page.'
+          break
+
+        default:
+          error = cached
+            ? '⚡ Connection failed. Using cached catalog.'
+            : '⚡ Failed to load catalog. Please try again.'
       }
 
-      applyPendingSharePackages(catalog)
-    } catch (e) {
-      const cached = getCachedCatalog()
-
-      if (e instanceof Error) {
-        switch (e.message) {
-          case 'OFFLINE':
-            error = cached
-              ? '📡 You\'re offline. Using cached catalog.'
-              : '📡 No internet connection. Please connect and try again.'
-            break
-
-          case 'TIMEOUT':
-            error = cached
-              ? '⏱️ Catalog is taking too long. Using cached version.'
-              : '⏱️ Connection timeout. Check your internet and try again.'
-            break
-
-          case 'CATALOG_NOT_FOUND':
-            error = '🔍 Catalog not found. Try reloading the page.'
-            break
-
-          case 'SERVER_ERROR':
-            error = cached
-              ? '🚨 Server error. Using cached catalog.'
-              : '🚨 Server error. Please try again in a few minutes.'
-            break
-
-          case 'INVALID_FORMAT':
-            error = '⚠️ Catalog format error. Please reload the page.'
-            break
-
-          default:
-            error = cached
-              ? '⚡ Connection failed. Using cached catalog.'
-              : '⚡ Failed to load catalog. Please try again.'
+      if (cached) {
+        setSoftware(cached)
+        if (!loadedFromShare) {
+          const defaults = getDefaultOptimizations()
+          setOptimizations(defaults)
         }
-
-        if (cached) {
-          setSoftware(cached)
-          if (!loadedFromShare) {
-            const defaults = getDefaultOptimizations()
-            setOptimizations(defaults)
-          }
-          applyPendingSharePackages(cached)
-        }
-      } else {
-        error = 'Unknown error loading catalog.'
-      }
-
-      console.error('[RockTune] Catalog load error:', error, e)
-    } finally {
-      loading = false
-    }
-  }
-
-  /**
-   * Apply a decoded shared build to app state
-   * Note: Packages are stored as pending and validated after catalog loads
-   */
-  function applySharedBuild(build: DecodedBuild): void {
-    if (build.cpu) setCpu(build.cpu)
-    if (build.gpu) setGpu(build.gpu)
-    if (build.dnsProvider) setDnsProvider(build.dnsProvider)
-    if (build.peripherals.length > 0) setPeripherals(build.peripherals)
-    if (build.monitorSoftware.length > 0) setMonitorSoftware(build.monitorSoftware)
-    if (build.optimizations.length > 0) setOptimizations(build.optimizations)
-    if (build.preset) setActivePreset(build.preset)
-
-    if (build.packages.length > 0) {
-      pendingSharePackages = build.packages
-    }
-
-    loadedFromShare = true
-  }
-
-  /**
-   * Validate and apply pending share packages against loaded catalog
-   */
-  function applyPendingSharePackages(catalog: SoftwareCatalog): void {
-    if (!pendingSharePackages) return
-
-    const catalogKeys = new Set(Object.keys(catalog))
-    const { valid, invalidCount } = validatePackages(pendingSharePackages, catalogKeys)
-
-    if (valid.length > 0) {
-      setSelection(valid)
-    }
-
-    if (invalidCount > 0) {
-      showToast(
-        `${invalidCount} package(s) from shared link no longer available.`,
-        'warning',
-        5000
-      )
-    }
-
-    pendingSharePackages = null
-  }
-
-  /**
-   * Try to load state from URL share hash
-   */
-  function tryLoadFromShareURL(): void {
-    if (!hasShareHash()) return
-
-    const hash = getShareHash()
-    if (!hash) return
-
-    const result = decodeShareURL(hash)
-
-    if (result.success) {
-      applySharedBuild(result.build)
-      clearShareHash()
-
-      if (result.build.skippedCount > 0) {
-        showToast(
-          `Build loaded! ${result.build.skippedCount} setting(s) no longer available.`,
-          'warning',
-          6000
-        )
-      } else {
-        showToast('Build loaded from shared link!', 'success')
+        applyPendingSharePackages(cached)
       }
     } else {
-      showToast(result.error, 'error', 6000)
-      clearShareHash()
+      error = 'Unknown error loading catalog.'
     }
+
+    console.error('[RockTune] Catalog load error:', error, e)
+  } finally {
+    _loading = false
+  }
+}
+
+/**
+ * Apply a decoded shared build to app state
+ * Note: Packages are stored as pending and validated after catalog loads
+ */
+function applySharedBuild(build: DecodedBuild): void {
+  if (build.cpu) setCpu(build.cpu)
+  if (build.gpu) setGpu(build.gpu)
+  if (build.dnsProvider) setDnsProvider(build.dnsProvider)
+  if (build.peripherals.length > 0) setPeripherals(build.peripherals)
+  if (build.monitorSoftware.length > 0) setMonitorSoftware(build.monitorSoftware)
+  if (build.optimizations.length > 0) setOptimizations(build.optimizations)
+  if (build.preset) setActivePreset(build.preset)
+
+  if (build.packages.length > 0) {
+    pendingSharePackages = build.packages
   }
 
-  onMount(() => {
-    tryLoadFromShareURL()
-    void hydrateCatalog()
-  })
+  loadedFromShare = true
+}
+
+/**
+ * Validate and apply pending share packages against loaded catalog
+ */
+function applyPendingSharePackages(catalog: SoftwareCatalog): void {
+  if (!pendingSharePackages) return
+
+  const catalogKeys = new Set(Object.keys(catalog))
+  const { valid, invalidCount } = validatePackages(pendingSharePackages, catalogKeys)
+
+  if (valid.length > 0) {
+    setSelection(valid)
+  }
+
+  if (invalidCount > 0) {
+    showToast(`${invalidCount} package(s) from shared link no longer available.`, 'warning', 5000)
+  }
+
+  pendingSharePackages = null
+}
+
+/**
+ * Try to load state from URL share hash
+ */
+function tryLoadFromShareURL(): void {
+  if (!hasShareHash()) return
+
+  const hash = getShareHash()
+  if (!hash) return
+
+  const result = decodeShareURL(hash)
+
+  if (result.success) {
+    applySharedBuild(result.build)
+    clearShareHash()
+
+    if (result.build.skippedCount > 0) {
+      showToast(
+        `Build loaded! ${result.build.skippedCount} setting(s) no longer available.`,
+        'warning',
+        6000,
+      )
+    } else {
+      showToast('Build loaded from shared link!', 'success')
+    }
+  } else {
+    showToast(result.error, 'error', 6000)
+    clearShareHash()
+  }
+}
+
+onMount(() => {
+  tryLoadFromShareURL()
+  void hydrateCatalog()
+})
 </script>
 
 

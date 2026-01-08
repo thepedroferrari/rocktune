@@ -1,36 +1,32 @@
 <script lang="ts">
-  /**
-   * PreflightChecks - Hardware-dependent prerequisite cards
-   *
-   * Shows recommended/required steps before running the generated script.
-   * Visibility is reactive based on hardware selection.
-   */
+/**
+ * PreflightChecks - Hardware-dependent prerequisite cards
+ *
+ * Shows recommended/required steps before running the generated script.
+ * Visibility is reactive based on hardware selection.
+ */
 
-  import { app } from '$lib/state.svelte'
-  import { PREFLIGHT_CHECKS, isPreflightVisible, type PreflightCheck } from '$lib/preflight'
-  import { copyToClipboard } from '../utils/clipboard'
+import { app } from '$lib/state.svelte'
+import { PREFLIGHT_CHECKS, isPreflightVisible, type PreflightCheck } from '$lib/preflight'
+import { copyToClipboard } from '../utils/clipboard'
 
-  
-  let visibleChecks = $derived(
-    PREFLIGHT_CHECKS.filter((check) =>
-      isPreflightVisible(check, app.hardware.cpu, app.hardware.gpu),
-    ),
-  )
+const _visibleChecks = $derived(
+  PREFLIGHT_CHECKS.filter((check) => isPreflightVisible(check, app.hardware.cpu, app.hardware.gpu)),
+)
 
-  
-  let copyFeedback = $state<Record<string, string>>({})
+const copyFeedback = $state<Record<string, string>>({})
 
-  async function handleCopy(check: PreflightCheck) {
-    if (check.action.type !== 'copy') return
+async function _handleCopy(check: PreflightCheck) {
+  if (check.action.type !== 'copy') return
 
-    const success = await copyToClipboard(check.action.text)
-    if (success) {
-      copyFeedback[check.id] = 'Copied!'
-      setTimeout(() => {
-        copyFeedback[check.id] = ''
-      }, 1800)
-    }
+  const success = await copyToClipboard(check.action.text)
+  if (success) {
+    copyFeedback[check.id] = 'Copied!'
+    setTimeout(() => {
+      copyFeedback[check.id] = ''
+    }, 1800)
   }
+}
 </script>
 
 {#if visibleChecks.length > 0}
