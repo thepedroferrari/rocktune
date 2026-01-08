@@ -1697,9 +1697,7 @@ function generatePreflightScan(selected: Set<string>, _hardware: HardwareProfile
     )
     lines.push('    if ($prop) { $checked++; if ($prop.RegistryValue -eq "0") { $disabled++ } }')
     lines.push('  }')
-    lines.push(
-      '  if ($checked -eq 0) { Add-ScanResult "NIC Flow Control" "N/A" "Disabled" "N/A" }',
-    )
+    lines.push('  if ($checked -eq 0) { Add-ScanResult "NIC Flow Control" "N/A" "Disabled" "N/A" }')
     lines.push(
       '  elseif ($disabled -eq $checked) { Add-ScanResult "NIC Flow Control" "Disabled ($disabled/$checked)" "Disabled" "OK" }',
     )
@@ -1867,9 +1865,7 @@ function generatePreflightScan(selected: Set<string>, _hardware: HardwareProfile
     lines.push(
       '$val = Get-RegValue "HKCU:\\Software\\Microsoft\\Multimedia\\Audio" "UserDuckingPreference"',
     )
-    lines.push(
-      'if ($val -eq 2) { Add-ScanResult "Audio exclusive mode" "Enabled" "Enabled" "OK" }',
-    )
+    lines.push('if ($val -eq 2) { Add-ScanResult "Audio exclusive mode" "Enabled" "Enabled" "OK" }')
     lines.push('else { Add-ScanResult "Audio exclusive mode" "Disabled" "Enabled" "CHANGE" }')
   }
 
@@ -2339,9 +2335,7 @@ function generatePreflightScan(selected: Set<string>, _hardware: HardwareProfile
   // === NEW AUDIO DETECTIONS ===
   if (selected.has('audio_communications')) {
     if (selected.has('audio_exclusive')) {
-      lines.push(
-        'Add-ScanResult "[SAFE] No Volume Ducking" "Overridden" "Exclusive mode" "INFO"',
-      )
+      lines.push('Add-ScanResult "[SAFE] No Volume Ducking" "Overridden" "Exclusive mode" "INFO"')
     } else {
       lines.push('# Scan: Volume Ducking')
       lines.push(
