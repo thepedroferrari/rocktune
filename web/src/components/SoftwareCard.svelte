@@ -10,6 +10,7 @@ interface Props {
   overlayPosition?: 'right' | 'left'
 }
 
+// biome-ignore lint/correctness/noUnusedVariables: All props used in template
 const { key, pkg, selected, onToggle, overlayPosition = 'right' }: Props = $props()
 
 // Unique ID for checkbox-label association

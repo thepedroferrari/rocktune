@@ -135,8 +135,8 @@ export function generateToolConfig(tool: ConfigTool, context: ConfigContext): Co
       return generateNvidiaInspectorConfigs(context)
     default: {
       // Exhaustive check - TypeScript will error if we miss a tool
-      const _exhaustive: never = tool
-      return _exhaustive
+      const Exhaustive: never = tool
+      return Exhaustive
     }
   }
 }
