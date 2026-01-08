@@ -63,6 +63,8 @@
   let filterBy = $state<FilterOption>("all");
   let searchQuery = $state("");
   let downloadingSection = $state<string | null>(null);
+  let sortOpen = $state(false);
+  let filterOpen = $state(false);
   let showInstructions = $state(false);
   let instructionsText = $state("");
 
@@ -559,6 +561,10 @@
 
   /** Derived: groups organized by the current sort option */
   let displayGroups = $derived.by(() => {
+    // Explicitly track filterBy and searchQuery to make this reactive
+    const _filter = filterBy;
+    const _search = searchQuery;
+
     if (sortBy === "category") {
       return null; // Use original filteredGroups
     }
@@ -571,6 +577,10 @@
     }
     return null;
   });
+
+  // Create a reactive key that changes whenever filter/search changes
+  // This will force re-evaluation of {@const} blocks in the template
+  let filterKey = $derived(`${filterBy}-${searchQuery}`);
 
   function getFilteredItems(sectionId: string, items: readonly AnyItem[]): AnyItem[] {
     return items.filter((item) => matchesFilter(sectionId, item));
@@ -692,18 +702,167 @@
           />
         </div>
         <div class="guide__filters">
-          <select id="guide-sort" name="guide-sort" bind:value={sortBy} class="guide__select">
-            <option value="category">Sort: Category</option>
-            <option value="impact">Sort: Impact</option>
-            <option value="difficulty">Sort: Difficulty</option>
-          </select>
-          <select id="guide-filter" name="guide-filter" bind:value={filterBy} class="guide__select">
-            <option value="all">Show: All</option>
-            <option value="incomplete">Show: Incomplete</option>
-            <option value="quick-wins">Show: Quick Wins</option>
-            <option value="high-impact">Show: High Impact</option>
-          </select>
+          <!-- Custom Sort Dropdown -->
+          <div class="guide__select-wrapper">
+            <button
+              class="guide__select"
+              type="button"
+              aria-label="Sort options"
+              aria-haspopup="true"
+              aria-expanded={sortOpen}
+              onclick={() => sortOpen = !sortOpen}
+              onblur={(e) => {
+                if (!e.currentTarget.contains(e.relatedTarget)) {
+                  sortOpen = false;
+                }
+              }}
+            >
+              <span class="guide__select-label">
+                Sort: {sortBy === 'category' ? 'Category' : sortBy === 'impact' ? 'Impact' : 'Difficulty'}
+              </span>
+              <svg class="guide__select-arrow" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M2 4l4 4 4-4"/>
+              </svg>
+            </button>
+            {#if sortOpen}
+              <div class="guide__select-dropdown" role="listbox">
+                <button
+                  class="guide__select-option"
+                  class:selected={sortBy === 'category'}
+                  type="button"
+                  role="option"
+                  aria-selected={sortBy === 'category'}
+                  onclick={() => { sortBy = 'category'; sortOpen = false; }}
+                >
+                  Sort: Category
+                  {#if sortBy === 'category'}
+                    <svg class="guide__select-check" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M2 6l3 3 5-6"/>
+                    </svg>
+                  {/if}
+                </button>
+                <button
+                  class="guide__select-option"
+                  class:selected={sortBy === 'impact'}
+                  type="button"
+                  role="option"
+                  aria-selected={sortBy === 'impact'}
+                  onclick={() => { sortBy = 'impact'; sortOpen = false; }}
+                >
+                  Sort: Impact
+                  {#if sortBy === 'impact'}
+                    <svg class="guide__select-check" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M2 6l3 3 5-6"/>
+                    </svg>
+                  {/if}
+                </button>
+                <button
+                  class="guide__select-option"
+                  class:selected={sortBy === 'difficulty'}
+                  type="button"
+                  role="option"
+                  aria-selected={sortBy === 'difficulty'}
+                  onclick={() => { sortBy = 'difficulty'; sortOpen = false; }}
+                >
+                  Sort: Difficulty
+                  {#if sortBy === 'difficulty'}
+                    <svg class="guide__select-check" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M2 6l3 3 5-6"/>
+                    </svg>
+                  {/if}
+                </button>
+              </div>
+            {/if}
           </div>
+
+          <!-- Custom Filter Dropdown -->
+          <div class="guide__select-wrapper">
+            <button
+              class="guide__select"
+              type="button"
+              aria-label="Filter options"
+              aria-haspopup="true"
+              aria-expanded={filterOpen}
+              onclick={() => filterOpen = !filterOpen}
+              onblur={(e) => {
+                if (!e.currentTarget.contains(e.relatedTarget)) {
+                  filterOpen = false;
+                }
+              }}
+            >
+              <span class="guide__select-label">
+                Show: {filterBy === 'all' ? 'All' : filterBy === 'incomplete' ? 'Incomplete' : filterBy === 'quick-wins' ? 'Quick Wins' : 'High Impact'}
+              </span>
+              <svg class="guide__select-arrow" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M2 4l4 4 4-4"/>
+              </svg>
+            </button>
+            {#if filterOpen}
+              <div class="guide__select-dropdown" role="listbox">
+                <button
+                  class="guide__select-option"
+                  class:selected={filterBy === 'all'}
+                  type="button"
+                  role="option"
+                  aria-selected={filterBy === 'all'}
+                  onclick={() => { filterBy = 'all'; filterOpen = false; }}
+                >
+                  Show: All
+                  {#if filterBy === 'all'}
+                    <svg class="guide__select-check" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M2 6l3 3 5-6"/>
+                    </svg>
+                  {/if}
+                </button>
+                <button
+                  class="guide__select-option"
+                  class:selected={filterBy === 'incomplete'}
+                  type="button"
+                  role="option"
+                  aria-selected={filterBy === 'incomplete'}
+                  onclick={() => { filterBy = 'incomplete'; filterOpen = false; }}
+                >
+                  Show: Incomplete
+                  {#if filterBy === 'incomplete'}
+                    <svg class="guide__select-check" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M2 6l3 3 5-6"/>
+                    </svg>
+                  {/if}
+                </button>
+                <button
+                  class="guide__select-option"
+                  class:selected={filterBy === 'quick-wins'}
+                  type="button"
+                  role="option"
+                  aria-selected={filterBy === 'quick-wins'}
+                  onclick={() => { filterBy = 'quick-wins'; filterOpen = false; }}
+                >
+                  Show: Quick Wins
+                  {#if filterBy === 'quick-wins'}
+                    <svg class="guide__select-check" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M2 6l3 3 5-6"/>
+                    </svg>
+                  {/if}
+                </button>
+                <button
+                  class="guide__select-option"
+                  class:selected={filterBy === 'high-impact'}
+                  type="button"
+                  role="option"
+                  aria-selected={filterBy === 'high-impact'}
+                  onclick={() => { filterBy = 'high-impact'; filterOpen = false; }}
+                >
+                  Show: High Impact
+                  {#if filterBy === 'high-impact'}
+                    <svg class="guide__select-check" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M2 6l3 3 5-6"/>
+                    </svg>
+                  {/if}
+                </button>
+              </div>
+            {/if}
+          </div>
+        </div>
           </div>
 
       <!-- Content groups -->
@@ -859,6 +1018,7 @@
               </div>
 
               {#each group.sections as section (section.id)}
+                {@const _ = filterKey}
                 {@const items = getFilteredItems(section.id, section.items as readonly AnyItem[])}
                 {@const configTool = getSectionConfigTool(buildSectionId(section.id))}
                 {@const persona = app.activePreset ?? "gamer"}
