@@ -1616,7 +1616,7 @@ function generatePreflightScan(selected: Set<string>, _hardware: HardwareProfile
   if (selected.has('usb_power')) {
     lines.push('# Scan: USB selective suspend')
     lines.push(
-      '$val = Get-RegValue "HKLM:\\SYSTEM\\CurrentControlSet\\Services\\USB\\DisableSelectiveSuspend" "DisableSelectiveSuspend"',
+      '$val = Get-RegValue "HKLM:\\SYSTEM\\CurrentControlSet\\Services\\USB" "DisableSelectiveSuspend"',
     )
     lines.push(
       'if ($val -eq 1) { Add-ScanResult "USB selective suspend" "Disabled" "Disabled" "OK" }',
@@ -1660,52 +1660,80 @@ function generatePreflightScan(selected: Set<string>, _hardware: HardwareProfile
   if (selected.has('nic_interrupt_mod')) {
     lines.push('# Scan: NIC Interrupt Moderation')
     lines.push(
-      '$adapter = Get-NetAdapter | Where-Object {$_.Status -eq "Up"} | Select-Object -First 1',
+      '$adapters = Get-NetAdapter | Where-Object {$_.Status -eq "Up" -and ($_.InterfaceDescription -like "*Ethernet*" -or $_.InterfaceDescription -like "*Wi-Fi*")}',
     )
-    lines.push('if ($adapter) {')
+    lines.push('if ($adapters) {')
+    lines.push('  $checked = 0')
+    lines.push('  $disabled = 0')
+    lines.push('  foreach ($adapter in $adapters) {')
     lines.push(
-      '  $prop = Get-NetAdapterAdvancedProperty -Name $adapter.Name -RegistryKeyword "*InterruptModeration" -EA SilentlyContinue',
+      '    $prop = Get-NetAdapterAdvancedProperty -Name $adapter.Name -RegistryKeyword "*InterruptModeration" -EA SilentlyContinue',
+    )
+    lines.push('    if ($prop) { $checked++; if ($prop.RegistryValue -eq "0") { $disabled++ } }')
+    lines.push('  }')
+    lines.push(
+      '  if ($checked -eq 0) { Add-ScanResult "NIC Interrupt Moderation" "N/A" "Disabled" "N/A" }',
     )
     lines.push(
-      '  if ($prop -and $prop.RegistryValue -eq "0") { Add-ScanResult "NIC Interrupt Moderation" "Disabled" "Disabled" "OK" }',
+      '  elseif ($disabled -eq $checked) { Add-ScanResult "NIC Interrupt Moderation" "Disabled ($disabled/$checked)" "Disabled" "OK" }',
     )
-    lines.push('  else { Add-ScanResult "NIC Interrupt Moderation" "Enabled" "Disabled" "CHANGE" }')
+    lines.push(
+      '  else { Add-ScanResult "NIC Interrupt Moderation" "Enabled ($disabled/$checked disabled)" "Disabled" "CHANGE" }',
+    )
     lines.push('} else { Add-ScanResult "NIC Interrupt Moderation" "N/A" "Disabled" "N/A" }')
   }
 
   if (selected.has('nic_flow_control')) {
     lines.push('# Scan: NIC Flow Control')
     lines.push(
-      '$adapter = Get-NetAdapter | Where-Object {$_.Status -eq "Up"} | Select-Object -First 1',
+      '$adapters = Get-NetAdapter | Where-Object {$_.Status -eq "Up" -and ($_.InterfaceDescription -like "*Ethernet*" -or $_.InterfaceDescription -like "*Wi-Fi*")}',
     )
-    lines.push('if ($adapter) {')
+    lines.push('if ($adapters) {')
+    lines.push('  $checked = 0')
+    lines.push('  $disabled = 0')
+    lines.push('  foreach ($adapter in $adapters) {')
     lines.push(
-      '  $prop = Get-NetAdapterAdvancedProperty -Name $adapter.Name -RegistryKeyword "*FlowControl" -EA SilentlyContinue',
+      '    $prop = Get-NetAdapterAdvancedProperty -Name $adapter.Name -RegistryKeyword "*FlowControl" -EA SilentlyContinue',
+    )
+    lines.push('    if ($prop) { $checked++; if ($prop.RegistryValue -eq "0") { $disabled++ } }')
+    lines.push('  }')
+    lines.push(
+      '  if ($checked -eq 0) { Add-ScanResult "NIC Flow Control" "N/A" "Disabled" "N/A" }',
     )
     lines.push(
-      '  if ($prop -and $prop.RegistryValue -eq "0") { Add-ScanResult "NIC Flow Control" "Disabled" "Disabled" "OK" }',
+      '  elseif ($disabled -eq $checked) { Add-ScanResult "NIC Flow Control" "Disabled ($disabled/$checked)" "Disabled" "OK" }',
     )
-    lines.push('  else { Add-ScanResult "NIC Flow Control" "Enabled" "Disabled" "CHANGE" }')
+    lines.push(
+      '  else { Add-ScanResult "NIC Flow Control" "Enabled ($disabled/$checked disabled)" "Disabled" "CHANGE" }',
+    )
     lines.push('} else { Add-ScanResult "NIC Flow Control" "N/A" "Disabled" "N/A" }')
   }
 
   if (selected.has('nic_energy_efficient')) {
     lines.push('# Scan: NIC Energy Efficient Ethernet')
     lines.push(
-      '$adapter = Get-NetAdapter | Where-Object {$_.Status -eq "Up"} | Select-Object -First 1',
+      '$adapters = Get-NetAdapter | Where-Object {$_.Status -eq "Up" -and ($_.InterfaceDescription -like "*Ethernet*" -or $_.InterfaceDescription -like "*Wi-Fi*")}',
     )
-    lines.push('if ($adapter) {')
+    lines.push('if ($adapters) {')
+    lines.push('  $checked = 0')
+    lines.push('  $disabled = 0')
+    lines.push('  foreach ($adapter in $adapters) {')
     lines.push(
-      '  $prop = Get-NetAdapterAdvancedProperty -Name $adapter.Name -RegistryKeyword "*EEE" -EA SilentlyContinue',
-    )
-    lines.push(
-      '  if (-not $prop) { $prop = Get-NetAdapterAdvancedProperty -Name $adapter.Name -RegistryKeyword "EEELinkAdvertisement" -EA SilentlyContinue }',
-    )
-    lines.push(
-      '  if ($prop -and $prop.RegistryValue -eq "0") { Add-ScanResult "NIC Energy Efficient Ethernet" "Disabled" "Disabled" "OK" }',
+      '    $prop = Get-NetAdapterAdvancedProperty -Name $adapter.Name -RegistryKeyword "*EEE" -EA SilentlyContinue',
     )
     lines.push(
-      '  else { Add-ScanResult "NIC Energy Efficient Ethernet" "Enabled" "Disabled" "CHANGE" }',
+      '    if (-not $prop) { $prop = Get-NetAdapterAdvancedProperty -Name $adapter.Name -RegistryKeyword "EEELinkAdvertisement" -EA SilentlyContinue }',
+    )
+    lines.push('    if ($prop) { $checked++; if ($prop.RegistryValue -eq "0") { $disabled++ } }')
+    lines.push('  }')
+    lines.push(
+      '  if ($checked -eq 0) { Add-ScanResult "NIC Energy Efficient Ethernet" "N/A" "Disabled" "N/A" }',
+    )
+    lines.push(
+      '  elseif ($disabled -eq $checked) { Add-ScanResult "NIC Energy Efficient Ethernet" "Disabled ($disabled/$checked)" "Disabled" "OK" }',
+    )
+    lines.push(
+      '  else { Add-ScanResult "NIC Energy Efficient Ethernet" "Enabled ($disabled/$checked disabled)" "Disabled" "CHANGE" }',
     )
     lines.push('} else { Add-ScanResult "NIC Energy Efficient Ethernet" "N/A" "Disabled" "N/A" }')
   }
@@ -1823,26 +1851,26 @@ function generatePreflightScan(selected: Set<string>, _hardware: HardwareProfile
   // === AUDIO OPTIMIZATIONS ===
   if (selected.has('audio_enhancements')) {
     lines.push('# Scan: Audio enhancements (registry)')
+    lines.push('$audioPath = "HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Audio"')
+    lines.push('$soundVal = Get-RegValue $audioPath "DisableSystemSounds"')
+    lines.push('$protectedVal = Get-RegValue $audioPath "DisableProtectedAudioDG"')
     lines.push(
-      '$val = Get-RegValue "HKCU:\\Software\\Microsoft\\Multimedia\\Audio" "DisableAudioEnhancements"',
+      'if ($soundVal -eq 1 -and $protectedVal -eq 0) { Add-ScanResult "Audio enhancements (global)" "Configured" "Configured" "OK" }',
     )
     lines.push(
-      'if ($val -eq 1) { Add-ScanResult "Audio enhancements (global)" "Disabled" "Disabled" "OK" }',
-    )
-    lines.push(
-      'else { Add-ScanResult "Audio enhancements (global)" "Enabled" "Disabled" "CHANGE" }',
+      'else { Add-ScanResult "Audio enhancements (global)" "Default" "Configured" "CHANGE" }',
     )
   }
 
   if (selected.has('audio_exclusive')) {
-    lines.push('# Scan: Exclusive mode priority')
+    lines.push('# Scan: Audio exclusive mode preference')
     lines.push(
-      '$val = Get-RegValue "HKCU:\\Software\\Microsoft\\Multimedia\\Audio" "ExclusiveModeLatency"',
+      '$val = Get-RegValue "HKCU:\\Software\\Microsoft\\Multimedia\\Audio" "UserDuckingPreference"',
     )
     lines.push(
-      'if ($val -eq 1) { Add-ScanResult "Exclusive mode priority" "Low latency" "Low latency" "OK" }',
+      'if ($val -eq 2) { Add-ScanResult "Audio exclusive mode" "Enabled" "Enabled" "OK" }',
     )
-    lines.push('else { Add-ScanResult "Exclusive mode priority" "Normal" "Low latency" "CHANGE" }')
+    lines.push('else { Add-ScanResult "Audio exclusive mode" "Disabled" "Enabled" "CHANGE" }')
   }
 
   // === NEW SYSTEM DETECTIONS ===
@@ -2310,14 +2338,20 @@ function generatePreflightScan(selected: Set<string>, _hardware: HardwareProfile
 
   // === NEW AUDIO DETECTIONS ===
   if (selected.has('audio_communications')) {
-    lines.push('# Scan: Volume Ducking')
-    lines.push(
-      '$val = Get-RegValue "HKCU:\\Software\\Microsoft\\Multimedia\\Audio" "UserDuckingPreference"',
-    )
-    lines.push(
-      'if ($val -eq 3) { Add-ScanResult "[SAFE] No Volume Ducking" "Disabled" "Disabled" "OK" }',
-    )
-    lines.push('else { Add-ScanResult "[SAFE] No Volume Ducking" "Enabled" "Disabled" "CHANGE" }')
+    if (selected.has('audio_exclusive')) {
+      lines.push(
+        'Add-ScanResult "[SAFE] No Volume Ducking" "Overridden" "Exclusive mode" "INFO"',
+      )
+    } else {
+      lines.push('# Scan: Volume Ducking')
+      lines.push(
+        '$val = Get-RegValue "HKCU:\\Software\\Microsoft\\Multimedia\\Audio" "UserDuckingPreference"',
+      )
+      lines.push(
+        'if ($val -eq 3) { Add-ScanResult "[SAFE] No Volume Ducking" "Disabled" "Disabled" "OK" }',
+      )
+      lines.push('else { Add-ScanResult "[SAFE] No Volume Ducking" "Enabled" "Disabled" "CHANGE" }')
+    }
   }
 
   if (selected.has('audio_system_sounds')) {
@@ -2505,7 +2539,7 @@ function generatePreflightScan(selected: Set<string>, _hardware: HardwareProfile
   lines.push(
     'Write-Host "  Press any key to continue with optimizations..." -ForegroundColor DarkGray',
   )
-  lines.push('$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")')
+  lines.push('try { $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown") } catch { }')
   lines.push('Write-Host ""')
 
   return lines
@@ -3643,18 +3677,42 @@ function generateAudioOpts(selected: Set<string>): string[] {
 
   if (selected.has('audio_enhancements')) {
     lines.push('# Disable audio enhancements')
-    lines.push('Write-OK "Audio enhancements disabled (handled by audio drivers/settings)"')
+    lines.push('$audioPath = "HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Audio"')
+    lines.push('Set-Reg $audioPath "DisableSystemSounds" 1')
+    lines.push('Set-Reg $audioPath "DisableProtectedAudioDG" 0')
+    lines.push('Write-OK "Audio enhancements disabled (global)"')
+    lines.push('# Disable audio driver power management')
+    lines.push(
+      '$driverPath = "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e96c-e325-11ce-bfc1-08002be10318}"',
+    )
+    lines.push('if (Test-Path $driverPath) {')
+    lines.push('    $audioDrivers = Get-ChildItem $driverPath -EA SilentlyContinue')
+    lines.push('    foreach ($driver in $audioDrivers) {')
+    lines.push('        $path = $driver.PSPath')
+    lines.push('        Set-Reg $path "DisableHDAudioPowerManagement" 1')
+    lines.push('        Set-Reg $path "PowerSave" 0')
+    lines.push('    }')
+    lines.push('    Write-OK "Audio driver power management disabled"')
+    lines.push('}')
   }
 
-  if (selected.has('audio_exclusive')) {
-    lines.push('# Configure audio exclusive mode')
-    lines.push('Write-OK "Audio exclusive mode configured (set per-device in Sound settings)"')
+  const hasExclusive = selected.has('audio_exclusive')
+  const hasCommunications = selected.has('audio_communications')
+
+  if (hasCommunications && hasExclusive) {
+    lines.push('Write-Warn "Audio exclusive overrides volume ducking setting"')
   }
 
-  if (selected.has('audio_communications')) {
+  if (hasCommunications && !hasExclusive) {
     lines.push('# Disable volume ducking during communications')
     lines.push('Set-Reg "HKCU:\\Software\\Microsoft\\Multimedia\\Audio" "UserDuckingPreference" 3')
     lines.push('Write-OK "Volume ducking disabled (full volume during calls)"')
+  }
+
+  if (hasExclusive) {
+    lines.push('# Configure audio exclusive mode preference')
+    lines.push('Set-Reg "HKCU:\\Software\\Microsoft\\Multimedia\\Audio" "UserDuckingPreference" 2')
+    lines.push('Write-OK "Audio exclusive mode preference enabled"')
   }
 
   if (selected.has('audio_system_sounds')) {
@@ -3926,12 +3984,28 @@ export function buildVerificationScript(selection: SelectionState): string {
     )
   }
 
-  if (selected.has('audio_enhancements') || selected.has('audio_communications')) {
+  if (
+    selected.has('audio_enhancements') ||
+    selected.has('audio_communications') ||
+    selected.has('audio_exclusive')
+  ) {
     lines.push('')
     lines.push('Write-Section "Audio Settings"')
-    lines.push(
-      'if (Test-RegValue "HKCU:\\Software\\Microsoft\\Multimedia\\Audio" "UserDuckingPreference" 3) { Write-Pass "Audio ducking disabled" } else { Write-Fail "Audio ducking NOT disabled" }',
-    )
+    if (selected.has('audio_enhancements')) {
+      lines.push(
+        'if ((Test-RegValue "HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Audio" "DisableSystemSounds" 1) -and (Test-RegValue "HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Audio" "DisableProtectedAudioDG" 0)) { Write-Pass "Audio enhancements disabled" } else { Write-Fail "Audio enhancements NOT disabled" }',
+      )
+    }
+
+    if (selected.has('audio_exclusive')) {
+      lines.push(
+        'if (Test-RegValue "HKCU:\\Software\\Microsoft\\Multimedia\\Audio" "UserDuckingPreference" 2) { Write-Pass "Audio exclusive mode preference enabled" } else { Write-Fail "Audio exclusive mode preference NOT enabled" }',
+      )
+    } else if (selected.has('audio_communications')) {
+      lines.push(
+        'if (Test-RegValue "HKCU:\\Software\\Microsoft\\Multimedia\\Audio" "UserDuckingPreference" 3) { Write-Pass "Audio ducking disabled" } else { Write-Fail "Audio ducking NOT disabled" }',
+      )
+    }
   }
 
   lines.push('')
