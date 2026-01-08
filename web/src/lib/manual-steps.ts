@@ -2669,6 +2669,7 @@ const SECTION_GROUPS: readonly SectionGroup[] = [
       AMD_PRO_GAMER,
       AMD_STREAMER,
     ],
+    videos: [VIDEOS.NVIDIA_CS2, VIDEOS.NVIDIA_2026],
   },
   {
     id: "bios",
@@ -2692,6 +2693,7 @@ const SECTION_GROUPS: readonly SectionGroup[] = [
       RGB_GAMER,
       COOLING_ADVANCED,
     ],
+    videos: [VIDEOS.PC_PERFORMANCE],
   },
   {
     id: "peripherals",
