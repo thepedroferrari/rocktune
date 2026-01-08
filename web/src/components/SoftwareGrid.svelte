@@ -8,6 +8,7 @@ interface Props {
   class?: string
 }
 
+// biome-ignore lint/correctness/noUnusedVariables: className used in template
 const { class: className = '' }: Props = $props()
 
 const _filtered = $derived(getFiltered())

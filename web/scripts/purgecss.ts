@@ -60,6 +60,7 @@ function extractStaticClasses(value: string): string[] {
     .filter((token) => token.length > 0 && !DYNAMIC_TOKEN_RE.test(token))
 }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: CSS class collection requires pattern matching across multiple file types
 async function collectUsedClasses(files: string[]): Promise<Set<string>> {
   const used = new Set<string>()
 

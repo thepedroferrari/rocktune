@@ -31,7 +31,6 @@ interface Props {
   onSelect: (preset: PresetType) => void
 }
 
-// biome-ignore lint/correctness/noUnusedVariables: All props are used in Svelte template
 const {
   preset,
   // biome-ignore lint/correctness/noUnusedVariables: Used in template

@@ -13,6 +13,7 @@ interface Props {
   onclose: () => void
 }
 
+// biome-ignore lint/correctness/noUnusedVariables: Props passed to Modal component
 const { open, onclose }: Props = $props()
 
 const _tiers = Object.values(EFFECTIVENESS_RANKS).map((rank) => ({

@@ -31,6 +31,7 @@ function pushIssue(issues: Issue[], level: Issue['level'], message: string): voi
   issues.push({ level, message })
 }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Share registry validation requires extensive checks
 function audit(): Issue[] {
   const issues: Issue[] = []
 

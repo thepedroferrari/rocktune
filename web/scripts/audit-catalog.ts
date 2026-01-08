@@ -31,6 +31,7 @@ function pushIssue(issues: Issue[], level: Issue['level'], message: string): voi
   issues.push({ level, message })
 }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Audit function requires complex validation logic
 function collectPersonaKeys(data: unknown): string[] {
   if (!data || typeof data !== 'object') return []
   const personas = (data as { personas?: unknown }).personas
@@ -71,6 +72,7 @@ function findDuplicate(values: readonly string[]): string[] {
   return Array.from(duplicates)
 }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Main audit orchestration requires comprehensive validation
 async function main(): Promise<void> {
   const issues: Issue[] = []
 
