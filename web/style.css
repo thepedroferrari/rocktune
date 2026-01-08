@@ -679,17 +679,6 @@
          opacity: 0.8;
        }
 
-       &::after {
-         content: '';
-         position: absolute;
-         bottom: -1px;
-         left: -1px;
-         width: 18px;
-         height: 18px;
-         background: linear-gradient(-45deg, transparent 50%, var(--pf-accent) 50%);
-         opacity: 0.5;
-       }
-
        &:hover {
          border-color: color-mix(in oklch, var(--pf-accent) 50%, var(--border));
          box-shadow:
