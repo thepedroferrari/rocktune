@@ -47,6 +47,7 @@ export const SECTION_PREFIXES = {
 
   // Cooling sections
   COOLING_ADVANCED: 'cooling-advanced',
+  COOLING_SOFTWARE: 'cooling-software',
 
   // Network sections
   UBIQUITI_GAMING: 'ubiquiti-gaming',
