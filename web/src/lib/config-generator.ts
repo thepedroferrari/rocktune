@@ -62,8 +62,11 @@ export function getSectionConfigTool(sectionId: SectionId): ConfigTool | null {
     return CONFIG_TOOLS.MSI_AFTERBURNER
   }
 
-  // Cooling section -> Fan Control
-  if (sectionId === SECTION_PREFIXES.COOLING_ADVANCED) {
+  // Cooling sections -> Fan Control
+  if (
+    sectionId === SECTION_PREFIXES.COOLING_ADVANCED ||
+    sectionId === SECTION_PREFIXES.COOLING_SOFTWARE
+  ) {
     return CONFIG_TOOLS.FAN_CONTROL
   }
 
