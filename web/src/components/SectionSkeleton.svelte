@@ -1,9 +1,10 @@
 <script lang="ts">
-	interface Props {
-		height?: string;
-	}
+interface Props {
+  height?: string
+}
 
-	let { height = '400px' }: Props = $props();
+// biome-ignore lint/correctness/noUnusedVariables: height is used in Svelte template
+const { height = '400px' }: Props = $props()
 </script>
 
 <div class="section-skeleton" style="--skeleton-height: {height}">

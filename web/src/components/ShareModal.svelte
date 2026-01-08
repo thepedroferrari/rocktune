@@ -1,163 +1,163 @@
 <script lang="ts">
-  /**
-   * ShareModal - Modal for sharing build configurations
-   *
-   * Provides:
-   * - Build preview card
-   * - Social share buttons (Twitter, Reddit, LinkedIn, Web Share)
-   * - Shareable URL with one-click copy
-   * - Platform-specific text (Twitter, Reddit, Discord)
-   * - PowerShell one-liner for direct execution
-   */
+/**
+ * ShareModal - Modal for sharing build configurations
+ *
+ * Provides:
+ * - Build preview card
+ * - Social share buttons (Twitter, Reddit, LinkedIn, Web Share)
+ * - Shareable URL with one-click copy
+ * - Platform-specific text (Twitter, Reddit, Discord)
+ * - PowerShell one-liner for direct execution
+ */
 
-  import { app } from "$lib/state.svelte";
-  import {
-    getFullShareURLWithMeta,
-    getOneLinerWithMeta,
-    getBuildSummary,
-    getShareHighlights,
-    getSocialShareURLs,
-    generateTwitterText,
-    generateRedditText,
-    generateDiscordText,
-    type BuildToEncode,
-    type EncodeResult,
-    type OneLinerResult,
-  } from "$lib/share";
-  import { copyToClipboard } from "$lib/checksum";
-  import { showToast } from "$lib/toast.svelte";
-  import Modal from "./ui/Modal.svelte";
+import { app } from '$lib/state.svelte'
+import {
+  getFullShareURLWithMeta,
+  getOneLinerWithMeta,
+  getBuildSummary,
+  getSocialShareURLs,
+  generateTwitterText,
+  generateRedditText,
+  generateDiscordText,
+  type BuildToEncode,
+  type EncodeResult,
+  type OneLinerResult,
+} from '$lib/share'
+import { copyToClipboard } from '$lib/checksum'
+import { showToast } from '$lib/toast.svelte'
 
-  interface Props {
-    open: boolean;
-    onclose: () => void;
+interface Props {
+  open: boolean
+  onclose: () => void
+}
+
+const { open, onclose }: Props = $props()
+
+let urlCopied = $state(false)
+let oneLinerCopied = $state(false)
+let benchmarkCopied = $state(false)
+let platformCopied = $state(false)
+const _activeTab = $state<'url' | 'oneliner' | 'social'>('url')
+const activePlatform = $state<'twitter' | 'reddit' | 'discord'>('discord')
+
+const BENCHMARK_COMMAND = 'irm https://rocktune.pedroferrari.com/benchmark.ps1 | iex'
+
+const currentBuild = $derived<BuildToEncode>({
+  cpu: app.hardware.cpu,
+  gpu: app.hardware.gpu,
+  dnsProvider: app.dnsProvider,
+  peripherals: Array.from(app.peripherals),
+  monitorSoftware: Array.from(app.monitorSoftware),
+  optimizations: Array.from(app.optimizations),
+  packages: Array.from(app.selected),
+  preset: app.activePreset ?? undefined,
+})
+
+const shareResult = $derived<EncodeResult>(getFullShareURLWithMeta(currentBuild))
+const shareURL = $derived(shareResult.url)
+const _buildSummary = $derived(getBuildSummary(currentBuild))
+const _socialURLs = $derived(getSocialShareURLs(currentBuild))
+
+const oneLinerResult = $derived<OneLinerResult>(getOneLinerWithMeta(currentBuild))
+const oneLinerCommand = $derived(oneLinerResult.command)
+
+// Platform-specific text
+const twitterText = $derived(generateTwitterText(currentBuild))
+const redditText = $derived(generateRedditText(currentBuild))
+const discordText = $derived(generateDiscordText(currentBuild))
+
+const currentPlatformText = $derived(
+  activePlatform === 'twitter'
+    ? twitterText
+    : activePlatform === 'reddit'
+      ? redditText
+      : discordText,
+)
+
+// Check if Web Share API is available
+let _canWebShare = $state(false)
+$effect(() => {
+  _canWebShare = typeof navigator !== 'undefined' && !!navigator.share
+})
+
+$effect(() => {
+  if (!urlCopied) return
+  const timer = setTimeout(() => {
+    urlCopied = false
+  }, 2000)
+  return () => clearTimeout(timer)
+})
+
+$effect(() => {
+  if (!oneLinerCopied) return
+  const timer = setTimeout(() => {
+    oneLinerCopied = false
+  }, 2000)
+  return () => clearTimeout(timer)
+})
+
+$effect(() => {
+  if (!benchmarkCopied) return
+  const timer = setTimeout(() => {
+    benchmarkCopied = false
+  }, 2000)
+  return () => clearTimeout(timer)
+})
+
+$effect(() => {
+  if (!platformCopied) return
+  const timer = setTimeout(() => {
+    platformCopied = false
+  }, 2000)
+  return () => clearTimeout(timer)
+})
+
+async function _handleCopyBenchmark() {
+  const success = await copyToClipboard(BENCHMARK_COMMAND)
+  if (success) {
+    benchmarkCopied = true
+    showToast('Benchmark command copied!', 'success')
   }
+}
 
-  let { open, onclose }: Props = $props();
-
-  let urlCopied = $state(false);
-  let oneLinerCopied = $state(false);
-  let benchmarkCopied = $state(false);
-  let platformCopied = $state(false);
-  let activeTab = $state<"url" | "oneliner" | "social">("url");
-  let activePlatform = $state<"twitter" | "reddit" | "discord">("discord");
-
-  const BENCHMARK_COMMAND =
-    "irm https://rocktune.pedroferrari.com/benchmark.ps1 | iex";
-
-  let currentBuild = $derived<BuildToEncode>({
-    cpu: app.hardware.cpu,
-    gpu: app.hardware.gpu,
-    dnsProvider: app.dnsProvider,
-    peripherals: Array.from(app.peripherals),
-    monitorSoftware: Array.from(app.monitorSoftware),
-    optimizations: Array.from(app.optimizations),
-    packages: Array.from(app.selected),
-    preset: app.activePreset ?? undefined,
-  });
-
-  let shareResult = $derived<EncodeResult>(
-    getFullShareURLWithMeta(currentBuild),
-  );
-  let shareURL = $derived(shareResult.url);
-  let buildSummary = $derived(getBuildSummary(currentBuild));
-  let socialURLs = $derived(getSocialShareURLs(currentBuild));
-
-  let oneLinerResult = $derived<OneLinerResult>(
-    getOneLinerWithMeta(currentBuild),
-  );
-  let oneLinerCommand = $derived(oneLinerResult.command);
-
-  // Platform-specific text
-  let twitterText = $derived(generateTwitterText(currentBuild));
-  let redditText = $derived(generateRedditText(currentBuild));
-  let discordText = $derived(generateDiscordText(currentBuild));
-
-  let currentPlatformText = $derived(
-    activePlatform === "twitter"
-      ? twitterText
-      : activePlatform === "reddit"
-        ? redditText
-        : discordText,
-  );
-
-  // Check if Web Share API is available
-  let canWebShare = $state(false);
-  $effect(() => {
-    canWebShare = typeof navigator !== "undefined" && !!navigator.share;
-  });
-
-  $effect(() => {
-    if (!urlCopied) return;
-    const timer = setTimeout(() => (urlCopied = false), 2000);
-    return () => clearTimeout(timer);
-  });
-
-  $effect(() => {
-    if (!oneLinerCopied) return;
-    const timer = setTimeout(() => (oneLinerCopied = false), 2000);
-    return () => clearTimeout(timer);
-  });
-
-  $effect(() => {
-    if (!benchmarkCopied) return;
-    const timer = setTimeout(() => (benchmarkCopied = false), 2000);
-    return () => clearTimeout(timer);
-  });
-
-  $effect(() => {
-    if (!platformCopied) return;
-    const timer = setTimeout(() => (platformCopied = false), 2000);
-    return () => clearTimeout(timer);
-  });
-
-  async function handleCopyBenchmark() {
-    const success = await copyToClipboard(BENCHMARK_COMMAND);
-    if (success) {
-      benchmarkCopied = true;
-      showToast("Benchmark command copied!", "success");
-    }
+async function _handleCopyURL() {
+  const success = await copyToClipboard(shareURL)
+  if (success) {
+    urlCopied = true
+    showToast('Link copied to clipboard!', 'success')
   }
+}
 
-  async function handleCopyURL() {
-    const success = await copyToClipboard(shareURL);
-    if (success) {
-      urlCopied = true;
-      showToast("Link copied to clipboard!", "success");
-    }
+async function _handleCopyOneLiner() {
+  const success = await copyToClipboard(oneLinerCommand)
+  if (success) {
+    oneLinerCopied = true
+    showToast('One-liner command copied!', 'success')
   }
+}
 
-  async function handleCopyOneLiner() {
-    const success = await copyToClipboard(oneLinerCommand);
-    if (success) {
-      oneLinerCopied = true;
-      showToast("One-liner command copied!", "success");
-    }
+async function _handleCopyPlatformText() {
+  const success = await copyToClipboard(currentPlatformText)
+  if (success) {
+    platformCopied = true
+    const platformName = activePlatform.charAt(0).toUpperCase() + activePlatform.slice(1)
+    showToast(`${platformName} text copied!`, 'success')
   }
+}
 
-  async function handleCopyPlatformText() {
-    const success = await copyToClipboard(currentPlatformText);
-    if (success) {
-      platformCopied = true;
-      const platformName =
-        activePlatform.charAt(0).toUpperCase() + activePlatform.slice(1);
-      showToast(`${platformName} text copied!`, "success");
-    }
+async function _handleWebShare() {
+  if (!navigator.share) return
+  try {
+    await navigator.share({
+      title: 'My RockTune Build',
+      text: `Check out my Windows gaming loadout!`,
+      url: shareURL,
+    })
+    showToast('Shared successfully!', 'success')
+  } catch (_err) {
+    // User cancelled or share failed - ignore
   }
-
-  async function handleWebShare() {
-    if (!navigator.share) return;
-    try {
-      await navigator.share({
-        title: "My RockTune Build",
-        text: `Check out my Windows gaming loadout!`,
-        url: shareURL,
-      });
-      showToast("Shared successfully!", "success");
-    } catch (err) {
-      // User cancelled or share failed - ignore
-    }
-  }
+}
 </script>
 
 <Modal {open} {onclose} size="lg" class="share-modal">

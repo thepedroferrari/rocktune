@@ -1,58 +1,58 @@
 <script lang="ts">
-  import type { PackageKey, SoftwarePackage, Category } from '$lib/types'
-  import { CATEGORY_SVG_ICONS, SIMPLE_ICONS_CDN } from '$lib/types'
+import type { PackageKey, SoftwarePackage, Category } from '$lib/types'
+import { CATEGORY_SVG_ICONS, SIMPLE_ICONS_CDN } from '$lib/types'
 
-  interface Props {
-    key: PackageKey
-    pkg: SoftwarePackage
-    selected: boolean
-    onToggle: (key: PackageKey) => void
-    overlayPosition?: 'right' | 'left'
+interface Props {
+  key: PackageKey
+  pkg: SoftwarePackage
+  selected: boolean
+  onToggle: (key: PackageKey) => void
+  overlayPosition?: 'right' | 'left'
+}
+
+const { key, pkg, selected, onToggle, overlayPosition = 'right' }: Props = $props()
+
+// Unique ID for checkbox-label association
+const __inputId = $derived(`pkg-${key}`)
+
+type LogoType = 'sprite' | 'cdn' | 'emoji' | 'fallback'
+const __logoType: LogoType = $derived.by(() => {
+  if (pkg.icon) {
+    return pkg.icon.endsWith('.svg') || pkg.icon.startsWith('icons/') ? 'sprite' : 'cdn'
   }
+  return pkg.emoji ? 'emoji' : 'fallback'
+})
 
-  let { key, pkg, selected, onToggle, overlayPosition = 'right' }: Props = $props()
+const __spriteId = $derived(pkg.icon?.replace('icons/', '').replace('.svg', '') ?? '')
+const __cdnUrl = $derived(`${SIMPLE_ICONS_CDN}/${pkg.icon}/white`)
 
-  // Unique ID for checkbox-label association
-  let inputId = $derived(`pkg-${key}`)
+function __getCategoryIcon(category: Category): string {
+  return CATEGORY_SVG_ICONS[category] ?? CATEGORY_SVG_ICONS.default
+}
 
-  type LogoType = 'sprite' | 'cdn' | 'emoji' | 'fallback'
-  let logoType: LogoType = $derived.by(() => {
-    if (pkg.icon) {
-      return pkg.icon.endsWith('.svg') || pkg.icon.startsWith('icons/') ? 'sprite' : 'cdn'
-    }
-    return pkg.emoji ? 'emoji' : 'fallback'
-  })
+let __iconFailed = $state(false)
 
-  let spriteId = $derived(pkg.icon?.replace('icons/', '').replace('.svg', '') ?? '')
-  let cdnUrl = $derived(`${SIMPLE_ICONS_CDN}/${pkg.icon}/white`)
+function __handleChange() {
+  onToggle(key)
+}
 
-  function getCategoryIcon(category: Category): string {
-    return CATEGORY_SVG_ICONS[category] ?? CATEGORY_SVG_ICONS.default
-  }
-
-  let iconFailed = $state(false)
-
-  function handleChange() {
-    onToggle(key)
-  }
-
-  function handleImageError() {
-    iconFailed = true
-  }
+function __handleImageError() {
+  __iconFailed = true
+}
 </script>
 
 {#snippet renderIcon(isOverlay: boolean)}
-  {#if logoType === 'sprite'}
+  {#if _logoType === 'sprite'}
     <svg
       class="sprite-icon"
       role="img"
       aria-label={isOverlay ? undefined : `${pkg.name} icon`}
       aria-hidden={isOverlay ? 'true' : undefined}
     >
-      <use href="/icons/sprite.svg#{spriteId}"></use>
+      <use href="/icons/sprite.svg#{_spriteId}"></use>
     </svg>
-  {:else if logoType === 'cdn'}
-    {#if iconFailed}
+  {:else if _logoType === 'cdn'}
+    {#if _iconFailed}
       <svg
         class="sprite-icon fallback-icon"
         viewBox="0 0 48 48"
@@ -64,13 +64,13 @@
       </svg>
     {:else}
       <img
-        src={cdnUrl}
+        src={_cdnUrl}
         alt={isOverlay ? '' : `${pkg.name} logo`}
         loading="lazy"
-        onerror={isOverlay ? undefined : handleImageError}
+        onerror={isOverlay ? undefined : _handleImageError}
       />
     {/if}
-  {:else if logoType === 'emoji'}
+  {:else if _logoType === 'emoji'}
     <span
       class="emoji-icon"
       role="img"
@@ -78,7 +78,7 @@
       aria-hidden={isOverlay ? 'true' : undefined}
     >{pkg.emoji}</span>
   {:else}
-    {@html getCategoryIcon(pkg.category)}
+    {@html _getCategoryIcon(pkg.category)}
   {/if}
 {/snippet}
 
@@ -92,21 +92,21 @@
   <!-- Hidden checkbox for semantic toggle -->
   <input
     type="checkbox"
-    id={inputId}
+    id={_inputId}
     checked={selected}
-    onchange={handleChange}
+    onchange={_handleChange}
     class="sr-only"
-    aria-describedby="{inputId}-desc"
+    aria-describedby="{_inputId}-desc"
   />
 
   <!-- Label wraps entire card for click-to-toggle -->
-  <label for={inputId} class="card-label">
+  <label for={_inputId} class="card-label">
     <figure class="logo">
       {@render renderIcon(false)}
     </figure>
 
     <span class="name">{pkg.name}</span>
-    <span id="{inputId}-desc" class="sr-only">{pkg.desc ?? pkg.category}</span>
+    <span id="{_inputId}-desc" class="sr-only">{pkg.desc ?? pkg.category}</span>
 
     <!-- Overlay inside label - clicking it toggles the checkbox -->
     <div class="card-overlay">
@@ -140,7 +140,7 @@
         class="overlay-action"
         class:overlay-action--add={!selected}
         class:overlay-action--remove={selected}
-        onclick={(e) => { e.stopPropagation(); e.preventDefault(); handleChange(); }}
+        onclick={(e) => { e.stopPropagation(); e.preventDefault(); _handleChange(); }}
         type="button"
       >
         {#if selected}
