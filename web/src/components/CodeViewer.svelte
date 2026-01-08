@@ -10,9 +10,9 @@
 
 import { diffLines } from 'diff'
 import type { ScriptMode } from '$lib/state.svelte'
+import { SCRIPT_FILENAME } from '$lib/types'
 import { copyToClipboard } from '../utils/clipboard'
 import { downloadText } from '../utils/download'
-import { SCRIPT_FILENAME } from '$lib/types'
 
 interface Props {
   /** Current script content */
@@ -35,9 +35,7 @@ const {
   script,
   previousScript,
   mode = 'current',
-  // biome-ignore lint/correctness/noUnusedVariables: Used in Svelte template
   pillLabel = 'Preview',
-  // biome-ignore lint/correctness/noUnusedVariables: Used in Svelte template
   showActions = true,
   onModeChange,
   onEdit,
@@ -47,10 +45,10 @@ let localModeOverride = $state<ScriptMode | null>(null)
 const activeMode = $derived(localModeOverride ?? mode)
 let diffIndex = $state(0)
 let isEditing = $state(false)
-let _editContent = $state('')
-let _copyText = $state('Copy')
+let editContent = $state('')
+let copyText = $state('Copy')
 let copyTimeout: ReturnType<typeof setTimeout> | null = null
-const diffPaneEl: HTMLDivElement | null = null
+let diffPaneEl: HTMLDivElement | null = $state(null)
 
 $effect(() => {
   void mode
@@ -59,12 +57,12 @@ $effect(() => {
 
 $effect(() => {
   if (!isEditing) {
-    _editContent = script
+    editContent = script
   }
 })
 
-const _lines = $derived(script ? script.split('\n').length : 0)
-const _sizeKb = $derived(script ? (new Blob([script]).size / 1024).toFixed(1) : '0.0')
+const lines = $derived(script ? script.split('\n').length : 0)
+const sizeKb = $derived(script ? (new Blob([script]).size / 1024).toFixed(1) : '0.0')
 
 interface DiffLine {
   type: 'added' | 'removed' | 'unchanged'
@@ -126,7 +124,7 @@ const diffTargets = $derived(
     .filter(({ line }) => line.type !== 'unchanged'),
 )
 
-const _showNav = $derived(activeMode === 'diff' && diffTargets.length > 0)
+const showNav = $derived(activeMode === 'diff' && diffTargets.length > 0)
 
 $effect(() => {
   const count = diffTargets.length
@@ -144,25 +142,25 @@ function setMode(newMode: ScriptMode) {
   onModeChange?.(newMode)
 }
 
-function _handleTabClick(tabMode: ScriptMode) {
+function handleTabClick(tabMode: ScriptMode) {
   setMode(tabMode)
 }
 
-function _handleEditFocus() {
+function handleEditFocus() {
   isEditing = true
 }
 
-function _handleEditBlur() {
+function handleEditBlur() {
   isEditing = false
 }
 
-function _handleEditInput(event: Event & { currentTarget: HTMLTextAreaElement }) {
+function handleEditInput(event: Event & { currentTarget: HTMLTextAreaElement }) {
   const { value } = event.currentTarget
-  _editContent = value
+  editContent = value
   onEdit?.(value)
 }
 
-function _navigateDiff(direction: 'prev' | 'next') {
+function navigateDiff(direction: 'prev' | 'next') {
   if (diffTargets.length === 0) return
 
   if (direction === 'prev') {
@@ -184,20 +182,20 @@ function scrollToCurrentDiff() {
   targetEl?.scrollIntoView({ block: 'center', behavior: 'smooth' })
 }
 
-async function _handleCopy() {
+async function handleCopy() {
   if (!script) return
 
   const success = await copyToClipboard(script)
   if (success) {
-    _copyText = 'Copied!'
+    copyText = 'Copied!'
     if (copyTimeout) clearTimeout(copyTimeout)
     copyTimeout = setTimeout(() => {
-      _copyText = 'Copy'
+      copyText = 'Copy'
     }, 1800)
   }
 }
 
-function _handleDownload() {
+function handleDownload() {
   if (!script.trim()) return
   downloadText(script, SCRIPT_FILENAME)
 }
@@ -215,7 +213,7 @@ $effect(() => {
       type="button"
       class="tab"
       class:active={activeMode === 'current'}
-      onclick={() => _handleTabClick('current')}
+      onclick={() => handleTabClick('current')}
     >
       Current
     </button>
@@ -223,7 +221,7 @@ $effect(() => {
       type="button"
       class="tab"
       class:active={activeMode === 'diff'}
-      onclick={() => _handleTabClick('diff')}
+      onclick={() => handleTabClick('diff')}
     >
       Diff
     </button>
@@ -231,18 +229,18 @@ $effect(() => {
       type="button"
       class="tab"
       class:active={activeMode === 'edit'}
-      onclick={() => _handleTabClick('edit')}
+      onclick={() => handleTabClick('edit')}
     >
       Edit
     </button>
 
-    {#if _showNav}
+    {#if showNav}
       <div class="nav">
         <button
           type="button"
           class="nav-btn"
           title="Previous change"
-          onclick={() => _navigateDiff('prev')}
+          onclick={() => navigateDiff('prev')}
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="18 15 12 9 6 15" />
@@ -253,7 +251,7 @@ $effect(() => {
           type="button"
           class="nav-btn"
           title="Next change"
-          onclick={() => _navigateDiff('next')}
+          onclick={() => navigateDiff('next')}
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="6 9 12 15 18 9" />
@@ -293,24 +291,24 @@ $effect(() => {
       name="script-edit"
       spellcheck="false"
       autocomplete="off"
-      value={_editContent}
-      onfocus={_handleEditFocus}
-      onblur={_handleEditBlur}
-      oninput={_handleEditInput}
+      value={editContent}
+      onfocus={handleEditFocus}
+      onblur={handleEditBlur}
+      oninput={handleEditInput}
     ></textarea>
   </div>
 
   <footer class="footer">
     <div class="stats">
-      <span>{_lines} lines</span>
-      <span>{_sizeKb} KB</span>
+      <span>{lines} lines</span>
+      <span>{sizeKb} KB</span>
     </div>
     {#if showActions}
       <div class="actions">
-        <button type="button" class="btn-secondary" onclick={_handleCopy}>
-          {_copyText}
+        <button type="button" class="btn-secondary" onclick={handleCopy}>
+          {copyText}
         </button>
-        <button type="button" class="cyber-btn cyber-btn--primary" onclick={_handleDownload}>
+        <button type="button" class="cyber-btn cyber-btn--primary" onclick={handleDownload}>
           <span class="text">Download</span>
         </button>
       </div>

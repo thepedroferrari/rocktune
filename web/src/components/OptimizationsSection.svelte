@@ -7,22 +7,32 @@
  */
 
 import {
-  app,
-  toggleWizardMode,
+  getCategoriesForTier,
+  getOptimizationsByTierAndCategory,
+  OPTIMIZATIONS,
+  type OptimizationCategory,
+  type OptimizationDef,
+} from '$lib/optimizations'
+import {
   acknowledgeLudicrous,
   acknowledgeRestorePointDisable,
+  app,
   toggleOptimization,
+  toggleWizardMode,
 } from '$lib/state.svelte'
-import { OPTIMIZATIONS, type OptimizationCategory, type OptimizationDef } from '$lib/optimizations'
 import {
-  OPTIMIZATION_TIERS,
+  type BreakingChange,
   OPTIMIZATION_KEYS,
-  type OptimizationTier,
+  OPTIMIZATION_TIERS,
   type OptimizationKey,
+  type OptimizationTier,
 } from '$lib/types'
+import DnsProviderSelector from './DnsProviderSelector.svelte'
+import OptimizationCheckbox from './OptimizationCheckbox.svelte'
+import TierLegendDialog from './TierLegendDialog.svelte'
 
 /** Category display names */
-const _CATEGORY_LABELS: Record<OptimizationCategory, string> = {
+const CATEGORY_LABELS: Record<OptimizationCategory, string> = {
   system: 'System',
   power: 'Power',
   network: 'Network',
@@ -33,14 +43,14 @@ const _CATEGORY_LABELS: Record<OptimizationCategory, string> = {
 }
 
 /** Tier order for rendering - LUDICROUS excluded from normal flow */
-const _NORMAL_TIERS: readonly OptimizationTier[] = [
+const NORMAL_TIERS: readonly OptimizationTier[] = [
   OPTIMIZATION_TIERS.SAFE,
   OPTIMIZATION_TIERS.CAUTION,
   OPTIMIZATION_TIERS.RISKY,
 ] as const
 
 /** Tier display names */
-const _TIER_LABELS: Record<OptimizationTier, string> = {
+const TIER_LABELS: Record<OptimizationTier, string> = {
   [OPTIMIZATION_TIERS.SAFE]: 'Safe',
   [OPTIMIZATION_TIERS.CAUTION]: 'Caution',
   [OPTIMIZATION_TIERS.RISKY]: 'Risky',
@@ -48,39 +58,39 @@ const _TIER_LABELS: Record<OptimizationTier, string> = {
 }
 
 /** Reference to LUDICROUS dialog element */
-const ludicrousDialog: HTMLDialogElement | null = $state(null)
+let ludicrousDialog: HTMLDialogElement | null = $state(null)
 /** Reference to restore point dialog element */
-const restorePointDialog: HTMLDialogElement | null = $state(null)
+let restorePointDialog: HTMLDialogElement | null = $state(null)
 /** Reference to breaking changes dialog element */
-const breakingChangesDialog: HTMLDialogElement | null = $state(null)
+let breakingChangesDialog: HTMLDialogElement | null = $state(null)
 /** Pending optimization with breaking changes */
 let pendingBreakingOpt: OptimizationDef | null = $state(null)
 /** Tier legend dialog open state */
-let _tierLegendOpen = $state(false)
+let tierLegendOpen = $state(false)
 
-function _openTierLegend() {
-  _tierLegendOpen = true
+function openTierLegend() {
+  tierLegendOpen = true
 }
 
-function _closeTierLegend() {
-  _tierLegendOpen = false
+function closeTierLegend() {
+  tierLegendOpen = false
 }
 
-function _handleWizardToggle() {
+function handleWizardToggle() {
   toggleWizardMode()
 }
 
-function _openLudicrousModal() {
+function openLudicrousModal() {
   const scrollY = window.scrollY
   ludicrousDialog?.showModal()
   window.scrollTo({ top: scrollY, behavior: 'instant' })
 }
 
-function _closeLudicrousModal() {
+function closeLudicrousModal() {
   ludicrousDialog?.close()
 }
 
-function _confirmLudicrous() {
+function confirmLudicrous() {
   acknowledgeLudicrous()
   ludicrousDialog?.close()
 }
@@ -91,11 +101,11 @@ function openRestorePointModal() {
   window.scrollTo({ top: scrollY, behavior: 'instant' })
 }
 
-function _closeRestorePointModal() {
+function closeRestorePointModal() {
   restorePointDialog?.close()
 }
 
-function _confirmRestorePointDisable() {
+function confirmRestorePointDisable() {
   acknowledgeRestorePointDisable()
   toggleOptimization(OPTIMIZATION_KEYS.RESTORE_POINT)
   restorePointDialog?.close()
@@ -108,12 +118,12 @@ function openBreakingChangesModal(opt: OptimizationDef) {
   window.scrollTo({ top: scrollY, behavior: 'instant' })
 }
 
-function _closeBreakingChangesModal() {
+function closeBreakingChangesModal() {
   pendingBreakingOpt = null
   breakingChangesDialog?.close()
 }
 
-function _confirmBreakingChanges() {
+function confirmBreakingChanges() {
   if (pendingBreakingOpt) {
     toggleOptimization(pendingBreakingOpt.key)
   }
@@ -124,7 +134,7 @@ function _confirmBreakingChanges() {
 /**
  * Intercept toggle for restore_point and items with breaking changes
  */
-function _handleBeforeToggle(key: OptimizationKey, isCurrentlyChecked: boolean): boolean {
+function handleBeforeToggle(key: OptimizationKey, isCurrentlyChecked: boolean): boolean {
   // Restore point special handling
   if (key === OPTIMIZATION_KEYS.RESTORE_POINT && isCurrentlyChecked) {
     if (!app.ui.restorePointAcknowledged) {
@@ -446,7 +456,7 @@ function _handleBeforeToggle(key: OptimizationKey, isCurrentlyChecked: boolean):
           <li>
             <a
               href="https://nvd.nist.gov/vuln/detail/CVE-2017-5753"
-              target="_blank"
+              target="blank"
               rel="noopener">CVE-2017-5753</a
             >
             <span class="cve-name">(Spectre V1)</span> — Bounds check bypass
@@ -454,7 +464,7 @@ function _handleBeforeToggle(key: OptimizationKey, isCurrentlyChecked: boolean):
           <li>
             <a
               href="https://nvd.nist.gov/vuln/detail/CVE-2017-5715"
-              target="_blank"
+              target="blank"
               rel="noopener">CVE-2017-5715</a
             >
             <span class="cve-name">(Spectre V2)</span> — Branch target injection
@@ -462,7 +472,7 @@ function _handleBeforeToggle(key: OptimizationKey, isCurrentlyChecked: boolean):
           <li>
             <a
               href="https://nvd.nist.gov/vuln/detail/CVE-2017-5754"
-              target="_blank"
+              target="blank"
               rel="noopener">CVE-2017-5754</a
             >
             <span class="cve-name">(Meltdown)</span> — Rogue data cache load
@@ -501,10 +511,10 @@ function _handleBeforeToggle(key: OptimizationKey, isCurrentlyChecked: boolean):
 
       <div class="research-links">
         <span>Research before proceeding:</span>
-        <a href="https://meltdownattack.com" target="_blank" rel="noopener"
+        <a href="https://meltdownattack.com" target="blank" rel="noopener"
           >meltdownattack.com</a
         >
-        <a href="https://spectreattack.com" target="_blank" rel="noopener"
+        <a href="https://spectreattack.com" target="blank" rel="noopener"
           >spectreattack.com</a
         >
       </div>

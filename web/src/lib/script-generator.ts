@@ -6,8 +6,8 @@
  */
 
 // Build-time globals injected by Vite
-declare const BuildCommit: string
-declare const BuildDate: string
+declare const __BUILD_COMMIT__: string
+declare const __BUILD_DATE__: string
 
 import { OPTIMIZATIONS } from './optimizations'
 import { PERSONA_NEXT_STEPS } from './persona-config'
@@ -876,8 +876,8 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
   lines.push(`    RockTune — Loadout generated ${timestamp}`)
   lines.push('.DESCRIPTION')
   lines.push(`    Core: ${hardware.cpu} + ${hardware.gpu}`)
-  lines.push(`    Build: ${BuildCommit} (${BuildDate})`)
-  lines.push(`    Source: https://github.com/thepedroferrari/rocktune/tree/${BuildCommit}`)
+  lines.push(`    Build: ${__BUILD_COMMIT__} (${__BUILD_DATE__})`)
+  lines.push(`    Source: https://github.com/thepedroferrari/rocktune/tree/${__BUILD_COMMIT__}`)
   if (hasLudicrous) {
     lines.push('')
     lines.push('    ⚠️  DANGER ZONE: CPU security mitigations are DISABLED in this script.')
@@ -907,7 +907,7 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
 
   const config = {
     generated: timestamp,
-    build: BuildCommit,
+    build: __BUILD_COMMIT__,
     risk_profile: riskProfile,
     restore_point_required: restorePointRequired,
     hardware: {
@@ -1294,7 +1294,7 @@ export function buildScript(selection: SelectionState, options: ScriptGeneratorO
   lines.push(
     `${indent}Write-Host "  Get-FileHash .\\rocktune-setup.ps1 -Algorithm SHA256" -ForegroundColor DarkGray`,
   )
-  lines.push(`${indent}Write-Host "  Build: ${BuildCommit}" -ForegroundColor DarkGray`)
+  lines.push(`${indent}Write-Host "  Build: ${__BUILD_COMMIT__}" -ForegroundColor DarkGray`)
   lines.push(`${indent}Write-Host ""`)
 
   // Interactive key prompt with next-steps option

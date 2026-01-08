@@ -5,10 +5,10 @@
  * Shown when the DNS optimization is enabled.
  */
 
-import { setDnsProvider } from '$lib/state.svelte'
+import { app, setDnsProvider } from '$lib/state.svelte'
 import { DNS_PROVIDERS, type DnsProviderType } from '$lib/types'
 
-const _DNS_OPTIONS: readonly { value: DnsProviderType; label: string; hint: string }[] = [
+const DNS_OPTIONS: readonly { value: DnsProviderType; label: string; hint: string }[] = [
   {
     value: DNS_PROVIDERS.CLOUDFLARE,
     label: 'Cloudflare',
@@ -24,7 +24,7 @@ const _DNS_OPTIONS: readonly { value: DnsProviderType; label: string; hint: stri
   },
 ] as const
 
-function _handleChange(event: Event) {
+function handleChange(event: Event) {
   const target = event.target as HTMLInputElement
   setDnsProvider(target.value as DnsProviderType)
 }

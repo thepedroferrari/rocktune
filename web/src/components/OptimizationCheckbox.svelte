@@ -5,10 +5,10 @@
  * Shows tier rank as text prefix [S], [A], etc.
  */
 
-import { app, toggleOptimization } from '$lib/state.svelte'
 import type { OptimizationDef } from '$lib/optimizations'
+import { app, toggleOptimization } from '$lib/state.svelte'
 import type { OptimizationKey } from '$lib/types'
-import type { StructuredTooltip } from '../utils/tooltips'
+import { type StructuredTooltip, tooltip } from '../utils/tooltips'
 
 interface Props {
   opt: OptimizationDef
@@ -32,9 +32,9 @@ function buildTooltipWithRank(baseTooltip: StructuredTooltip): StructuredTooltip
   }
 }
 
-const _enhancedTooltip = $derived(buildTooltipWithRank(opt.tooltip))
+const enhancedTooltip = $derived(buildTooltipWithRank(opt.tooltip))
 
-function _handleClick(event: MouseEvent) {
+function handleClick(event: MouseEvent) {
   if (onBeforeToggle) {
     const shouldProceed = onBeforeToggle(opt.key, isChecked)
     if (!shouldProceed) {

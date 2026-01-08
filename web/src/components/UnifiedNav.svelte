@@ -9,10 +9,12 @@
  * - Hamburger menu for mobile
  */
 
+import { slide } from 'svelte/transition'
 import { preloadSection, type SectionId } from '../lib/preload'
 import { scrollToSection } from '../lib/scroll'
+import ShareModal from './ShareModal.svelte'
 
-let _shareModalOpen = $state(false)
+let shareModalOpen = $state(false)
 let menuOpen = $state(false)
 
 interface NavLink {
@@ -31,9 +33,9 @@ const NAV_LINKS: NavLink[] = [
   { href: '#guide', label: 'Guide', step: 6 },
 ]
 
-let _activeStep = $state(0)
+let activeStep = $state(0)
 
-function _toggleMenu() {
+function toggleMenu() {
   menuOpen = !menuOpen
 }
 
@@ -65,7 +67,7 @@ $effect(() => {
       }
 
       if (topSection !== null) {
-        _activeStep = topSection.index
+        activeStep = topSection.index
       }
     },
     {
@@ -85,12 +87,12 @@ $effect(() => {
   }
 })
 
-function _handlePreload(link: NavLink) {
+function handlePreload(link: NavLink) {
   const sectionId = link.href.replace('#', '') as SectionId
   preloadSection(sectionId)
 }
 
-async function _handleClick(event: MouseEvent, link: NavLink) {
+async function handleClick(event: MouseEvent, link: NavLink) {
   event.preventDefault()
   const sectionId = link.href.replace('#', '') as SectionId
 
@@ -98,15 +100,15 @@ async function _handleClick(event: MouseEvent, link: NavLink) {
   preloadSection(sectionId)
 
   // Update active state optimistically
-  _activeStep = link.step
+  activeStep = link.step
   closeMenu()
 
   // Scroll with wait-for-render
   await scrollToSection({ sectionId })
 }
 
-function _handleMobileShare() {
-  _shareModalOpen = true
+function handleMobileShare() {
+  shareModalOpen = true
   closeMenu()
 }
 </script>
@@ -228,7 +230,7 @@ function _handleMobileShare() {
       <hr class="mobile-divider" />
       <a
         href="https://github.com/thepedroferrari/rocktune/tree/{__BUILD_COMMIT__}"
-        target="_blank"
+        target="blank"
         rel="noopener"
         class="mobile-github"
       >

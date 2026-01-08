@@ -33,7 +33,7 @@ const {
   footer,
 }: Props = $props()
 
-const dialogEl: HTMLDialogElement | null = $state(null)
+let dialogEl: HTMLDialogElement | null = $state(null)
 
 $effect(() => {
   if (!dialogEl) return
@@ -51,18 +51,18 @@ $effect(() => {
   }
 })
 
-function _handleBackdropClick(e: MouseEvent) {
+function handleBackdropClick(e: MouseEvent) {
   if (e.target === dialogEl) {
     onclose()
   }
 }
 
-function _handleCancel(e: Event) {
+function handleCancel(e: Event) {
   e.preventDefault()
   onclose()
 }
 
-function _handleKeydown(e: KeyboardEvent) {
+function handleKeydown(e: KeyboardEvent) {
   if (e.key === 'Escape') {
     e.preventDefault()
     onclose()
@@ -73,9 +73,9 @@ function _handleKeydown(e: KeyboardEvent) {
 <dialog
   bind:this={dialogEl}
   class="modal-base modal-base--{size} {className}"
-  onclick={_handleBackdropClick}
-  oncancel={_handleCancel}
-  onkeydown={_handleKeydown}
+  onclick={handleBackdropClick}
+  oncancel={handleCancel}
+  onkeydown={handleKeydown}
 >
   <header class="modal-header">
     {@render header()}

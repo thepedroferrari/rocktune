@@ -8,8 +8,8 @@
 import { app, getSelectedCount } from '$lib/state.svelte'
 import type { CpuType, GpuType } from '$lib/types'
 
-const _softwareCount = $derived(getSelectedCount())
-const _optimizationCount = $derived(app.optimizations.size)
+const softwareCount = $derived(getSelectedCount())
+const optimizationCount = $derived(app.optimizations.size)
 
 const cpuLabels: Record<CpuType, string> = {
   amd_x3d: 'X3D',
@@ -25,7 +25,7 @@ const gpuLabels: Record<GpuType, string> = {
 
 const cpuLabel = $derived(cpuLabels[app.hardware.cpu] || app.hardware.cpu)
 const gpuLabel = $derived(gpuLabels[app.hardware.gpu] || app.hardware.gpu)
-const _hardwareLabel = $derived(`${cpuLabel} + ${gpuLabel}`)
+const hardwareLabel = $derived(`${cpuLabel} + ${gpuLabel}`)
 </script>
 
 <div class="summary-shell">

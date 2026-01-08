@@ -3,10 +3,10 @@
  * Driver Cards - Shows relevant driver download links based on hardware selection
  */
 
-import { app } from '$lib/state.svelte'
 import { DRIVER_CARDS, isDriverCardVisible } from '$lib/hardware'
+import { app } from '$lib/state.svelte'
 
-const _visibleCards = $derived(
+const visibleCards = $derived(
   DRIVER_CARDS.filter((card) => isDriverCardVisible(card, app.hardware.cpu, app.hardware.gpu)),
 )
 </script>
@@ -48,13 +48,13 @@ const _visibleCards = $derived(
       <h3>{card.title}</h3>
       <p>{card.description}</p>
       {#if card.links.length === 1}
-        <a href={card.links[0].url} target="_blank" rel="noopener">
+        <a href={card.links[0].url} target="blank" rel="noopener">
           {card.links[0].label} ↗
         </a>
       {:else}
         <div class="links">
           {#each card.links as link}
-            <a href={link.url} target="_blank" rel="noopener">{link.label} ↗</a>
+            <a href={link.url} target="blank" rel="noopener">{link.label} ↗</a>
           {/each}
         </div>
       {/if}

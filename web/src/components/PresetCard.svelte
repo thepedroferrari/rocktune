@@ -9,9 +9,9 @@
  * - Intensity bar for risk visualization
  */
 
-import { adjust, clamp, round, Spring, SPRING_PRESETS } from '../utils/spring'
-import type { PresetType } from '$lib/types'
 import type { TierBreakdown } from '$lib/presets'
+import type { PresetType } from '$lib/types'
+import { adjust, clamp, round, SPRING_PRESETS, Spring } from '../utils/spring'
 
 interface Props {
   preset: PresetType
@@ -33,30 +33,18 @@ interface Props {
 
 const {
   preset,
-  // biome-ignore lint/correctness/noUnusedVariables: Used in template
   label,
-  // biome-ignore lint/correctness/noUnusedVariables: Used in template
   description = '',
-  // biome-ignore lint/correctness/noUnusedVariables: Used in template
   bestFor = '',
-  // biome-ignore lint/correctness/noUnusedVariables: Used in template attribute
   rarity = 'common',
-  // biome-ignore lint/correctness/noUnusedVariables: Used in template
   intensity = 50,
   riskLevel = 'low',
-  // biome-ignore lint/correctness/noUnusedVariables: Used in template
   overheadLabel = '',
-  // biome-ignore lint/correctness/noUnusedVariables: Used in template
   latencyLabel = '',
-  // biome-ignore lint/correctness/noUnusedVariables: Used in template
   traits = [],
-  // biome-ignore lint/correctness/noUnusedVariables: Used in template
   softwareCount,
-  // biome-ignore lint/correctness/noUnusedVariables: Used in template
   optimizationCount = 0,
-  // biome-ignore lint/correctness/noUnusedVariables: Used in template
   tierBreakdown,
-  // biome-ignore lint/correctness/noUnusedVariables: Used in template attribute
   active = false,
   onSelect,
 }: Props = $props()
@@ -66,7 +54,7 @@ const riskLabels = {
   medium: 'Medium',
   high: 'High',
 } as const
-const _riskText = $derived(
+const riskText = $derived(
   riskLevel === 'low'
     ? preset === 'gamer' || preset === 'streamer'
       ? 'Safe'
@@ -76,7 +64,7 @@ const _riskText = $derived(
     : riskLabels[riskLevel],
 )
 
-const rotator: HTMLElement | undefined = $state()
+let rotator: HTMLElement | undefined = $state()
 const springRotate = new Spring({ x: 0, y: 0 }, SPRING_PRESETS.INTERACTIVE)
 const springGlare = new Spring({ x: 50, y: 50, o: 0 }, SPRING_PRESETS.INTERACTIVE)
 const springBackground = new Spring({ x: 50, y: 50 }, SPRING_PRESETS.INTERACTIVE)
@@ -84,17 +72,17 @@ const springBackground = new Spring({ x: 50, y: 50 }, SPRING_PRESETS.INTERACTIVE
 let interacting = $state(false)
 let animationId: number | null = null
 
-let _pointerX = $state('50%')
-let _pointerY = $state('50%')
-let _pointerFromCenter = $state('0')
-let _pointerFromTop = $state('0.5')
-let _pointerFromLeft = $state('0.5')
-let _cardOpacity = $state('0')
-let _rotateX = $state('0deg')
-let _rotateY = $state('0deg')
-let _backgroundX = $state('50%')
-let _backgroundY = $state('50%')
-let _transform = $state('')
+let pointerX = $state('50%')
+let pointerY = $state('50%')
+let pointerFromCenter = $state('0')
+let pointerFromTop = $state('0.5')
+let pointerFromLeft = $state('0.5')
+let cardOpacity = $state('0')
+let rotateX = $state('0deg')
+let rotateY = $state('0deg')
+let backgroundX = $state('50%')
+let backgroundY = $state('50%')
+let transform = $state('')
 
 function applyStyles() {
   const glareX = springGlare.current.x
@@ -105,18 +93,18 @@ function applyStyles() {
   const pft = glareY / 100
   const pfl = glareX / 100
 
-  _pointerX = `${round(glareX)}%`
-  _pointerY = `${round(glareY)}%`
-  _pointerFromCenter = round(pfc).toString()
-  _pointerFromTop = round(pft).toString()
-  _pointerFromLeft = round(pfl).toString()
-  _cardOpacity = round(glareO).toString()
-  _rotateX = `${round(springRotate.current.x)}deg`
-  _rotateY = `${round(springRotate.current.y)}deg`
-  _backgroundX = `${round(springBackground.current.x)}%`
-  _backgroundY = `${round(springBackground.current.y)}%`
+  pointerX = `${round(glareX)}%`
+  pointerY = `${round(glareY)}%`
+  pointerFromCenter = round(pfc).toString()
+  pointerFromTop = round(pft).toString()
+  pointerFromLeft = round(pfl).toString()
+  cardOpacity = round(glareO).toString()
+  rotateX = `${round(springRotate.current.x)}deg`
+  rotateY = `${round(springRotate.current.y)}deg`
+  backgroundX = `${round(springBackground.current.x)}%`
+  backgroundY = `${round(springBackground.current.y)}%`
 
-  _transform = `rotateY(${round(springRotate.current.x)}deg) rotateX(${round(
+  transform = `rotateY(${round(springRotate.current.x)}deg) rotateX(${round(
     springRotate.current.y,
   )}deg)`
 }
@@ -143,7 +131,7 @@ function startAnimation() {
   }
 }
 
-function _handlePointerMove(e: PointerEvent) {
+function handlePointerMove(e: PointerEvent) {
   if (!rotator) return
   const rect = rotator.getBoundingClientRect()
 
@@ -181,7 +169,7 @@ function _handlePointerMove(e: PointerEvent) {
   startAnimation()
 }
 
-function _handlePointerEnter() {
+function handlePointerEnter() {
   interacting = true
   const { stiffness, damping } = SPRING_PRESETS.INTERACTIVE
   springRotate.stiffness = stiffness
@@ -193,7 +181,7 @@ function _handlePointerEnter() {
   startAnimation()
 }
 
-function _handlePointerLeave() {
+function handlePointerLeave() {
   interacting = false
   const { stiffness, damping } = SPRING_PRESETS.GENTLE
 
@@ -212,7 +200,7 @@ function _handlePointerLeave() {
   startAnimation()
 }
 
-function _handleClick() {
+function handleClick() {
   onSelect(preset)
 }
 
@@ -232,25 +220,25 @@ $effect(() => {
   class:interacting
   data-preset={preset}
   data-rarity={rarity}
-  style:--pointer-x={_pointerX}
-  style:--pointer-y={_pointerY}
-  style:--pointer-from-center={_pointerFromCenter}
-  style:--pointer-from-top={_pointerFromTop}
-  style:--pointer-from-left={_pointerFromLeft}
-  style:--card-opacity={_cardOpacity}
-  style:--rotate-x={_rotateX}
-  style:--rotate-y={_rotateY}
-  style:--background-x={_backgroundX}
-  style:--background-y={_backgroundY}
-  onclick={_handleClick}
+  style:--pointer-x={pointerX}
+  style:--pointer-y={pointerY}
+  style:--pointer-from-center={pointerFromCenter}
+  style:--pointer-from-top={pointerFromTop}
+  style:--pointer-from-left={pointerFromLeft}
+  style:--card-opacity={cardOpacity}
+  style:--rotate-x={rotateX}
+  style:--rotate-y={rotateY}
+  style:--background-x={backgroundX}
+  style:--background-y={backgroundY}
+  onclick={handleClick}
 >
   <div
     bind:this={rotator}
     class="preset-card__rotator"
-    style:transform={_transform}
-    onpointermove={_handlePointerMove}
-    onpointerenter={_handlePointerEnter}
-    onpointerleave={_handlePointerLeave}
+    style:transform={transform}
+    onpointermove={handlePointerMove}
+    onpointerenter={handlePointerEnter}
+    onpointerleave={handlePointerLeave}
   >
     <div class="preset-card__front">
       <div class="preset-card__header">
@@ -301,7 +289,7 @@ $effect(() => {
         <dt class="stat-label">Software</dt>
         <dd class="stat-value">{softwareCount}</dd>
         <dt class="stat-label">Risk</dt>
-        <dd class="stat-value stat-value--risk-{riskLevel}">{_riskText}</dd>
+        <dd class="stat-value stat-value--risk-{riskLevel}">{riskText}</dd>
       </dl>
     </div>
 

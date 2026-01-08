@@ -75,14 +75,18 @@
   },
   "overrides": [
     {
-      "includes": ["*.svelte"],
+      "includes": ["**/*.svelte"],
       "linter": {
         "rules": {
           "style": {
-            "noNonNullAssertion": "warn"
+            "noNonNullAssertion": "warn",
+            "useConst": "off",
+            "useImportType": "off"
           },
           "correctness": {
-            "noUndeclaredVariables": "off"
+            "noUndeclaredVariables": "off",
+            "noUnusedVariables": "off",
+            "noUnusedImports": "off"
           }
         }
       }

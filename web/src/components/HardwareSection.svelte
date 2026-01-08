@@ -5,6 +5,9 @@
  * Replaces the static HTML hardware section with reactive Svelte components.
  */
 
+import CpuSelector from './CpuSelector.svelte'
+import DriverCards from './DriverCards.svelte'
+import GpuSelector from './GpuSelector.svelte'
 </script>
 
 <section id="hardware" class="step">

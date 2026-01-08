@@ -8,42 +8,43 @@
  * - Hardware (NVIDIA vs AMD GPU)
  */
 
-import { app } from '$lib/state.svelte'
-import {
-  getFilteredSectionGroups,
-  countTotalItems,
-  type ManualStepSection,
-  type ManualStepItem,
-  type SettingItem,
-  type SoftwareSettingItem,
-  type BrowserSettingItem,
-  type RgbSettingItem,
-  type PreflightCheck,
-  type TroubleshootingItem,
-  type GameLaunchItem,
-  type StreamingTroubleshootItem,
-  type DiagnosticTool,
-  type ImpactLevel,
-  type DifficultyLevel,
-  type SafetyLevel,
-} from '$lib/manual-steps'
-import {
-  isCompleted,
-  resetSection,
-  resetAll,
-  createItemId,
-  getProgressData,
-} from '$lib/progress.svelte'
-import type { StructuredTooltip } from '../utils/tooltips'
 import { generateToolConfig, getSectionConfigTool, isToolAvailable } from '$lib/config-generator'
 import { downloadConfigs } from '$lib/download-utils'
+import {
+  type BrowserSettingItem,
+  countTotalItems,
+  type DiagnosticTool,
+  type DifficultyLevel,
+  type GameLaunchItem,
+  getFilteredSectionGroups,
+  type ImpactLevel,
+  type ManualStepItem,
+  type ManualStepSection,
+  type PreflightCheck,
+  type RgbSettingItem,
+  type SafetyLevel,
+  type SettingItem,
+  type SoftwareSettingItem,
+  type StreamingTroubleshootItem,
+  type TroubleshootingItem,
+} from '$lib/manual-steps'
+import {
+  createItemId,
+  getProgressData,
+  isCompleted,
+  resetAll,
+  resetSection,
+  toggleItem,
+} from '$lib/progress.svelte'
 import { buildSectionId } from '$lib/section-ids'
+import { app } from '$lib/state.svelte'
+import { type StructuredTooltip, tooltip } from '../utils/tooltips'
 
-function _getYouTubeThumbnail(videoId: string): string {
+function getYouTubeThumbnail(videoId: string): string {
   return `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`
 }
 
-function _getYouTubeUrl(videoId: string): string {
+function getYouTubeUrl(videoId: string): string {
   return `https://www.youtube.com/watch?v=${videoId}`
 }
 
@@ -51,17 +52,17 @@ type SortOption = 'category' | 'impact' | 'difficulty'
 type FilterOption = 'all' | 'incomplete' | 'quick-wins' | 'high-impact'
 
 let activeGroupId = $state<string | null>(null)
-const sortBy = $state<SortOption>('category')
-const filterBy = $state<FilterOption>('all')
-const searchQuery = $state('')
-let _downloadingSection = $state<string | null>(null)
-const _sortOpen = $state(false)
-const _filterOpen = $state(false)
-let _showInstructions = $state(false)
-let _instructionsText = $state('')
+let sortBy = $state<SortOption>('category')
+let filterBy = $state<FilterOption>('all')
+let searchQuery = $state('')
+let downloadingSection = $state<string | null>(null)
+let sortOpen = $state(false)
+let filterOpen = $state(false)
+let showInstructions = $state(false)
+let instructionsText = $state('')
 
 // Impact badge tooltips
-const _IMPACT_TOOLTIPS: Record<ImpactLevel, StructuredTooltip> = {
+const IMPACT_TOOLTIPS: Record<ImpactLevel, StructuredTooltip> = {
   high: {
     title: 'High Impact',
     desc: 'This setting significantly affects FPS, latency, or system stability.',
@@ -82,7 +83,7 @@ const _IMPACT_TOOLTIPS: Record<ImpactLevel, StructuredTooltip> = {
   },
 }
 
-const _DIFFICULTY_TOOLTIPS: Record<DifficultyLevel, StructuredTooltip> = {
+const DIFFICULTY_TOOLTIPS: Record<DifficultyLevel, StructuredTooltip> = {
   quick: {
     title: 'Quick Win',
     desc: 'Fast to complete, simple settings change.',
@@ -103,7 +104,7 @@ const _DIFFICULTY_TOOLTIPS: Record<DifficultyLevel, StructuredTooltip> = {
   },
 }
 
-const _SAFETY_TOOLTIPS: Record<SafetyLevel, StructuredTooltip> = {
+const SAFETY_TOOLTIPS: Record<SafetyLevel, StructuredTooltip> = {
   safe: {
     title: 'Safe',
     desc: 'Fully reversible, no risk of system issues.',
@@ -130,7 +131,7 @@ const filteredGroups = $derived.by(() => {
   return getFilteredSectionGroups(persona, gpu)
 })
 
-const _totalItems = $derived.by(() => {
+const totalItems = $derived.by(() => {
   const persona = app.activePreset ?? 'gamer'
   const gpu = app.hardware.gpu
   return countTotalItems(persona, gpu)
@@ -149,17 +150,17 @@ function isDone(sectionId: string, itemId: string): boolean {
   return isCompleted(sectionId, itemId)
 }
 
-function _handleResetSection(sectionId: string) {
+function handleResetSection(sectionId: string) {
   resetSection(sectionId)
 }
 
-function _handleResetAll() {
+function handleResetAll() {
   if (confirm('Reset all progress? This cannot be undone.')) {
     resetAll()
   }
 }
 
-async function _handleDownloadConfig(sectionId: string) {
+async function handleDownloadConfig(sectionId: string) {
   const tool = getSectionConfigTool(buildSectionId(sectionId))
   if (!tool) return
 
@@ -171,7 +172,7 @@ async function _handleDownloadConfig(sectionId: string) {
     return
   }
 
-  _downloadingSection = sectionId
+  downloadingSection = sectionId
 
   try {
     const context = {
@@ -190,13 +191,13 @@ async function _handleDownloadConfig(sectionId: string) {
     await downloadConfigs(configs)
 
     // Show instructions in a simple alert for now (modal coming next)
-    _instructionsText = configs[0].instructions
-    _showInstructions = true
+    instructionsText = configs[0].instructions
+    showInstructions = true
   } catch (error) {
     console.error('Config download failed:', error)
     alert('Failed to download config. Please try again.')
   } finally {
-    _downloadingSection = null
+    downloadingSection = null
   }
 }
 
@@ -229,12 +230,12 @@ function getProgressForItems(sectionId: string, items: readonly AnyItem[]) {
   }
 }
 
-function _getProgress(sectionId: string, items: readonly AnyItem[]) {
+function getProgress(sectionId: string, items: readonly AnyItem[]) {
   const _ = progressData.lastUpdated
   return getProgressForItems(sectionId, items)
 }
 
-function _getGroupProgress(sections: readonly ManualStepSection[]) {
+function getGroupProgress(sections: readonly ManualStepSection[]) {
   const _ = progressData.lastUpdated
   let completed = 0
   let total = 0
@@ -347,14 +348,14 @@ function getSafety(item: AnyItem): SafetyLevel {
   return (item as { safety?: SafetyLevel }).safety ?? 'safe'
 }
 
-let _copiedId = $state<string | null>(null)
+let copiedId = $state<string | null>(null)
 
-async function _copyLaunchOptions(launchOptions: string, gameId: string) {
+async function copyLaunchOptions(launchOptions: string, gameId: string) {
   try {
     await navigator.clipboard.writeText(launchOptions)
-    _copiedId = gameId
+    copiedId = gameId
     setTimeout(() => {
-      _copiedId = null
+      copiedId = null
     }, 2000)
   } catch {
     const textarea = document.createElement('textarea')
@@ -363,14 +364,14 @@ async function _copyLaunchOptions(launchOptions: string, gameId: string) {
     textarea.select()
     document.execCommand('copy')
     document.body.removeChild(textarea)
-    _copiedId = gameId
+    copiedId = gameId
     setTimeout(() => {
-      _copiedId = null
+      copiedId = null
     }, 2000)
   }
 }
 
-function _scrollToGroup(groupId: string) {
+function scrollToGroup(groupId: string) {
   activeGroupId = groupId
   const element = document.getElementById(`guide-${groupId}`)
   if (element) {
@@ -378,12 +379,12 @@ function _scrollToGroup(groupId: string) {
   }
 }
 
-function _handlePrint() {
+function handlePrint() {
   window.print()
 }
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Tooltip builder handles multiple item types with conditional sections
-function _buildItemTooltip(item: AnyItem): StructuredTooltip {
+function buildItemTooltip(item: AnyItem): StructuredTooltip {
   const title = getItemTitle(item)
   const why = getItemWhy(item)
   const impact = getImpact(item)
@@ -550,10 +551,10 @@ function groupByDifficulty(
 }
 
 /** Derived: groups organized by the current sort option */
-const _displayGroups = $derived.by(() => {
+const displayGroups = $derived.by(() => {
   // Explicitly track filterBy and searchQuery to make this reactive
-  const _filter = filterBy
-  const _search = searchQuery
+  const filter = filterBy
+  const search = searchQuery
 
   if (sortBy === 'category') {
     return null // Use original filteredGroups
@@ -570,13 +571,13 @@ const _displayGroups = $derived.by(() => {
 
 // Create a reactive key that changes whenever filter/search changes
 // This will force re-evaluation of {@const} blocks in the template
-const _filterKey = $derived(`${filterBy}-${searchQuery}`)
+const filterKey = $derived(`${filterBy}-${searchQuery}`)
 
-function _getFilteredItems(sectionId: string, items: readonly AnyItem[]): AnyItem[] {
+function getFilteredItems(sectionId: string, items: readonly AnyItem[]): AnyItem[] {
   return items.filter((item) => matchesFilter(sectionId, item))
 }
 
-function _getGroupIcon(groupId: string): string {
+function getGroupIcon(groupId: string): string {
   switch (groupId) {
     case 'windows':
       return 'M3 5a2 2 0 0 1 2-2h6v8H3V5zm8-2h6a2 2 0 0 1 2 2v6h-8V3zm8 10v6a2 2 0 0 1-2 2h-6v-8h8zm-10 8H5a2 2 0 0 1-2-2v-6h8v8z'
@@ -1186,7 +1187,7 @@ function _getGroupIcon(groupId: string): string {
                 {#each group.videos as video (video.id)}
                   <a
                     href={getYouTubeUrl(video.videoId)}
-                    target="_blank"
+                    target="blank"
                     rel="noopener noreferrer"
                         class="guide__video-card"
                   >

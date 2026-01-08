@@ -9,31 +9,35 @@
  * - SHA256 checksum for verification
  */
 
+import { copyToClipboard, generateSHA256 } from '$lib/checksum'
+import { buildVerificationScript, type SelectionState } from '$lib/script-generator'
 import {
   app,
-  openPreviewModal,
   generateCurrentScript,
-  setScriptDownloaded,
-  setIncludeTimer,
+  openPreviewModal,
   setIncludeManualSteps,
+  setIncludeTimer,
+  setScriptDownloaded,
 } from '$lib/state.svelte'
 import { SCRIPT_FILENAME } from '$lib/types'
-import { generateSHA256, copyToClipboard } from '$lib/checksum'
 import { downloadText } from '../utils/download'
-import { buildVerificationScript, type SelectionState } from '$lib/script-generator'
+import PreflightChecks from './PreflightChecks.svelte'
+import ShareModal from './ShareModal.svelte'
+import Summary from './Summary.svelte'
+import TroubleshootModal from './TroubleshootModal.svelte'
 
 let checksum = $state('')
-let _copied = $state(false)
-let _shareModalOpen = $state(false)
-const _troubleshootModalOpen = $state(false)
+let copied = $state(false)
+let shareModalOpen = $state(false)
+let troubleshootModalOpen = $state(false)
 let checksumRequestId = 0
 
-function _openShareModal() {
-  _shareModalOpen = true
+function openShareModal() {
+  shareModalOpen = true
 }
 
-function _closeShareModal() {
-  _shareModalOpen = false
+function closeShareModal() {
+  shareModalOpen = false
 }
 
 $effect(() => {
@@ -49,18 +53,18 @@ $effect(() => {
   }
 })
 
-function _handlePreview() {
+function handlePreview() {
   openPreviewModal()
 }
 
-function _handleDownload() {
+function handleDownload() {
   const script = app.script.edited ?? generateCurrentScript()
   if (!script.trim()) return
   downloadText(script, SCRIPT_FILENAME)
   setScriptDownloaded(true)
 }
 
-function _handleDownloadVerify() {
+function handleDownloadVerify() {
   const selection: SelectionState = {
     hardware: app.hardware,
     optimizations: Array.from(app.optimizations),
@@ -75,21 +79,21 @@ function _handleDownloadVerify() {
   downloadText(script, 'rocktune-verify.ps1')
 }
 
-function _handleToggleTimer() {
+function handleToggleTimer() {
   setIncludeTimer(!app.buildOptions.includeTimer)
 }
 
-function _handleToggleManualSteps() {
+function handleToggleManualSteps() {
   setIncludeManualSteps(!app.buildOptions.includeManualSteps)
 }
 
-async function _handleCopyHash() {
+async function handleCopyHash() {
   if (!checksum) return
   const success = await copyToClipboard(checksum)
   if (success) {
-    _copied = true
+    copied = true
     setTimeout(() => {
-      _copied = false
+      copied = false
     }, 2000)
   }
 }
@@ -282,7 +286,7 @@ async function _handleCopyHash() {
       <span class="trust-divider">·</span>
       <a
         href="https://github.com/thepedroferrari/rocktune/tree/{__BUILD_COMMIT__}"
-        target="_blank"
+        target="blank"
         rel="noopener"
         class="trust-item trust-item--provenance"
       >
@@ -343,9 +347,9 @@ async function _handleCopyHash() {
 
         <div class="benchmark-tools">
           <span class="benchmark-tools__label">Recommended tools:</span>
-          <a href="https://www.capframex.com/" target="_blank" rel="noopener" class="benchmark-tool">CapFrameX</a>
-          <a href="https://www.guru3d.com/download/rtss-rivatuner-statistics-server-download/" target="_blank" rel="noopener" class="benchmark-tool">RTSS</a>
-          <a href="https://www.resplendence.com/latencymon" target="_blank" rel="noopener" class="benchmark-tool">LatencyMon</a>
+          <a href="https://www.capframex.com/" target="blank" rel="noopener" class="benchmark-tool">CapFrameX</a>
+          <a href="https://www.guru3d.com/download/rtss-rivatuner-statistics-server-download/" target="blank" rel="noopener" class="benchmark-tool">RTSS</a>
+          <a href="https://www.resplendence.com/latencymon" target="blank" rel="noopener" class="benchmark-tool">LatencyMon</a>
         </div>
       </div>
     </details>
@@ -375,10 +379,10 @@ async function _handleCopyHash() {
             <button
               type="button"
               class="hash-panel__btn"
-              title={_copied ? "Copied!" : "Copy SHA-256 hash"}
+              title={copied ? "Copied!" : "Copy SHA-256 hash"}
               onclick={handleCopyHash}
             >
-              {#if _copied}
+              {#if copied}
                 <svg
                   class="icon"
                   viewBox="0 0 24 24"

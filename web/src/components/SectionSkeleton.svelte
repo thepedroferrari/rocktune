@@ -3,7 +3,6 @@ interface Props {
   height?: string
 }
 
-// biome-ignore lint/correctness/noUnusedVariables: height is used in Svelte template
 const { height = '400px' }: Props = $props()
 </script>
 

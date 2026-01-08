@@ -1,18 +1,25 @@
 <script lang="ts">
+import type { PresetConfig } from '$lib/presets'
 import {
   app,
-  setActivePreset,
-  setSelection,
-  setRecommendedPackages,
   clearRecommendedPackages,
+  setActivePreset,
   setFilter,
   setOptimizations,
+  setRecommendedPackages,
+  setSelection,
 } from '$lib/state.svelte'
-import { isPackageKey, type PackageKey, type PresetType, type OptimizationKey } from '$lib/types'
-import type { PresetConfig } from '$lib/presets'
-import { FILTER_ALL, FILTER_RECOMMENDED } from '$lib/types'
+import {
+  FILTER_ALL,
+  FILTER_RECOMMENDED,
+  isPackageKey,
+  type OptimizationKey,
+  type PackageKey,
+  type PresetType,
+} from '$lib/types'
+import PresetCards from './PresetCards.svelte'
 
-const _activePreset = $derived(app.activePreset)
+const activePreset = $derived(app.activePreset)
 
 function applyOptimizations(keys: readonly OptimizationKey[]) {
   if (keys.length === 0) return
@@ -26,7 +33,7 @@ function getDefaultSelection(): PackageKey[] {
     .filter((key): key is PackageKey => isPackageKey(app.software, key))
 }
 
-function _handlePresetSelect(preset: PresetType, config: PresetConfig) {
+function handlePresetSelect(preset: PresetType, config: PresetConfig) {
   if (app.activePreset === preset) {
     setActivePreset(null)
     clearRecommendedPackages()

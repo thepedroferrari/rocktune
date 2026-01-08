@@ -1,16 +1,16 @@
 <script lang="ts">
+import type { RecommendedPreset } from '$lib/presets'
 import {
   app,
-  setFilter,
+  clearRecommendedPackages,
+  clearSelection,
   getCategoryCounts,
   getSelectedCount,
-  clearSelection,
+  setFilter,
   setRecommendedPackages,
-  clearRecommendedPackages,
 } from '$lib/state.svelte'
 import type { FilterValue } from '$lib/types'
-import type { RecommendedPreset } from '$lib/presets'
-import { CATEGORIES } from '$lib/types'
+import { CATEGORIES, FILTER_ALL, FILTER_RECOMMENDED, FILTER_SELECTED } from '$lib/types'
 
 interface Props {
   recommendedPreset?: RecommendedPreset | null
@@ -20,14 +20,12 @@ const { recommendedPreset = null }: Props = $props()
 
 const counts = $derived(getCategoryCounts())
 const selectedCount = $derived(getSelectedCount())
-const _activeFilter = $derived(app.filter)
+const activeFilter = $derived(app.filter)
+const visibleCategories = $derived(CATEGORIES.filter((cat) => counts[cat] > 0))
+const FILTER_ANIMATION_DELAY_MS = 30
+const presetOffset = $derived(recommendedPreset ? 1 : 0)
 
-const _visibleCategories = $derived(CATEGORIES.filter((cat) => counts[cat] > 0))
-
-const _FILTER_ANIMATION_DELAY_MS = 30
-const _presetOffset = $derived(recommendedPreset ? 1 : 0)
-
-const badgeRef: HTMLSpanElement | null = $state(null)
+let badgeRef: HTMLSpanElement | null = $state(null)
 let prevCount = $state(0)
 
 $effect(() => {
@@ -58,11 +56,11 @@ $effect(() => {
   }
 })
 
-function _handleFilterClick(filter: FilterValue) {
+function handleFilterClick(filter: FilterValue) {
   setFilter(filter)
 }
 
-function _handleClearAll() {
+function handleClearAll() {
   clearSelection()
 }
 </script>

@@ -6,11 +6,12 @@
  * UX: "Copy this → Do that" - maximum simplicity
  */
 
-import { app } from '$lib/state.svelte'
-import { getOneLinerWithMeta, type BuildToEncode } from '$lib/share'
 import { copyToClipboard } from '$lib/checksum'
+import { type BuildToEncode, getOneLinerWithMeta } from '$lib/share'
+import { app } from '$lib/state.svelte'
 import { showToast } from '$lib/toast.svelte'
 import { downloadText } from '../utils/download'
+import Modal from './ui/Modal.svelte'
 
 interface Props {
   open: boolean
@@ -37,20 +38,22 @@ const currentBuild = $derived<BuildToEncode>({
 })
 
 const oneLinerResult = $derived(getOneLinerWithMeta(currentBuild))
-const _oneLinerCommand = $derived(oneLinerResult.command)
+const oneLinerCommand = $derived(oneLinerResult.command)
 
-const _UNBLOCK_COMMANDS = `cd $HOME\\Downloads
+const UNBLOCK_COMMANDS = `cd $HOME\\Downloads
 Unblock-File .\\rocktune-setup.ps1
 .\\rocktune-setup.ps1`
 
-const _POLICY_COMMAND = `Set-ExecutionPolicy RemoteSigned -Scope CurrentUser`
+const POLICY_COMMAND = `Set-ExecutionPolicy RemoteSigned -Scope CurrentUser`
 
 function resetCopied(key: keyof typeof copiedStates) {
   copiedStates[key] = true
-  setTimeout(() => (copiedStates[key] = false), 2000)
+  setTimeout(() => {
+    copiedStates[key] = false
+  }, 2000)
 }
 
-async function _handleCopy(text: string, key: keyof typeof copiedStates, msg: string) {
+async function handleCopy(text: string, key: keyof typeof copiedStates, msg: string) {
   const success = await copyToClipboard(text)
   if (success) {
     resetCopied(key)
@@ -58,7 +61,7 @@ async function _handleCopy(text: string, key: keyof typeof copiedStates, msg: st
   }
 }
 
-function _handleDownloadBat() {
+function handleDownloadBat() {
   const batContent = `@echo off
 :: RockTune Launcher
 :: Requests admin, bypasses execution policy, runs the script
@@ -175,8 +178,8 @@ powershell -Command "Start-Process powershell -ArgumentList '-ExecutionPolicy By
 <style>
   /* Modal overrides */
   :global(.troubleshoot-modal) {
-    --_width: 600px;
-    --_clip: polygon(
+    --width: 600px;
+    --clip: polygon(
       0 0,
       calc(100% - 16px) 0,
       100% 16px,
@@ -386,7 +389,7 @@ powershell -Command "Start-Process powershell -ArgumentList '-ExecutionPolicy By
 
   @media (max-width: 640px) {
     :global(.troubleshoot-modal) {
-      --_clip: polygon(
+      --clip: polygon(
         0 0,
         calc(100% - 10px) 0,
         100% 10px,

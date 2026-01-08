@@ -10,36 +10,36 @@
  * - PowerShell one-liner for direct execution
  */
 
-import { app } from '$lib/state.svelte'
+import { copyToClipboard } from '$lib/checksum'
 import {
-  getFullShareURLWithMeta,
-  getOneLinerWithMeta,
-  getBuildSummary,
-  getSocialShareURLs,
-  generateTwitterText,
-  generateRedditText,
-  generateDiscordText,
   type BuildToEncode,
   type EncodeResult,
+  generateDiscordText,
+  generateRedditText,
+  generateTwitterText,
+  getBuildSummary,
+  getFullShareURLWithMeta,
+  getOneLinerWithMeta,
+  getSocialShareURLs,
   type OneLinerResult,
 } from '$lib/share'
-import { copyToClipboard } from '$lib/checksum'
+import { app } from '$lib/state.svelte'
 import { showToast } from '$lib/toast.svelte'
+import Modal from './ui/Modal.svelte'
 
 interface Props {
   open: boolean
   onclose: () => void
 }
 
-// biome-ignore lint/correctness/noUnusedVariables: Props passed to Modal component
 const { open, onclose }: Props = $props()
 
 let urlCopied = $state(false)
 let oneLinerCopied = $state(false)
 let benchmarkCopied = $state(false)
 let platformCopied = $state(false)
-const _activeTab = $state<'url' | 'oneliner' | 'social'>('url')
-const activePlatform = $state<'twitter' | 'reddit' | 'discord'>('discord')
+let activeTab = $state<'url' | 'oneliner' | 'social'>('url')
+let activePlatform = $state<'twitter' | 'reddit' | 'discord'>('discord')
 
 const BENCHMARK_COMMAND = 'irm https://rocktune.pedroferrari.com/benchmark.ps1 | iex'
 
@@ -56,8 +56,8 @@ const currentBuild = $derived<BuildToEncode>({
 
 const shareResult = $derived<EncodeResult>(getFullShareURLWithMeta(currentBuild))
 const shareURL = $derived(shareResult.url)
-const _buildSummary = $derived(getBuildSummary(currentBuild))
-const _socialURLs = $derived(getSocialShareURLs(currentBuild))
+const buildSummary = $derived(getBuildSummary(currentBuild))
+const socialURLs = $derived(getSocialShareURLs(currentBuild))
 
 const oneLinerResult = $derived<OneLinerResult>(getOneLinerWithMeta(currentBuild))
 const oneLinerCommand = $derived(oneLinerResult.command)
@@ -76,9 +76,9 @@ const currentPlatformText = $derived(
 )
 
 // Check if Web Share API is available
-let _canWebShare = $state(false)
+let canWebShare = $state(false)
 $effect(() => {
-  _canWebShare = typeof navigator !== 'undefined' && !!navigator.share
+  canWebShare = typeof navigator !== 'undefined' && !!navigator.share
 })
 
 $effect(() => {
@@ -113,7 +113,7 @@ $effect(() => {
   return () => clearTimeout(timer)
 })
 
-async function _handleCopyBenchmark() {
+async function handleCopyBenchmark() {
   const success = await copyToClipboard(BENCHMARK_COMMAND)
   if (success) {
     benchmarkCopied = true
@@ -121,7 +121,7 @@ async function _handleCopyBenchmark() {
   }
 }
 
-async function _handleCopyURL() {
+async function handleCopyURL() {
   const success = await copyToClipboard(shareURL)
   if (success) {
     urlCopied = true
@@ -129,7 +129,7 @@ async function _handleCopyURL() {
   }
 }
 
-async function _handleCopyOneLiner() {
+async function handleCopyOneLiner() {
   const success = await copyToClipboard(oneLinerCommand)
   if (success) {
     oneLinerCopied = true
@@ -137,7 +137,7 @@ async function _handleCopyOneLiner() {
   }
 }
 
-async function _handleCopyPlatformText() {
+async function handleCopyPlatformText() {
   const success = await copyToClipboard(currentPlatformText)
   if (success) {
     platformCopied = true
@@ -146,7 +146,7 @@ async function _handleCopyPlatformText() {
   }
 }
 
-async function _handleWebShare() {
+async function handleWebShare() {
   if (!navigator.share) return
   try {
     await navigator.share({
@@ -155,7 +155,7 @@ async function _handleWebShare() {
       url: shareURL,
     })
     showToast('Shared successfully!', 'success')
-  } catch (_err) {
+  } catch (err) {
     // User cancelled or share failed - ignore
   }
 }
@@ -437,7 +437,7 @@ async function _handleWebShare() {
             <div class="social-buttons">
               <a
                 href={socialURLs.twitter}
-                target="_blank"
+                target="blank"
                 rel="noopener noreferrer"
                 class="social-btn social-btn--twitter"
                 aria-label="Share on Twitter"
@@ -451,7 +451,7 @@ async function _handleWebShare() {
               </a>
               <a
                 href={socialURLs.reddit}
-                target="_blank"
+                target="blank"
                 rel="noopener noreferrer"
                 class="social-btn social-btn--reddit"
                 aria-label="Share on Reddit"
@@ -465,7 +465,7 @@ async function _handleWebShare() {
               </a>
               <a
                 href={socialURLs.linkedin}
-                target="_blank"
+                target="blank"
                 rel="noopener noreferrer"
                 class="social-btn social-btn--linkedin"
                 aria-label="Share on LinkedIn"
@@ -805,10 +805,10 @@ async function _handleWebShare() {
     --share-accent-border: oklch(0.7 0.15 250 / 0.35);
     --share-ink: oklch(0.1 0.02 250);
 
-    --_width: 520px;
-    --_bg: var(--share-surface);
-    --_border: var(--share-border-strong);
-    --_clip: none;
+    --width: 520px;
+    --bg: var(--share-surface);
+    --border: var(--share-border-strong);
+    --clip: none;
     border-radius: var(--radius-lg);
     box-shadow: 0 20px 40px oklch(0 0 0 / 0.5);
     color: var(--text-primary);
@@ -1432,7 +1432,7 @@ async function _handleWebShare() {
 
   @media (max-width: 640px) {
     :global(.share-modal) {
-      --_width: 100%;
+      --width: 100%;
       inset-block-start: auto;
       inset-block-end: 0;
       transform: translateX(-50%);

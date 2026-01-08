@@ -5,7 +5,6 @@
  */
 
 import { EFFECTIVENESS_RANKS, RANK_LABELS } from '$lib/types'
-// biome-ignore lint/correctness/noUnusedImports: Modal is used in Svelte template
 import Modal from './ui/Modal.svelte'
 
 interface Props {
@@ -13,10 +12,9 @@ interface Props {
   onclose: () => void
 }
 
-// biome-ignore lint/correctness/noUnusedVariables: Props passed to Modal component
 const { open, onclose }: Props = $props()
 
-const _tiers = Object.values(EFFECTIVENESS_RANKS).map((rank) => ({
+const tiers = Object.values(EFFECTIVENESS_RANKS).map((rank) => ({
   rank,
   label: RANK_LABELS[rank],
 }))
@@ -27,7 +25,7 @@ const _tiers = Object.values(EFFECTIVENESS_RANKS).map((rank) => ({
     <h2 class="modal-title tier-dialog__title">Tier Rankings</h2>
   {/snippet}
 
-  <pre class="tier-dialog__body">{#each _tiers as tier}
+  <pre class="tier-dialog__body">{#each tiers as tier}
 [{tier.rank}] {tier.label}
 {/each}</pre>
 
@@ -39,8 +37,8 @@ const _tiers = Object.values(EFFECTIVENESS_RANKS).map((rank) => ({
 <style>
   /* Only component-specific overrides - layout comes from modal pattern */
   :global(.tier-dialog) {
-    --_width: 320px;
-    --_clip: var(--clip-cyber-sm);
+    --width: 320px;
+    --clip: var(--clip-cyber-sm);
   }
 
   .tier-dialog__title {

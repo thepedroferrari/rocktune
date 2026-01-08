@@ -5,17 +5,23 @@
  * Replaces the static HTML peripherals section with reactive Svelte components.
  */
 
-import { togglePeripheral, toggleMonitorSoftware } from '$lib/state.svelte'
+import {
+  MONITOR_LINKS,
+  MONITOR_OPTIONS,
+  PERIPHERAL_LINKS,
+  PERIPHERAL_OPTIONS,
+} from '$lib/peripherals'
+import { app, toggleMonitorSoftware, togglePeripheral } from '$lib/state.svelte'
 import { isMonitorSoftwareType, isPeripheralType } from '$lib/types'
 
-function _handlePeripheralChange(event: Event & { currentTarget: HTMLInputElement }) {
+function handlePeripheralChange(event: Event & { currentTarget: HTMLInputElement }) {
   const { value } = event.currentTarget
   if (isPeripheralType(value)) {
     togglePeripheral(value)
   }
 }
 
-function _handleMonitorChange(event: Event & { currentTarget: HTMLInputElement }) {
+function handleMonitorChange(event: Event & { currentTarget: HTMLInputElement }) {
   const { value } = event.currentTarget
   if (isMonitorSoftwareType(value)) {
     toggleMonitorSoftware(value)
@@ -78,7 +84,7 @@ function _handleMonitorChange(event: Event & { currentTarget: HTMLInputElement }
               <a
                 class="peripheral-link"
                 href={link.url}
-                target="_blank"
+                target="blank"
                 rel="noopener"
               >
                 <span class="peripheral-link-title">{link.title}</span>
@@ -133,7 +139,7 @@ function _handleMonitorChange(event: Event & { currentTarget: HTMLInputElement }
               <a
                 class="peripheral-link"
                 href={link.url}
-                target="_blank"
+                target="blank"
                 rel="noopener"
               >
                 <span class="peripheral-link-title">{link.title}</span>

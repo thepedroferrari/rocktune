@@ -624,7 +624,7 @@ const PRESET_HIGHLIGHTS: Record<PresetType, readonly string[]> = {
 
 const DEFAULT_HIGHLIGHTS = ['Lower input lag', 'Smoother frame times', 'Cleaner background load']
 
-export function getShareHighlights(build: BuildToEncode): readonly string[] {
+function getShareHighlights(build: BuildToEncode): readonly string[] {
   if (build.preset && PRESET_HIGHLIGHTS[build.preset]) {
     return PRESET_HIGHLIGHTS[build.preset]
   }

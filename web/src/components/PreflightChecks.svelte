@@ -6,17 +6,17 @@
  * Visibility is reactive based on hardware selection.
  */
 
+import { isPreflightVisible, PREFLIGHT_CHECKS, type PreflightCheck } from '$lib/preflight'
 import { app } from '$lib/state.svelte'
-import { PREFLIGHT_CHECKS, isPreflightVisible, type PreflightCheck } from '$lib/preflight'
 import { copyToClipboard } from '../utils/clipboard'
 
-const _visibleChecks = $derived(
+const visibleChecks = $derived(
   PREFLIGHT_CHECKS.filter((check) => isPreflightVisible(check, app.hardware.cpu, app.hardware.gpu)),
 )
 
 const copyFeedback = $state<Record<string, string>>({})
 
-async function _handleCopy(check: PreflightCheck) {
+async function handleCopy(check: PreflightCheck) {
   if (check.action.type !== 'copy') return
 
   const success = await copyToClipboard(check.action.text)
@@ -55,7 +55,7 @@ async function _handleCopy(check: PreflightCheck) {
           {#if check.action.type === 'link'}
             <a
               href={check.action.url}
-              target="_blank"
+              target="blank"
               rel="noopener noreferrer"
               class="link"
             >

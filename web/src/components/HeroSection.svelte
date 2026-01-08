@@ -6,19 +6,19 @@
  * Sharp angles, neon glows, one bold message, instant understanding.
  */
 
-import { PRESETS, PRESET_META, PRESET_ORDER } from '$lib/presets'
+import { PRESET_META, PRESET_ORDER, PRESETS } from '$lib/presets'
 import {
   app,
   setActivePreset,
-  setSelection,
-  setRecommendedPackages,
   setFilter,
   setOptimizations,
+  setRecommendedPackages,
+  setSelection,
 } from '$lib/state.svelte'
-import { isPackageKey, type PackageKey, type PresetType, FILTER_RECOMMENDED } from '$lib/types'
+import { FILTER_RECOMMENDED, isPackageKey, type PackageKey, type PresetType } from '$lib/types'
 
 /** Profile badge data - GAMER is the default/highlighted choice */
-const _PROFILE_BADGES = PRESET_ORDER.map((id) => {
+const PROFILE_BADGES = PRESET_ORDER.map((id) => {
   const meta = PRESET_META[id]
   return {
     id,
@@ -36,7 +36,7 @@ function getDefaultSelection(): PackageKey[] {
 }
 
 /** Select a profile and scroll to the quick-start section */
-function _selectAndScroll(presetId: PresetType) {
+function selectAndScroll(presetId: PresetType) {
   const config = PRESETS[presetId]
 
   setActivePreset(presetId)
@@ -53,7 +53,7 @@ const prefersReducedMotion =
   typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 /** 3D tilt effect on mouse move (Codrops-style) */
-function _handleBadgeMouseMove(event: MouseEvent) {
+function handleBadgeMouseMove(event: MouseEvent) {
   if (prefersReducedMotion) return
   const el = event.currentTarget as HTMLElement
   const rect = el.getBoundingClientRect()
@@ -63,7 +63,7 @@ function _handleBadgeMouseMove(event: MouseEvent) {
 }
 
 /** Reset tilt on mouse leave */
-function _handleBadgeMouseLeave(event: MouseEvent) {
+function handleBadgeMouseLeave(event: MouseEvent) {
   if (prefersReducedMotion) return
   const el = event.currentTarget as HTMLElement
   el.style.transform = ''
@@ -87,7 +87,7 @@ function _handleBadgeMouseLeave(event: MouseEvent) {
       <div class="provenance-bar" role="group" aria-label="Project information">
         <a
           href="https://github.com/thepedroferrari/rocktune/tree/{__BUILD_COMMIT__}"
-          target="_blank"
+          target="blank"
           rel="noopener noreferrer"
           class="proof-chip"
           title="Built from commit {__BUILD_COMMIT__} on {__BUILD_DATE__}"
@@ -109,7 +109,7 @@ function _handleBadgeMouseLeave(event: MouseEvent) {
 
         <a
           href="https://github.com/thepedroferrari/rocktune/blob/master/LICENSE"
-          target="_blank"
+          target="blank"
           rel="noopener noreferrer"
           class="proof-chip"
           title="MIT License - Free to use, modify, and distribute"
@@ -127,7 +127,7 @@ function _handleBadgeMouseLeave(event: MouseEvent) {
 
         <a
           href="https://github.com/thepedroferrari/rocktune"
-          target="_blank"
+          target="blank"
           rel="noopener noreferrer"
           class="proof-chip"
           title="Open source on GitHub - inspect the code"

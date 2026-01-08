@@ -7,35 +7,36 @@
  */
 
 import { onMount } from 'svelte'
+import { getDefaultOptimizations } from '$lib/optimizations'
+import { getRecommendedPreset } from '$lib/presets'
+import { scrollToSection } from '$lib/scroll'
+import {
+  clearShareHash,
+  type DecodedBuild,
+  decodeShareURL,
+  getShareHash,
+  hasShareHash,
+  validatePackages,
+} from '$lib/share'
 import {
   app,
-  setSoftware,
   getSelectedCount,
   getTotalCount,
-  setOptimizations,
-  setView,
-  setCpu,
-  setGpu,
-  setDnsProvider,
-  setPeripherals,
-  setMonitorSoftware,
-  setSelection,
   setActivePreset,
+  setCpu,
+  setDnsProvider,
+  setGpu,
+  setMonitorSoftware,
+  setOptimizations,
+  setPeripherals,
+  setSelection,
+  setSoftware,
+  setView,
 } from '$lib/state.svelte'
-import { type VIEW_MODES, OPTIMIZATION_KEYS } from '$lib/types'
-import { getRecommendedPreset } from '$lib/presets'
-import { safeParseCatalog, isParseSuccess } from './schemas'
-import type { SoftwareCatalog } from '$lib/types'
-import { getDefaultOptimizations } from '$lib/optimizations'
-import {
-  hasShareHash,
-  getShareHash,
-  decodeShareURL,
-  clearShareHash,
-  validatePackages,
-  type DecodedBuild,
-} from '$lib/share'
-import type { PackageKey } from '$lib/types'
+import type { PackageKey, SoftwareCatalog } from '$lib/types'
+import { OPTIMIZATION_KEYS, VIEW_MODES } from '$lib/types'
+import SectionSkeleton from './components/SectionSkeleton.svelte'
+import { formatZodErrors, isParseSuccess, safeParseCatalog } from './schemas'
 
 /** LUDICROUS optimization keys for danger zone detection */
 const LUDICROUS_KEYS = [
@@ -46,17 +47,22 @@ const LUDICROUS_KEYS = [
 ] as const
 
 import { showToast } from '$lib/toast.svelte'
+import HeroSection from './components/HeroSection.svelte'
+import PresetSection from './components/PresetSection.svelte'
+import SRAnnounce from './components/SRAnnounce.svelte'
+import Toast from './components/Toast.svelte'
+import UnifiedNav from './components/UnifiedNav.svelte'
 
-let _loading = $state(true)
+let loading = $state(true)
 let error = $state<string | null>(null)
 
 /** Pending packages from share URL (validated after catalog loads) */
 let pendingSharePackages = $state<PackageKey[] | null>(null)
 
-const _selectedCount = $derived(getSelectedCount())
-const _totalCount = $derived(getTotalCount())
-const _recommendedPreset = $derived(getRecommendedPreset(app.activePreset))
-const _activeView = $derived(app.view)
+const selectedCount = $derived(getSelectedCount())
+const totalCount = $derived(getTotalCount())
+const recommendedPreset = $derived(getRecommendedPreset(app.activePreset))
+const activeView = $derived(app.view)
 
 /** Track if we loaded from a shared URL */
 let loadedFromShare = $state(false)
@@ -65,9 +71,9 @@ let loadedFromShare = $state(false)
 const hasLudicrousSelected = $derived(LUDICROUS_KEYS.some((key) => app.optimizations.has(key)))
 
 /** Show danger banner when LUDICROUS acknowledged AND items selected */
-const _showDangerBanner = $derived(app.ui.ludicrousAcknowledged && hasLudicrousSelected)
+const showDangerBanner = $derived(app.ui.ludicrousAcknowledged && hasLudicrousSelected)
 
-function _handleViewToggle(view: typeof VIEW_MODES.GRID | typeof VIEW_MODES.LIST) {
+function handleViewToggle(view: typeof VIEW_MODES.GRID | typeof VIEW_MODES.LIST) {
   setView(view)
 }
 
@@ -170,7 +176,7 @@ async function loadCatalog(): Promise<SoftwareCatalog> {
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Catalog hydration requires complex state coordination and error handling
 async function hydrateCatalog() {
-  _loading = true
+  loading = true
   error = null
 
   try {
@@ -234,7 +240,7 @@ async function hydrateCatalog() {
 
     console.error('[RockTune] Catalog load error:', error, e)
   } finally {
-    _loading = false
+    loading = false
   }
 }
 

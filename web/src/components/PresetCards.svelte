@@ -6,11 +6,9 @@
  * Each preset configures optimizations and software selections.
  */
 
-import type { PresetType } from '$lib/types'
 import type { PresetConfig } from '$lib/presets'
-// biome-ignore lint/correctness/noUnusedImports: All imports are used in Svelte template
-import { PRESETS, PRESET_ORDER, PRESET_META, getPresetTierBreakdown } from '$lib/presets'
-// biome-ignore lint/correctness/noUnusedImports: PresetCard is used in Svelte template
+import { getPresetTierBreakdown, PRESET_META, PRESET_ORDER, PRESETS } from '$lib/presets'
+import type { PresetType } from '$lib/types'
 import PresetCard from './PresetCard.svelte'
 
 interface Props {
@@ -18,10 +16,9 @@ interface Props {
   onPresetSelect?: (preset: PresetType, config: PresetConfig) => void
 }
 
-// biome-ignore lint/correctness/noUnusedVariables: activePreset is used in Svelte template
 const { activePreset = null, onPresetSelect }: Props = $props()
 
-function _handleSelect(preset: PresetType) {
+function handleSelect(preset: PresetType) {
   onPresetSelect?.(preset, PRESETS[preset])
 }
 </script>
@@ -47,7 +44,7 @@ function _handleSelect(preset: PresetType) {
         optimizationCount={config.opts.length}
         {tierBreakdown}
         active={activePreset === preset}
-        onSelect={_handleSelect}
+        onSelect={handleSelect}
       />
     {/each}
   </div>

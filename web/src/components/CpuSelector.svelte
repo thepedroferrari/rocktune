@@ -3,10 +3,11 @@
  * CPU Selector - Radio group for CPU type selection
  */
 
-import { setCpu } from '$lib/state.svelte'
+import { CPU_OPTIONS } from '$lib/hardware'
+import { app, setCpu } from '$lib/state.svelte'
 import { isCpuType } from '$lib/types'
 
-function _handleChange(event: Event & { currentTarget: HTMLInputElement }) {
+function handleChange(event: Event & { currentTarget: HTMLInputElement }) {
   const { value } = event.currentTarget
   if (isCpuType(value)) {
     setCpu(value)

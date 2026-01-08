@@ -29,13 +29,13 @@ interface Props {
 
 const { name, size = 'md', variant = 'inherit', label, class: className = '' }: Props = $props()
 
-const _isDecorative = $derived(!label)
+const isDecorative = $derived(!label)
 </script>
 
 <svg
   class="icon icon--{size} icon--{variant} {className}"
-  role={_isDecorative ? 'presentation' : 'img'}
-  aria-hidden={_isDecorative ? 'true' : undefined}
+  role={isDecorative ? 'presentation' : 'img'}
+  aria-hidden={isDecorative ? 'true' : undefined}
   aria-label={label}
 >
   <use href="/icons/ui-sprite.svg#{name}"></use>

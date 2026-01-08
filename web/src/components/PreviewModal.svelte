@@ -8,37 +8,40 @@
 
 import {
   app,
-  setScriptMode,
-  setEditedScript,
+  closePreviewModal,
   generateCurrentScript,
-  setIncludeTimer,
-  setIncludeManualSteps,
-  setCreateBackup,
   type ScriptMode,
+  setCreateBackup,
+  setEditedScript,
+  setIncludeManualSteps,
+  setIncludeTimer,
+  setScriptMode,
 } from '$lib/state.svelte'
+import CodeViewer from './CodeViewer.svelte'
+import Modal from './ui/Modal.svelte'
 
-function _handleTimerToggle() {
+function handleTimerToggle() {
   setIncludeTimer(!app.buildOptions.includeTimer)
 }
 
-function _handleManualStepsToggle() {
+function handleManualStepsToggle() {
   setIncludeManualSteps(!app.buildOptions.includeManualSteps)
 }
 
-function _handleBackupToggle() {
+function handleBackupToggle() {
   setCreateBackup(!app.buildOptions.createBackup)
 }
 
-function _handleModeChange(mode: ScriptMode) {
+function handleModeChange(mode: ScriptMode) {
   setScriptMode(mode)
 }
 
-function _handleEdit(content: string) {
+function handleEdit(content: string) {
   setEditedScript(content)
 }
 
 const generatedScript = $derived(generateCurrentScript())
-const _activeScript = $derived(app.script.edited ?? generatedScript)
+const activeScript = $derived(app.script.edited ?? generatedScript)
 </script>
 
 <Modal
