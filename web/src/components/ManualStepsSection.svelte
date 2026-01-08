@@ -702,20 +702,21 @@
           />
         </div>
         <div class="guide__filters">
-          <!-- Custom Sort Dropdown -->
-          <div class="guide__select-wrapper">
+          <div
+            class="guide__select-wrapper"
+            onfocusout={(e) => {
+              if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                sortOpen = false;
+              }
+            }}
+          >
             <button
               class="guide__select"
               type="button"
               aria-label="Sort options"
-              aria-haspopup="true"
+              aria-haspopup="listbox"
               aria-expanded={sortOpen}
               onclick={() => sortOpen = !sortOpen}
-              onblur={(e) => {
-                if (!e.currentTarget.contains(e.relatedTarget)) {
-                  sortOpen = false;
-                }
-              }}
             >
               <span class="guide__select-label">
                 Sort: {sortBy === 'category' ? 'Category' : sortBy === 'impact' ? 'Impact' : 'Difficulty'}
@@ -776,19 +777,21 @@
           </div>
 
           <!-- Custom Filter Dropdown -->
-          <div class="guide__select-wrapper">
+          <div
+            class="guide__select-wrapper"
+            onfocusout={(e) => {
+              if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                filterOpen = false;
+              }
+            }}
+          >
             <button
               class="guide__select"
               type="button"
               aria-label="Filter options"
-              aria-haspopup="true"
+              aria-haspopup="listbox"
               aria-expanded={filterOpen}
               onclick={() => filterOpen = !filterOpen}
-              onblur={(e) => {
-                if (!e.currentTarget.contains(e.relatedTarget)) {
-                  filterOpen = false;
-                }
-              }}
             >
               <span class="guide__select-label">
                 Show: {filterBy === 'all' ? 'All' : filterBy === 'incomplete' ? 'Incomplete' : filterBy === 'quick-wins' ? 'Quick Wins' : 'High Impact'}
