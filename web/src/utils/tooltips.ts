@@ -70,6 +70,7 @@ function getTooltipElement(): HTMLElement {
 /**
  * Parse rich markdown-like content to HTML (legacy string format)
  */
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Markdown parsing requires handling multiple syntax patterns
 function parseRichContent(raw: string): string {
   const lines = raw.split('\n')
   const parts: string[] = []

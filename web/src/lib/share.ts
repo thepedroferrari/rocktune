@@ -275,6 +275,7 @@ function safeSlice<T>(arr: T[] | undefined, max: number): T[] {
 /**
  * Decode version 1 share data
  */
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Share data decoding requires validation of multiple optional fields
 function decodeV1(data: ShareDataV1): DecodeResult {
   const warnings: string[] = []
   let skippedCount = 0
@@ -500,6 +501,7 @@ export function validatePackages(
  * This format can be parsed natively by PowerShell without LZ-string decompression.
  * LUDICROUS optimizations are filtered out for security.
  */
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: URL encoding requires conditional handling of multiple optional build properties
 function encodeCompactURL(build: BuildToEncode): string {
   const params = new URLSearchParams()
 

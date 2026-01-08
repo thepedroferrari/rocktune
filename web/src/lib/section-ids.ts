@@ -22,8 +22,8 @@ import type { PersonaId } from './persona-registry'
  * Branded type for section IDs
  * Prevents accidentally using plain strings where section IDs are expected
  */
-declare const __sectionIdBrand: unique symbol
-export type SectionId = string & { readonly [__sectionIdBrand]: 'SectionId' }
+declare const SectionIdBrand: unique symbol
+export type SectionId = string & { readonly [SectionIdBrand]: 'SectionId' }
 
 // ====================================================================
 // SECTION PREFIXES (Exhaustive list)
