@@ -1,5 +1,5 @@
-import type { ConfigFile } from './config-generator'
 import { downloadText } from '../utils/download'
+import type { ConfigFile } from './config-generator'
 
 /**
  * Download multiple config files sequentially
