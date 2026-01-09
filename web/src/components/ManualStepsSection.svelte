@@ -539,6 +539,17 @@
     sectionId: string;
   }
 
+  interface PanelItem {
+    item: AnyItem;
+    section: ManualStepSection;
+    key: string;
+  }
+
+  interface PanelNode extends PanelItem {
+    prevKey: string | null;
+    nextKey: string | null;
+  }
+
   function matchesFilter(sectionId: string, item: AnyItem): boolean {
     // Filter out automated items if "Manual only" is ON
     if (manualOnly && item.automated) {
@@ -672,6 +683,89 @@
   ): AnyItem[] {
     return items.filter((item) => matchesFilter(sectionId, item));
   }
+
+  function buildPanelKey(item: AnyItem, sectionId: string): string {
+    return `${sectionId}::${getItemId(item)}`;
+  }
+
+  function getPanelItems(): PanelItem[] {
+    const items: PanelItem[] = [];
+    if (sortBy === "category") {
+      for (const group of filteredGroups) {
+        for (const section of group.sections) {
+          const filtered = getFilteredItems(
+            section.id,
+            section.items as readonly AnyItem[],
+          );
+          for (const item of filtered) {
+            items.push({
+              item,
+              section,
+              key: buildPanelKey(item, section.id),
+            });
+          }
+        }
+      }
+      return items;
+    }
+
+    if (!displayGroups) return items;
+    for (const group of displayGroups) {
+      for (const flatItem of group.items) {
+        const section = sectionLookup.get(flatItem.sectionId);
+        if (!section) continue;
+        items.push({
+          item: flatItem.item,
+          section,
+          key: buildPanelKey(flatItem.item, section.id),
+        });
+      }
+    }
+    return items;
+  }
+
+  function* generatePanelNodes(items: PanelItem[]): Generator<PanelNode> {
+    for (let index = 0; index < items.length; index += 1) {
+      const current = items[index];
+      const prev = items[index - 1];
+      const next = items[index + 1];
+      yield {
+        ...current,
+        prevKey: prev ? prev.key : null,
+        nextKey: next ? next.key : null,
+      };
+    }
+  }
+
+  const panelState = $derived.by(() => {
+    const items = getPanelItems();
+    const nodes = new Map<string, PanelNode>();
+    for (const node of generatePanelNodes(items)) {
+      nodes.set(node.key, node);
+    }
+    return { items, nodes };
+  });
+
+  const selectedNode = $derived.by(() => {
+    if (!selectedItem) return null;
+    const key = buildPanelKey(selectedItem.item, selectedItem.section.id);
+    return panelState.nodes.get(key) ?? null;
+  });
+
+  function selectPanelNode(key: string | null) {
+    if (!key) return;
+    const node = panelState.nodes.get(key);
+    if (!node) return;
+    selectedItem = { item: node.item, section: node.section };
+  }
+
+  $effect(() => {
+    if (!selectedItem) return;
+    const key = buildPanelKey(selectedItem.item, selectedItem.section.id);
+    if (!panelState.nodes.has(key)) {
+      selectedItem = null;
+    }
+  });
 
   function getGroupIcon(groupId: string): string {
     switch (groupId) {
@@ -1650,6 +1744,10 @@
     isCompleted={isDone(section.id, itemId)}
     onClose={closeItemPanel}
     onToggleComplete={() => toggleItem(section.id, itemId)}
+    hasPrev={Boolean(selectedNode?.prevKey)}
+    hasNext={Boolean(selectedNode?.nextKey)}
+    onPrev={() => selectPanelNode(selectedNode?.prevKey ?? null)}
+    onNext={() => selectPanelNode(selectedNode?.nextKey ?? null)}
   />
 {/if}
 

@@ -22,6 +22,10 @@ interface Props {
   isCompleted: boolean
   onClose: () => void
   onToggleComplete: () => void
+  onPrev?: () => void
+  onNext?: () => void
+  hasPrev?: boolean
+  hasNext?: boolean
 }
 
 let {
@@ -31,6 +35,10 @@ let {
   isCompleted,
   onClose,
   onToggleComplete,
+  onPrev,
+  onNext,
+  hasPrev = false,
+  hasNext = false,
 }: Props = $props()
 
 let panelRef = $state<HTMLElement | null>(null)
@@ -48,6 +56,122 @@ function formatScore(value: number | null): string {
 
 function buildSearchUrl(term: string): string {
   return `https://www.youtube.com/results?search_query=${encodeURIComponent(term)}`
+}
+
+const KEY_ALIASES: Record<string, { label: string; key: string }> = {
+  ctrl: { label: 'Ctrl', key: 'ctrl' },
+  control: { label: 'Ctrl', key: 'ctrl' },
+  alt: { label: 'Alt', key: 'alt' },
+  option: { label: 'Alt', key: 'alt' },
+  shift: { label: 'Shift', key: 'shift' },
+  win: { label: 'Win', key: 'win' },
+  windows: { label: 'Win', key: 'win' },
+  cmd: { label: 'Cmd', key: 'cmd' },
+  command: { label: 'Cmd', key: 'cmd' },
+  esc: { label: 'Esc', key: 'esc' },
+  escape: { label: 'Esc', key: 'esc' },
+  tab: { label: 'Tab', key: 'tab' },
+  enter: { label: 'Enter', key: 'enter' },
+  return: { label: 'Enter', key: 'enter' },
+  del: { label: 'Del', key: 'del' },
+  delete: { label: 'Del', key: 'del' },
+  backspace: { label: 'Backspace', key: 'backspace' },
+  space: { label: 'Space', key: 'space' },
+  pgup: { label: 'PgUp', key: 'pgup' },
+  'page up': { label: 'PgUp', key: 'pgup' },
+  pgdn: { label: 'PgDn', key: 'pgdn' },
+  'page down': { label: 'PgDn', key: 'pgdn' },
+  ins: { label: 'Ins', key: 'ins' },
+  insert: { label: 'Ins', key: 'ins' },
+  home: { label: 'Home', key: 'home' },
+  end: { label: 'End', key: 'end' },
+  up: { label: 'Up', key: 'up' },
+  down: { label: 'Down', key: 'down' },
+  left: { label: 'Left', key: 'left' },
+  right: { label: 'Right', key: 'right' },
+} as const
+
+const KEY_PATTERN = Object.keys(KEY_ALIASES)
+  .sort((a, b) => b.length - a.length)
+  .map((key) => key.replace(/ /g, '\\s+'))
+  .join('|')
+
+const KEY_SEQUENCE_REGEX = new RegExp(`\\b(?:${KEY_PATTERN})(?:\\s*\\+\\s*(?:${KEY_PATTERN}))+`, 'gi')
+const REGISTRY_PATH_REGEX = /\b(?:HKLM|HKCU|HKEY_LOCAL_MACHINE|HKEY_CURRENT_USER|HKCR|HKU|HKCC)[^\s,;)]*/gi
+const FILE_PATH_REGEX = /\b[A-Z]:\\[^\s,;)]*/g
+const MENU_PATH_REGEX = /\b(?:Settings|System|Control Panel|NVIDIA Control Panel|AMD Software|AMD Adrenalin|Registry Editor|BIOS|UEFI|Task Manager|Device Manager|Steam|Discord|OBS|Right-click desktop|Desktop)[^.,;\n]*?(?:>|→)[^.,;\n]+(?:\s*(?:>|→)\s*[^.,;\n]+)*/gi
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+function replaceTokens(
+  input: string,
+  pattern: RegExp,
+  tokens: string[],
+  render: (match: string) => string,
+): string {
+  return input.replace(pattern, (match) => {
+    const token = `%%TOKEN${tokens.length}%%`
+    tokens.push(render(match))
+    return token
+  })
+}
+
+function renderKbdSequence(sequence: string): string {
+  const parts = sequence.split(/\s*\+\s*/).map((part) => part.trim()).filter(Boolean)
+  return parts
+    .map((part) => {
+      const key = part.toLowerCase().replace(/\s+/g, ' ')
+      const mapping = KEY_ALIASES[key]
+      const label = mapping?.label ?? part
+      const dataKey = mapping?.key ?? key.replace(/\s+/g, '-')
+      return `<kbd class="guide-kbd" data-key="${escapeHtml(dataKey)}">${escapeHtml(label)}</kbd>`
+    })
+    .join('<span class="kbd-plus">+</span>')
+}
+
+function isPreformattedLine(text: string): boolean {
+  const trimmed = text.trim()
+  return (
+    /^Registry:/i.test(trimmed) ||
+    /^(HKLM|HKCU|HKEY_LOCAL_MACHINE|HKEY_CURRENT_USER|HKCR|HKU|HKCC)/i.test(trimmed) ||
+    /^[A-Z]:\\/.test(trimmed)
+  )
+}
+
+function formatGuideLine(text: string): string {
+  const trimmed = text.trim()
+  if (!trimmed) return ''
+  if (isPreformattedLine(trimmed)) {
+    return `<pre class="guide-pre">${escapeHtml(trimmed)}</pre>`
+  }
+
+  const tokens: string[] = []
+  let working = text
+  working = replaceTokens(working, KEY_SEQUENCE_REGEX, tokens, (match) => renderKbdSequence(match))
+  working = replaceTokens(working, REGISTRY_PATH_REGEX, tokens, (match) => `<code class="guide-inline-code">${escapeHtml(match)}</code>`)
+  working = replaceTokens(working, FILE_PATH_REGEX, tokens, (match) => `<code class="guide-inline-code">${escapeHtml(match)}</code>`)
+  working = replaceTokens(working, MENU_PATH_REGEX, tokens, (match) => `<code class="guide-inline-code">${escapeHtml(match)}</code>`)
+
+  let escaped = escapeHtml(working)
+  tokens.forEach((html, index) => {
+    escaped = escaped.replace(`%%TOKEN${index}%%`, html)
+  })
+  return escaped
+}
+
+function formatGuideHtml(text: string): string {
+  return text
+    .split('\n')
+    .map((line) => formatGuideLine(line))
+    .filter(Boolean)
+    .join('<br />')
 }
 
 // Handle Escape key to close
@@ -109,7 +233,7 @@ $effect(() => {
 
     <div class="panel-body">
       {#if item.guide.intro}
-        <p class="panel-intro">{item.guide.intro}</p>
+        <div class="panel-intro">{item.guide.intro}</div>
       {/if}
 
       <!-- How to Configure -->
@@ -119,7 +243,7 @@ $effect(() => {
           {#each item.guide.steps as step, i}
             <li>
               <span class="step-number">{i + 1}</span>
-              <span class="step-text">{step}</span>
+              <div class="step-text">{@html formatGuideHtml(step)}</div>
             </li>
           {/each}
         </ol>
@@ -131,8 +255,8 @@ $effect(() => {
         <ul class="panel-list panel-list--benefits">
           {#each item.guide.benefits as benefit}
             <li>
-              <Icon name="check" size="xs" variant="success" />
-              <span>{benefit}</span>
+              <Icon name="check" size="xs" variant="success" class="panel-icon" />
+              <div class="panel-text">{@html formatGuideHtml(benefit)}</div>
             </li>
           {/each}
         </ul>
@@ -144,8 +268,8 @@ $effect(() => {
         <ul class="panel-list panel-list--considerations">
           {#each item.guide.risks as risk}
             <li>
-              <Icon name="warning" size="xs" variant="warning" />
-              <span>{risk}</span>
+              <Icon name="warning" size="xs" variant="warning" class="panel-icon" />
+              <div class="panel-text">{@html formatGuideHtml(risk)}</div>
             </li>
           {/each}
         </ul>
@@ -157,8 +281,8 @@ $effect(() => {
         <ul class="panel-list panel-list--skip">
           {#each item.guide.skipIf as skip}
             <li>
-              <Icon name="close" size="xs" variant="muted" />
-              <span>{skip}</span>
+              <Icon name="close" size="xs" variant="muted" class="panel-icon" />
+              <div class="panel-text">{@html formatGuideHtml(skip)}</div>
             </li>
           {/each}
         </ul>
@@ -170,8 +294,8 @@ $effect(() => {
         <ul class="panel-list panel-list--verify">
           {#each item.guide.verify as verify}
             <li>
-              <Icon name="check" size="xs" variant="accent" />
-              <span>{verify}</span>
+              <Icon name="check" size="xs" variant="accent" class="panel-icon" />
+              <div class="panel-text">{@html formatGuideHtml(verify)}</div>
             </li>
           {/each}
         </ul>
@@ -183,8 +307,8 @@ $effect(() => {
         <ul class="panel-list panel-list--rollback">
           {#each item.guide.rollback as rollback}
             <li>
-              <Icon name="refresh" size="xs" variant="warning" />
-              <span>{rollback}</span>
+              <Icon name="refresh" size="xs" variant="warning" class="panel-icon" />
+              <div class="panel-text">{@html formatGuideHtml(rollback)}</div>
             </li>
           {/each}
         </ul>
@@ -195,8 +319,8 @@ $effect(() => {
         <ul class="panel-list panel-list--symptoms">
           {#each item.guide.symptoms as symptom}
             <li>
-              <Icon name="warning" size="xs" variant="warning" />
-              <span>{symptom}</span>
+              <Icon name="warning" size="xs" variant="warning" class="panel-icon" />
+              <div class="panel-text">{@html formatGuideHtml(symptom)}</div>
             </li>
           {/each}
         </ul>
@@ -207,8 +331,8 @@ $effect(() => {
         <ul class="panel-list panel-list--compat">
           {#each item.guide.compatibilityNotes as note}
             <li>
-              <Icon name="info" size="xs" variant="accent" />
-              <span>{note}</span>
+              <Icon name="info" size="xs" variant="accent" class="panel-icon" />
+              <div class="panel-text">{@html formatGuideHtml(note)}</div>
             </li>
           {/each}
         </ul>
@@ -219,8 +343,8 @@ $effect(() => {
         <ul class="panel-list panel-list--bottleneck">
           {#each item.guide.bottleneckHint as hint}
             <li>
-              <Icon name="info" size="xs" variant="muted" />
-              <span>{hint}</span>
+              <Icon name="info" size="xs" variant="muted" class="panel-icon" />
+              <div class="panel-text">{@html formatGuideHtml(hint)}</div>
             </li>
           {/each}
         </ul>
@@ -231,8 +355,8 @@ $effect(() => {
         <ul class="panel-list panel-list--tech">
           {#each item.guide.techNotes as note}
             <li>
-              <Icon name="code" size="xs" variant="muted" />
-              <span>{note}</span>
+              <Icon name="code" size="xs" variant="muted" class="panel-icon" />
+              <div class="panel-text">{@html formatGuideHtml(note)}</div>
             </li>
           {/each}
         </ul>
@@ -311,8 +435,8 @@ $effect(() => {
         <ul class="panel-list panel-list--failures">
           {#each item.guide.failureModes as mode}
             <li>
-              <strong>{mode.symptom}</strong>
-              <span>{mode.whatToDo}</span>
+              <strong>{@html formatGuideHtml(mode.symptom)}</strong>
+              <div class="panel-text">{@html formatGuideHtml(mode.whatToDo)}</div>
             </li>
           {/each}
         </ul>
@@ -364,14 +488,29 @@ $effect(() => {
     <footer class="panel-footer">
       <button
         type="button"
+        class="panel-nav"
+        onclick={() => onPrev && onPrev()}
+        disabled={!hasPrev}
+        aria-label="Previous item"
+      >
+        <span aria-hidden="true">‹</span>
+      </button>
+      <button
+        type="button"
         class="panel-action"
         class:completed={isCompleted}
-        onclick={() => {
-          onToggleComplete()
-          onClose()
-        }}
+        onclick={() => onToggleComplete()}
       >
         {isCompleted ? 'Marked as Done' : 'Mark as Done'}
+      </button>
+      <button
+        type="button"
+        class="panel-nav"
+        onclick={() => onNext && onNext()}
+        disabled={!hasNext}
+        aria-label="Next item"
+      >
+        <span aria-hidden="true">›</span>
       </button>
     </footer>
   </aside>
@@ -488,6 +627,7 @@ $effect(() => {
   }
 
   .step-text {
+    display: block;
     font-size: var(--text-sm);
     color: var(--text-primary);
     line-height: 1.5;
@@ -509,6 +649,64 @@ $effect(() => {
     color: var(--text-secondary);
   }
 
+  .panel-icon {
+    margin-top: 0.2em;
+    flex-shrink: 0;
+  }
+
+  .panel-text {
+    flex: 1;
+    min-width: 0;
+    line-height: 1.5;
+  }
+
+  .guide-inline-code {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.1rem 0.4rem;
+    border-radius: 10px;
+    border: 1px solid color-mix(in oklch, var(--cyber-cyan) 30%, transparent);
+    background: color-mix(in oklch, var(--cyber-cyan) 12%, transparent);
+    font-family: var(--font-mono);
+    font-size: 0.78em;
+    color: var(--text-primary);
+  }
+
+  .guide-pre {
+    display: inline-block;
+    margin: 0;
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: 12px;
+    border: 1px solid color-mix(in oklch, var(--cyber-cyan) 25%, transparent);
+    background: color-mix(in oklch, var(--cyber-cyan) 8%, transparent);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--text-primary);
+    white-space: pre-wrap;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  .guide-kbd {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.12rem 0.45rem;
+    border-radius: 10px;
+    border: 1px solid color-mix(in oklch, var(--text-secondary) 35%, transparent);
+    background: color-mix(in oklch, var(--text-secondary) 12%, transparent);
+    font-family: var(--font-mono);
+    font-size: 0.78em;
+    color: var(--text-primary);
+    letter-spacing: 0.02em;
+    text-transform: capitalize;
+  }
+
+  .kbd-plus {
+    margin: 0 0.2rem;
+    color: var(--text-dim);
+    font-size: 0.75em;
+  }
+
   .panel-list--failures li {
     display: grid;
     gap: 4px;
@@ -518,7 +716,7 @@ $effect(() => {
     color: var(--text-primary);
   }
 
-  .panel-list--failures span {
+  .panel-list--failures .panel-text {
     color: var(--text-secondary);
   }
 
@@ -590,6 +788,10 @@ $effect(() => {
   }
 
   .panel-footer {
+    display: grid;
+    grid-template-columns: 40px 1fr 40px;
+    gap: var(--space-sm);
+    align-items: center;
     padding: var(--space-lg);
     border-top: 1px solid var(--border);
     background: var(--bg-elevated);
@@ -611,5 +813,30 @@ $effect(() => {
 
   .panel-action.completed {
     background: var(--safe);
+  }
+
+  .panel-nav {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: color-mix(in oklch, var(--bg-secondary) 70%, transparent);
+    color: var(--text-secondary);
+    font-size: var(--text-lg);
+    cursor: pointer;
+    transition: all var(--duration-fast) ease;
+  }
+
+  .panel-nav:hover:not(:disabled) {
+    color: var(--text-primary);
+    border-color: var(--text-dim);
+  }
+
+  .panel-nav:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
   }
 </style>
