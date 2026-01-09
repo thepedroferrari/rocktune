@@ -15,6 +15,65 @@ export type DifficultyLevel = 'quick' | 'moderate' | 'advanced'
 
 export type SafetyLevel = 'safe' | 'moderate' | 'expert'
 
+export type EvidenceLevel = 'official' | 'measured' | 'reputable' | 'community' | 'speculative'
+
+export type ImpactAxis =
+  | 'latency'
+  | 'fps_avg'
+  | 'fps_1pct'
+  | 'stutter'
+  | 'visuals'
+  | 'stability'
+  | 'thermals'
+  | 'noise'
+  | 'battery'
+
+export interface GuideAssessment {
+  readonly evidence: EvidenceLevel
+  readonly confidence: 1 | 2 | 3 | 4 | 5
+  readonly risk: 1 | 2 | 3 | 4 | 5
+  readonly impact: Partial<Record<ImpactAxis, -2 | -1 | 0 | 1 | 2>>
+  readonly scope: 'global' | 'perGame' | 'hardware' | 'symptomOnly'
+  readonly prerequisites?: readonly string[]
+  readonly appliesTo?: readonly string[]
+  readonly lastReviewed?: string
+  readonly sources?: readonly string[]
+}
+
+export interface FailureMode {
+  readonly symptom: string
+  readonly whatToDo: string
+}
+
+export interface VideoRef {
+  readonly title: string
+  readonly creator: string
+  readonly videoId?: string
+  readonly search?: string
+  readonly note?: string
+}
+
+export interface GuideCopy {
+  readonly title?: string
+  readonly intro?: string
+  readonly steps?: readonly string[]
+  readonly verify?: readonly string[]
+  readonly benefits?: readonly string[]
+  readonly risks?: readonly string[]
+  readonly skipIf?: readonly string[]
+  readonly rollback?: readonly string[]
+  readonly time?: string
+  readonly tools?: readonly string[]
+  readonly techNotes?: readonly string[]
+  readonly references?: readonly string[]
+  readonly videos?: readonly VideoRef[]
+  readonly assessment?: GuideAssessment
+  readonly failureModes?: readonly FailureMode[]
+  readonly symptoms?: readonly string[]
+  readonly bottleneckHint?: readonly string[]
+  readonly compatibilityNotes?: readonly string[]
+}
+
 export interface ItemMeta {
   readonly impact?: ImpactLevel
   readonly difficulty?: DifficultyLevel
@@ -30,6 +89,11 @@ export interface ItemMeta {
    * Shows users how to achieve the same result without the script.
    */
   readonly manualSteps?: readonly string[]
+  /**
+   * Structured, future-proof guidance for manual steps.
+   * UI prefers guide.steps, falls back to legacy manualSteps.
+   */
+  readonly guide?: GuideCopy
 }
 
 export interface ManualStepItem extends ItemMeta {
@@ -109,7 +173,9 @@ export interface VideoResource {
   readonly id: string
   readonly title: string
   readonly creator: string
-  readonly videoId: string
+  readonly videoId?: string
+  readonly search?: string
+  readonly note?: string
   readonly description?: string
 }
 
@@ -132,6 +198,584 @@ export interface ManualStepSection {
     | readonly GameLaunchItem[]
     | readonly StreamingTroubleshootItem[]
     | readonly DiagnosticTool[]
+}
+
+export type ManualItem =
+  | ManualStepItem
+  | SettingItem
+  | SoftwareSettingItem
+  | BrowserSettingItem
+  | RgbSettingItem
+  | PreflightCheck
+  | TroubleshootingItem
+  | GameLaunchItem
+  | StreamingTroubleshootItem
+  | DiagnosticTool
+
+export interface NormalizedGuideCopy {
+  readonly intro: string
+  readonly steps: readonly string[]
+  readonly benefits: readonly string[]
+  readonly risks: readonly string[]
+  readonly skipIf: readonly string[]
+  readonly verify: readonly string[]
+  readonly rollback: readonly string[]
+  readonly assessment: GuideAssessment
+  readonly failureModes: readonly FailureMode[]
+  readonly techNotes: readonly string[]
+  readonly references: readonly string[]
+  readonly videos: readonly VideoRef[]
+  readonly symptoms?: readonly string[]
+  readonly bottleneckHint?: readonly string[]
+  readonly compatibilityNotes?: readonly string[]
+}
+
+export interface NormalizedManualItem {
+  readonly id: string
+  readonly title: string
+  readonly value?: string
+  readonly why: string
+  readonly impact: ImpactLevel
+  readonly difficulty: DifficultyLevel
+  readonly safety: SafetyLevel
+  readonly automated?: boolean | AutomatedBy
+  readonly guide: NormalizedGuideCopy
+}
+
+export interface NormalizeOptions {
+  readonly warn?: (message: string) => void
+  readonly today?: string
+}
+
+export const MANUAL_REVIEW_DATE = '2026-01-09'
+export const MANUAL_REVIEW_STALE_DAYS = 180
+
+export const MANUAL_GLOBAL_SAFETY_NOTES = [
+  'If you are nervous, create a restore point first.',
+  'Change one thing at a time, test, then move on.',
+  'If you get new stutters after a change, roll it back and continue.',
+] as const
+
+export const MANUAL_QUICK_TEST_PROTOCOL = [
+  'Pick one game you know well and one repeatable scene.',
+  'Use a frametime overlay (RTSS/CapFrameX) for 5-10 minutes before and after.',
+  'If you cannot measure a change, keep the safer default.',
+] as const
+
+const STEP_PREFIXES = ['First', 'Next', 'Then', 'Finish'] as const
+const WARNED_MESSAGES = new Set<string>()
+
+const DEFAULT_RISKS: Record<SafetyLevel, string> = {
+  safe: 'May have no measurable effect; test on yours.',
+  moderate: 'May affect other settings; revert if behavior worsens.',
+  expert: 'Higher risk of instability; create a restore point first.',
+}
+
+const DEFAULT_SKIP_IF = 'Skip if you are happy with current performance and stability.'
+
+const DEFAULT_VERIFY = 'Re-test in a repeatable scene and confirm no regressions.'
+
+const DEFAULT_ROLLBACK = 'Undo the change and reboot if required.'
+
+const DEFAULT_ASSESSMENT: Omit<GuideAssessment, 'lastReviewed'> = {
+  evidence: 'community',
+  confidence: 3,
+  risk: 2,
+  impact: {},
+  scope: 'global',
+}
+
+const REFERENCE_SOURCES_BY_ID: Record<string, readonly string[]> = {
+  'gpu-scheduling': ['search: DirectX Dev Blog hardware accelerated GPU scheduling'],
+  'fullscreen-optimizations-disable': ['search: Microsoft Support optimizations for windowed games'],
+  'mpo-disable': ['search: NVIDIA MPO disable restore registry files flicker'],
+  'nv-low-latency': ['search: NVIDIA system latency optimization guide'],
+  'nv-pro-low-latency': ['search: NVIDIA system latency optimization guide'],
+  'nv-stream-low-latency': ['search: NVIDIA system latency optimization guide'],
+  'nv-bench-low-latency': ['search: NVIDIA system latency optimization guide'],
+  'diag-capframex': ['search: CapFrameX GitHub releases'],
+} as const
+
+const ASSESSMENT_OVERRIDES: Record<string, Partial<GuideAssessment>> = {
+  'gpu-scheduling': { evidence: 'official' },
+  'fullscreen-optimizations-disable': { evidence: 'official', scope: 'perGame' },
+  'gamedvr-disable': { evidence: 'official' },
+  'mpo-disable': { evidence: 'community', scope: 'symptomOnly', risk: 3 },
+  'gpu-preference': { scope: 'perGame', prerequisites: ['Laptop with hybrid graphics'] },
+  'nagle-algorithm-disable': { evidence: 'community', risk: 3 },
+  'network-throttling-disable': { evidence: 'community', risk: 3 },
+  'win32-priority-separation': { evidence: 'community', risk: 3 },
+} as const
+
+const GUIDE_OVERRIDES: Record<string, GuideCopy> = {
+  'gamedvr-disable': {
+    skipIf: ['You have an AMD X3D CPU and need Game Bar for the V-Cache optimizer.'],
+  },
+  'gpu-scheduling': {
+    risks: ['Mixed results in older DX9/DX11 titles; test on yours.'],
+    skipIf: ['You mostly play older titles and already tested with no gains.'],
+  },
+  'fullscreen-optimizations-disable': {
+    skipIf: ['You need fast alt-tab or only play borderless windowed.'],
+  },
+  'mpo-disable': {
+    symptoms: ['Flicker, stutter, or overlay glitches in windowed games.'],
+    skipIf: ['You are not seeing flicker, stutter, or overlay glitches.'],
+  },
+} as const
+
+function warnManual(message: string, warn?: (message: string) => void) {
+  if (warn) {
+    warn(message)
+    return
+  }
+  if (!import.meta.env?.DEV) return
+  if (WARNED_MESSAGES.has(message)) return
+  WARNED_MESSAGES.add(message)
+  console.warn(`[ManualSteps] ${message}`)
+}
+
+function normalizeStepText(step: string, index: number, total: number): string {
+  const trimmed = step.trim()
+  if (!trimmed) return trimmed
+  const prefix =
+    index === 0 ? STEP_PREFIXES[0] : index === total - 1 ? STEP_PREFIXES[3] : index === 1 ? STEP_PREFIXES[1] : STEP_PREFIXES[2]
+  const hasPrefix = STEP_PREFIXES.some((token) => trimmed.toLowerCase().startsWith(token.toLowerCase()))
+  const normalized = trimmed.endsWith('.') ? trimmed : `${trimmed}.`
+  return hasPrefix ? normalized : `${prefix} ${normalized}`
+}
+
+function normalizeSteps(steps: readonly string[]): string[] {
+  return steps.map((step, index) => normalizeStepText(step, index, steps.length)).filter(Boolean)
+}
+
+function getFirstSentence(text: string): string {
+  const trimmed = text.trim()
+  if (!trimmed) return trimmed
+  const match = trimmed.match(/^[^.!?]+[.!?]?/)
+  return match ? match[0].trim() : trimmed
+}
+
+function isManualStepItem(item: ManualItem): item is ManualStepItem {
+  return 'step' in item && 'check' in item && 'why' in item
+}
+
+function isSettingItem(item: ManualItem): item is SettingItem {
+  return 'setting' in item && 'value' in item && !('path' in item) && !('browser' in item) && !('software' in item)
+}
+
+function isSoftwareSettingItem(item: ManualItem): item is SoftwareSettingItem {
+  return 'path' in item && 'value' in item && !('browser' in item)
+}
+
+function isBrowserSettingItem(item: ManualItem): item is BrowserSettingItem {
+  return 'browser' in item && 'setting' in item
+}
+
+function isRgbSettingItem(item: ManualItem): item is RgbSettingItem {
+  return 'software' in item && 'action' in item
+}
+
+function isPreflightCheck(item: ManualItem): item is PreflightCheck {
+  return 'check' in item && 'how' in item && 'fail' in item
+}
+
+function isTroubleshootingItem(item: ManualItem): item is TroubleshootingItem {
+  return 'problem' in item && 'causes' in item && 'quickFix' in item
+}
+
+function isGameLaunchItem(item: ManualItem): item is GameLaunchItem {
+  return 'game' in item && 'platform' in item && 'notes' in item
+}
+
+function isStreamingTroubleshootItem(item: ManualItem): item is StreamingTroubleshootItem {
+  return 'problem' in item && 'solution' in item && 'why' in item && !('causes' in item)
+}
+
+function isDiagnosticTool(item: ManualItem): item is DiagnosticTool {
+  return 'tool' in item && 'use' in item
+}
+
+function getItemTitle(item: ManualItem): string {
+  if (isManualStepItem(item)) return item.check
+  if (isSettingItem(item)) return item.setting
+  if (isSoftwareSettingItem(item)) return item.path.split('>').pop()?.trim() ?? item.path
+  if (isBrowserSettingItem(item)) return item.setting
+  if (isRgbSettingItem(item)) return item.software
+  if (isPreflightCheck(item)) return item.check
+  if (isTroubleshootingItem(item)) return item.problem
+  if (isGameLaunchItem(item)) return item.game
+  if (isStreamingTroubleshootItem(item)) return item.problem
+  if (isDiagnosticTool(item)) return item.tool
+  return (item as { id: string }).id
+}
+
+function getItemValue(item: ManualItem): string | undefined {
+  if (isManualStepItem(item)) return undefined
+  if (isSettingItem(item)) return item.value
+  if (isSoftwareSettingItem(item)) return item.value
+  if (isBrowserSettingItem(item)) return item.value
+  if (isRgbSettingItem(item)) return item.action
+  if (isPreflightCheck(item)) return undefined
+  if (isTroubleshootingItem(item)) return undefined
+  if (isGameLaunchItem(item)) return item.launchOptions
+  if (isStreamingTroubleshootItem(item)) return item.solution
+  if (isDiagnosticTool(item)) return undefined
+  return undefined
+}
+
+function getItemWhy(item: ManualItem): string {
+  if ('why' in item) return item.why
+  if (isPreflightCheck(item)) return `${item.how} If not: ${item.fail}`
+  if (isTroubleshootingItem(item)) return item.quickFix
+  if (isGameLaunchItem(item)) return item.notes.join(' ')
+  if (isDiagnosticTool(item)) return item.use
+  return ''
+}
+
+function deriveIntro(item: ManualItem): string {
+  const why = getItemWhy(item)
+  if (why) return getFirstSentence(why)
+  if (isTroubleshootingItem(item)) return `Troubleshoot: ${getFirstSentence(item.problem)}`
+  if (isPreflightCheck(item)) return `Quick check: ${getFirstSentence(item.check)}`
+  if (isDiagnosticTool(item)) return `Diagnostic tool: ${getFirstSentence(item.tool)}`
+  return 'Make a targeted change, then test the result.'
+}
+
+function deriveSteps(item: ManualItem, section: ManualStepSection): string[] {
+  if (isManualStepItem(item)) {
+    return normalizeSteps([
+      `First open ${item.step}`,
+      `Next ${item.check}`,
+      'Finish by applying the change and retesting',
+    ])
+  }
+
+  if (isSettingItem(item)) {
+    const location = section.location ?? section.description ?? `${section.title} settings`
+    return normalizeSteps([
+      `First open ${location}`,
+      `Next set ${item.setting} to ${item.value}`,
+      'Finish by applying and closing the settings window',
+    ])
+  }
+
+  if (isSoftwareSettingItem(item)) {
+    return normalizeSteps([
+      `First open ${item.path}`,
+      `Next set the value to ${item.value}`,
+      'Finish by restarting the app if required',
+    ])
+  }
+
+  if (isBrowserSettingItem(item)) {
+    return normalizeSteps([
+      `First open ${item.browser} settings`,
+      `Next go to ${item.path}`,
+      `Then set ${item.setting} to ${item.value}`,
+      'Finish by restarting the browser if needed',
+    ])
+  }
+
+  if (isRgbSettingItem(item)) {
+    return normalizeSteps([
+      `First open ${item.software}`,
+      `Next ${item.action}`,
+      'Finish by saving the profile and closing the app if possible',
+    ])
+  }
+
+  if (isPreflightCheck(item)) {
+    return normalizeSteps([
+      `First check: ${item.check}`,
+      `Next follow: ${item.how}`,
+      'Finish by fixing any issues you find',
+    ])
+  }
+
+  if (isTroubleshootingItem(item)) {
+    return normalizeSteps([
+      `First confirm the symptom: ${item.problem}`,
+      `Next try: ${item.quickFix}`,
+      'Finish by retesting for stability',
+    ])
+  }
+
+  if (isGameLaunchItem(item)) {
+    const platform = `${item.platform} launcher`
+    const options = item.launchOptions
+      ? `set launch options to ${item.launchOptions}`
+      : 'apply the in-game settings listed'
+    return normalizeSteps([
+      `First open the ${platform} for ${item.game}`,
+      `Next ${options}`,
+      'Finish by launching the game and testing',
+    ])
+  }
+
+  if (isStreamingTroubleshootItem(item)) {
+    return normalizeSteps([
+      `First confirm: ${item.problem}`,
+      `Next apply: ${item.solution}`,
+      'Finish by monitoring OBS stats for improvement',
+    ])
+  }
+
+  if (isDiagnosticTool(item)) {
+    return normalizeSteps([
+      `First install ${item.tool}`,
+      `Next use it to ${item.use}`,
+      'Finish by reviewing the results before changing settings',
+    ])
+  }
+
+  return []
+}
+
+function isRegistryOrSystemTweak(item: ManualItem, section: ManualStepSection): boolean {
+  if (section.id.startsWith('bios')) return true
+  if (isManualStepItem(item) && item.step.toLowerCase().includes('registry')) return true
+  if (typeof item.automated === 'object') {
+    return Boolean(
+      item.automated.registryPath ||
+        item.automated.bcdedit ||
+        item.automated.service ||
+        item.automated.scheduledTask,
+    )
+  }
+  return false
+}
+
+function getDefaultScope(item: ManualItem, section: ManualStepSection): GuideAssessment['scope'] {
+  if (isTroubleshootingItem(item) || isStreamingTroubleshootItem(item)) return 'symptomOnly'
+  if (isGameLaunchItem(item)) return 'perGame'
+  if (section.hardware || section.id.startsWith('bios')) return 'hardware'
+  return 'global'
+}
+
+function coerceRisk(safety: SafetyLevel): 1 | 2 | 3 | 4 | 5 {
+  if (safety === 'expert') return 4
+  if (safety === 'moderate') return 3
+  return 2
+}
+
+function buildAssessment(
+  item: ManualItem,
+  section: ManualStepSection,
+  guide: GuideCopy | undefined,
+  options?: NormalizeOptions,
+): GuideAssessment {
+  const safety = item.safety ?? 'safe'
+  const override = {
+    ...ASSESSMENT_OVERRIDES[item.id],
+    ...(guide?.assessment ?? {}),
+  }
+  const hasExplicitAssessment = guide?.assessment !== undefined
+  const hasLastReviewed = override.lastReviewed !== undefined
+  const scope = override.scope ?? getDefaultScope(item, section)
+
+  const assessment: GuideAssessment = {
+    ...DEFAULT_ASSESSMENT,
+    ...override,
+    scope,
+    risk: override.risk ?? coerceRisk(safety),
+    lastReviewed: override.lastReviewed ?? MANUAL_REVIEW_DATE,
+    impact: override.impact ?? {},
+  }
+
+  if (section.hardware) {
+    assessment.appliesTo = assessment.appliesTo ?? [
+      section.hardware === GPU_TYPES.NVIDIA ? 'NVIDIA GPUs' : section.hardware === GPU_TYPES.AMD ? 'AMD GPUs' : 'Intel GPUs',
+    ]
+  }
+
+  const refSources = REFERENCE_SOURCES_BY_ID[item.id] ?? []
+  const guideSources = guide?.references ?? []
+  const assessmentSources = assessment.sources ?? []
+  const mergedSources = [...assessmentSources, ...guideSources, ...refSources]
+  if (mergedSources.length > 0) {
+    assessment.sources = mergedSources
+  }
+
+  if (isRegistryOrSystemTweak(item, section) && assessment.risk < 3) {
+    assessment.risk = 3
+  }
+
+  if (hasExplicitAssessment && !hasLastReviewed) {
+    warnManual(`Missing lastReviewed for "${item.id}"`, options?.warn)
+  }
+
+  if (!assessment.lastReviewed) {
+    assessment.lastReviewed = MANUAL_REVIEW_DATE
+  }
+
+  const lastReviewed = assessment.lastReviewed
+  if (lastReviewed) {
+    const parsed = Date.parse(lastReviewed)
+    if (!Number.isNaN(parsed)) {
+      const today = Date.parse(options?.today ?? MANUAL_REVIEW_DATE)
+      const ageDays = Math.floor((today - parsed) / (1000 * 60 * 60 * 24))
+      if (ageDays > MANUAL_REVIEW_STALE_DAYS) {
+        warnManual(`Stale lastReviewed (${lastReviewed}) for "${item.id}"`, options?.warn)
+      }
+    }
+  }
+
+  return assessment
+}
+
+function buildFailureModes(
+  item: ManualItem,
+  section: ManualStepSection,
+  assessment: GuideAssessment,
+  guide: GuideCopy | undefined,
+  options?: NormalizeOptions,
+): FailureMode[] {
+  const failureModes = guide?.failureModes ? [...guide.failureModes] : []
+  const requiresFailureModes = assessment.risk >= 3 || assessment.scope === 'symptomOnly'
+  if (failureModes.length > 0 || !requiresFailureModes) {
+    return failureModes
+  }
+
+  let defaultMode: FailureMode
+  if (section.id.startsWith('bios')) {
+    defaultMode = {
+      symptom: 'Boot issues or instability after the change',
+      whatToDo: 'Rollback the BIOS setting or load optimized defaults.',
+    }
+  } else if (isRegistryOrSystemTweak(item, section)) {
+    defaultMode = {
+      symptom: 'New stutter, instability, or unexpected behavior',
+      whatToDo: 'Rollback the change and reboot.',
+    }
+  } else if (assessment.scope === 'symptomOnly') {
+    defaultMode = {
+      symptom: 'The issue persists after applying the change',
+      whatToDo: 'Undo the change and continue troubleshooting.',
+    }
+  } else {
+    defaultMode = {
+      symptom: 'Performance or stability regresses',
+      whatToDo: 'Rollback the change and retest.',
+    }
+  }
+
+  warnManual(`Missing failureModes for "${item.id}" (required by risk/scope)`, options?.warn)
+  return [defaultMode]
+}
+
+function buildRollback(item: ManualItem, section: ManualStepSection): string {
+  if (typeof item.automated === 'object' && item.automated.registryPath && item.automated.registryKey) {
+    return `Revert ${item.automated.registryKey} in ${item.automated.registryPath} and reboot.`
+  }
+  if (section.id.startsWith('bios')) {
+    return 'Revert the BIOS setting or load optimized defaults.'
+  }
+  if (isSettingItem(item)) {
+    return `Set ${item.setting} back to the previous value.`
+  }
+  if (isSoftwareSettingItem(item) || isBrowserSettingItem(item)) {
+    return 'Restore the previous setting and restart the app.'
+  }
+  if (isGameLaunchItem(item)) {
+    return 'Remove the launch options and relaunch the game.'
+  }
+  return DEFAULT_ROLLBACK
+}
+
+function buildVerify(item: ManualItem): string {
+  if (isPreflightCheck(item)) {
+    return `Confirm: ${item.check}`
+  }
+  if (isTroubleshootingItem(item)) {
+    return 'The issue no longer reproduces during play.'
+  }
+  if (isStreamingTroubleshootItem(item)) {
+    return 'OBS stats show stability improvements.'
+  }
+  if (isDiagnosticTool(item)) {
+    return 'Review the tool output before changing additional settings.'
+  }
+  return DEFAULT_VERIFY
+}
+
+function buildSkipIf(scope: GuideAssessment['scope']): string {
+  if (scope === 'symptomOnly') {
+    return 'Skip if you do not see the symptom this step targets.'
+  }
+  return DEFAULT_SKIP_IF
+}
+
+function normalizeGuide(
+  item: ManualItem,
+  section: ManualStepSection,
+  options?: NormalizeOptions,
+): NormalizedGuideCopy {
+  const guide = item.guide ?? GUIDE_OVERRIDES[item.id]
+  const steps = guide?.steps && guide.steps.length > 0
+    ? normalizeSteps(guide.steps)
+    : item.manualSteps && item.manualSteps.length > 0
+      ? normalizeSteps(item.manualSteps)
+      : normalizeSteps(deriveSteps(item, section))
+
+  if (steps.length === 0) {
+    warnManual(`Missing steps for "${item.id}"`, options?.warn)
+    const assessment = buildAssessment(item, section, guide, options)
+    return {
+      intro: deriveIntro(item),
+      steps: ['This item needs steps — do not proceed yet.'],
+      benefits: [getItemWhy(item) || 'This may improve performance or stability.'],
+      risks: [DEFAULT_RISKS[item.safety ?? 'safe']],
+      skipIf: [buildSkipIf(assessment.scope)],
+      verify: [buildVerify(item)],
+      rollback: [buildRollback(item, section)],
+      assessment,
+      failureModes: buildFailureModes(item, section, assessment, guide, options),
+      techNotes: [],
+      references: guide?.references ? [...guide.references] : [],
+      videos: guide?.videos ? [...guide.videos] : [],
+    }
+  }
+
+  const assessment = buildAssessment(item, section, guide, options)
+  const failureModes = buildFailureModes(item, section, assessment, guide, options)
+
+  return {
+    intro: guide?.intro ?? deriveIntro(item),
+    steps,
+    benefits: guide?.benefits && guide.benefits.length > 0 ? [...guide.benefits] : [getItemWhy(item) || 'May improve performance or stability.'],
+    risks: guide?.risks && guide.risks.length > 0 ? [...guide.risks] : [DEFAULT_RISKS[item.safety ?? 'safe']],
+    skipIf: guide?.skipIf && guide.skipIf.length > 0 ? [...guide.skipIf] : [buildSkipIf(assessment.scope)],
+    verify: guide?.verify && guide.verify.length > 0 ? [...guide.verify] : [buildVerify(item)],
+    rollback: guide?.rollback && guide.rollback.length > 0 ? [...guide.rollback] : [buildRollback(item, section)],
+    assessment,
+    failureModes,
+    techNotes: guide?.techNotes ? [...guide.techNotes] : [],
+    references: guide?.references ? [...guide.references] : [],
+    videos: guide?.videos ? [...guide.videos] : [],
+    symptoms: guide?.symptoms,
+    bottleneckHint: guide?.bottleneckHint,
+    compatibilityNotes: guide?.compatibilityNotes,
+  }
+}
+
+export function normalizeManualItem(
+  item: ManualItem,
+  section: ManualStepSection,
+  options?: NormalizeOptions,
+): NormalizedManualItem {
+  const guideTitle = item.guide?.title
+  return {
+    id: item.id,
+    title: guideTitle ?? getItemTitle(item),
+    value: getItemValue(item),
+    why: getItemWhy(item),
+    impact: item.impact ?? 'medium',
+    difficulty: item.difficulty ?? 'moderate',
+    safety: item.safety ?? 'safe',
+    automated: item.automated,
+    guide: normalizeGuide(item, section, options),
+  }
 }
 
 const WINDOWS_DISPLAY_ALL: ManualStepSection = {
@@ -2844,43 +3488,71 @@ const VIDEOS = {
     id: 'intel-settings',
     title: 'Intel CPU Settings You NEED to Change',
     creator: 'JayzTwoCents',
-    videoId: 'B3EW5lRIZYc',
+    search: 'JayzTwoCents Intel CPU Settings You NEED to Change',
     description: 'Essential BIOS and Windows settings for Intel CPUs',
   },
   POST_BUILD: {
     id: 'post-build',
     title: 'What to do AFTER Building Your PC',
     creator: 'JayzTwoCents',
-    videoId: 'xhHtHMQygzE',
+    search: 'JayzTwoCents What to do AFTER Building Your PC',
     description: 'First steps after a fresh Windows install',
   },
   STUTTERING_FIXES: {
     id: 'stuttering-fixes',
     title: 'Fix Game Stuttering & Micro-Stutters',
     creator: 'JayzTwoCents',
-    videoId: 'YWTZkB9rVU0',
+    search: 'JayzTwoCents Fix Game Stuttering & Micro-Stutters',
     description: 'Diagnose and fix stuttering issues including mouse-move stutters',
   },
   PC_PERFORMANCE: {
     id: 'pc-performance-setup',
     title: "You're HURTING your Performance! Check these things NOW!",
     creator: 'JayzTwoCents',
-    videoId: 'kRJZpcbVXIg',
+    search: "JayzTwoCents You're HURTING your Performance! Check these things NOW!",
     description: 'XMP/EXPO, fan curves, Fan Control software, VBS optimization',
   },
   NVIDIA_CS2: {
     id: 'nvidia-cs2-settings',
     title: 'Best Nvidia Settings for Counter-Strike 2',
     creator: 'Gaming Optimization Guide',
-    videoId: 'FVhgaHfhMTg',
+    search: 'Gaming Optimization Guide Best Nvidia Settings for Counter-Strike 2',
     description: 'Comprehensive Nvidia Control Panel settings for CS2',
   },
   NVIDIA_2026: {
     id: 'nvidia-gaming-2026',
     title: 'Nvidia Settings for Gaming Updated 2026',
     creator: 'Gaming Optimization Guide',
-    videoId: '5mtCUTUNzs0',
+    search: 'Gaming Optimization Guide Nvidia Settings for Gaming Updated 2026',
     description: 'Driver installation, digital vibrance, Reflex, and advanced settings',
+  },
+  BUFFERBLOAT_LAG: {
+    id: 'bufferbloat-lag',
+    title: 'Bufferbloat & Lag - Why Framing Matters',
+    creator: 'Battle(non)sense',
+    videoId: 'LjJW_s5gQ9Y',
+    description: 'Explains bufferbloat, latency spikes, and mitigation',
+  },
+  OBS_SECRET_SAUCE: {
+    id: 'obs-secret-sauce',
+    title: "My OBS Studio 'Secret Sauce' EXPLAINED!",
+    creator: 'EposVox',
+    videoId: 'fQ04pIcpMkM',
+    description: 'Detailed OBS settings, quality vs performance trade-offs',
+  },
+  XMP_PROFILE: {
+    id: 'xmp-profile',
+    title: 'How to set your memory speed and XMP Profile',
+    creator: 'JayzTwoCents',
+    videoId: 'NTWEzTV8B54',
+    description: 'Step-by-step XMP/EXPO memory setup',
+  },
+  DF_WIN11_2026: {
+    id: 'df-win11-2026',
+    title: 'Will Windows 11 Gaming Truly, Actually Improve in 2026?',
+    creator: 'DF Clips',
+    videoId: 'quaF75xVKNg',
+    description: 'Windows gaming improvements and trade-offs',
   },
 } as const
 
@@ -2890,7 +3562,7 @@ const SECTION_GROUPS: readonly SectionGroup[] = [
     title: 'Windows Display',
     icon: 'monitor',
     sections: [WINDOWS_DISPLAY_ALL, WINDOWS_DISPLAY_PRO],
-    videos: [VIDEOS.POST_BUILD],
+    videos: [VIDEOS.DF_WIN11_2026, VIDEOS.POST_BUILD],
   },
   {
     id: 'gpu',
@@ -2912,7 +3584,7 @@ const SECTION_GROUPS: readonly SectionGroup[] = [
     title: 'BIOS Settings',
     icon: 'chip',
     sections: [BIOS_ALL, BIOS_AMD_X3D, BIOS_INTEL],
-    videos: [VIDEOS.INTEL_SETTINGS],
+    videos: [VIDEOS.XMP_PROFILE, VIDEOS.INTEL_SETTINGS],
   },
   {
     id: 'software',
@@ -2950,6 +3622,7 @@ const SECTION_GROUPS: readonly SectionGroup[] = [
     title: 'Network Configuration',
     icon: 'network',
     sections: [NETWORK_ALL, UBIQUITI_GAMING],
+    videos: [VIDEOS.BUFFERBLOAT_LAG],
   },
   {
     id: 'performance',
@@ -2987,6 +3660,7 @@ const SECTION_GROUPS: readonly SectionGroup[] = [
     title: 'Streaming (OBS)',
     icon: 'broadcast',
     sections: [OBS_OUTPUT, OBS_VIDEO, OBS_ADVANCED, OBS_SOURCES, OBS_TROUBLESHOOTING],
+    videos: [VIDEOS.OBS_SECRET_SAUCE],
   },
   {
     id: 'diagnostics',
@@ -3049,4 +3723,15 @@ export function countTotalItems(persona: PresetType, gpuType: GpuType): number {
       group.sections.reduce((sectionTotal, section) => sectionTotal + section.items.length, 0),
     0,
   )
+}
+
+export function auditManualSteps(groups: readonly SectionGroup[], options?: NormalizeOptions): void {
+  if (!options?.warn && !import.meta.env?.DEV) return
+  for (const group of groups) {
+    for (const section of group.sections) {
+      for (const item of section.items as readonly ManualItem[]) {
+        normalizeManualItem(item, section, options)
+      }
+    }
+  }
 }

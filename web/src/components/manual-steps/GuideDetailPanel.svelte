@@ -9,13 +9,11 @@
 import { fade, fly } from 'svelte/transition'
 import { cubicOut } from 'svelte/easing'
 import Icon from '../ui/Icon.svelte'
+import type { NormalizedManualItem } from '$lib/manual-steps'
 
 interface Props {
   isOpen: boolean
-  title: string
-  manualSteps?: string[]
-  benefits?: string[]
-  considerations?: string[]
+  item: NormalizedManualItem
   automationInfo?: {
     module: string
     function: string
@@ -28,10 +26,7 @@ interface Props {
 
 let {
   isOpen,
-  title,
-  manualSteps = [],
-  benefits = [],
-  considerations = [],
+  item,
   automationInfo = null,
   isCompleted,
   onClose,
@@ -39,6 +34,16 @@ let {
 }: Props = $props()
 
 let panelRef = $state<HTMLElement | null>(null)
+
+function formatImpact(value: number): string {
+  if (value > 0) return `+${value}`
+  if (value < 0) return `${value}`
+  return '0'
+}
+
+function buildSearchUrl(term: string): string {
+  return `https://www.youtube.com/results?search_query=${encodeURIComponent(term)}`
+}
 
 // Handle Escape key to close
 function handleKeydown(e: KeyboardEvent) {
@@ -83,7 +88,7 @@ $effect(() => {
     transition:fly={{ x: 400, duration: 300, easing: cubicOut }}
   >
     <header class="panel-header">
-      <h3 id="panel-title" class="panel-title">{title}</h3>
+      <h3 id="panel-title" class="panel-title">{item.title}</h3>
       <button
         type="button"
         class="panel-close"
@@ -98,28 +103,28 @@ $effect(() => {
     </header>
 
     <div class="panel-body">
+      {#if item.guide.intro}
+        <p class="panel-intro">{item.guide.intro}</p>
+      {/if}
+
       <!-- How to Configure -->
       <h4 class="panel-heading">How to Configure</h4>
-      {#if manualSteps.length > 0}
+      {#if item.guide.steps.length > 0}
         <ol class="panel-steps">
-          {#each manualSteps as step, i}
+          {#each item.guide.steps as step, i}
             <li>
               <span class="step-number">{i + 1}</span>
               <span class="step-text">{step}</span>
             </li>
           {/each}
         </ol>
-      {:else}
-        <p class="panel-empty">
-          Search online for <mark>"{title}" Windows gaming optimization</mark>
-        </p>
       {/if}
 
       <!-- Benefits -->
-      {#if benefits.length > 0}
+      {#if item.guide.benefits.length > 0}
         <h4 class="panel-heading">Benefits</h4>
         <ul class="panel-list panel-list--benefits">
-          {#each benefits as benefit}
+          {#each item.guide.benefits as benefit}
             <li>
               <Icon name="check" size="xs" variant="success" />
               <span>{benefit}</span>
@@ -128,14 +133,202 @@ $effect(() => {
         </ul>
       {/if}
 
-      <!-- Considerations -->
-      {#if considerations.length > 0}
-        <h4 class="panel-heading">Considerations</h4>
+      <!-- Risks -->
+      {#if item.guide.risks.length > 0}
+        <h4 class="panel-heading">Risks</h4>
         <ul class="panel-list panel-list--considerations">
-          {#each considerations as con}
+          {#each item.guide.risks as risk}
             <li>
               <Icon name="warning" size="xs" variant="warning" />
-              <span>{con}</span>
+              <span>{risk}</span>
+            </li>
+          {/each}
+        </ul>
+      {/if}
+
+      <!-- Skip If -->
+      {#if item.guide.skipIf.length > 0}
+        <h4 class="panel-heading">Skip If</h4>
+        <ul class="panel-list panel-list--skip">
+          {#each item.guide.skipIf as skip}
+            <li>
+              <Icon name="close" size="xs" variant="muted" />
+              <span>{skip}</span>
+            </li>
+          {/each}
+        </ul>
+      {/if}
+
+      <!-- Verify -->
+      {#if item.guide.verify.length > 0}
+        <h4 class="panel-heading">Verify</h4>
+        <ul class="panel-list panel-list--verify">
+          {#each item.guide.verify as verify}
+            <li>
+              <Icon name="check" size="xs" variant="accent" />
+              <span>{verify}</span>
+            </li>
+          {/each}
+        </ul>
+      {/if}
+
+      <!-- Rollback -->
+      {#if item.guide.rollback.length > 0}
+        <h4 class="panel-heading">Rollback</h4>
+        <ul class="panel-list panel-list--rollback">
+          {#each item.guide.rollback as rollback}
+            <li>
+              <Icon name="refresh" size="xs" variant="warning" />
+              <span>{rollback}</span>
+            </li>
+          {/each}
+        </ul>
+      {/if}
+
+      {#if item.guide.symptoms && item.guide.symptoms.length > 0}
+        <h4 class="panel-heading">Only If You See</h4>
+        <ul class="panel-list panel-list--symptoms">
+          {#each item.guide.symptoms as symptom}
+            <li>
+              <Icon name="warning" size="xs" variant="warning" />
+              <span>{symptom}</span>
+            </li>
+          {/each}
+        </ul>
+      {/if}
+
+      {#if item.guide.compatibilityNotes && item.guide.compatibilityNotes.length > 0}
+        <h4 class="panel-heading">Compatibility Notes</h4>
+        <ul class="panel-list panel-list--compat">
+          {#each item.guide.compatibilityNotes as note}
+            <li>
+              <Icon name="info" size="xs" variant="accent" />
+              <span>{note}</span>
+            </li>
+          {/each}
+        </ul>
+      {/if}
+
+      {#if item.guide.bottleneckHint && item.guide.bottleneckHint.length > 0}
+        <h4 class="panel-heading">Bottleneck Hint</h4>
+        <ul class="panel-list panel-list--bottleneck">
+          {#each item.guide.bottleneckHint as hint}
+            <li>
+              <Icon name="info" size="xs" variant="muted" />
+              <span>{hint}</span>
+            </li>
+          {/each}
+        </ul>
+      {/if}
+
+      {#if item.guide.techNotes.length > 0}
+        <h4 class="panel-heading">Tech Notes</h4>
+        <ul class="panel-list panel-list--tech">
+          {#each item.guide.techNotes as note}
+            <li>
+              <Icon name="code" size="xs" variant="muted" />
+              <span>{note}</span>
+            </li>
+          {/each}
+        </ul>
+      {/if}
+
+      <!-- Assessment -->
+      <h4 class="panel-heading">Assessment</h4>
+      <dl class="panel-assessment">
+        <div class="assessment-row">
+          <dt>Evidence</dt>
+          <dd>{item.guide.assessment.evidence}</dd>
+        </div>
+        <div class="assessment-row">
+          <dt>Confidence</dt>
+          <dd>{item.guide.assessment.confidence}/5</dd>
+        </div>
+        <div class="assessment-row">
+          <dt>Risk</dt>
+          <dd>{item.guide.assessment.risk}/5</dd>
+        </div>
+        <div class="assessment-row">
+          <dt>Scope</dt>
+          <dd>{item.guide.assessment.scope}</dd>
+        </div>
+        {#if item.guide.assessment.lastReviewed}
+          <div class="assessment-row">
+            <dt>Last reviewed</dt>
+            <dd>{item.guide.assessment.lastReviewed}</dd>
+          </div>
+        {/if}
+        {#if item.guide.assessment.prerequisites && item.guide.assessment.prerequisites.length > 0}
+          <div class="assessment-row">
+            <dt>Prerequisites</dt>
+            <dd>{item.guide.assessment.prerequisites.join(', ')}</dd>
+          </div>
+        {/if}
+        {#if item.guide.assessment.appliesTo && item.guide.assessment.appliesTo.length > 0}
+          <div class="assessment-row">
+            <dt>Applies to</dt>
+            <dd>{item.guide.assessment.appliesTo.join(', ')}</dd>
+          </div>
+        {/if}
+        {#if Object.keys(item.guide.assessment.impact).length > 0}
+          <div class="assessment-row assessment-row--impact">
+            <dt>Impact</dt>
+            <dd>
+              {#each Object.entries(item.guide.assessment.impact) as [axis, value]}
+                <span class="impact-pill">{axis}: {formatImpact(value)}</span>
+              {/each}
+            </dd>
+          </div>
+        {/if}
+      </dl>
+
+      {#if item.guide.assessment.sources && item.guide.assessment.sources.length > 0}
+        <h4 class="panel-heading">Sources</h4>
+        <ul class="panel-list panel-list--sources">
+          {#each item.guide.assessment.sources as source}
+            <li>
+              {#if source.startsWith('search:')}
+                <a href={buildSearchUrl(source.replace('search:', '').trim())} target="_blank" rel="noopener noreferrer">
+                  {source}
+                </a>
+              {:else}
+                <a href={source} target="_blank" rel="noopener noreferrer">
+                  {source}
+                </a>
+              {/if}
+            </li>
+          {/each}
+        </ul>
+      {/if}
+
+      {#if item.guide.failureModes.length > 0}
+        <h4 class="panel-heading">Failure Modes</h4>
+        <ul class="panel-list panel-list--failures">
+          {#each item.guide.failureModes as mode}
+            <li>
+              <strong>{mode.symptom}</strong>
+              <span>{mode.whatToDo}</span>
+            </li>
+          {/each}
+        </ul>
+      {/if}
+
+      {#if item.guide.videos.length > 0}
+        <h4 class="panel-heading">Videos</h4>
+        <ul class="panel-list panel-list--videos">
+          {#each item.guide.videos as video}
+            <li>
+              {#if video.videoId}
+                <a href={`https://www.youtube.com/watch?v=${video.videoId}`} target="_blank" rel="noopener noreferrer">
+                  {video.creator} — {video.title}
+                </a>
+              {:else if video.search}
+                <a href={buildSearchUrl(video.search)} target="_blank" rel="noopener noreferrer">
+                  {video.creator} — {video.title}
+                </a>
+              {:else}
+                <span>{video.creator} — {video.title}</span>
+              {/if}
             </li>
           {/each}
         </ul>
@@ -221,34 +414,21 @@ $effect(() => {
   }
 
   .panel-close {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
-    padding: 0;
-    flex-shrink: 0;
-    background: transparent;
-    border: 1px solid var(--border);
+    inline-size: 32px;
+    block-size: 32px;
     border-radius: 6px;
-    color: var(--text-dim);
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-secondary);
     cursor: pointer;
     transition: all var(--duration-fast) ease;
 
-    & svg {
-      width: 18px;
-      height: 18px;
-    }
-
     &:hover {
       color: var(--text-primary);
-      border-color: var(--cyber-cyan);
-      background: color-mix(in oklch, var(--cyber-cyan) 10%, transparent);
-    }
-
-    &:focus-visible {
-      outline: 2px solid var(--cyber-cyan);
-      outline-offset: 2px;
+      border-color: var(--text-dim);
     }
   }
 
@@ -258,180 +438,173 @@ $effect(() => {
     padding: var(--space-lg);
   }
 
-  /* Editorial heading style - small caps feel */
+  .panel-intro {
+    margin-block: 0 var(--space-md);
+    color: var(--text-secondary);
+    font-size: var(--text-sm);
+    line-height: 1.5;
+  }
+
   .panel-heading {
-    margin: 0 0 var(--space-md) 0;
-    padding-block-end: var(--space-xs);
-    font-size: var(--text-xs);
+    margin: var(--space-md) 0 var(--space-sm);
+    font-size: var(--text-sm);
     font-weight: 600;
-    color: var(--text-dim);
     text-transform: uppercase;
-    letter-spacing: 0.1em;
-    border-bottom: 1px solid color-mix(in oklch, var(--border) 50%, transparent);
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
   }
 
-  .panel-heading:not(:first-child) {
-    margin-block-start: var(--space-xl);
-  }
-
-  /* Custom numbered steps */
   .panel-steps {
-    list-style: none;
+    display: grid;
+    gap: var(--space-sm);
+    margin: 0 0 var(--space-md);
     padding: 0;
-    margin: 0 0 var(--space-lg) 0;
+    list-style: none;
   }
 
   .panel-steps li {
     display: grid;
-    grid-template-columns: 1.75rem 1fr;
+    grid-template-columns: auto 1fr;
     gap: var(--space-sm);
-    margin-block-end: var(--space-md);
-    line-height: 1.65;
-    align-items: baseline;
-  }
-
-  .panel-steps li:last-child {
-    margin-block-end: 0;
+    align-items: start;
   }
 
   .step-number {
-    font-family: var(--font-mono);
-    font-size: var(--text-sm);
-    font-weight: 700;
+    inline-size: 24px;
+    block-size: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--text-xs);
+    font-weight: 600;
     color: var(--cyber-cyan);
-    text-align: right;
-    padding-inline-end: var(--space-xs);
+    border: 1px solid color-mix(in oklch, var(--cyber-cyan) 50%, transparent);
+    border-radius: 6px;
   }
 
   .step-text {
-    color: var(--text-secondary);
-    font-size: var(--text-md);
-  }
-
-  /* Empty state - no italic */
-  .panel-empty {
-    margin: 0;
-    color: var(--text-dim);
     font-size: var(--text-sm);
-    line-height: 1.7;
+    color: var(--text-primary);
+    line-height: 1.5;
   }
 
-  .panel-empty mark {
-    background: color-mix(in oklch, var(--cyber-cyan) 15%, transparent);
-    color: var(--cyber-cyan);
-    padding: 0.125em 0.5em;
-    border-radius: 4px;
-    font-weight: 500;
-  }
-
-  /* Benefits / Considerations lists */
   .panel-list {
-    list-style: none;
+    display: grid;
+    gap: var(--space-xs);
+    margin: 0 0 var(--space-md);
     padding: 0;
-    margin: 0 0 var(--space-lg) 0;
+    list-style: none;
   }
 
   .panel-list li {
     display: flex;
     align-items: flex-start;
-    gap: var(--space-sm);
-    margin-block-end: var(--space-sm);
-    color: var(--text-secondary);
+    gap: var(--space-xs);
     font-size: var(--text-sm);
-    line-height: 1.6;
+    color: var(--text-secondary);
   }
 
-  .panel-list li:last-child {
-    margin-block-end: 0;
+  .panel-list--failures li {
+    display: grid;
+    gap: 4px;
   }
 
-  .panel-list li :global(svg) {
-    flex-shrink: 0;
-    margin-block-start: 0.2em;
+  .panel-list--failures strong {
+    color: var(--text-primary);
   }
 
-  /* Automation details - definition list */
-  .panel-automation {
-    margin: 0;
+  .panel-list--failures span {
+    color: var(--text-secondary);
+  }
+
+  .panel-assessment {
+    display: grid;
+    gap: var(--space-xs);
+    margin: 0 0 var(--space-md);
+  }
+
+  .assessment-row {
     display: flex;
-    flex-direction: column;
+    justify-content: space-between;
     gap: var(--space-sm);
-    padding: var(--space-md);
-    background: color-mix(in oklch, var(--cyber-cyan) 4%, transparent);
-    border-radius: 6px;
-    border: 1px solid color-mix(in oklch, var(--cyber-cyan) 15%, transparent);
+    font-size: var(--text-xs);
+  }
+
+  .assessment-row dt {
+    color: var(--text-dim);
+    font-weight: 500;
+  }
+
+  .assessment-row dd {
+    margin: 0;
+    color: var(--text-primary);
+    text-align: right;
+  }
+
+  .assessment-row--impact dd {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+    justify-content: flex-end;
+  }
+
+  .impact-pill {
+    padding: 2px 6px;
+    border-radius: 999px;
+    background: color-mix(in oklch, var(--cyber-cyan) 12%, transparent);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--text-primary);
+  }
+
+  .panel-list--sources li,
+  .panel-list--videos li {
+    font-size: var(--text-xs);
+  }
+
+  .panel-automation {
+    display: grid;
+    gap: var(--space-xs);
+    margin: 0 0 var(--space-md);
   }
 
   .automation-row {
     display: flex;
-    align-items: baseline;
-    gap: var(--space-md);
+    justify-content: space-between;
+    gap: var(--space-sm);
+    font-size: var(--text-xs);
   }
 
   .automation-row dt {
-    font-size: var(--text-xs);
-    font-weight: 600;
     color: var(--text-dim);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    min-width: 4.5rem;
   }
 
   .automation-row dd {
     margin: 0;
-    flex: 1;
-    min-width: 0;
-  }
-
-  .automation-row code {
-    font-family: var(--font-mono);
-    font-size: var(--text-xs);
-    color: var(--cyber-cyan);
-    word-break: break-all;
+    color: var(--text-secondary);
   }
 
   .panel-footer {
-    padding: var(--space-md) var(--space-lg);
+    padding: var(--space-lg);
     border-top: 1px solid var(--border);
     background: var(--bg-elevated);
   }
 
   .panel-action {
     width: 100%;
-    padding: 0.875rem 1.5rem;
+    padding: var(--space-sm);
     font-family: var(--font-mono);
-    font-size: 1rem;
+    font-size: var(--text-sm);
     font-weight: 600;
-    color: oklch(0.1 0 0);
+    color: var(--bg-primary);
     background: var(--cyber-yellow);
     border: none;
     border-radius: 6px;
     cursor: pointer;
     transition: all var(--duration-fast) ease;
-
-    &:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 0 20px color-mix(in oklch, var(--cyber-yellow) 50%, transparent);
-    }
-
-    &:active {
-      transform: translateY(0);
-    }
-
-    &.completed {
-      background: var(--safe);
-      color: oklch(0.98 0.01 285);
-    }
-
-    &:focus-visible {
-      outline: 2px solid var(--cyber-yellow);
-      outline-offset: 2px;
-    }
   }
 
-  @media (max-width: 600px) {
-    .guide-panel {
-      width: 100vw;
-    }
+  .panel-action.completed {
+    background: var(--safe);
   }
 </style>
