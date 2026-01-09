@@ -6,7 +6,7 @@
  */
 
 import { buildPersonaSectionId, buildSectionId, SECTION_PREFIXES } from './section-ids'
-import type { GpuType, PresetType } from './types'
+import type { AutomatedBy, GpuType, PresetType } from './types'
 import { GPU_TYPES } from './types'
 
 export type ImpactLevel = 'high' | 'medium' | 'low'
@@ -19,6 +19,17 @@ export interface ItemMeta {
   readonly impact?: ImpactLevel
   readonly difficulty?: DifficultyLevel
   readonly safety?: SafetyLevel
+  /**
+   * Automation metadata - describes how this step is automated by the script.
+   * Phase A: Simple boolean for newly automated items (Discord, Steam, Audio, Monitor)
+   * Phase B: Full AutomatedBy object for existing 200+ automated items
+   */
+  readonly automated?: boolean | AutomatedBy
+  /**
+   * Alternative manual instructions for automated steps.
+   * Shows users how to achieve the same result without the script.
+   */
+  readonly manualSteps?: readonly string[]
 }
 
 export interface ManualStepItem extends ItemMeta {
@@ -136,6 +147,7 @@ const WINDOWS_DISPLAY_ALL: ManualStepSection = {
       impact: 'high',
       difficulty: 'quick',
       safety: 'safe',
+      automated: true, // Now automated by Set-MonitorRefreshRate function
     },
     {
       id: 'gpu-scheduling',
@@ -172,6 +184,83 @@ const WINDOWS_DISPLAY_ALL: ManualStepSection = {
       impact: 'medium',
       difficulty: 'quick',
       safety: 'safe',
+    },
+    {
+      id: 'game-mode-enable',
+      step: 'Settings → Gaming → Game Mode',
+      check: 'Toggle Game Mode to ON',
+      why: 'Prioritizes game processes and reduces background activity during gameplay.',
+      impact: 'medium',
+      difficulty: 'quick',
+      safety: 'safe',
+      automated: {
+        script: true,
+        module: 'performance.psm1',
+        function: 'Enable-GameMode',
+        registryPath: 'HKCU:\\Software\\Microsoft\\GameBar',
+        registryKey: 'AutoGameModeEnabled',
+        registryValue: 1,
+        registryType: 'DWORD',
+        scriptAction: 'Enables Windows Game Mode via registry',
+      },
+    },
+    {
+      id: 'gamedvr-disable',
+      step: 'Settings → Gaming → Xbox Game Bar',
+      check: 'Toggle Record game clips and Open Xbox Game Bar to OFF',
+      why: 'Background recording overlay causes frame drops and input lag in competitive games.',
+      impact: 'high',
+      difficulty: 'quick',
+      safety: 'safe',
+      automated: {
+        script: true,
+        module: 'performance.psm1',
+        function: 'Disable-GameDVR',
+        registryPath: 'HKCU:\\System\\GameConfigStore',
+        registryKey: 'GameDVR_Enabled',
+        registryValue: 0,
+        registryType: 'DWORD',
+        scriptAction: 'Disables Game Bar and background recording (sets multiple registry keys)',
+      },
+    },
+    {
+      id: 'fullscreen-optimizations-disable',
+      step: 'Registry: HKCU:\\System\\GameConfigStore',
+      check:
+        'Set "GameDVR_DXGIHonorFSEWindowsCompatible" = 1 (or right-click game .exe → Properties → Compatibility → Disable fullscreen optimizations)',
+      why: 'Borderless fullscreen adds latency. True exclusive fullscreen is faster for competitive gaming.',
+      impact: 'medium',
+      difficulty: 'advanced',
+      safety: 'moderate',
+      automated: {
+        script: true,
+        module: 'performance.psm1',
+        function: 'Disable-FullscreenOptimizations',
+        registryPath: 'HKCU:\\System\\GameConfigStore',
+        registryKey: 'GameDVR_DXGIHonorFSEWindowsCompatible',
+        registryValue: 1,
+        registryType: 'DWORD',
+        scriptAction: 'Disables FSO globally via registry (games default to true fullscreen)',
+      },
+    },
+    {
+      id: 'mpo-disable',
+      step: 'Registry: HKLM:\\SOFTWARE\\Microsoft\\Windows\\Dwm',
+      check: 'Create DWORD "OverlayTestMode" = 5, then Reboot',
+      why: 'Can cause flickering, stutters, and frame pacing issues in some games.',
+      impact: 'medium',
+      difficulty: 'advanced',
+      safety: 'safe',
+      automated: {
+        script: true,
+        module: 'performance.psm1',
+        function: 'Disable-MPO',
+        registryPath: 'HKLM:\\SOFTWARE\\Microsoft\\Windows\\Dwm',
+        registryKey: 'OverlayTestMode',
+        registryValue: 5,
+        registryType: 'DWORD',
+        scriptAction: 'Disables Hardware Compositor MPO',
+      },
     },
   ] as const,
 } as const
@@ -982,6 +1071,7 @@ const DISCORD_PRO_GAMER: ManualStepSection = {
       impact: 'medium',
       difficulty: 'quick',
       safety: 'safe',
+      automated: true, // Set-DiscordGamingSettings
     },
     {
       id: 'discord-pro-activity',
@@ -991,6 +1081,7 @@ const DISCORD_PRO_GAMER: ManualStepSection = {
       impact: 'low',
       difficulty: 'quick',
       safety: 'safe',
+      automated: true, // Set-DiscordGamingSettings
     },
     {
       id: 'discord-pro-echo',
@@ -1000,6 +1091,7 @@ const DISCORD_PRO_GAMER: ManualStepSection = {
       impact: 'low',
       difficulty: 'quick',
       safety: 'safe',
+      automated: true, // Set-DiscordGamingSettings
     },
     {
       id: 'discord-pro-noise',
@@ -1009,6 +1101,7 @@ const DISCORD_PRO_GAMER: ManualStepSection = {
       impact: 'low',
       difficulty: 'quick',
       safety: 'safe',
+      automated: true, // Set-DiscordGamingSettings (sets to "standard")
     },
     {
       id: 'discord-pro-agc',
@@ -1018,6 +1111,7 @@ const DISCORD_PRO_GAMER: ManualStepSection = {
       impact: 'low',
       difficulty: 'quick',
       safety: 'safe',
+      automated: true, // Set-DiscordGamingSettings
     },
   ] as const,
 } as const
@@ -1118,6 +1212,7 @@ const STEAM_PRO_GAMER: ManualStepSection = {
       impact: 'medium',
       difficulty: 'quick',
       safety: 'safe',
+      automated: true, // Set-SteamGamingSettings
     },
     {
       id: 'steam-pro-fps-counter',
@@ -1136,6 +1231,7 @@ const STEAM_PRO_GAMER: ManualStepSection = {
       impact: 'high',
       difficulty: 'quick',
       safety: 'safe',
+      automated: true, // Set-SteamGamingSettings
     },
     {
       id: 'steam-pro-low-bandwidth',
@@ -1145,6 +1241,7 @@ const STEAM_PRO_GAMER: ManualStepSection = {
       impact: 'low',
       difficulty: 'quick',
       safety: 'safe',
+      automated: true, // Set-SteamGamingSettings
     },
     {
       id: 'steam-pro-notifications',
@@ -1800,6 +1897,33 @@ const PERIPHERAL_MOUSE_PRO: ManualStepSection = {
       difficulty: 'moderate',
       safety: 'safe',
     },
+    {
+      id: 'mouse-acceleration-disable',
+      setting: 'Mouse Acceleration',
+      value: 'Disabled',
+      why: 'Raw mouse input for precise aiming. Windows acceleration causes non-linear mouse movement.',
+      impact: 'high',
+      difficulty: 'advanced',
+      safety: 'safe',
+      automated: {
+        script: true,
+        module: 'peripherals.psm1',
+        function: 'Disable-MouseAcceleration',
+        registryPath: 'HKCU:\\Control Panel\\Mouse',
+        registryKey: 'MouseSpeed',
+        registryValue: 0,
+        registryType: 'String',
+        scriptAction: 'Sets MouseSpeed=0, MouseThreshold1=0, MouseThreshold2=0 in registry',
+      },
+      manualSteps: [
+        'Open Registry Editor (regedit)',
+        'Navigate to HKCU:\\Control Panel\\Mouse',
+        'Set "MouseSpeed" = "0"',
+        'Set "MouseThreshold1" = "0"',
+        'Set "MouseThreshold2" = "0"',
+        'Reboot for changes to take effect',
+      ],
+    },
   ] as const,
 } as const
 
@@ -1898,6 +2022,7 @@ const PERIPHERAL_AUDIO_ALL: ManualStepSection = {
       impact: 'medium',
       difficulty: 'quick',
       safety: 'safe',
+      automated: true, // Set-AudioDeviceProperties
     },
     {
       id: 'audio-exclusive',
@@ -1907,6 +2032,7 @@ const PERIPHERAL_AUDIO_ALL: ManualStepSection = {
       impact: 'medium',
       difficulty: 'quick',
       safety: 'safe',
+      automated: true, // Set-AudioDeviceProperties
     },
   ] as const,
 } as const
@@ -1944,6 +2070,102 @@ const PERIPHERAL_AUDIO_PRO: ManualStepSection = {
       impact: 'medium',
       difficulty: 'quick',
       safety: 'safe',
+      automated: true, // Set-AudioDeviceProperties
+    },
+  ] as const,
+} as const
+
+const NETWORK_ALL: ManualStepSection = {
+  id: buildSectionId('network-all'),
+  title: 'Network Optimization',
+  description: 'Network settings to reduce latency and improve online gaming performance',
+  items: [
+    {
+      id: 'nagle-algorithm-disable',
+      setting: "Nagle's Algorithm",
+      value: 'Disabled',
+      why: 'TCP packet coalescing adds latency. Disable for real-time gaming traffic.',
+      impact: 'medium',
+      difficulty: 'advanced',
+      safety: 'safe',
+      automated: {
+        script: true,
+        module: 'network.psm1',
+        function: 'Disable-NagleAlgorithm',
+        registryPath:
+          'HKLM:\\SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters\\Interfaces\\{adapter-guid}',
+        registryKey: 'TcpAckFrequency',
+        registryValue: 1,
+        registryType: 'DWORD',
+        scriptAction: 'Sets TcpAckFrequency=1 and TCPNoDelay=1 for all network adapters',
+      },
+      manualSteps: [
+        'Open Registry Editor as Administrator',
+        'Navigate to HKLM:\\SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters\\Interfaces',
+        'Find your active network adapter GUID (check ipconfig /all)',
+        'Create DWORD "TcpAckFrequency" = 1',
+        'Create DWORD "TCPNoDelay" = 1',
+        'Reboot',
+      ],
+    },
+    {
+      id: 'network-throttling-disable',
+      setting: 'Network Throttling Index',
+      value: 'Disabled (0xFFFFFFFF)',
+      why: 'Windows limits network bandwidth by default. Remove limit for gaming.',
+      impact: 'medium',
+      difficulty: 'advanced',
+      safety: 'safe',
+      automated: {
+        script: true,
+        module: 'network.psm1',
+        function: 'Disable-NetworkThrottling',
+        registryPath:
+          'HKLM:\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile',
+        registryKey: 'NetworkThrottlingIndex',
+        registryValue: 0xffffffff,
+        registryType: 'DWORD',
+        scriptAction: 'Removes network bandwidth throttling',
+      },
+      manualSteps: [
+        'Open Registry Editor as Administrator',
+        'Navigate to HKLM:\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile',
+        'Set "NetworkThrottlingIndex" = 0xFFFFFFFF (hex)',
+        'Reboot',
+      ],
+    },
+  ] as const,
+} as const
+
+const PERFORMANCE_ALL: ManualStepSection = {
+  id: buildSectionId('performance-all'),
+  title: 'Performance Tweaks',
+  description: 'Advanced Windows performance optimizations for competitive gaming',
+  items: [
+    {
+      id: 'win32-priority-separation',
+      setting: 'Win32PrioritySeparation',
+      value: '0x26 (Short, Variable, High foreground boost)',
+      why: 'Gives foreground applications (games) more CPU time slices for better performance.',
+      impact: 'medium',
+      difficulty: 'advanced',
+      safety: 'moderate',
+      automated: {
+        script: true,
+        module: 'performance.psm1',
+        function: 'Set-Win32PrioritySeparation',
+        registryPath: 'HKLM:\\SYSTEM\\CurrentControlSet\\Control\\PriorityControl',
+        registryKey: 'Win32PrioritySeparation',
+        registryValue: 0x26,
+        registryType: 'DWORD',
+        scriptAction: 'Sets Windows scheduler to prioritize foreground processes',
+      },
+      manualSteps: [
+        'Open Registry Editor as Administrator',
+        'Navigate to HKLM:\\SYSTEM\\CurrentControlSet\\Control\\PriorityControl',
+        'Set "Win32PrioritySeparation" = 0x26 (hex) or 38 (decimal)',
+        'Reboot',
+      ],
     },
   ] as const,
 } as const
@@ -2602,6 +2824,7 @@ export type SectionCategory =
   | 'software'
   | 'peripherals'
   | 'network'
+  | 'performance'
   | 'preflight'
   | 'troubleshooting'
   | 'games'
@@ -2726,7 +2949,13 @@ const SECTION_GROUPS: readonly SectionGroup[] = [
     id: 'network',
     title: 'Network Configuration',
     icon: 'network',
-    sections: [UBIQUITI_GAMING],
+    sections: [NETWORK_ALL, UBIQUITI_GAMING],
+  },
+  {
+    id: 'performance',
+    title: 'Performance Tweaks',
+    icon: 'zap',
+    sections: [PERFORMANCE_ALL],
   },
   {
     id: 'preflight',

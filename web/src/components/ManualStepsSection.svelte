@@ -60,6 +60,7 @@ let sortOpen = $state(false)
 let filterOpen = $state(false)
 let showInstructions = $state(false)
 let instructionsText = $state('')
+let showAutomated = $state(true)
 
 // Impact badge tooltips
 const IMPACT_TOOLTIPS: Record<ImpactLevel, StructuredTooltip> = {
@@ -135,6 +136,18 @@ const totalItems = $derived.by(() => {
   const persona = app.activePreset ?? 'gamer'
   const gpu = app.hardware.gpu
   return countTotalItems(persona, gpu)
+})
+
+const automatedCount = $derived.by(() => {
+  let count = 0
+  for (const group of filteredGroups) {
+    for (const section of group.sections) {
+      for (const item of section.items) {
+        if (item.automated) count++
+      }
+    }
+  }
+  return count
 })
 
 $effect(() => {
@@ -237,11 +250,15 @@ function getProgress(sectionId: string, items: readonly AnyItem[]) {
 
 function getGroupProgress(sections: readonly ManualStepSection[]) {
   const _ = progressData.lastUpdated
+  const showAuto = showAutomated // Read reactive state
   let completed = 0
   let total = 0
 
   for (const section of sections) {
-    const sectionProgress = getProgressForItems(section.id, section.items as readonly AnyItem[])
+    // Filter out automated items if toggle is OFF
+    const filteredItems = showAuto ? section.items : section.items.filter((item) => !item.automated)
+
+    const sectionProgress = getProgressForItems(section.id, filteredItems as readonly AnyItem[])
     completed += sectionProgress.completed
     total += sectionProgress.total
   }
@@ -470,6 +487,11 @@ interface FlatItem {
 }
 
 function matchesFilter(sectionId: string, item: AnyItem): boolean {
+  // Filter out automated items if toggle is OFF
+  if (!showAutomated && item.automated) {
+    return false
+  }
+
   const itemId = getItemId(item)
   const itemDone = isDone(sectionId, itemId)
   const impact = getImpact(item)
@@ -856,6 +878,26 @@ function getGroupIcon(groupId: string): string {
               </div>
             {/if}
           </div>
+
+          <!-- Automated Items Toggle -->
+          <button
+            class="guide__automated-toggle"
+            class:active={showAutomated}
+            type="button"
+            aria-pressed={showAutomated}
+            onclick={() => showAutomated = !showAutomated}
+            aria-label={showAutomated ? `Hide ${automatedCount} automated items` : `Show ${automatedCount} automated items`}
+            use:tooltip={showAutomated
+              ? `Hide ${automatedCount} automated items. These settings are automated by the PowerShell script.`
+              : `Show ${automatedCount} automated items. These settings can be automated by the PowerShell script.`}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="2" width="20" height="8" rx="2" ry="2" />
+              <rect x="2" y="14" width="20" height="8" rx="2" ry="2" />
+              <line x1="6" y1="6" x2="6.01" y2="6" />
+              <line x1="6" y1="18" x2="6.01" y2="18" />
+            </svg>
+          </button>
         </div>
           </div>
 
@@ -887,7 +929,7 @@ function getGroupIcon(groupId: string): string {
                   {@const itemTooltip = buildItemTooltip(item)}
 
                   {#if isComplex}
-                    <div class="guide__card guide__card--complex" class:completed={itemDone}>
+                    <div class="guide__card guide__card--complex" class:completed={itemDone} class:automated={item.automated}>
                       <label class="guide__card-header" use:tooltip={itemTooltip}>
                         <input
                           type="checkbox"
@@ -899,7 +941,14 @@ function getGroupIcon(groupId: string): string {
                         />
                         <span class="guide__checkbox"></span>
                         <span class="guide__card-content">
-                          <span class="guide__card-title">{title}</span>
+                          <span class="guide__card-title">
+                            {title}
+                            {#if item.automated}
+                              <span class="guide__automated-badge" title="Automated by generated PowerShell script">
+                                🤖
+                              </span>
+                            {/if}
+                          </span>
                         </span>
                         <span class="guide__card-badges">
                           <span class="guide__badge guide__badge--{impact}" use:tooltip={IMPACT_TOOLTIPS[impact]}>
@@ -951,7 +1000,7 @@ function getGroupIcon(groupId: string): string {
                   </div>
                 </div>
                   {:else}
-                    <label class="guide__card" class:completed={itemDone} use:tooltip={itemTooltip}>
+                    <label class="guide__card" class:completed={itemDone} class:automated={item.automated} use:tooltip={itemTooltip}>
                       <input
                         type="checkbox"
                         id="guide-item-{sectionId}-{itemId}"
@@ -962,7 +1011,14 @@ function getGroupIcon(groupId: string): string {
                       />
                       <span class="guide__checkbox"></span>
                       <span class="guide__card-content">
-                        <span class="guide__card-title">{title}</span>
+                        <span class="guide__card-title">
+                          {title}
+                          {#if item.automated}
+                            <span class="guide__automated-badge" title="Automated by generated PowerShell script">
+                              🤖
+                            </span>
+                          {/if}
+                        </span>
                         {#if value}
                           <span class="guide__card-value">{value}</span>
                         {/if}
@@ -1067,7 +1123,7 @@ function getGroupIcon(groupId: string): string {
                         {@const itemTooltip = buildItemTooltip(item)}
 
                         {#if isComplex}
-                          <div class="guide__card guide__card--complex" class:completed={itemDone}>
+                          <div class="guide__card guide__card--complex" class:completed={itemDone} class:automated={item.automated}>
                             <label class="guide__card-header" use:tooltip={itemTooltip}>
                       <input
                         type="checkbox"
@@ -1079,7 +1135,14 @@ function getGroupIcon(groupId: string): string {
                               />
                               <span class="guide__checkbox"></span>
                               <span class="guide__card-content">
-                                <span class="guide__card-title">{title}</span>
+                                <span class="guide__card-title">
+                                  {title}
+                                  {#if item.automated}
+                                    <span class="guide__automated-badge" title="Automated by generated PowerShell script">
+                                      🤖
+                                    </span>
+                                  {/if}
+                                </span>
                               </span>
                               <span class="guide__card-badges">
                                 <span class="guide__badge guide__badge--{impact}" use:tooltip={IMPACT_TOOLTIPS[impact]}>
@@ -1131,7 +1194,7 @@ function getGroupIcon(groupId: string): string {
                             </div>
                           </div>
                         {:else}
-                          <label class="guide__card" class:completed={itemDone} use:tooltip={itemTooltip}>
+                          <label class="guide__card" class:completed={itemDone} class:automated={item.automated} use:tooltip={itemTooltip}>
                             <input
                               type="checkbox"
                               id="guide-item-{section.id}-{itemId}"
@@ -1142,7 +1205,14 @@ function getGroupIcon(groupId: string): string {
                             />
                             <span class="guide__checkbox"></span>
                             <span class="guide__card-content">
-                              <span class="guide__card-title">{title}</span>
+                              <span class="guide__card-title">
+                                {title}
+                                {#if item.automated}
+                                  <span class="guide__automated-badge" title="Automated by generated PowerShell script">
+                                    🤖
+                                  </span>
+                                {/if}
+                              </span>
                               {#if value}
                                 <span class="guide__card-value">{value}</span>
                               {/if}
