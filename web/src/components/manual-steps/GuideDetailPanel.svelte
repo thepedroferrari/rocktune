@@ -41,6 +41,11 @@ function formatImpact(value: number): string {
   return '0'
 }
 
+function formatScore(value: number | null): string {
+  if (value === null) return '?/5'
+  return `${value}/5`
+}
+
 function buildSearchUrl(term: string): string {
   return `https://www.youtube.com/results?search_query=${encodeURIComponent(term)}`
 }
@@ -242,11 +247,11 @@ $effect(() => {
         </div>
         <div class="assessment-row">
           <dt>Confidence</dt>
-          <dd>{item.guide.assessment.confidence}/5</dd>
+          <dd>{formatScore(item.guide.assessment.confidence)}</dd>
         </div>
         <div class="assessment-row">
           <dt>Risk</dt>
-          <dd>{item.guide.assessment.risk}/5</dd>
+          <dd>{formatScore(item.guide.assessment.risk)}</dd>
         </div>
         <div class="assessment-row">
           <dt>Scope</dt>

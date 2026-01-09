@@ -28,10 +28,13 @@ export type ImpactAxis =
   | 'noise'
   | 'battery'
 
+export type ConfidenceScore = 1 | 2 | 3 | 4 | 5
+export type RiskScore = 0 | 1 | 2 | 3 | 4 | 5
+
 export interface GuideAssessment {
   readonly evidence: EvidenceLevel
-  readonly confidence: 1 | 2 | 3 | 4 | 5
-  readonly risk: 1 | 2 | 3 | 4 | 5
+  readonly confidence?: ConfidenceScore
+  readonly risk?: RiskScore
   readonly impact: Partial<Record<ImpactAxis, -2 | -1 | 0 | 1 | 2>>
   readonly scope: 'global' | 'perGame' | 'hardware' | 'symptomOnly'
   readonly prerequisites?: readonly string[]
@@ -212,6 +215,11 @@ export type ManualItem =
   | StreamingTroubleshootItem
   | DiagnosticTool
 
+export interface NormalizedGuideAssessment extends Omit<GuideAssessment, 'confidence' | 'risk'> {
+  readonly confidence: ConfidenceScore | null
+  readonly risk: RiskScore | null
+}
+
 export interface NormalizedGuideCopy {
   readonly intro: string
   readonly steps: readonly string[]
@@ -220,7 +228,7 @@ export interface NormalizedGuideCopy {
   readonly skipIf: readonly string[]
   readonly verify: readonly string[]
   readonly rollback: readonly string[]
-  readonly assessment: GuideAssessment
+  readonly assessment: NormalizedGuideAssessment
   readonly failureModes: readonly FailureMode[]
   readonly techNotes: readonly string[]
   readonly references: readonly string[]
@@ -277,10 +285,11 @@ const DEFAULT_VERIFY = 'Re-test in a repeatable scene and confirm no regressions
 
 const DEFAULT_ROLLBACK = 'Undo the change and reboot if required.'
 
-const DEFAULT_ASSESSMENT: Omit<GuideAssessment, 'lastReviewed'> = {
+const DEFAULT_ASSESSMENT: Omit<
+  NormalizedGuideAssessment,
+  'confidence' | 'risk' | 'lastReviewed' | 'sources' | 'prerequisites' | 'appliesTo'
+> = {
   evidence: 'community',
-  confidence: 3,
-  risk: 2,
   impact: {},
   scope: 'global',
 }
@@ -297,6 +306,8 @@ const REFERENCE_SOURCES_BY_ID: Record<string, readonly string[]> = {
 } as const
 
 const ASSESSMENT_OVERRIDES: Record<string, Partial<GuideAssessment>> = {
+  'refresh-rate': { evidence: 'official', confidence: 5, risk: 0 },
+  'preflight-refresh-rate': { evidence: 'official', confidence: 5, risk: 0 },
   'gpu-scheduling': { evidence: 'official' },
   'fullscreen-optimizations-disable': { evidence: 'official', scope: 'perGame' },
   'gamedvr-disable': { evidence: 'official' },
@@ -553,32 +564,33 @@ function getDefaultScope(item: ManualItem, section: ManualStepSection): GuideAss
   return 'global'
 }
 
-function coerceRisk(safety: SafetyLevel): 1 | 2 | 3 | 4 | 5 {
-  if (safety === 'expert') return 4
-  if (safety === 'moderate') return 3
-  return 2
-}
-
 function buildAssessment(
   item: ManualItem,
   section: ManualStepSection,
   guide: GuideCopy | undefined,
   options?: NormalizeOptions,
-): GuideAssessment {
-  const safety = item.safety ?? 'safe'
-  const override = {
-    ...ASSESSMENT_OVERRIDES[item.id],
+): NormalizedGuideAssessment {
+  const override: Partial<GuideAssessment> = {
+    ...(ASSESSMENT_OVERRIDES[item.id] ?? {}),
     ...(guide?.assessment ?? {}),
   }
   const hasExplicitAssessment = guide?.assessment !== undefined
   const hasLastReviewed = override.lastReviewed !== undefined
   const scope = override.scope ?? getDefaultScope(item, section)
 
-  const assessment: GuideAssessment = {
+  const normalizedRisk =
+    override.risk === undefined
+      ? null
+      : override.risk <= 0
+        ? 0
+        : ((override.risk - 1) as RiskScore)
+
+  const assessment: NormalizedGuideAssessment = {
     ...DEFAULT_ASSESSMENT,
     ...override,
     scope,
-    risk: override.risk ?? coerceRisk(safety),
+    confidence: override.confidence ?? null,
+    risk: normalizedRisk,
     lastReviewed: override.lastReviewed ?? MANUAL_REVIEW_DATE,
     impact: override.impact ?? {},
   }
@@ -595,10 +607,6 @@ function buildAssessment(
   const mergedSources = [...assessmentSources, ...guideSources, ...refSources]
   if (mergedSources.length > 0) {
     assessment.sources = mergedSources
-  }
-
-  if (isRegistryOrSystemTweak(item, section) && assessment.risk < 3) {
-    assessment.risk = 3
   }
 
   if (hasExplicitAssessment && !hasLastReviewed) {
@@ -627,12 +635,13 @@ function buildAssessment(
 function buildFailureModes(
   item: ManualItem,
   section: ManualStepSection,
-  assessment: GuideAssessment,
+  assessment: NormalizedGuideAssessment,
   guide: GuideCopy | undefined,
   options?: NormalizeOptions,
 ): FailureMode[] {
   const failureModes = guide?.failureModes ? [...guide.failureModes] : []
-  const requiresFailureModes = assessment.risk >= 3 || assessment.scope === 'symptomOnly'
+  const riskScore = assessment.risk ?? 0
+  const requiresFailureModes = riskScore >= 3 || assessment.scope === 'symptomOnly'
   if (failureModes.length > 0 || !requiresFailureModes) {
     return failureModes
   }
@@ -3488,42 +3497,42 @@ const VIDEOS = {
     id: 'intel-settings',
     title: 'Intel CPU Settings You NEED to Change',
     creator: 'JayzTwoCents',
-    search: 'JayzTwoCents Intel CPU Settings You NEED to Change',
+    videoId: 'B3EW5lRIZYc',
     description: 'Essential BIOS and Windows settings for Intel CPUs',
   },
   POST_BUILD: {
     id: 'post-build',
     title: 'What to do AFTER Building Your PC',
     creator: 'JayzTwoCents',
-    search: 'JayzTwoCents What to do AFTER Building Your PC',
+    videoId: 'xhHtHMQygzE',
     description: 'First steps after a fresh Windows install',
   },
   STUTTERING_FIXES: {
     id: 'stuttering-fixes',
     title: 'Fix Game Stuttering & Micro-Stutters',
     creator: 'JayzTwoCents',
-    search: 'JayzTwoCents Fix Game Stuttering & Micro-Stutters',
+    videoId: 'YWTZkB9rVU0',
     description: 'Diagnose and fix stuttering issues including mouse-move stutters',
   },
   PC_PERFORMANCE: {
     id: 'pc-performance-setup',
     title: "You're HURTING your Performance! Check these things NOW!",
     creator: 'JayzTwoCents',
-    search: "JayzTwoCents You're HURTING your Performance! Check these things NOW!",
+    videoId: 'kRJZpcbVXIg',
     description: 'XMP/EXPO, fan curves, Fan Control software, VBS optimization',
   },
   NVIDIA_CS2: {
     id: 'nvidia-cs2-settings',
     title: 'Best Nvidia Settings for Counter-Strike 2',
     creator: 'Gaming Optimization Guide',
-    search: 'Gaming Optimization Guide Best Nvidia Settings for Counter-Strike 2',
+    videoId: 'FVhgaHfhMTg',
     description: 'Comprehensive Nvidia Control Panel settings for CS2',
   },
   NVIDIA_2026: {
     id: 'nvidia-gaming-2026',
     title: 'Nvidia Settings for Gaming Updated 2026',
     creator: 'Gaming Optimization Guide',
-    search: 'Gaming Optimization Guide Nvidia Settings for Gaming Updated 2026',
+    videoId: '5mtCUTUNzs0',
     description: 'Driver installation, digital vibrance, Reflex, and advanced settings',
   },
   BUFFERBLOAT_LAG: {

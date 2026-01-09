@@ -51,7 +51,7 @@ Deno.test('normalizeManualItem falls back to manualSteps and prefixes step words
   assert(normalized.guide.steps[2].startsWith('Finish '))
 })
 
-Deno.test('normalizeManualItem enforces failure modes for registry-like items', () => {
+Deno.test('normalizeManualItem does not force risk for registry-like items', () => {
   const item: ManualStepItem = {
     id: 'test-registry-item',
     step: 'Registry: HKLM\\Software',
@@ -67,8 +67,77 @@ Deno.test('normalizeManualItem enforces failure modes for registry-like items', 
   }
 
   const normalized = normalizeManualItem(item, buildSection([item]))
-  assert(normalized.guide.assessment.risk >= 3)
-  assert(normalized.guide.failureModes.length > 0)
+  assertEquals(normalized.guide.assessment.risk, null)
+  assertEquals(normalized.guide.failureModes.length, 0)
+})
+
+Deno.test('normalizeManualItem defaults assessment scores to unknown when missing', () => {
+  const item: ManualStepItem = {
+    id: 'test-unknown-assessment',
+    step: 'Settings > Display',
+    check: 'Toggle setting',
+    why: 'Testing unknown assessment.',
+  }
+
+  const normalized = normalizeManualItem(item, buildSection([item]))
+  assertEquals(normalized.guide.assessment.confidence, null)
+  assertEquals(normalized.guide.assessment.risk, null)
+})
+
+Deno.test('normalizeManualItem supports zero risk scores', () => {
+  const item: ManualStepItem = {
+    id: 'test-zero-risk',
+    step: 'Settings > Display',
+    check: 'Apply safe change',
+    why: 'Testing zero risk.',
+    guide: {
+      intro: 'Test intro.',
+      steps: ['First open settings.', 'Next apply change.', 'Finish by verifying.'],
+      benefits: ['May help.'],
+      risks: ['No meaningful risk.'],
+      skipIf: ['Skip if already set.'],
+      verify: ['Verify setting applied.'],
+      rollback: ['Restore previous value.'],
+      assessment: {
+        evidence: 'official',
+        confidence: 5,
+        risk: 0,
+        impact: {},
+        scope: 'global',
+      },
+    } satisfies GuideCopy,
+  }
+
+  const normalized = normalizeManualItem(item, buildSection([item]))
+  assertEquals(normalized.guide.assessment.risk, 0)
+})
+
+Deno.test('normalizeManualItem normalizes non-zero risk scores down by one', () => {
+  const item: ManualStepItem = {
+    id: 'test-risk-offset',
+    step: 'Settings > Display',
+    check: 'Apply moderate change',
+    why: 'Testing risk offset.',
+    guide: {
+      intro: 'Test intro.',
+      steps: ['First open settings.', 'Next apply change.', 'Finish by verifying.'],
+      benefits: ['May help.'],
+      risks: ['May have side effects.'],
+      skipIf: ['Skip if already set.'],
+      verify: ['Verify setting applied.'],
+      rollback: ['Restore previous value.'],
+      assessment: {
+        evidence: 'community',
+        confidence: 3,
+        risk: 2,
+        impact: {},
+        scope: 'global',
+      },
+    } satisfies GuideCopy,
+  }
+
+  const normalized = normalizeManualItem(item, buildSection([item]))
+  assertEquals(normalized.guide.assessment.risk, 1)
 })
 
 Deno.test('normalizeManualItem warns when guide assessment is missing lastReviewed', () => {

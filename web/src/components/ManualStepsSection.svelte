@@ -1603,7 +1603,7 @@
                     {#each group.videos as video (video.id)}
                       <a
                         href={getYouTubeUrl(video)}
-                        target="blank"
+                        target="_blank"
                         rel="noopener noreferrer"
                         class="guide__video-card"
                       >
