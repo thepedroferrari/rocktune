@@ -258,6 +258,39 @@ export interface OptimizationEvidence {
   readonly note?: string
 }
 
+/**
+ * Metadata describing how a manual step is automated by the generated script.
+ * Enables full transparency: users can see what the script does AND how to do it manually.
+ */
+export interface AutomatedBy {
+  /** True if this step is automated by the generated PowerShell script */
+  readonly script: boolean
+  /** PowerShell module name (e.g., "performance.psm1") */
+  readonly module?: string
+  /** PowerShell function name (e.g., "Enable-MSIMode") */
+  readonly function?: string
+  /** Registry path if this is a registry tweak */
+  readonly registryPath?: string
+  /** Registry key name */
+  readonly registryKey?: string
+  /** Registry value (can be number, string, or binary data description) */
+  readonly registryValue?: unknown
+  /** Registry value type (DWORD, String, Binary, etc.) */
+  readonly registryType?: 'DWORD' | 'String' | 'Binary' | 'QWORD' | 'MultiString' | 'ExpandString'
+  /** bcdedit command if this is a boot config change */
+  readonly bcdedit?: string
+  /** powercfg command if this is a power plan setting */
+  readonly powercfg?: string
+  /** Service name if this disables/enables a Windows service */
+  readonly service?: string
+  /** Scheduled task path if this disables a task */
+  readonly scheduledTask?: string
+  /** AppX package name if this removes bloatware */
+  readonly appxPackage?: string
+  /** Brief description of what the script does */
+  readonly scriptAction?: string
+}
+
 /** Breaking changes that an optimization may cause */
 export interface BreakingChange {
   /** What feature/functionality breaks */
