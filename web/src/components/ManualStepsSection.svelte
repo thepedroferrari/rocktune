@@ -39,6 +39,9 @@ import {
 import { buildSectionId } from '$lib/section-ids'
 import { app } from '$lib/state.svelte'
 import { type StructuredTooltip, tooltip } from '../utils/tooltips'
+import { tick } from 'svelte'
+import Icon from './ui/Icon.svelte'
+import GuideDetailPanel from './manual-steps/GuideDetailPanel.svelte'
 
 function getYouTubeThumbnail(videoId: string): string {
   return `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`
@@ -60,7 +63,9 @@ let sortOpen = $state(false)
 let filterOpen = $state(false)
 let showInstructions = $state(false)
 let instructionsText = $state('')
-let showAutomated = $state(true)
+let manualOnly = $state(false)
+let expandedId = $state<string | null>(null)
+let selectedItem = $state<{ item: AnyItem; sectionId: string } | null>(null)
 
 // Impact badge tooltips
 const IMPACT_TOOLTIPS: Record<ImpactLevel, StructuredTooltip> = {
@@ -173,6 +178,28 @@ function handleResetAll() {
   }
 }
 
+// Item type union for consistent handling
+type AnyItem =
+  | ManualStepItem
+  | SettingItem
+  | TroubleshootingItem
+  | StreamingTroubleshootItem
+  | DiagnosticTool
+  | GameLaunchItem
+  | SoftwareSettingItem
+  | RgbSettingItem
+  | BrowserSettingItem
+  | PreflightCheck
+
+// Open side panel for item details
+function openItemPanel(item: AnyItem, sectionId: string) {
+  selectedItem = { item, sectionId }
+}
+
+function closeItemPanel() {
+  selectedItem = null
+}
+
 async function handleDownloadConfig(sectionId: string) {
   const tool = getSectionConfigTool(buildSectionId(sectionId))
   if (!tool) return
@@ -214,18 +241,6 @@ async function handleDownloadConfig(sectionId: string) {
   }
 }
 
-type AnyItem =
-  | ManualStepItem
-  | SettingItem
-  | SoftwareSettingItem
-  | BrowserSettingItem
-  | RgbSettingItem
-  | PreflightCheck
-  | TroubleshootingItem
-  | GameLaunchItem
-  | StreamingTroubleshootItem
-  | DiagnosticTool
-
 function getItemId(item: AnyItem): string {
   return item.id ?? createItemId(item as unknown as Record<string, unknown>)
 }
@@ -250,13 +265,13 @@ function getProgress(sectionId: string, items: readonly AnyItem[]) {
 
 function getGroupProgress(sections: readonly ManualStepSection[]) {
   const _ = progressData.lastUpdated
-  const showAuto = showAutomated // Read reactive state
+  const showManualOnly = manualOnly // Read reactive state
   let completed = 0
   let total = 0
 
   for (const section of sections) {
-    // Filter out automated items if toggle is OFF
-    const filteredItems = showAuto ? section.items : section.items.filter((item) => !item.automated)
+    // Filter out automated items if "Manual only" is ON
+    const filteredItems = showManualOnly ? section.items.filter((item) => !item.automated) : section.items
 
     const sectionProgress = getProgressForItems(section.id, filteredItems as readonly AnyItem[])
     completed += sectionProgress.completed
@@ -487,8 +502,8 @@ interface FlatItem {
 }
 
 function matchesFilter(sectionId: string, item: AnyItem): boolean {
-  // Filter out automated items if toggle is OFF
-  if (!showAutomated && item.automated) {
+  // Filter out automated items if "Manual only" is ON
+  if (manualOnly && item.automated) {
     return false
   }
 
@@ -879,24 +894,24 @@ function getGroupIcon(groupId: string): string {
             {/if}
           </div>
 
-          <!-- Automated Items Toggle -->
+          <!-- Manual Only Toggle -->
           <button
             class="guide__automated-toggle"
-            class:active={showAutomated}
+            class:active={manualOnly}
             type="button"
-            aria-pressed={showAutomated}
-            onclick={() => showAutomated = !showAutomated}
-            aria-label={showAutomated ? `Hide ${automatedCount} automated items` : `Show ${automatedCount} automated items`}
-            use:tooltip={showAutomated
-              ? `Hide ${automatedCount} automated items. These settings are automated by the PowerShell script.`
-              : `Show ${automatedCount} automated items. These settings can be automated by the PowerShell script.`}
+            aria-pressed={manualOnly}
+            onclick={() => manualOnly = !manualOnly}
+            use:tooltip={manualOnly
+              ? `Showing only manual items. Click to show all ${totalItems} items.`
+              : `${automatedCount} items can be automated by the script. Click to show only manual steps.`}
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="2" y="2" width="20" height="8" rx="2" ry="2" />
-              <rect x="2" y="14" width="20" height="8" rx="2" ry="2" />
-              <line x1="6" y1="6" x2="6.01" y2="6" />
-              <line x1="6" y1="18" x2="6.01" y2="18" />
+            <svg class="guide__toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2L2 7l10 5 10-5-10-5z" />
+              <path d="M2 17l10 5 10-5" />
+              <path d="M2 12l10 5 10-5" />
             </svg>
+            <span class="guide__toggle-label">Manual only</span>
+            <span class="guide__toggle-indicator" class:on={manualOnly}></span>
           </button>
         </div>
           </div>
@@ -1000,38 +1015,42 @@ function getGroupIcon(groupId: string): string {
                   </div>
                 </div>
                   {:else}
-                    <label class="guide__card" class:completed={itemDone} class:automated={item.automated} use:tooltip={itemTooltip}>
-                      <input
-                        type="checkbox"
-                        id="guide-item-{sectionId}-{itemId}"
-                        name="guide-item-{sectionId}"
-                        checked={itemDone}
-                        onchange={() => toggleItem(sectionId, itemId)}
-                        class="guide__checkbox-input"
-                      />
-                      <span class="guide__checkbox"></span>
-                      <span class="guide__card-content">
-                        <span class="guide__card-title">
-                          {title}
-                          {#if item.automated}
-                            <span class="guide__automated-badge" title="Automated by generated PowerShell script">
-                              🤖
-                            </span>
-                          {/if}
-                        </span>
-                        {#if value}
-                          <span class="guide__card-value">{value}</span>
-                        {/if}
-                      </span>
-                      <span class="guide__card-badges">
-                        <span class="guide__badge guide__badge--{impact}" use:tooltip={IMPACT_TOOLTIPS[impact]}>
-                          {impact === "high" ? "↑↑" : impact === "medium" ? "↑" : "−"}
-                        </span>
-                        <span class="guide__badge guide__badge--{safety}" use:tooltip={SAFETY_TOOLTIPS[safety]}>
-                          {safety === "safe" ? "✓" : safety === "moderate" ? "◎" : "△"}
-                        </span>
-                      </span>
-                    </label>
+                    <div
+                      class="guide__card"
+                      class:completed={itemDone}
+                      class:automated={item.automated}
+                      data-item-id={itemId}
+                    >
+                      <!-- Checkbox area (left, toggle completion) -->
+                      <div class="guide__card-checkbox">
+                        <input
+                          type="checkbox"
+                          id="guide-item-{sectionId}-{itemId}"
+                          name="guide-item-{sectionId}"
+                          checked={itemDone}
+                          onchange={() => toggleItem(sectionId, itemId)}
+                          onclick={(e) => e.stopPropagation()}
+                          aria-label={`Mark ${title} as ${itemDone ? 'incomplete' : 'complete'}`}
+                        />
+                      </div>
+
+                      <!-- Content area (clickable to open panel) -->
+                      <div
+                        class="guide__card-content"
+                        onclick={() => openItemPanel(item, sectionId)}
+                        onkeydown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault()
+                            openItemPanel(item, sectionId)
+                          }
+                        }}
+                        role="button"
+                        tabindex="0"
+                        use:tooltip={itemTooltip}
+                      >
+                        <h4 class="guide__card-title">{title}</h4>
+                      </div>
+                    </div>
                   {/if}
                 {/each}
               </div>
@@ -1194,38 +1213,44 @@ function getGroupIcon(groupId: string): string {
                             </div>
                           </div>
                         {:else}
-                          <label class="guide__card" class:completed={itemDone} class:automated={item.automated} use:tooltip={itemTooltip}>
-                            <input
-                              type="checkbox"
-                              id="guide-item-{section.id}-{itemId}"
-                              name="guide-item-{section.id}"
-                              checked={itemDone}
-                              onchange={() => toggleItem(section.id, itemId)}
-                              class="guide__checkbox-input"
-                            />
-                            <span class="guide__checkbox"></span>
-                            <span class="guide__card-content">
-                              <span class="guide__card-title">
-                                {title}
-                                {#if item.automated}
-                                  <span class="guide__automated-badge" title="Automated by generated PowerShell script">
-                                    🤖
-                                  </span>
-                                {/if}
-                              </span>
-                              {#if value}
-                                <span class="guide__card-value">{value}</span>
-                              {/if}
-                            </span>
-                            <span class="guide__card-badges">
-                              <span class="guide__badge guide__badge--{impact}" use:tooltip={IMPACT_TOOLTIPS[impact]}>
-                                {impact === "high" ? "↑↑" : impact === "medium" ? "↑" : "−"}
-                              </span>
-                              <span class="guide__badge guide__badge--{safety}" use:tooltip={SAFETY_TOOLTIPS[safety]}>
-                                {safety === "safe" ? "✓" : safety === "moderate" ? "◎" : "△"}
-                              </span>
-                            </span>
-                          </label>
+                          <div
+                            class="guide__card"
+                            class:completed={itemDone}
+                            class:automated={item.automated}
+                            data-item-id={itemId}
+                            onclick={() => openItemPanel(item, section.id)}
+                            onkeydown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault()
+                                openItemPanel(item, section.id)
+                              }
+                            }}
+                            role="button"
+                            tabindex="0"
+                            use:tooltip={itemTooltip}
+                          >
+                            <!-- Checkbox area (left, toggle completion) -->
+                            <div
+                              class="guide__card-checkbox"
+                              onclick={(e) => e.stopPropagation()}
+                              onkeydown={(e) => e.stopPropagation()}
+                              role="presentation"
+                            >
+                              <input
+                                type="checkbox"
+                                id="guide-item-{section.id}-{itemId}"
+                                name="guide-item-{section.id}"
+                                checked={itemDone}
+                                onchange={() => toggleItem(section.id, itemId)}
+                                aria-label={`Mark ${title} as ${itemDone ? 'incomplete' : 'complete'}`}
+                              />
+                            </div>
+
+                            <!-- Content area -->
+                            <div class="guide__card-content">
+                              <h4 class="guide__card-title">{title}</h4>
+                            </div>
+                          </div>
                         {/if}
                       {/each}
                       </div>
@@ -1283,6 +1308,27 @@ function getGroupIcon(groupId: string): string {
     </div>
   </div>
 </section>
+
+<!-- Side Panel for Item Details -->
+{#if selectedItem}
+  {@const item = selectedItem.item}
+  {@const sectionId = selectedItem.sectionId}
+  {@const itemId = getItemId(item)}
+  {@const itemTooltip = buildItemTooltip(item)}
+  {@const manualSteps = 'manualSteps' in item && item.manualSteps ? item.manualSteps : []}
+  {@const automationInfo = item.automated && typeof item.automated === 'object' ? item.automated : null}
+  <GuideDetailPanel
+    isOpen={true}
+    title={getItemTitle(item)}
+    manualSteps={manualSteps}
+    benefits={itemTooltip.pros}
+    considerations={itemTooltip.cons}
+    automationInfo={automationInfo}
+    isCompleted={isDone(sectionId, itemId)}
+    onClose={closeItemPanel}
+    onToggleComplete={() => toggleItem(sectionId, itemId)}
+  />
+{/if}
 
 {#if showInstructions}
   <!-- svelte-ignore a11y_click_events_have_key_events -->
