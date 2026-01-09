@@ -104,6 +104,9 @@
           },
           "style": {
             "noImplicitBoolean": "off"
+          },
+          "suspicious": {
+            "noUselessEscapeInString": "off"
           }
         }
       },
