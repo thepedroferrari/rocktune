@@ -257,7 +257,7 @@ $effect(() => {
   ></div>
 
   <!-- Panel -->
-  <aside
+  <div
     bind:this={panelRef}
     class="guide-panel"
     role="dialog"
@@ -580,7 +580,7 @@ $effect(() => {
         </button>
       </div>
     </footer>
-  </aside>
+  </div>
 {/if}
 
 <style>
@@ -679,8 +679,8 @@ $effect(() => {
   .panel-intro {
     margin-block: 0 var(--space-md);
     color: var(--text-secondary);
-    font-size: var(--text-sm);
-    line-height: 1.5;
+    font-size: var(--text-base);
+    line-height: 1.6;
   }
 
   .panel-heading {
@@ -713,7 +713,7 @@ $effect(() => {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: var(--text-xs);
+    font-size: var(--text-sm);
     font-weight: 600;
     color: var(--cyber-cyan);
     border: 1px solid color-mix(in oklch, var(--cyber-cyan) 50%, transparent);
@@ -722,9 +722,9 @@ $effect(() => {
 
   .step-text {
     display: block;
-    font-size: var(--text-sm);
+    font-size: var(--text-base);
     color: var(--text-primary);
-    line-height: 1.5;
+    line-height: 1.6;
   }
 
   .panel-list {
@@ -739,66 +739,15 @@ $effect(() => {
     display: flex;
     align-items: flex-start;
     gap: var(--space-xs);
-    font-size: var(--text-sm);
+    font-size: var(--text-base);
+    line-height: 1.6;
     color: var(--text-secondary);
-  }
-
-  .panel-icon {
-    margin-top: 0.2em;
-    flex-shrink: 0;
   }
 
   .panel-text {
     flex: 1;
     min-width: 0;
     line-height: 1.5;
-  }
-
-  .guide-inline-code {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.1rem 0.4rem;
-    border-radius: 10px;
-    border: 1px solid color-mix(in oklch, var(--cyber-cyan) 30%, transparent);
-    background: color-mix(in oklch, var(--cyber-cyan) 12%, transparent);
-    font-family: var(--font-mono);
-    font-size: 0.78em;
-    color: var(--text-primary);
-  }
-
-  .guide-pre {
-    display: inline-block;
-    margin: 0;
-    padding: var(--space-xs) var(--space-sm);
-    border-radius: 12px;
-    border: 1px solid color-mix(in oklch, var(--cyber-cyan) 25%, transparent);
-    background: color-mix(in oklch, var(--cyber-cyan) 8%, transparent);
-    font-family: var(--font-mono);
-    font-size: var(--text-xs);
-    color: var(--text-primary);
-    white-space: pre-wrap;
-    max-width: 100%;
-    overflow-x: auto;
-  }
-
-  .guide-kbd {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.12rem 0.45rem;
-    border-radius: 10px;
-    border: 1px solid color-mix(in oklch, var(--text-secondary) 35%, transparent);
-    background: color-mix(in oklch, var(--text-secondary) 12%, transparent);
-    font-family: var(--font-mono);
-    font-size: 0.78em;
-    color: var(--text-primary);
-    letter-spacing: 0.02em;
-    text-transform: capitalize;
-  }
-
-  .kbd-plus {
-    margin: 0 0.2rem;
-    color: var(--text-dim);
-    font-size: 0.75em;
   }
 
   .panel-list--failures li {
@@ -817,68 +766,107 @@ $effect(() => {
   .panel-assessment {
     display: grid;
     gap: var(--space-xs);
-    margin: 0 0 var(--space-md);
+    margin-block-end: var(--space-md);
   }
 
   .assessment-row {
     display: flex;
-    justify-content: space-between;
-    gap: var(--space-sm);
-    font-size: var(--text-xs);
+    align-items: baseline;
+    font-size: var(--text-sm);
+    line-height: 1.5;
   }
 
   .assessment-row dt {
-    color: var(--text-dim);
-    font-weight: 500;
+    display: flex;
+    align-items: baseline;
+    flex: 1;
+    color: color-mix(in oklch, var(--text-primary) 85%, white);
+    font-weight: 600;
+    text-transform: capitalize;
+    white-space: nowrap;
+  }
+
+  .assessment-row dt::after {
+    content: '';
+    flex: 1;
+    border-block-end: 1px dotted oklch(0.4 0.01 285);
+    margin-inline: var(--space-sm) var(--space-xs);
+    min-inline-size: var(--space-md);
+    align-self: flex-end;
+    margin-block-end: 0.3em;
   }
 
   .assessment-row dd {
     margin: 0;
     color: var(--text-primary);
-    text-align: right;
+    font-family: var(--font-mono);
+    font-weight: 500;
+    letter-spacing: 0.025em;
+    white-space: nowrap;
   }
 
   .assessment-row--impact dd {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-xs);
-    justify-content: flex-end;
   }
 
   .impact-pill {
-    padding: 2px 6px;
-    border-radius: 999px;
-    background: color-mix(in oklch, var(--cyber-cyan) 12%, transparent);
+    padding: 4px 8px;
+    border-radius: 4px;
+    background: color-mix(in oklch, var(--cyber-cyan) 15%, transparent);
+    border: 1px solid color-mix(in oklch, var(--cyber-cyan) 25%, transparent);
     font-family: var(--font-mono);
     font-size: var(--text-xs);
+    font-weight: 600;
     color: var(--text-primary);
   }
 
   .panel-list--sources li,
   .panel-list--videos li {
-    font-size: var(--text-xs);
+    font-size: var(--text-sm);
   }
 
   .panel-automation {
     display: grid;
     gap: var(--space-xs);
-    margin: 0 0 var(--space-md);
+    margin-block-end: var(--space-md);
   }
 
   .automation-row {
     display: flex;
-    justify-content: space-between;
-    gap: var(--space-sm);
-    font-size: var(--text-xs);
+    align-items: baseline;
+    font-size: var(--text-sm);
+    line-height: 1.5;
   }
 
   .automation-row dt {
-    color: var(--text-dim);
+    display: flex;
+    align-items: baseline;
+    flex: 1;
+    color: color-mix(in oklch, var(--text-primary) 85%, white);
+    font-weight: 600;
+    text-transform: capitalize;
+    white-space: nowrap;
+  }
+
+  .automation-row dt::after {
+    content: '';
+    flex: 1;
+    border-block-end: 1px dotted oklch(0.4 0.01 285);
+    margin-inline: var(--space-sm) var(--space-xs);
+    min-inline-size: var(--space-md);
+    align-self: flex-end;
+    margin-block-end: 0.3em;
   }
 
   .automation-row dd {
     margin: 0;
     color: var(--text-secondary);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    font-weight: 500;
+    word-break: break-all;
   }
 
   .panel-footer {
