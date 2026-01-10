@@ -309,10 +309,7 @@ $effect(() => {
         <h4 class="panel-heading">Benefits</h4>
         <ul class="panel-list panel-list--benefits">
           {#each item.guide.benefits as benefit}
-            <li>
-              <Icon name="check" size="xs" variant="success" class="panel-icon" />
-              <div class="panel-text">{@html formatGuideHtml(benefit)}</div>
-            </li>
+            <li>{@html formatGuideHtml(benefit)}</li>
           {/each}
         </ul>
       {/if}
@@ -323,8 +320,7 @@ $effect(() => {
         <ul class="panel-list panel-list--considerations">
           {#each item.guide.risks as risk}
             <li>
-              <Icon name="warning" size="xs" variant="warning" class="panel-icon" />
-              <div class="panel-text">{@html formatGuideHtml(risk)}</div>
+{@html formatGuideHtml(risk)}
             </li>
           {/each}
         </ul>
@@ -336,8 +332,7 @@ $effect(() => {
         <ul class="panel-list panel-list--skip">
           {#each item.guide.skipIf as skip}
             <li>
-              <Icon name="close" size="xs" variant="muted" class="panel-icon" />
-              <div class="panel-text">{@html formatGuideHtml(skip)}</div>
+{@html formatGuideHtml(skip)}
             </li>
           {/each}
         </ul>
@@ -349,8 +344,7 @@ $effect(() => {
         <ul class="panel-list panel-list--verify">
           {#each item.guide.verify as verify}
             <li>
-              <Icon name="check" size="xs" variant="accent" class="panel-icon" />
-              <div class="panel-text">{@html formatGuideHtml(verify)}</div>
+{@html formatGuideHtml(verify)}
             </li>
           {/each}
         </ul>
@@ -362,8 +356,7 @@ $effect(() => {
         <ul class="panel-list panel-list--rollback">
           {#each item.guide.rollback as rollback}
             <li>
-              <Icon name="refresh" size="xs" variant="warning" class="panel-icon" />
-              <div class="panel-text">{@html formatGuideHtml(rollback)}</div>
+{@html formatGuideHtml(rollback)}
             </li>
           {/each}
         </ul>
@@ -374,8 +367,7 @@ $effect(() => {
         <ul class="panel-list panel-list--symptoms">
           {#each item.guide.symptoms as symptom}
             <li>
-              <Icon name="warning" size="xs" variant="warning" class="panel-icon" />
-              <div class="panel-text">{@html formatGuideHtml(symptom)}</div>
+{@html formatGuideHtml(symptom)}
             </li>
           {/each}
         </ul>
@@ -386,8 +378,7 @@ $effect(() => {
         <ul class="panel-list panel-list--compat">
           {#each item.guide.compatibilityNotes as note}
             <li>
-              <Icon name="info" size="xs" variant="accent" class="panel-icon" />
-              <div class="panel-text">{@html formatGuideHtml(note)}</div>
+{@html formatGuideHtml(note)}
             </li>
           {/each}
         </ul>
@@ -398,8 +389,7 @@ $effect(() => {
         <ul class="panel-list panel-list--bottleneck">
           {#each item.guide.bottleneckHint as hint}
             <li>
-              <Icon name="info" size="xs" variant="muted" class="panel-icon" />
-              <div class="panel-text">{@html formatGuideHtml(hint)}</div>
+{@html formatGuideHtml(hint)}
             </li>
           {/each}
         </ul>
@@ -410,8 +400,7 @@ $effect(() => {
         <ul class="panel-list panel-list--tech">
           {#each item.guide.techNotes as note}
             <li>
-              <Icon name="code" size="xs" variant="muted" class="panel-icon" />
-              <div class="panel-text">{@html formatGuideHtml(note)}</div>
+{@html formatGuideHtml(note)}
             </li>
           {/each}
         </ul>
@@ -736,18 +725,9 @@ $effect(() => {
   }
 
   .panel-list li {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--space-xs);
     font-size: var(--text-base);
     line-height: 1.6;
     color: var(--text-secondary);
-  }
-
-  .panel-text {
-    flex: 1;
-    min-width: 0;
-    line-height: 1.5;
   }
 
   .panel-list--failures li {
