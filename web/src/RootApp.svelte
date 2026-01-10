@@ -446,7 +446,7 @@ onMount(() => {
     </nav>
   </div>
 
-  <div class="step-container">
+  <div class="step-container step-container--flexible">
     <section id="software" class="step step--arsenal">
     <header class="step-banner">
       <div class="step-banner__marker">4</div>

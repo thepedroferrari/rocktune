@@ -17,6 +17,11 @@
     flex-direction: column;
   }
 
+  /* Flexible step container for content that varies widely (like filtered lists) */
+  .step-container--flexible {
+    min-height: auto;
+  }
+
   .step-container .step {
     flex: 0 1 auto;
     display: flex;
@@ -28,6 +33,10 @@
   .step-container .wizard-nav {
     flex-shrink: 0;
     margin-top: auto;
+  }
+
+  .step-container--flexible .wizard-nav {
+    margin-top: var(--space-2xl);
   }
 
   .step {
