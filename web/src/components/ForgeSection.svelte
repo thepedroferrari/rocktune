@@ -1,100 +1,103 @@
 <script lang="ts">
-/**
- * ForgeSection - Script generation section (Step 5)
- *
- * Final section with:
- * - Status indicator
- * - Preview and Download actions
- * - SHA256 checksum for verification
- */
+  /**
+   * ForgeSection - Script generation section (Step 5)
+   *
+   * Final section with:
+   * - Status indicator
+   * - Preview and Download actions
+   * - SHA256 checksum for verification
+   */
 
-import { copyToClipboard, generateSHA256 } from '$lib/checksum'
-import { buildVerificationScript, type SelectionState } from '$lib/script-generator'
-import {
-  app,
-  generateCurrentScript,
-  openPreviewModal,
-  setIncludeManualSteps,
-  setIncludeTimer,
-  setScriptDownloaded,
-} from '$lib/state.svelte'
-import { SCRIPT_FILENAME } from '$lib/types'
-import { downloadText } from '../utils/download'
-import ShareModal from './ShareModal.svelte'
-import Summary from './Summary.svelte'
-import TroubleshootModal from './TroubleshootModal.svelte'
+  import { copyToClipboard, generateSHA256 } from "$lib/checksum";
+  import {
+    buildVerificationScript,
+    type SelectionState,
+  } from "$lib/script-generator";
+  import {
+    app,
+    generateCurrentScript,
+    openPreviewModal,
+    setIncludeManualSteps,
+    setIncludeTimer,
+    setScriptDownloaded,
+  } from "$lib/state.svelte";
+  import { SCRIPT_FILENAME } from "$lib/types";
+  import { downloadText } from "../utils/download";
+  import ShareModal from "./ShareModal.svelte";
+  import Summary from "./Summary.svelte";
+  import TroubleshootModal from "./TroubleshootModal.svelte";
 
-let checksum = $state('')
-let copied = $state(false)
-let shareModalOpen = $state(false)
-let troubleshootModalOpen = $state(false)
-let checksumRequestId = 0
+  let checksum = $state("");
+  let copied = $state(false);
+  let shareModalOpen = $state(false);
+  let troubleshootModalOpen = $state(false);
+  let checksumRequestId = 0;
 
-function openShareModal() {
-  shareModalOpen = true
-}
-
-function closeShareModal() {
-  shareModalOpen = false
-}
-
-$effect(() => {
-  const script = app.script.edited ?? generateCurrentScript()
-  const requestId = ++checksumRequestId
-  if (script.trim()) {
-    generateSHA256(script, { includeBom: true }).then((hash) => {
-      if (requestId !== checksumRequestId) return
-      checksum = hash
-    })
-  } else {
-    checksum = ''
+  function openShareModal() {
+    shareModalOpen = true;
   }
-})
 
-function handlePreview() {
-  openPreviewModal()
-}
-
-function handleDownload() {
-  const script = app.script.edited ?? generateCurrentScript()
-  if (!script.trim()) return
-  downloadText(script, SCRIPT_FILENAME)
-  setScriptDownloaded(true)
-}
-
-function handleDownloadVerify() {
-  const selection: SelectionState = {
-    hardware: app.hardware,
-    optimizations: Array.from(app.optimizations),
-    packages: Array.from(app.selected),
-    missingPackages: [],
-    preset: app.activePreset,
-    includeTimer: app.buildOptions.includeTimer,
-    includeManualSteps: app.buildOptions.includeManualSteps,
-    createBackup: app.buildOptions.createBackup,
+  function closeShareModal() {
+    shareModalOpen = false;
   }
-  const script = buildVerificationScript(selection)
-  downloadText(script, 'rocktune-verify.ps1')
-}
 
-function handleToggleTimer() {
-  setIncludeTimer(!app.buildOptions.includeTimer)
-}
+  $effect(() => {
+    const script = app.script.edited ?? generateCurrentScript();
+    const requestId = ++checksumRequestId;
+    if (script.trim()) {
+      generateSHA256(script, { includeBom: true }).then((hash) => {
+        if (requestId !== checksumRequestId) return;
+        checksum = hash;
+      });
+    } else {
+      checksum = "";
+    }
+  });
 
-function handleToggleManualSteps() {
-  setIncludeManualSteps(!app.buildOptions.includeManualSteps)
-}
-
-async function handleCopyHash() {
-  if (!checksum) return
-  const success = await copyToClipboard(checksum)
-  if (success) {
-    copied = true
-    setTimeout(() => {
-      copied = false
-    }, 2000)
+  function handlePreview() {
+    openPreviewModal();
   }
-}
+
+  function handleDownload() {
+    const script = app.script.edited ?? generateCurrentScript();
+    if (!script.trim()) return;
+    downloadText(script, SCRIPT_FILENAME);
+    setScriptDownloaded(true);
+  }
+
+  function handleDownloadVerify() {
+    const selection: SelectionState = {
+      hardware: app.hardware,
+      optimizations: Array.from(app.optimizations),
+      packages: Array.from(app.selected),
+      missingPackages: [],
+      preset: app.activePreset,
+      includeTimer: app.buildOptions.includeTimer,
+      includeManualSteps: app.buildOptions.includeManualSteps,
+      createBackup: app.buildOptions.createBackup,
+    };
+    const script = buildVerificationScript(selection);
+    downloadText(script, "rocktune-verify.ps1");
+  }
+
+  function handleToggleTimer() {
+    setIncludeTimer(!app.buildOptions.includeTimer);
+  }
+
+  function handleToggleManualSteps() {
+    setIncludeManualSteps(!app.buildOptions.includeManualSteps);
+  }
+
+  async function handleCopyHash() {
+    if (!checksum) return;
+    const success = await copyToClipboard(checksum);
+    if (success) {
+      copied = true;
+      setTimeout(() => {
+        copied = false;
+      }, 2000);
+    }
+  }
 </script>
 
 <section id="generate" class="step step--forge">
@@ -164,7 +167,7 @@ async function handleCopyHash() {
     </button>
 
     <!-- Tagline beneath download -->
-    <p class="zone-tagline">No installer. No bundled crapware. Just code.</p>
+    <p class="zone-tagline">Readable PowerShell. No installer. No tracking.</p>
 
     <!-- Troubleshoot link -->
     <button
@@ -173,7 +176,13 @@ async function handleCopyHash() {
       onclick={() => (troubleshootModalOpen = true)}
     >
       Having trouble running the script?
-      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <svg
+        class="icon"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+      >
         <line x1="5" y1="12" x2="19" y2="12" />
         <polyline points="12 5 19 12 12 19" />
       </svg>
@@ -237,7 +246,7 @@ async function handleCopyHash() {
         </svg>
         Open Source
       </span>
-      <span class="trust-divider">·</span>
+      <span class="trust-divider" aria-hidden="true">·</span>
       <span class="trust-item">
         <svg
           class="trust-icon"
@@ -251,7 +260,7 @@ async function handleCopyHash() {
         </svg>
         Preview First
       </span>
-      <span class="trust-divider">·</span>
+      <span class="trust-divider" aria-hidden="true">·</span>
       <span class="trust-item">
         <svg
           class="trust-icon"
@@ -265,7 +274,7 @@ async function handleCopyHash() {
         </svg>
         No Tracking
       </span>
-      <span class="trust-divider">·</span>
+      <span class="trust-divider" aria-hidden="true">·</span>
       <span class="trust-item">
         <svg
           class="trust-icon"
@@ -279,10 +288,10 @@ async function handleCopyHash() {
         </svg>
         Self-Contained
       </span>
-      <span class="trust-divider">·</span>
+      <span class="trust-divider" aria-hidden="true">·</span>
       <a
         href="https://github.com/thepedroferrari/rocktune/tree/{__BUILD_COMMIT__}"
-        target="blank"
+        target="_blank"
         rel="noopener"
         class="trust-item trust-item--provenance"
       >
@@ -303,16 +312,23 @@ async function handleCopyHash() {
     <!-- Benchmarking Tips -->
     <details class="benchmark-tips">
       <summary class="benchmark-tips__summary">
-        <svg class="benchmark-tips__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M12 20V10"/>
-          <path d="M18 20V4"/>
-          <path d="M6 20v-4"/>
+        <svg
+          class="benchmark-tips__icon"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path d="M12 20V10" />
+          <path d="M18 20V4" />
+          <path d="M6 20v-4" />
         </svg>
         Benchmarking Tips — Measure Before & After
       </summary>
       <div class="benchmark-tips__content">
         <p class="benchmark-tips__intro">
-          To verify these optimizations actually help <em>your</em> system, benchmark before and after applying them.
+          To verify these optimizations actually help <em>your</em> system, benchmark
+          before and after applying them.
         </p>
 
         <div class="benchmark-tips__grid">
@@ -320,7 +336,10 @@ async function handleCopyHash() {
             <span class="benchmark-tip__num">1</span>
             <div class="benchmark-tip__body">
               <strong>Before applying</strong>
-              <p>Run a benchmark in your main game using CapFrameX or RTSS. Note Average FPS, 1% low, and 0.1% low.</p>
+              <p>
+                Run a benchmark in your main game using CapFrameX or RTSS. Note
+                Average FPS, 1% low, and 0.1% low.
+              </p>
             </div>
           </div>
 
@@ -328,7 +347,10 @@ async function handleCopyHash() {
             <span class="benchmark-tip__num">2</span>
             <div class="benchmark-tip__body">
               <strong>Apply & reboot</strong>
-              <p>Run the script as Admin, reboot, then run the same benchmark again.</p>
+              <p>
+                Run the script as Admin, reboot, then run the same benchmark
+                again.
+              </p>
             </div>
           </div>
 
@@ -336,16 +358,34 @@ async function handleCopyHash() {
             <span class="benchmark-tip__num">3</span>
             <div class="benchmark-tip__body">
               <strong>Compare results</strong>
-              <p>Focus on 1% lows — that's where you'll see stutter reduction. Average FPS gains are typically modest.</p>
+              <p>
+                Focus on 1% lows — that's where you'll see stutter reduction.
+                Average FPS gains are typically modest.
+              </p>
             </div>
           </div>
         </div>
 
         <div class="benchmark-tools">
           <span class="benchmark-tools__label">Recommended tools:</span>
-          <a href="https://www.capframex.com/" target="blank" rel="noopener" class="benchmark-tool">CapFrameX</a>
-          <a href="https://www.guru3d.com/download/rtss-rivatuner-statistics-server-download/" target="blank" rel="noopener" class="benchmark-tool">RTSS</a>
-          <a href="https://www.resplendence.com/latencymon" target="blank" rel="noopener" class="benchmark-tool">LatencyMon</a>
+          <a
+            href="https://www.capframex.com/"
+            target="_blank"
+            rel="noopener"
+            class="benchmark-tool">CapFrameX</a
+          >
+          <a
+            href="https://www.guru3d.com/download/rtss-rivatuner-statistics-server-download/"
+            target="_blank"
+            rel="noopener"
+            class="benchmark-tool">RTSS</a
+          >
+          <a
+            href="https://www.resplendence.com/latencymon"
+            target="_blank"
+            rel="noopener"
+            class="benchmark-tool">LatencyMon</a
+          >
         </div>
       </div>
     </details>
@@ -465,4 +505,7 @@ async function handleCopyHash() {
 </section>
 
 <ShareModal open={shareModalOpen} onclose={closeShareModal} />
-<TroubleshootModal open={troubleshootModalOpen} onclose={() => (troubleshootModalOpen = false)} />
+<TroubleshootModal
+  open={troubleshootModalOpen}
+  onclose={() => (troubleshootModalOpen = false)}
+/>

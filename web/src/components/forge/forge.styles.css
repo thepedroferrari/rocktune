@@ -69,9 +69,9 @@
       border: 2px solid oklch(0.85 0.18 102 / 0.5);
       border-radius: var(--radius-md);
       box-shadow:
-        0 0 60px oklch(0.85 0.18 102 / 0.2),
-        0 0 120px oklch(0.85 0.18 102 / 0.1),
-        inset 0 0 80px oklch(0.85 0.18 102 / 0.06);
+        0 0 40px oklch(0.85 0.18 102 / 0.12),
+        0 0 80px oklch(0.85 0.18 102 / 0.06),
+        inset 0 0 60px oklch(0.85 0.18 102 / 0.04);
       animation: downloadZonePulse 4s ease-in-out infinite;
 
       display: grid;
@@ -82,7 +82,7 @@
         "troubleshoot"
         "secondary"
         "trust";
-      gap: var(--space-lg);
+      gap: var(--space-md);
       justify-items: center;
     }
 
@@ -90,7 +90,7 @@
     .zone-headline {
       grid-area: headline;
       margin: 0;
-      margin-block-end: var(--space-xl);
+      margin-block-end: var(--space-lg);
       padding: 0 var(--space-lg);
       font-family: var(--font-mono);
       font-size: clamp(var(--text-xl), 3.5vw, var(--text-2xl));
@@ -149,16 +149,16 @@
       0%,
       100% {
         box-shadow:
-          0 0 60px oklch(0.85 0.18 102 / 0.2),
-          0 0 120px oklch(0.85 0.18 102 / 0.1),
-          inset 0 0 80px oklch(0.85 0.18 102 / 0.06);
+          0 0 40px oklch(0.85 0.18 102 / 0.12),
+          0 0 80px oklch(0.85 0.18 102 / 0.06),
+          inset 0 0 60px oklch(0.85 0.18 102 / 0.04);
       }
 
       50% {
         box-shadow:
-          0 0 80px oklch(0.85 0.18 102 / 0.28),
-          0 0 160px oklch(0.85 0.18 102 / 0.15),
-          inset 0 0 100px oklch(0.85 0.18 102 / 0.1);
+          0 0 60px oklch(0.85 0.18 102 / 0.2),
+          0 0 120px oklch(0.85 0.18 102 / 0.1),
+          inset 0 0 80px oklch(0.85 0.18 102 / 0.06);
       }
     }
 
@@ -326,11 +326,11 @@
       position: relative;
       display: inline-flex;
       align-items: center;
-      gap: var(--space-md);
-      padding: var(--space-lg) var(--space-3xl);
-      min-block-size: 72px;
+      gap: var(--space-sm);
+      padding: var(--space-md) var(--space-2xl);
+      min-block-size: 56px;
       font-family: var(--font-display);
-      font-size: var(--text-xl);
+      font-size: var(--text-lg);
       font-weight: 700;
       letter-spacing: var(--tracking-wide);
       text-transform: uppercase;
@@ -344,20 +344,20 @@
       cursor: pointer;
       overflow: hidden;
       box-shadow:
-        0 0 0 3px oklch(0.98 0.22 102),
-        0 8px 40px oklch(0.85 0.18 102 / 0.6),
-        0 16px 80px oklch(0.85 0.18 102 / 0.35),
-        0 0 100px oklch(0.85 0.18 102 / 0.25);
+        0 0 0 2px oklch(0.98 0.22 102),
+        0 6px 30px oklch(0.85 0.18 102 / 0.5),
+        0 12px 60px oklch(0.85 0.18 102 / 0.3),
+        0 0 80px oklch(0.85 0.18 102 / 0.2);
       animation: heroButtonGlow 2.5s ease-in-out infinite;
       transition: transform var(--transition-fast), box-shadow var(--transition-fast);
 
       &:hover {
-        transform: translateY(-4px) scale(1.03);
+        transform: translateY(-3px) scale(1.02);
         box-shadow:
-          0 0 0 4px oklch(1 0.24 102),
-          0 12px 50px oklch(0.85 0.18 102 / 0.7),
-          0 24px 100px oklch(0.85 0.18 102 / 0.45),
-          0 0 150px oklch(0.85 0.18 102 / 0.35);
+          0 0 0 3px oklch(1 0.24 102),
+          0 10px 40px oklch(0.85 0.18 102 / 0.6),
+          0 20px 80px oklch(0.85 0.18 102 / 0.4),
+          0 0 120px oklch(0.85 0.18 102 / 0.3);
       }
 
       &:active {
@@ -365,20 +365,20 @@
       }
 
       &:focus-visible {
-        outline: 4px solid oklch(1 0.22 102);
-        outline-offset: 4px;
+        outline: 3px solid oklch(1 0.22 102);
+        outline-offset: 3px;
       }
 
       .text {
         display: flex;
         align-items: center;
-        gap: var(--space-md);
+        gap: var(--space-sm);
         position: relative;
         z-index: 1;
 
         .icon {
-          inline-size: 32px;
-          block-size: 32px;
+          inline-size: 24px;
+          block-size: 24px;
           filter: drop-shadow(0 2px 4px oklch(0 0 0 / 0.3));
         }
       }
@@ -388,18 +388,18 @@
       0%,
       100% {
         box-shadow:
-          0 0 0 3px oklch(0.98 0.22 102),
-          0 8px 40px oklch(0.85 0.18 102 / 0.6),
-          0 16px 80px oklch(0.85 0.18 102 / 0.35),
-          0 0 100px oklch(0.85 0.18 102 / 0.25);
+          0 0 0 2px oklch(0.98 0.22 102),
+          0 6px 30px oklch(0.85 0.18 102 / 0.5),
+          0 12px 60px oklch(0.85 0.18 102 / 0.3),
+          0 0 80px oklch(0.85 0.18 102 / 0.2);
       }
 
       50% {
         box-shadow:
-          0 0 0 4px oklch(1 0.24 102),
-          0 12px 50px oklch(0.85 0.18 102 / 0.75),
-          0 24px 100px oklch(0.85 0.18 102 / 0.5),
-          0 0 140px oklch(0.85 0.18 102 / 0.4);
+          0 0 0 3px oklch(1 0.24 102),
+          0 10px 40px oklch(0.85 0.18 102 / 0.65),
+          0 20px 80px oklch(0.85 0.18 102 / 0.45),
+          0 0 110px oklch(0.85 0.18 102 / 0.35);
       }
     }
 
@@ -1069,14 +1069,14 @@
       }
 
       .btn-forge {
-        padding: var(--space-md) var(--space-xl);
+        padding: var(--space-sm) var(--space-lg);
         font-size: var(--text-base);
-        min-block-size: 56px;
+        min-block-size: 48px;
       }
 
       .btn-forge .text .icon {
-        inline-size: 24px;
-        block-size: 24px;
+        inline-size: 20px;
+        block-size: 20px;
       }
 
       .btn-preview,
