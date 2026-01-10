@@ -4,7 +4,6 @@
  *
  * Final section with:
  * - Status indicator
- * - Preflight checks
  * - Preview and Download actions
  * - SHA256 checksum for verification
  */
@@ -21,7 +20,6 @@ import {
 } from '$lib/state.svelte'
 import { SCRIPT_FILENAME } from '$lib/types'
 import { downloadText } from '../utils/download'
-import PreflightChecks from './PreflightChecks.svelte'
 import ShareModal from './ShareModal.svelte'
 import Summary from './Summary.svelte'
 import TroubleshootModal from './TroubleshootModal.svelte'
@@ -130,8 +128,6 @@ async function handleCopyHash() {
   </header>
 
   <Summary />
-
-  <PreflightChecks />
 
   <section class="transparency-zone" id="download">
     <span class="corner corner--tl"></span>

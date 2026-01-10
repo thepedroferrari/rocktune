@@ -30,21 +30,17 @@ const hardwareLabel = $derived(`${cpuLabel} + ${gpuLabel}`)
 
 <div class="summary-shell">
   <div id="summary" class="summary">
-    <span class="corner corner--tl"></span>
-    <span class="corner corner--tr"></span>
-    <span class="corner corner--bl"></span>
-    <span class="corner corner--br"></span>
     <div class="item">
-      <div id="summary-hardware" class="value">{hardwareLabel}</div>
-      <div class="label">Core</div>
+      <span id="summary-hardware" class="value">{hardwareLabel}</span>
+      <span class="label">Core</span>
     </div>
     <div class="item">
-      <div id="summary-opts" class="value">{optimizationCount}</div>
-      <div class="label">Upgrades</div>
+      <span id="summary-opts" class="value">{optimizationCount}</span>
+      <span class="label">Upgrades</span>
     </div>
     <div class="item">
-      <div id="summary-software" class="value">{softwareCount}</div>
-      <div class="label">Arsenal</div>
+      <span id="summary-software" class="value">{softwareCount}</span>
+      <span class="label">Arsenal</span>
     </div>
   </div>
 </div>

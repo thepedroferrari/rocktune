@@ -20,7 +20,6 @@
    @import './src/components/unified-nav/unified-nav.styles.css' layer(components);
    @import './src/components/preview-modal/preview-modal.styles.css' layer(components);
    @import './src/components/forge/forge.styles.css' layer(components);
-   @import './src/components/preflight/preflight.styles.css' layer(components);
    @import './src/components/manual-steps/manual-steps.styles.css' layer(components);
    @import './src/components/step-banner/step-banner.styles.css' layer(components);
    @import './src/styles/overrides.css' layer(overrides);
