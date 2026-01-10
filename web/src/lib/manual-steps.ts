@@ -5,191 +5,206 @@
  * are essential for optimal gaming performance.
  */
 
-import { buildPersonaSectionId, buildSectionId, SECTION_PREFIXES } from './section-ids'
-import type { AutomatedBy, GpuType, PresetType } from './types'
-import { GPU_TYPES } from './types'
+import {
+  buildPersonaSectionId,
+  buildSectionId,
+  SECTION_PREFIXES,
+} from "./section-ids";
+import type { AutomatedBy, GpuType, PresetType } from "./types";
+import { GPU_TYPES } from "./types";
 
-export type ImpactLevel = 'high' | 'medium' | 'low'
+export type ImpactLevel = "high" | "medium" | "low";
 
-export type DifficultyLevel = 'quick' | 'moderate' | 'advanced'
+export type DifficultyLevel = "quick" | "moderate" | "advanced";
 
-export type SafetyLevel = 'safe' | 'moderate' | 'expert'
+export type SafetyLevel = "safe" | "moderate" | "expert";
 
-export type EvidenceLevel = 'official' | 'measured' | 'reputable' | 'community' | 'speculative'
+export type EvidenceLevel =
+  | "official"
+  | "measured"
+  | "reputable"
+  | "community"
+  | "speculative";
 
 export type ImpactAxis =
-  | 'latency'
-  | 'fps_avg'
-  | 'fps_1pct'
-  | 'stutter'
-  | 'visuals'
-  | 'stability'
-  | 'thermals'
-  | 'noise'
-  | 'battery'
+  | "latency"
+  | "fps_avg"
+  | "fps_1pct"
+  | "stutter"
+  | "visuals"
+  | "stability"
+  | "thermals"
+  | "noise"
+  | "battery";
 
-export type ConfidenceScore = 1 | 2 | 3 | 4 | 5
-export type RiskScore = 0 | 1 | 2 | 3 | 4 | 5
+export type ConfidenceScore = 1 | 2 | 3 | 4 | 5;
+export type RiskScore = 0 | 1 | 2 | 3 | 4 | 5;
 
 export interface GuideAssessment {
-  readonly evidence: EvidenceLevel
-  readonly confidence?: ConfidenceScore
-  readonly risk?: RiskScore
-  readonly impact: Partial<Record<ImpactAxis, -2 | -1 | 0 | 1 | 2>>
-  readonly scope: 'global' | 'perGame' | 'hardware' | 'symptomOnly'
-  readonly prerequisites?: readonly string[]
-  readonly appliesTo?: readonly string[]
-  readonly lastReviewed?: string
-  readonly sources?: readonly string[]
+  readonly evidence: EvidenceLevel;
+  readonly confidence?: ConfidenceScore;
+  readonly risk?: RiskScore;
+  readonly impact: Partial<Record<ImpactAxis, -2 | -1 | 0 | 1 | 2>>;
+  readonly scope: "global" | "perGame" | "hardware" | "symptomOnly";
+  readonly prerequisites?: readonly string[];
+  readonly appliesTo?: readonly string[];
+  readonly lastReviewed?: string;
+  readonly sources?: readonly string[];
 }
 
 export interface FailureMode {
-  readonly symptom: string
-  readonly whatToDo: string
+  readonly symptom: string;
+  readonly whatToDo: string;
 }
 
 export interface VideoRef {
-  readonly title: string
-  readonly creator: string
-  readonly videoId?: string
-  readonly search?: string
-  readonly note?: string
+  readonly title: string;
+  readonly creator: string;
+  readonly videoId?: string;
+  readonly search?: string;
+  readonly note?: string;
 }
 
 export interface GuideCopy {
-  readonly title?: string
-  readonly intro?: string
-  readonly steps?: readonly string[]
-  readonly verify?: readonly string[]
-  readonly benefits?: readonly string[]
-  readonly risks?: readonly string[]
-  readonly skipIf?: readonly string[]
-  readonly rollback?: readonly string[]
-  readonly time?: string
-  readonly tools?: readonly string[]
-  readonly techNotes?: readonly string[]
-  readonly references?: readonly string[]
-  readonly videos?: readonly VideoRef[]
-  readonly assessment?: GuideAssessment
-  readonly failureModes?: readonly FailureMode[]
-  readonly symptoms?: readonly string[]
-  readonly bottleneckHint?: readonly string[]
-  readonly compatibilityNotes?: readonly string[]
+  readonly title?: string;
+  readonly intro?: string;
+  readonly steps?: readonly string[];
+  readonly verify?: readonly string[];
+  readonly benefits?: readonly string[];
+  readonly risks?: readonly string[];
+  readonly skipIf?: readonly string[];
+  readonly rollback?: readonly string[];
+  readonly time?: string;
+  readonly tools?: readonly string[];
+  readonly techNotes?: readonly string[];
+  readonly references?: readonly string[];
+  readonly videos?: readonly VideoRef[];
+  readonly assessment?: GuideAssessment;
+  readonly failureModes?: readonly FailureMode[];
+  readonly symptoms?: readonly string[];
+  readonly bottleneckHint?: readonly string[];
+  readonly compatibilityNotes?: readonly string[];
 }
 
 export interface ItemMeta {
-  readonly impact?: ImpactLevel
-  readonly difficulty?: DifficultyLevel
-  readonly safety?: SafetyLevel
+  readonly impact?: ImpactLevel;
+  readonly difficulty?: DifficultyLevel;
+  readonly safety?: SafetyLevel;
   /**
    * Automation metadata - describes how this step is automated by the script.
    * Phase A: Simple boolean for newly automated items (Discord, Steam, Audio, Monitor)
    * Phase B: Full AutomatedBy object for existing 200+ automated items
    */
-  readonly automated?: boolean | AutomatedBy
+  readonly automated?: boolean | AutomatedBy;
   /**
    * Alternative manual instructions for automated steps.
    * Shows users how to achieve the same result without the script.
    */
-  readonly manualSteps?: readonly string[]
+  readonly manualSteps?: readonly string[];
   /**
    * Structured, future-proof guidance for manual steps.
    * UI prefers guide.steps, falls back to legacy manualSteps.
    */
-  readonly guide?: GuideCopy
+  readonly guide?: GuideCopy;
 }
 
 export interface ManualStepItem extends ItemMeta {
-  readonly id: string
-  readonly step: string
-  readonly check: string
-  readonly why: string
+  readonly id: string;
+  readonly step: string;
+  readonly check: string;
+  readonly why: string;
 }
 
 export interface SettingItem extends ItemMeta {
-  readonly id: string
-  readonly setting: string
-  readonly value: string
-  readonly why: string
+  readonly id: string;
+  readonly setting: string;
+  readonly value: string;
+  readonly why: string;
 }
 
 export interface SoftwareSettingItem extends ItemMeta {
-  readonly id: string
-  readonly path: string
-  readonly value: string
-  readonly why: string
+  readonly id: string;
+  readonly path: string;
+  readonly value: string;
+  readonly why: string;
 }
 
 export interface BrowserSettingItem extends ItemMeta {
-  readonly id: string
-  readonly browser: string
-  readonly path: string
-  readonly setting: string
-  readonly value: string
-  readonly why: string
+  readonly id: string;
+  readonly browser: string;
+  readonly path: string;
+  readonly setting: string;
+  readonly value: string;
+  readonly why: string;
 }
 
 export interface RgbSettingItem extends ItemMeta {
-  readonly id: string
-  readonly software: string
-  readonly action: string
-  readonly why: string
+  readonly id: string;
+  readonly software: string;
+  readonly action: string;
+  readonly why: string;
 }
 
 export interface PreflightCheck extends ItemMeta {
-  readonly id: string
-  readonly check: string
-  readonly how: string
-  readonly fail: string
+  readonly id: string;
+  readonly check: string;
+  readonly how: string;
+  readonly fail: string;
 }
 
 export interface TroubleshootingItem extends ItemMeta {
-  readonly id: string
-  readonly problem: string
-  readonly causes: readonly string[]
-  readonly quickFix: string
+  readonly id: string;
+  readonly problem: string;
+  readonly causes: readonly string[];
+  readonly quickFix: string;
 }
 
 export interface GameLaunchItem extends ItemMeta {
-  readonly id: string
-  readonly game: string
-  readonly platform: 'Steam' | 'Epic' | 'Battle.net' | 'Riot' | 'Origin' | 'EA App'
-  readonly launchOptions?: string
-  readonly notes: readonly string[]
+  readonly id: string;
+  readonly game: string;
+  readonly platform:
+    | "Steam"
+    | "Epic"
+    | "Battle.net"
+    | "Riot"
+    | "Origin"
+    | "EA App";
+  readonly launchOptions?: string;
+  readonly notes: readonly string[];
 }
 
 export interface StreamingTroubleshootItem extends ItemMeta {
-  readonly id: string
-  readonly problem: string
-  readonly solution: string
-  readonly why: string
+  readonly id: string;
+  readonly problem: string;
+  readonly solution: string;
+  readonly why: string;
 }
 
 export interface DiagnosticTool extends ItemMeta {
-  readonly id: string
-  readonly tool: string
-  readonly use: string
-  readonly arsenalKey?: string
+  readonly id: string;
+  readonly tool: string;
+  readonly use: string;
+  readonly arsenalKey?: string;
 }
 
 export interface VideoResource {
-  readonly id: string
-  readonly title: string
-  readonly creator: string
-  readonly videoId?: string
-  readonly search?: string
-  readonly note?: string
-  readonly description?: string
+  readonly id: string;
+  readonly title: string;
+  readonly creator: string;
+  readonly videoId?: string;
+  readonly search?: string;
+  readonly note?: string;
+  readonly description?: string;
 }
 
 export interface ManualStepSection {
-  readonly id: string
-  readonly title: string
-  readonly description?: string
-  readonly location?: string
-  readonly note?: string
-  readonly personas?: readonly PresetType[]
-  readonly hardware?: GpuType
+  readonly id: string;
+  readonly title: string;
+  readonly description?: string;
+  readonly location?: string;
+  readonly note?: string;
+  readonly personas?: readonly PresetType[];
+  readonly hardware?: GpuType;
   readonly items:
     | readonly ManualStepItem[]
     | readonly SettingItem[]
@@ -200,7 +215,7 @@ export interface ManualStepSection {
     | readonly TroubleshootingItem[]
     | readonly GameLaunchItem[]
     | readonly StreamingTroubleshootItem[]
-    | readonly DiagnosticTool[]
+    | readonly DiagnosticTool[];
 }
 
 export type ManualItem =
@@ -213,244 +228,767 @@ export type ManualItem =
   | TroubleshootingItem
   | GameLaunchItem
   | StreamingTroubleshootItem
-  | DiagnosticTool
+  | DiagnosticTool;
 
-export interface NormalizedGuideAssessment extends Omit<GuideAssessment, 'confidence' | 'risk'> {
-  readonly confidence: ConfidenceScore | null
-  readonly risk: RiskScore | null
+export interface NormalizedGuideAssessment
+  extends Omit<GuideAssessment, "confidence" | "risk"> {
+  readonly confidence: ConfidenceScore | null;
+  readonly risk: RiskScore | null;
 }
 
 export interface NormalizedGuideCopy {
-  readonly intro: string
-  readonly steps: readonly string[]
-  readonly benefits: readonly string[]
-  readonly risks: readonly string[]
-  readonly skipIf: readonly string[]
-  readonly verify: readonly string[]
-  readonly rollback: readonly string[]
-  readonly assessment: NormalizedGuideAssessment
-  readonly failureModes: readonly FailureMode[]
-  readonly techNotes: readonly string[]
-  readonly references: readonly string[]
-  readonly videos: readonly VideoRef[]
-  readonly symptoms?: readonly string[]
-  readonly bottleneckHint?: readonly string[]
-  readonly compatibilityNotes?: readonly string[]
+  readonly intro: string;
+  readonly steps: readonly string[];
+  readonly benefits: readonly string[];
+  readonly risks: readonly string[];
+  readonly skipIf: readonly string[];
+  readonly verify: readonly string[];
+  readonly rollback: readonly string[];
+  readonly assessment: NormalizedGuideAssessment;
+  readonly failureModes: readonly FailureMode[];
+  readonly techNotes: readonly string[];
+  readonly references: readonly string[];
+  readonly videos: readonly VideoRef[];
+  readonly symptoms?: readonly string[];
+  readonly bottleneckHint?: readonly string[];
+  readonly compatibilityNotes?: readonly string[];
 }
 
 export interface NormalizedManualItem {
-  readonly id: string
-  readonly title: string
-  readonly value?: string
-  readonly why: string
-  readonly impact: ImpactLevel
-  readonly difficulty: DifficultyLevel
-  readonly safety: SafetyLevel
-  readonly automated?: boolean | AutomatedBy
-  readonly guide: NormalizedGuideCopy
+  readonly id: string;
+  readonly title: string;
+  readonly value?: string;
+  readonly why: string;
+  readonly impact: ImpactLevel;
+  readonly difficulty: DifficultyLevel;
+  readonly safety: SafetyLevel;
+  readonly automated?: boolean | AutomatedBy;
+  readonly guide: NormalizedGuideCopy;
 }
 
 export interface NormalizeOptions {
-  readonly warn?: (message: string) => void
-  readonly today?: string
+  readonly warn?: (message: string) => void;
+  readonly today?: string;
 }
 
-export const MANUAL_REVIEW_DATE = '2026-01-09'
-export const MANUAL_REVIEW_STALE_DAYS = 180
+export const MANUAL_REVIEW_DATE = "2026-01-09";
+export const MANUAL_REVIEW_STALE_DAYS = 180;
 
 export const MANUAL_GLOBAL_SAFETY_NOTES = [
-  'If you are nervous, create a restore point first.',
-  'Change one thing at a time, test, then move on.',
-  'If you get new stutters after a change, roll it back and continue.',
-] as const
+  "If you are nervous, create a restore point first.",
+  "Change one thing at a time, test, then move on.",
+  "If you get new stutters after a change, roll it back and continue.",
+] as const;
 
 export const MANUAL_QUICK_TEST_PROTOCOL = [
-  'Pick one game you know well and one repeatable scene.',
-  'Use a frametime overlay (RTSS/CapFrameX) for 5-10 minutes before and after.',
-  'If you cannot measure a change, keep the safer default.',
-] as const
+  "Pick one game you know well and one repeatable scene.",
+  "Use a frametime overlay (RTSS/CapFrameX) for 5-10 minutes before and after.",
+  "If you cannot measure a change, keep the safer default.",
+] as const;
 
-const STEP_PREFIXES = ['First', 'Next', 'Then', 'Finish'] as const
-const WARNED_MESSAGES = new Set<string>()
+const STEP_PREFIXES = ["First", "Next", "Then", "Finish"] as const;
+const WARNED_MESSAGES = new Set<string>();
 
 const DEFAULT_RISKS: Record<SafetyLevel, string> = {
-  safe: 'May have no measurable effect; test on yours.',
-  moderate: 'May affect other settings; revert if behavior worsens.',
-  expert: 'Higher risk of instability; create a restore point first.',
-}
+  safe: "May have no measurable effect; test on yours.",
+  moderate: "May affect other settings; revert if behavior worsens.",
+  expert: "Higher risk of instability; create a restore point first.",
+};
 
-const DEFAULT_SKIP_IF = 'Skip if you are happy with current performance and stability.'
+const DEFAULT_SKIP_IF =
+  "Skip if you are happy with current performance and stability.";
 
-const DEFAULT_VERIFY = 'Re-test in a repeatable scene and confirm no regressions.'
+const DEFAULT_VERIFY =
+  "Re-test in a repeatable scene and confirm no regressions.";
 
-const DEFAULT_ROLLBACK = 'Undo the change and reboot if required.'
+const DEFAULT_ROLLBACK = "Undo the change and reboot if required.";
 
 const DEFAULT_ASSESSMENT: Omit<
   NormalizedGuideAssessment,
-  'confidence' | 'risk' | 'lastReviewed' | 'sources' | 'prerequisites' | 'appliesTo'
+  | "confidence"
+  | "risk"
+  | "lastReviewed"
+  | "sources"
+  | "prerequisites"
+  | "appliesTo"
 > = {
-  evidence: 'community',
+  evidence: "community",
   impact: {},
-  scope: 'global',
-}
+  scope: "global",
+};
 
 const REFERENCE_SOURCES_BY_ID: Record<string, readonly string[]> = {
-  'gpu-scheduling': ['search: DirectX Dev Blog hardware accelerated GPU scheduling'],
-  'fullscreen-optimizations-disable': ['search: Microsoft Support optimizations for windowed games'],
-  'mpo-disable': ['search: NVIDIA MPO disable restore registry files flicker'],
-  'nv-low-latency': ['search: NVIDIA system latency optimization guide'],
-  'nv-pro-low-latency': ['search: NVIDIA system latency optimization guide'],
-  'nv-stream-low-latency': ['search: NVIDIA system latency optimization guide'],
-  'nv-bench-low-latency': ['search: NVIDIA system latency optimization guide'],
-  'diag-capframex': ['search: CapFrameX GitHub releases'],
-} as const
+  "gpu-scheduling": [
+    "search: DirectX Dev Blog hardware accelerated GPU scheduling",
+  ],
+  "fullscreen-optimizations-disable": [
+    "search: Microsoft Support optimizations for windowed games",
+  ],
+  "mpo-disable": ["search: NVIDIA MPO disable restore registry files flicker"],
+  "nv-low-latency": ["search: NVIDIA system latency optimization guide"],
+  "nv-pro-low-latency": ["search: NVIDIA system latency optimization guide"],
+  "nv-stream-low-latency": ["search: NVIDIA system latency optimization guide"],
+  "nv-bench-low-latency": ["search: NVIDIA system latency optimization guide"],
+  "diag-capframex": ["search: CapFrameX GitHub releases"],
+} as const;
 
 const ASSESSMENT_OVERRIDES: Record<string, Partial<GuideAssessment>> = {
-  'refresh-rate': { evidence: 'official', confidence: 5, risk: 0 },
-  'preflight-refresh-rate': { evidence: 'official', confidence: 5, risk: 0 },
-  'gpu-scheduling': { evidence: 'official' },
-  'fullscreen-optimizations-disable': { evidence: 'official', scope: 'perGame' },
-  'gamedvr-disable': { evidence: 'official' },
-  'mpo-disable': { evidence: 'community', scope: 'symptomOnly', risk: 3 },
-  'gpu-preference': { scope: 'perGame', prerequisites: ['Laptop with hybrid graphics'] },
-  'nagle-algorithm-disable': { evidence: 'community', risk: 3 },
-  'network-throttling-disable': { evidence: 'community', risk: 3 },
-  'win32-priority-separation': { evidence: 'community', risk: 3 },
-} as const
+  // ===== WINDOWS DISPLAY =====
+  "refresh-rate": { evidence: "official", confidence: 5, risk: 0 },
+  "gpu-scheduling": { evidence: "official", confidence: 4, risk: 2 },
+  "vrr-enable": { evidence: "official", confidence: 4, risk: 0 },
+  "hdr-setting": { evidence: "official", confidence: 3, risk: 0 },
+  "display-scale": { evidence: "official", confidence: 3, risk: 0 },
+  "game-mode-enable": { evidence: "official", confidence: 4, risk: 1 },
+  "gamedvr-disable": { evidence: "official", confidence: 4, risk: 1 },
+  "fullscreen-optimizations-disable": {
+    evidence: "official",
+    confidence: 3,
+    risk: 2,
+    scope: "perGame",
+  },
+  "mpo-disable": {
+    evidence: "community",
+    confidence: 3,
+    risk: 3,
+    scope: "symptomOnly",
+  },
+  "gpu-preference": {
+    evidence: "official",
+    confidence: 5,
+    risk: 0,
+    scope: "perGame",
+    prerequisites: ["Laptop with hybrid graphics"],
+  },
+
+  // ===== NVIDIA SETTINGS =====
+  "nv-low-latency": { evidence: "official", confidence: 3, risk: 1 },
+  "nv-digital-vibrance": { evidence: "official", confidence: 1, risk: 0 }, // Visual only
+  "nv-power-mode": { evidence: "official", confidence: 4, risk: 1 },
+  "nv-texture-quality": { evidence: "official", confidence: 2, risk: 0 },
+  "nv-threaded-opt": { evidence: "official", confidence: 2, risk: 0 },
+  "nv-vsync": { evidence: "official", confidence: 4, risk: 0 },
+  "nv-gsync": { evidence: "official", confidence: 5, risk: 0 },
+  "nv-max-fps": { evidence: "official", confidence: 4, risk: 0 },
+  "nv-fan-curve": { evidence: "measured", confidence: 3, risk: 1 },
+  "nv-power-limit": { evidence: "measured", confidence: 3, risk: 2 },
+  "nv-driver-install": { evidence: "official", confidence: 3, risk: 0 },
+  "nv-driver-strategy": { evidence: "community", confidence: 3, risk: 1 },
+  "nv-pro-low-latency": { evidence: "official", confidence: 4, risk: 1 },
+  "nv-pro-digital-vibrance": { evidence: "official", confidence: 1, risk: 0 }, // Visual only
+  "nv-pro-power-mode": { evidence: "official", confidence: 4, risk: 1 },
+  "nv-pro-texture-quality": { evidence: "official", confidence: 3, risk: 0 },
+  "nv-pro-threaded-opt": { evidence: "official", confidence: 3, risk: 0 },
+  "nv-pro-vsync": { evidence: "official", confidence: 5, risk: 0 },
+  "nv-pro-gsync": { evidence: "official", confidence: 5, risk: 0 },
+  "nv-pro-scaling-mode": { evidence: "official", confidence: 3, risk: 0 },
+  "nv-pro-max-fps": { evidence: "official", confidence: 4, risk: 0 },
+  "nv-pro-shader-cache": { evidence: "official", confidence: 3, risk: 0 },
+  "nv-pro-per-game": {
+    evidence: "official",
+    confidence: 4,
+    risk: 0,
+    scope: "perGame",
+  },
+  "nv-pro-driver-install": { evidence: "official", confidence: 3, risk: 0 },
+  "nv-stream-low-latency": { evidence: "official", confidence: 3, risk: 1 },
+  "nv-stream-digital-vibrance": {
+    evidence: "official",
+    confidence: 1,
+    risk: 0,
+  }, // Visual only
+  "nv-stream-power-mode": { evidence: "official", confidence: 4, risk: 1 },
+  "nv-stream-vsync": { evidence: "official", confidence: 4, risk: 0 },
+  "nv-stream-gsync": { evidence: "official", confidence: 4, risk: 0 },
+  "nv-stream-cuda": { evidence: "official", confidence: 4, risk: 0 },
+  "nv-stream-driver-install": { evidence: "official", confidence: 3, risk: 0 },
+  "nv-bench-low-latency": { evidence: "official", confidence: 3, risk: 1 },
+  "nv-bench-digital-vibrance": { evidence: "official", confidence: 1, risk: 0 }, // Visual only
+  "nv-bench-power-mode": { evidence: "official", confidence: 4, risk: 1 },
+  "nv-bench-vsync": { evidence: "official", confidence: 5, risk: 0 },
+  "nv-bench-gsync": { evidence: "official", confidence: 4, risk: 0 },
+  "nv-bench-max-fps": { evidence: "official", confidence: 4, risk: 0 },
+  "nv-bench-shader-cache": { evidence: "official", confidence: 3, risk: 0 },
+  "nv-bench-driver-install": { evidence: "official", confidence: 3, risk: 0 },
+
+  // ===== AMD SETTINGS =====
+  "amd-anti-lag": { evidence: "official", confidence: 4, risk: 1 },
+  "amd-radeon-boost": { evidence: "official", confidence: 3, risk: 0 },
+  "amd-enhanced-sync": { evidence: "official", confidence: 3, risk: 1 },
+  "amd-freesync": { evidence: "official", confidence: 5, risk: 0 },
+  "amd-vsync": { evidence: "official", confidence: 4, risk: 0 },
+  "amd-frtc": { evidence: "official", confidence: 4, risk: 0 },
+  "amd-fan-curve": { evidence: "measured", confidence: 3, risk: 1 },
+  "amd-power-limit": { evidence: "measured", confidence: 3, risk: 2 },
+  "amd-driver-strategy": { evidence: "community", confidence: 3, risk: 1 },
+  "amd-pro-anti-lag": { evidence: "official", confidence: 4, risk: 1 },
+  "amd-pro-radeon-boost": { evidence: "official", confidence: 3, risk: 0 },
+  "amd-pro-enhanced-sync": { evidence: "official", confidence: 3, risk: 1 },
+  "amd-pro-freesync": { evidence: "official", confidence: 5, risk: 0 },
+  "amd-pro-chill": { evidence: "official", confidence: 3, risk: 0 },
+  "amd-pro-sharpening": { evidence: "official", confidence: 2, risk: 0 },
+  "amd-stream-anti-lag": { evidence: "official", confidence: 4, risk: 1 },
+  "amd-stream-radeon-boost": { evidence: "official", confidence: 3, risk: 0 },
+  "amd-stream-freesync": { evidence: "official", confidence: 4, risk: 0 },
+  "amd-stream-relive": { evidence: "official", confidence: 3, risk: 1 },
+
+  // ===== BIOS SETTINGS =====
+  "bios-xmp": { evidence: "official", confidence: 5, risk: 3 },
+  "bios-rebar": { evidence: "official", confidence: 4, risk: 1 },
+  "bios-csm": { evidence: "official", confidence: 3, risk: 3 },
+  "bios-above4g": { evidence: "official", confidence: 4, risk: 1 },
+  "bios-cppc": {
+    evidence: "official",
+    confidence: 5,
+    risk: 0,
+    prerequisites: ["AMD X3D CPU"],
+  },
+  "bios-cppc-preferred": {
+    evidence: "official",
+    confidence: 5,
+    risk: 0,
+    prerequisites: ["AMD X3D CPU"],
+  },
+  "bios-pbo": {
+    evidence: "official",
+    confidence: 4,
+    risk: 3,
+    prerequisites: ["AMD CPU"],
+  },
+  "bios-cpb": {
+    evidence: "official",
+    confidence: 4,
+    risk: 1,
+    prerequisites: ["AMD CPU"],
+  },
+  "bios-x3d-power-plan": {
+    evidence: "official",
+    confidence: 4,
+    risk: 0,
+    prerequisites: ["AMD X3D CPU"],
+  },
+  "bios-cstates": {
+    evidence: "official",
+    confidence: 3,
+    risk: 2,
+    prerequisites: ["Intel CPU"],
+  },
+  "bios-speedshift": {
+    evidence: "official",
+    confidence: 4,
+    risk: 0,
+    prerequisites: ["Intel CPU"],
+  },
+  "bios-turbo": {
+    evidence: "official",
+    confidence: 4,
+    risk: 1,
+    prerequisites: ["Intel CPU"],
+  },
+
+  // ===== DISCORD SETTINGS =====
+  "discord-hw-accel": { evidence: "official", confidence: 3, risk: 1 },
+  "discord-overlay": { evidence: "official", confidence: 3, risk: 1 },
+  "discord-streamer-mode": { evidence: "official", confidence: 2, risk: 0 },
+  "discord-pro-hw-accel": { evidence: "official", confidence: 3, risk: 1 },
+  "discord-pro-overlay": { evidence: "official", confidence: 4, risk: 1 },
+  "discord-pro-activity": { evidence: "official", confidence: 2, risk: 0 },
+  "discord-pro-echo": { evidence: "official", confidence: 3, risk: 0 },
+  "discord-pro-noise": { evidence: "official", confidence: 4, risk: 0 },
+  "discord-pro-agc": { evidence: "official", confidence: 3, risk: 0 },
+  "discord-stream-hw-accel": { evidence: "official", confidence: 3, risk: 1 },
+  "discord-stream-overlay": { evidence: "official", confidence: 2, risk: 1 },
+  "discord-stream-mode": { evidence: "official", confidence: 3, risk: 0 },
+
+  // ===== STEAM SETTINGS =====
+  "steam-overlay": { evidence: "official", confidence: 3, risk: 1 },
+  "steam-fps-counter": { evidence: "official", confidence: 3, risk: 0 },
+  "steam-downloads": { evidence: "official", confidence: 4, risk: 0 },
+  "steam-gpu-render": { evidence: "official", confidence: 3, risk: 1 },
+  "steam-pro-overlay": { evidence: "official", confidence: 4, risk: 1 },
+  "steam-pro-fps-counter": { evidence: "official", confidence: 3, risk: 0 },
+  "steam-pro-downloads": { evidence: "official", confidence: 4, risk: 0 },
+  "steam-pro-low-bandwidth": { evidence: "official", confidence: 3, risk: 0 },
+  "steam-pro-notifications": { evidence: "official", confidence: 3, risk: 0 },
+
+  // ===== BROWSER SETTINGS =====
+  "chrome-hw-accel": { evidence: "official", confidence: 3, risk: 1 },
+  "firefox-hw-accel": { evidence: "official", confidence: 3, risk: 1 },
+
+  // ===== RGB SETTINGS =====
+  "rgb-icue": { evidence: "community", confidence: 1, risk: 1 },
+  "rgb-synapse": { evidence: "community", confidence: 1, risk: 1 },
+  "rgb-armoury": { evidence: "community", confidence: 1, risk: 1 },
+  "rgb-ghub": { evidence: "community", confidence: 1, risk: 1 },
+  "rgb-casual": { evidence: "community", confidence: 1, risk: 0 },
+
+  // ===== COOLING SETTINGS =====
+  "cooling-fan-control": { evidence: "community", confidence: 3, risk: 1 },
+  "cooling-fan-curve-strategy": {
+    evidence: "measured",
+    confidence: 3,
+    risk: 1,
+  },
+  "cooling-airflow-check": { evidence: "measured", confidence: 3, risk: 0 },
+  "fan-control-download": { evidence: "community", confidence: 3, risk: 1 },
+  "fan-control-dual-curve": { evidence: "community", confidence: 3, risk: 1 },
+
+  // ===== PRE-FLIGHT CHECKLIST =====
+  "preflight-refresh-rate": { evidence: "official", confidence: 5, risk: 0 },
+  "preflight-vrr": { evidence: "official", confidence: 4, risk: 0 },
+  "preflight-discrete-gpu": { evidence: "official", confidence: 5, risk: 0 },
+  "preflight-downloads": { evidence: "community", confidence: 4, risk: 0 },
+  "preflight-power-plan": { evidence: "official", confidence: 4, risk: 0 },
+  "preflight-timer": { evidence: "measured", confidence: 2, risk: 2 },
+  "preflight-apps": { evidence: "community", confidence: 3, risk: 0 },
+  "preflight-drivers": { evidence: "official", confidence: 4, risk: 1 },
+  "preflight-antivirus": { evidence: "community", confidence: 3, risk: 1 },
+  "preflight-pro-discord": { evidence: "official", confidence: 3, risk: 1 },
+  "preflight-pro-overlay": { evidence: "official", confidence: 4, risk: 1 },
+  "preflight-pro-fullscreen": { evidence: "official", confidence: 3, risk: 2 },
+  "preflight-pro-reflex": { evidence: "official", confidence: 4, risk: 0 },
+
+  // ===== TROUBLESHOOTING =====
+  "wifi-bt-test": {
+    evidence: "community",
+    confidence: 3,
+    risk: 0,
+    scope: "symptomOnly",
+  },
+  "wifi-bt-bios-fix": {
+    evidence: "community",
+    confidence: 3,
+    risk: 2,
+    scope: "symptomOnly",
+  },
+  "wifi-bt-drivers": {
+    evidence: "official",
+    confidence: 3,
+    risk: 1,
+    scope: "symptomOnly",
+  },
+  "wifi-bt-separate": {
+    evidence: "community",
+    confidence: 3,
+    risk: 0,
+    scope: "symptomOnly",
+  },
+  "trouble-60fps-cap": {
+    evidence: "community",
+    confidence: 3,
+    risk: 0,
+    scope: "symptomOnly",
+  },
+  "trouble-micro-stutters": {
+    evidence: "community",
+    confidence: 3,
+    risk: 1,
+    scope: "symptomOnly",
+  },
+  "trouble-alt-tab": {
+    evidence: "community",
+    confidence: 3,
+    risk: 1,
+    scope: "symptomOnly",
+  },
+  "trouble-high-fps-laggy": {
+    evidence: "measured",
+    confidence: 3,
+    risk: 1,
+    scope: "symptomOnly",
+  },
+  "trouble-igpu": {
+    evidence: "community",
+    confidence: 4,
+    risk: 0,
+    scope: "symptomOnly",
+  },
+  "trouble-1-percent-lows": {
+    evidence: "measured",
+    confidence: 3,
+    risk: 1,
+    scope: "symptomOnly",
+  },
+  "trouble-audio-crackling": {
+    evidence: "community",
+    confidence: 3,
+    risk: 2,
+    scope: "symptomOnly",
+  },
+  "trouble-audio-directional": {
+    evidence: "community",
+    confidence: 3,
+    risk: 0,
+    scope: "symptomOnly",
+  },
+  "trouble-mic-quiet": {
+    evidence: "community",
+    confidence: 3,
+    risk: 0,
+    scope: "symptomOnly",
+  },
+  "trouble-high-ping": {
+    evidence: "community",
+    confidence: 3,
+    risk: 1,
+    scope: "symptomOnly",
+  },
+  "trouble-rubberbanding": {
+    evidence: "community",
+    confidence: 3,
+    risk: 1,
+    scope: "symptomOnly",
+  },
+  "trouble-nat-type": {
+    evidence: "community",
+    confidence: 3,
+    risk: 2,
+    scope: "symptomOnly",
+  },
+  "trouble-ctd": {
+    evidence: "community",
+    confidence: 3,
+    risk: 1,
+    scope: "symptomOnly",
+  },
+  "trouble-bsod": {
+    evidence: "community",
+    confidence: 3,
+    risk: 2,
+    scope: "symptomOnly",
+  },
+  "trouble-restart": {
+    evidence: "community",
+    confidence: 3,
+    risk: 2,
+    scope: "symptomOnly",
+  },
+
+  // ===== PERIPHERALS: MOUSE =====
+  "mouse-polling": { evidence: "measured", confidence: 4, risk: 0 },
+  "mouse-dpi": { evidence: "measured", confidence: 3, risk: 0 },
+  "mouse-angle-snapping": { evidence: "measured", confidence: 4, risk: 0 },
+  "mouse-lod": { evidence: "measured", confidence: 3, risk: 0 },
+  "mouse-debounce": { evidence: "measured", confidence: 2, risk: 0 },
+  "mouse-pro-calibration": { evidence: "measured", confidence: 3, risk: 0 },
+  "mouse-pro-dpi-stages": { evidence: "measured", confidence: 3, risk: 0 },
+  "mouse-pro-onboard": { evidence: "measured", confidence: 3, risk: 0 },
+  "mouse-acceleration-disable": {
+    evidence: "measured",
+    confidence: 5,
+    risk: 0,
+  },
+
+  // ===== PERIPHERALS: KEYBOARD =====
+  "kb-polling": { evidence: "measured", confidence: 4, risk: 0 },
+  "kb-nkro": { evidence: "official", confidence: 4, risk: 0 },
+  "kb-game-mode": { evidence: "official", confidence: 3, risk: 0 },
+  "kb-pro-rapid-trigger": { evidence: "measured", confidence: 4, risk: 0 },
+  "kb-pro-actuation": { evidence: "measured", confidence: 3, risk: 0 },
+
+  // ===== PERIPHERALS: AUDIO =====
+  "audio-sample-rate": { evidence: "official", confidence: 3, risk: 1 },
+  "audio-bit-depth": { evidence: "official", confidence: 2, risk: 0 },
+  "audio-spatial": { evidence: "official", confidence: 2, risk: 0 },
+  "audio-exclusive": { evidence: "official", confidence: 3, risk: 2 },
+  "audio-pro-sonic": { evidence: "community", confidence: 2, risk: 0 },
+  "audio-pro-loudness": { evidence: "official", confidence: 2, risk: 0 },
+  "audio-pro-enhance": { evidence: "official", confidence: 2, risk: 1 },
+
+  // ===== NETWORK SETTINGS =====
+  "nagle-algorithm-disable": { evidence: "community", confidence: 2, risk: 3 },
+  "network-throttling-disable": {
+    evidence: "community",
+    confidence: 2,
+    risk: 3,
+  },
+  "unifi-sqm": { evidence: "measured", confidence: 4, risk: 1 },
+  "unifi-dscp": { evidence: "community", confidence: 3, risk: 1 },
+  "unifi-wifi-channel": { evidence: "measured", confidence: 4, risk: 0 },
+  "unifi-band-steering": { evidence: "community", confidence: 3, risk: 1 },
+  "unifi-disable-features": { evidence: "community", confidence: 2, risk: 1 },
+  "unifi-bufferbloat-test": { evidence: "measured", confidence: 4, risk: 0 },
+
+  // ===== PERFORMANCE TWEAKS =====
+  "win32-priority-separation": {
+    evidence: "community",
+    confidence: 2,
+    risk: 3,
+  },
+
+  // ===== GAME LAUNCH OPTIONS =====
+  "game-cs2": {
+    evidence: "community",
+    confidence: 3,
+    risk: 0,
+    scope: "perGame",
+  },
+  "game-valorant": {
+    evidence: "community",
+    confidence: 3,
+    risk: 0,
+    scope: "perGame",
+  },
+  "game-apex": {
+    evidence: "community",
+    confidence: 3,
+    risk: 0,
+    scope: "perGame",
+  },
+  "game-overwatch2": {
+    evidence: "community",
+    confidence: 3,
+    risk: 0,
+    scope: "perGame",
+  },
+  "game-fortnite": {
+    evidence: "community",
+    confidence: 3,
+    risk: 0,
+    scope: "perGame",
+  },
+  "game-dota2": {
+    evidence: "community",
+    confidence: 3,
+    risk: 0,
+    scope: "perGame",
+  },
+  "game-lol": {
+    evidence: "community",
+    confidence: 3,
+    risk: 0,
+    scope: "perGame",
+  },
+
+  // ===== OBS SETTINGS =====
+  "obs-encoder": { evidence: "official", confidence: 5, risk: 0 },
+  "obs-rate-control": { evidence: "official", confidence: 4, risk: 0 },
+  "obs-bitrate": { evidence: "official", confidence: 4, risk: 0 },
+  "obs-keyframe": { evidence: "official", confidence: 4, risk: 0 },
+  "obs-preset": { evidence: "official", confidence: 4, risk: 1 },
+  "obs-profile": { evidence: "official", confidence: 4, risk: 0 },
+  "obs-lookahead": { evidence: "official", confidence: 3, risk: 0 },
+  "obs-psycho-visual": { evidence: "official", confidence: 3, risk: 0 },
+  "obs-bframes": { evidence: "official", confidence: 3, risk: 0 },
+  "obs-canvas-res": { evidence: "official", confidence: 5, risk: 0 },
+  "obs-output-res": { evidence: "official", confidence: 5, risk: 0 },
+  "obs-downscale": { evidence: "official", confidence: 4, risk: 0 },
+  "obs-fps": { evidence: "official", confidence: 5, risk: 0 },
+  "obs-priority": { evidence: "official", confidence: 3, risk: 1 },
+  "obs-renderer": { evidence: "official", confidence: 3, risk: 1 },
+  "obs-color-format": { evidence: "official", confidence: 3, risk: 0 },
+  "obs-color-space": { evidence: "official", confidence: 3, risk: 0 },
+  "obs-color-range": { evidence: "official", confidence: 3, risk: 0 },
+  "obs-capture-type": { evidence: "official", confidence: 4, risk: 0 },
+  "obs-capture-mode": { evidence: "official", confidence: 3, risk: 0 },
+  "obs-sli-capture": { evidence: "community", confidence: 2, risk: 1 },
+  "obs-transparency": { evidence: "official", confidence: 2, risk: 0 },
+  "obs-encoding-overload": {
+    evidence: "community",
+    confidence: 3,
+    risk: 1,
+    scope: "symptomOnly",
+  },
+  "obs-dropped-network": {
+    evidence: "community",
+    confidence: 3,
+    risk: 1,
+    scope: "symptomOnly",
+  },
+  "obs-dropped-rendering": {
+    evidence: "community",
+    confidence: 3,
+    risk: 1,
+    scope: "symptomOnly",
+  },
+  "obs-game-stutters": {
+    evidence: "community",
+    confidence: 3,
+    risk: 1,
+    scope: "symptomOnly",
+  },
+  "obs-black-screen": {
+    evidence: "community",
+    confidence: 3,
+    risk: 1,
+    scope: "symptomOnly",
+  },
+
+  // ===== DIAGNOSTIC TOOLS =====
+  "diag-latencymon": { evidence: "community", confidence: 4, risk: 0 },
+  "diag-hwinfo": { evidence: "community", confidence: 4, risk: 0 },
+  "diag-capframex": { evidence: "community", confidence: 4, risk: 0 },
+  "diag-afterburner": { evidence: "community", confidence: 4, risk: 0 },
+  "diag-procexp": { evidence: "community", confidence: 3, risk: 0 },
+  "diag-ddu": { evidence: "community", confidence: 4, risk: 2 },
+  "diag-crystaldisk": { evidence: "community", confidence: 4, risk: 0 },
+  "diag-memtest": { evidence: "community", confidence: 4, risk: 0 },
+  "diag-occt": { evidence: "community", confidence: 4, risk: 0 },
+  "diag-prime95": { evidence: "community", confidence: 4, risk: 0 },
+  "diag-winmtr": { evidence: "community", confidence: 4, risk: 0 },
+  "diag-pingplotter": { evidence: "community", confidence: 4, risk: 0 },
+  "diag-wireshark": { evidence: "community", confidence: 3, risk: 0 },
+  "diag-whocrashed": { evidence: "community", confidence: 4, risk: 0 },
+  "diag-bluescreenview": { evidence: "community", confidence: 4, risk: 0 },
+  "diag-eventviewer": { evidence: "official", confidence: 3, risk: 0 },
+} as const;
 
 const GUIDE_OVERRIDES: Record<string, GuideCopy> = {
-  'gamedvr-disable': {
-    skipIf: ['You have an AMD X3D CPU and need Game Bar for the V-Cache optimizer.'],
+  "gamedvr-disable": {
+    skipIf: [
+      "You have an AMD X3D CPU and need Game Bar for the V-Cache optimizer.",
+    ],
   },
-  'gpu-scheduling': {
-    risks: ['Mixed results in older DX9/DX11 titles; test on yours.'],
-    skipIf: ['You mostly play older titles and already tested with no gains.'],
+  "gpu-scheduling": {
+    risks: ["Mixed results in older DX9/DX11 titles; test on yours."],
+    skipIf: ["You mostly play older titles and already tested with no gains."],
   },
-  'fullscreen-optimizations-disable': {
-    skipIf: ['You need fast alt-tab or only play borderless windowed.'],
+  "fullscreen-optimizations-disable": {
+    skipIf: ["You need fast alt-tab or only play borderless windowed."],
   },
-  'mpo-disable': {
-    symptoms: ['Flicker, stutter, or overlay glitches in windowed games.'],
-    skipIf: ['You are not seeing flicker, stutter, or overlay glitches.'],
+  "mpo-disable": {
+    symptoms: ["Flicker, stutter, or overlay glitches in windowed games."],
+    skipIf: ["You are not seeing flicker, stutter, or overlay glitches."],
   },
-} as const
+} as const;
 
 function warnManual(message: string, warn?: (message: string) => void) {
   if (warn) {
-    warn(message)
-    return
+    warn(message);
+    return;
   }
-  if (!import.meta.env?.DEV) return
-  if (WARNED_MESSAGES.has(message)) return
-  WARNED_MESSAGES.add(message)
-  console.warn(`[ManualSteps] ${message}`)
+  if (!import.meta.env?.DEV) return;
+  if (WARNED_MESSAGES.has(message)) return;
+  WARNED_MESSAGES.add(message);
+  console.warn(`[ManualSteps] ${message}`);
 }
 
 function normalizeStepText(step: string, index: number, total: number): string {
-  const trimmed = step.trim()
-  if (!trimmed) return trimmed
-  const prefix =
-    index === 0 ? STEP_PREFIXES[0] : index === total - 1 ? STEP_PREFIXES[3] : index === 1 ? STEP_PREFIXES[1] : STEP_PREFIXES[2]
-  const hasPrefix = STEP_PREFIXES.some((token) => trimmed.toLowerCase().startsWith(token.toLowerCase()))
-  const normalized = trimmed.endsWith('.') ? trimmed : `${trimmed}.`
-  return hasPrefix ? normalized : `${prefix} ${normalized}`
+  const trimmed = step.trim();
+  if (!trimmed) return trimmed;
+  const prefix = index === 0
+    ? STEP_PREFIXES[0]
+    : index === total - 1
+    ? STEP_PREFIXES[3]
+    : index === 1
+    ? STEP_PREFIXES[1]
+    : STEP_PREFIXES[2];
+  const hasPrefix = STEP_PREFIXES.some((token) =>
+    trimmed.toLowerCase().startsWith(token.toLowerCase())
+  );
+  const normalized = trimmed.endsWith(".") ? trimmed : `${trimmed}.`;
+  return hasPrefix ? normalized : `${prefix} ${normalized}`;
 }
 
 function normalizeSteps(steps: readonly string[]): string[] {
-  return steps.map((step, index) => normalizeStepText(step, index, steps.length)).filter(Boolean)
+  return steps.map((step, index) =>
+    normalizeStepText(step, index, steps.length)
+  ).filter(Boolean);
 }
 
 function getFirstSentence(text: string): string {
-  const trimmed = text.trim()
-  if (!trimmed) return trimmed
-  const match = trimmed.match(/^[^.!?]+[.!?]?/)
-  return match ? match[0].trim() : trimmed
+  const trimmed = text.trim();
+  if (!trimmed) return trimmed;
+  const match = trimmed.match(/^[^.!?]+[.!?]?/);
+  return match ? match[0].trim() : trimmed;
 }
 
 function isManualStepItem(item: ManualItem): item is ManualStepItem {
-  return 'step' in item && 'check' in item && 'why' in item
+  return "step" in item && "check" in item && "why" in item;
 }
 
 function isSettingItem(item: ManualItem): item is SettingItem {
-  return 'setting' in item && 'value' in item && !('path' in item) && !('browser' in item) && !('software' in item)
+  return "setting" in item && "value" in item && !("path" in item) &&
+    !("browser" in item) && !("software" in item);
 }
 
 function isSoftwareSettingItem(item: ManualItem): item is SoftwareSettingItem {
-  return 'path' in item && 'value' in item && !('browser' in item)
+  return "path" in item && "value" in item && !("browser" in item);
 }
 
 function isBrowserSettingItem(item: ManualItem): item is BrowserSettingItem {
-  return 'browser' in item && 'setting' in item
+  return "browser" in item && "setting" in item;
 }
 
 function isRgbSettingItem(item: ManualItem): item is RgbSettingItem {
-  return 'software' in item && 'action' in item
+  return "software" in item && "action" in item;
 }
 
 function isPreflightCheck(item: ManualItem): item is PreflightCheck {
-  return 'check' in item && 'how' in item && 'fail' in item
+  return "check" in item && "how" in item && "fail" in item;
 }
 
 function isTroubleshootingItem(item: ManualItem): item is TroubleshootingItem {
-  return 'problem' in item && 'causes' in item && 'quickFix' in item
+  return "problem" in item && "causes" in item && "quickFix" in item;
 }
 
 function isGameLaunchItem(item: ManualItem): item is GameLaunchItem {
-  return 'game' in item && 'platform' in item && 'notes' in item
+  return "game" in item && "platform" in item && "notes" in item;
 }
 
-function isStreamingTroubleshootItem(item: ManualItem): item is StreamingTroubleshootItem {
-  return 'problem' in item && 'solution' in item && 'why' in item && !('causes' in item)
+function isStreamingTroubleshootItem(
+  item: ManualItem,
+): item is StreamingTroubleshootItem {
+  return "problem" in item && "solution" in item && "why" in item &&
+    !("causes" in item);
 }
 
 function isDiagnosticTool(item: ManualItem): item is DiagnosticTool {
-  return 'tool' in item && 'use' in item
+  return "tool" in item && "use" in item;
 }
 
 function getItemTitle(item: ManualItem): string {
-  if (isManualStepItem(item)) return item.check
-  if (isSettingItem(item)) return item.setting
-  if (isSoftwareSettingItem(item)) return item.path.split('>').pop()?.trim() ?? item.path
-  if (isBrowserSettingItem(item)) return item.setting
-  if (isRgbSettingItem(item)) return item.software
-  if (isPreflightCheck(item)) return item.check
-  if (isTroubleshootingItem(item)) return item.problem
-  if (isGameLaunchItem(item)) return item.game
-  if (isStreamingTroubleshootItem(item)) return item.problem
-  if (isDiagnosticTool(item)) return item.tool
-  return (item as { id: string }).id
+  if (isManualStepItem(item)) return item.check;
+  if (isSettingItem(item)) return item.setting;
+  if (isSoftwareSettingItem(item)) {
+    return item.path.split(">").pop()?.trim() ?? item.path;
+  }
+  if (isBrowserSettingItem(item)) return item.setting;
+  if (isRgbSettingItem(item)) return item.software;
+  if (isPreflightCheck(item)) return item.check;
+  if (isTroubleshootingItem(item)) return item.problem;
+  if (isGameLaunchItem(item)) return item.game;
+  if (isStreamingTroubleshootItem(item)) return item.problem;
+  if (isDiagnosticTool(item)) return item.tool;
+  return (item as { id: string }).id;
 }
 
 function getItemValue(item: ManualItem): string | undefined {
-  if (isManualStepItem(item)) return undefined
-  if (isSettingItem(item)) return item.value
-  if (isSoftwareSettingItem(item)) return item.value
-  if (isBrowserSettingItem(item)) return item.value
-  if (isRgbSettingItem(item)) return item.action
-  if (isPreflightCheck(item)) return undefined
-  if (isTroubleshootingItem(item)) return undefined
-  if (isGameLaunchItem(item)) return item.launchOptions
-  if (isStreamingTroubleshootItem(item)) return item.solution
-  if (isDiagnosticTool(item)) return undefined
-  return undefined
+  if (isManualStepItem(item)) return undefined;
+  if (isSettingItem(item)) return item.value;
+  if (isSoftwareSettingItem(item)) return item.value;
+  if (isBrowserSettingItem(item)) return item.value;
+  if (isRgbSettingItem(item)) return item.action;
+  if (isPreflightCheck(item)) return undefined;
+  if (isTroubleshootingItem(item)) return undefined;
+  if (isGameLaunchItem(item)) return item.launchOptions;
+  if (isStreamingTroubleshootItem(item)) return item.solution;
+  if (isDiagnosticTool(item)) return undefined;
+  return undefined;
 }
 
 function getItemWhy(item: ManualItem): string {
-  if ('why' in item) return item.why
-  if (isPreflightCheck(item)) return `${item.how} If not: ${item.fail}`
-  if (isTroubleshootingItem(item)) return item.quickFix
-  if (isGameLaunchItem(item)) return item.notes.join(' ')
-  if (isDiagnosticTool(item)) return item.use
-  return ''
+  if ("why" in item) return item.why;
+  if (isPreflightCheck(item)) return `${item.how} If not: ${item.fail}`;
+  if (isTroubleshootingItem(item)) return item.quickFix;
+  if (isGameLaunchItem(item)) return item.notes.join(" ");
+  if (isDiagnosticTool(item)) return item.use;
+  return "";
 }
 
 function deriveIntro(item: ManualItem): string {
-  const why = getItemWhy(item)
-  if (why) return getFirstSentence(why)
-  if (isTroubleshootingItem(item)) return `Troubleshoot: ${getFirstSentence(item.problem)}`
-  if (isPreflightCheck(item)) return `Quick check: ${getFirstSentence(item.check)}`
-  if (isDiagnosticTool(item)) return `Diagnostic tool: ${getFirstSentence(item.tool)}`
-  return 'Make a targeted change, then test the result.'
+  const why = getItemWhy(item);
+  if (why) return getFirstSentence(why);
+  if (isTroubleshootingItem(item)) {
+    return `Troubleshoot: ${getFirstSentence(item.problem)}`;
+  }
+  if (isPreflightCheck(item)) {
+    return `Quick check: ${getFirstSentence(item.check)}`;
+  }
+  if (isDiagnosticTool(item)) {
+    return `Diagnostic tool: ${getFirstSentence(item.tool)}`;
+  }
+  return "Make a targeted change, then test the result.";
 }
 
 function deriveSteps(item: ManualItem, section: ManualStepSection): string[] {
@@ -458,25 +996,26 @@ function deriveSteps(item: ManualItem, section: ManualStepSection): string[] {
     return normalizeSteps([
       `First open ${item.step}`,
       `Next ${item.check}`,
-      'Finish by applying the change and retesting',
-    ])
+      "Finish by applying the change and retesting",
+    ]);
   }
 
   if (isSettingItem(item)) {
-    const location = section.location ?? section.description ?? `${section.title} settings`
+    const location = section.location ?? section.description ??
+      `${section.title} settings`;
     return normalizeSteps([
       `First open ${location}`,
       `Next set ${item.setting} to ${item.value}`,
-      'Finish by applying and closing the settings window',
-    ])
+      "Finish by applying and closing the settings window",
+    ]);
   }
 
   if (isSoftwareSettingItem(item)) {
     return normalizeSteps([
       `First open ${item.path}`,
       `Next set the value to ${item.value}`,
-      'Finish by restarting the app if required',
-    ])
+      "Finish by restarting the app if required",
+    ]);
   }
 
   if (isBrowserSettingItem(item)) {
@@ -484,84 +1023,94 @@ function deriveSteps(item: ManualItem, section: ManualStepSection): string[] {
       `First open ${item.browser} settings`,
       `Next go to ${item.path}`,
       `Then set ${item.setting} to ${item.value}`,
-      'Finish by restarting the browser if needed',
-    ])
+      "Finish by restarting the browser if needed",
+    ]);
   }
 
   if (isRgbSettingItem(item)) {
     return normalizeSteps([
       `First open ${item.software}`,
       `Next ${item.action}`,
-      'Finish by saving the profile and closing the app if possible',
-    ])
+      "Finish by saving the profile and closing the app if possible",
+    ]);
   }
 
   if (isPreflightCheck(item)) {
     return normalizeSteps([
       `First check: ${item.check}`,
       `Next follow: ${item.how}`,
-      'Finish by fixing any issues you find',
-    ])
+      "Finish by fixing any issues you find",
+    ]);
   }
 
   if (isTroubleshootingItem(item)) {
     return normalizeSteps([
       `First confirm the symptom: ${item.problem}`,
       `Next try: ${item.quickFix}`,
-      'Finish by retesting for stability',
-    ])
+      "Finish by retesting for stability",
+    ]);
   }
 
   if (isGameLaunchItem(item)) {
-    const platform = `${item.platform} launcher`
+    const platform = `${item.platform} launcher`;
     const options = item.launchOptions
       ? `set launch options to ${item.launchOptions}`
-      : 'apply the in-game settings listed'
+      : "apply the in-game settings listed";
     return normalizeSteps([
       `First open the ${platform} for ${item.game}`,
       `Next ${options}`,
-      'Finish by launching the game and testing',
-    ])
+      "Finish by launching the game and testing",
+    ]);
   }
 
   if (isStreamingTroubleshootItem(item)) {
     return normalizeSteps([
       `First confirm: ${item.problem}`,
       `Next apply: ${item.solution}`,
-      'Finish by monitoring OBS stats for improvement',
-    ])
+      "Finish by monitoring OBS stats for improvement",
+    ]);
   }
 
   if (isDiagnosticTool(item)) {
     return normalizeSteps([
       `First install ${item.tool}`,
       `Next use it to ${item.use}`,
-      'Finish by reviewing the results before changing settings',
-    ])
+      "Finish by reviewing the results before changing settings",
+    ]);
   }
 
-  return []
+  return [];
 }
 
-function isRegistryOrSystemTweak(item: ManualItem, section: ManualStepSection): boolean {
-  if (section.id.startsWith('bios')) return true
-  if (isManualStepItem(item) && item.step.toLowerCase().includes('registry')) return true
-  if (typeof item.automated === 'object') {
+function isRegistryOrSystemTweak(
+  item: ManualItem,
+  section: ManualStepSection,
+): boolean {
+  if (section.id.startsWith("bios")) return true;
+  if (isManualStepItem(item) && item.step.toLowerCase().includes("registry")) {
+    return true;
+  }
+  if (typeof item.automated === "object") {
     return Boolean(
       item.automated.registryPath ||
         item.automated.bcdedit ||
         item.automated.service ||
         item.automated.scheduledTask,
-    )
+    );
   }
-  return false
+  return false;
 }
 
-function getDefaultScope(item: ManualItem, section: ManualStepSection): GuideAssessment['scope'] {
-  if (isTroubleshootingItem(item) || isStreamingTroubleshootItem(item)) return 'symptomOnly'
-  if (isGameLaunchItem(item)) return 'perGame'
-  if (section.hardware || section.id.startsWith('bios')) return 'hardware'
-  return 'global'
+function getDefaultScope(
+  item: ManualItem,
+  section: ManualStepSection,
+): GuideAssessment["scope"] {
+  if (isTroubleshootingItem(item) || isStreamingTroubleshootItem(item)) {
+    return "symptomOnly";
+  }
+  if (isGameLaunchItem(item)) return "perGame";
+  if (section.hardware || section.id.startsWith("bios")) return "hardware";
+  return "global";
 }
 
 function buildAssessment(
@@ -573,17 +1122,16 @@ function buildAssessment(
   const override: Partial<GuideAssessment> = {
     ...(ASSESSMENT_OVERRIDES[item.id] ?? {}),
     ...(guide?.assessment ?? {}),
-  }
-  const hasExplicitAssessment = guide?.assessment !== undefined
-  const hasLastReviewed = override.lastReviewed !== undefined
-  const scope = override.scope ?? getDefaultScope(item, section)
+  };
+  const hasExplicitAssessment = guide?.assessment !== undefined;
+  const hasLastReviewed = override.lastReviewed !== undefined;
+  const scope = override.scope ?? getDefaultScope(item, section);
 
-  const normalizedRisk =
-    override.risk === undefined
-      ? null
-      : override.risk <= 0
-        ? 0
-        : ((override.risk - 1) as RiskScore)
+  const normalizedRisk = override.risk === undefined
+    ? null
+    : override.risk <= 0
+    ? 0
+    : ((override.risk - 1) as RiskScore);
 
   const assessment: NormalizedGuideAssessment = {
     ...DEFAULT_ASSESSMENT,
@@ -593,43 +1141,50 @@ function buildAssessment(
     risk: normalizedRisk,
     lastReviewed: override.lastReviewed ?? MANUAL_REVIEW_DATE,
     impact: override.impact ?? {},
-  }
+  };
 
   if (section.hardware) {
     assessment.appliesTo = assessment.appliesTo ?? [
-      section.hardware === GPU_TYPES.NVIDIA ? 'NVIDIA GPUs' : section.hardware === GPU_TYPES.AMD ? 'AMD GPUs' : 'Intel GPUs',
-    ]
+      section.hardware === GPU_TYPES.NVIDIA
+        ? "NVIDIA GPUs"
+        : section.hardware === GPU_TYPES.AMD
+        ? "AMD GPUs"
+        : "Intel GPUs",
+    ];
   }
 
-  const refSources = REFERENCE_SOURCES_BY_ID[item.id] ?? []
-  const guideSources = guide?.references ?? []
-  const assessmentSources = assessment.sources ?? []
-  const mergedSources = [...assessmentSources, ...guideSources, ...refSources]
+  const refSources = REFERENCE_SOURCES_BY_ID[item.id] ?? [];
+  const guideSources = guide?.references ?? [];
+  const assessmentSources = assessment.sources ?? [];
+  const mergedSources = [...assessmentSources, ...guideSources, ...refSources];
   if (mergedSources.length > 0) {
-    assessment.sources = mergedSources
+    assessment.sources = mergedSources;
   }
 
   if (hasExplicitAssessment && !hasLastReviewed) {
-    warnManual(`Missing lastReviewed for "${item.id}"`, options?.warn)
+    warnManual(`Missing lastReviewed for "${item.id}"`, options?.warn);
   }
 
   if (!assessment.lastReviewed) {
-    assessment.lastReviewed = MANUAL_REVIEW_DATE
+    assessment.lastReviewed = MANUAL_REVIEW_DATE;
   }
 
-  const lastReviewed = assessment.lastReviewed
+  const lastReviewed = assessment.lastReviewed;
   if (lastReviewed) {
-    const parsed = Date.parse(lastReviewed)
+    const parsed = Date.parse(lastReviewed);
     if (!Number.isNaN(parsed)) {
-      const today = Date.parse(options?.today ?? MANUAL_REVIEW_DATE)
-      const ageDays = Math.floor((today - parsed) / (1000 * 60 * 60 * 24))
+      const today = Date.parse(options?.today ?? MANUAL_REVIEW_DATE);
+      const ageDays = Math.floor((today - parsed) / (1000 * 60 * 60 * 24));
       if (ageDays > MANUAL_REVIEW_STALE_DAYS) {
-        warnManual(`Stale lastReviewed (${lastReviewed}) for "${item.id}"`, options?.warn)
+        warnManual(
+          `Stale lastReviewed (${lastReviewed}) for "${item.id}"`,
+          options?.warn,
+        );
       }
     }
   }
 
-  return assessment
+  return assessment;
 }
 
 function buildFailureModes(
@@ -639,80 +1194,87 @@ function buildFailureModes(
   guide: GuideCopy | undefined,
   options?: NormalizeOptions,
 ): FailureMode[] {
-  const failureModes = guide?.failureModes ? [...guide.failureModes] : []
-  const riskScore = assessment.risk ?? 0
-  const requiresFailureModes = riskScore >= 3 || assessment.scope === 'symptomOnly'
+  const failureModes = guide?.failureModes ? [...guide.failureModes] : [];
+  const riskScore = assessment.risk ?? 0;
+  const requiresFailureModes = riskScore >= 3 ||
+    assessment.scope === "symptomOnly";
   if (failureModes.length > 0 || !requiresFailureModes) {
-    return failureModes
+    return failureModes;
   }
 
-  let defaultMode: FailureMode
-  if (section.id.startsWith('bios')) {
+  let defaultMode: FailureMode;
+  if (section.id.startsWith("bios")) {
     defaultMode = {
-      symptom: 'Boot issues or instability after the change',
-      whatToDo: 'Rollback the BIOS setting or load optimized defaults.',
-    }
+      symptom: "Boot issues or instability after the change",
+      whatToDo: "Rollback the BIOS setting or load optimized defaults.",
+    };
   } else if (isRegistryOrSystemTweak(item, section)) {
     defaultMode = {
-      symptom: 'New stutter, instability, or unexpected behavior',
-      whatToDo: 'Rollback the change and reboot.',
-    }
-  } else if (assessment.scope === 'symptomOnly') {
+      symptom: "New stutter, instability, or unexpected behavior",
+      whatToDo: "Rollback the change and reboot.",
+    };
+  } else if (assessment.scope === "symptomOnly") {
     defaultMode = {
-      symptom: 'The issue persists after applying the change',
-      whatToDo: 'Undo the change and continue troubleshooting.',
-    }
+      symptom: "The issue persists after applying the change",
+      whatToDo: "Undo the change and continue troubleshooting.",
+    };
   } else {
     defaultMode = {
-      symptom: 'Performance or stability regresses',
-      whatToDo: 'Rollback the change and retest.',
-    }
+      symptom: "Performance or stability regresses",
+      whatToDo: "Rollback the change and retest.",
+    };
   }
 
-  warnManual(`Missing failureModes for "${item.id}" (required by risk/scope)`, options?.warn)
-  return [defaultMode]
+  warnManual(
+    `Missing failureModes for "${item.id}" (required by risk/scope)`,
+    options?.warn,
+  );
+  return [defaultMode];
 }
 
 function buildRollback(item: ManualItem, section: ManualStepSection): string {
-  if (typeof item.automated === 'object' && item.automated.registryPath && item.automated.registryKey) {
-    return `Revert ${item.automated.registryKey} in ${item.automated.registryPath} and reboot.`
+  if (
+    typeof item.automated === "object" && item.automated.registryPath &&
+    item.automated.registryKey
+  ) {
+    return `Revert ${item.automated.registryKey} in ${item.automated.registryPath} and reboot.`;
   }
-  if (section.id.startsWith('bios')) {
-    return 'Revert the BIOS setting or load optimized defaults.'
+  if (section.id.startsWith("bios")) {
+    return "Revert the BIOS setting or load optimized defaults.";
   }
   if (isSettingItem(item)) {
-    return `Set ${item.setting} back to the previous value.`
+    return `Set ${item.setting} back to the previous value.`;
   }
   if (isSoftwareSettingItem(item) || isBrowserSettingItem(item)) {
-    return 'Restore the previous setting and restart the app.'
+    return "Restore the previous setting and restart the app.";
   }
   if (isGameLaunchItem(item)) {
-    return 'Remove the launch options and relaunch the game.'
+    return "Remove the launch options and relaunch the game.";
   }
-  return DEFAULT_ROLLBACK
+  return DEFAULT_ROLLBACK;
 }
 
 function buildVerify(item: ManualItem): string {
   if (isPreflightCheck(item)) {
-    return `Confirm: ${item.check}`
+    return `Confirm: ${item.check}`;
   }
   if (isTroubleshootingItem(item)) {
-    return 'The issue no longer reproduces during play.'
+    return "The issue no longer reproduces during play.";
   }
   if (isStreamingTroubleshootItem(item)) {
-    return 'OBS stats show stability improvements.'
+    return "OBS stats show stability improvements.";
   }
   if (isDiagnosticTool(item)) {
-    return 'Review the tool output before changing additional settings.'
+    return "Review the tool output before changing additional settings.";
   }
-  return DEFAULT_VERIFY
+  return DEFAULT_VERIFY;
 }
 
-function buildSkipIf(scope: GuideAssessment['scope']): string {
-  if (scope === 'symptomOnly') {
-    return 'Skip if you do not see the symptom this step targets.'
+function buildSkipIf(scope: GuideAssessment["scope"]): string {
+  if (scope === "symptomOnly") {
+    return "Skip if you do not see the symptom this step targets.";
   }
-  return DEFAULT_SKIP_IF
+  return DEFAULT_SKIP_IF;
 }
 
 function normalizeGuide(
@@ -720,43 +1282,67 @@ function normalizeGuide(
   section: ManualStepSection,
   options?: NormalizeOptions,
 ): NormalizedGuideCopy {
-  const guide = item.guide ?? GUIDE_OVERRIDES[item.id]
+  const guide = item.guide ?? GUIDE_OVERRIDES[item.id];
   const steps = guide?.steps && guide.steps.length > 0
     ? normalizeSteps(guide.steps)
     : item.manualSteps && item.manualSteps.length > 0
-      ? normalizeSteps(item.manualSteps)
-      : normalizeSteps(deriveSteps(item, section))
+    ? normalizeSteps(item.manualSteps)
+    : normalizeSteps(deriveSteps(item, section));
 
   if (steps.length === 0) {
-    warnManual(`Missing steps for "${item.id}"`, options?.warn)
-    const assessment = buildAssessment(item, section, guide, options)
+    warnManual(`Missing steps for "${item.id}"`, options?.warn);
+    const assessment = buildAssessment(item, section, guide, options);
     return {
       intro: deriveIntro(item),
-      steps: ['This item needs steps — do not proceed yet.'],
-      benefits: [getItemWhy(item) || 'This may improve performance or stability.'],
-      risks: [DEFAULT_RISKS[item.safety ?? 'safe']],
+      steps: ["This item needs steps — do not proceed yet."],
+      benefits: [
+        getItemWhy(item) || "This may improve performance or stability.",
+      ],
+      risks: [DEFAULT_RISKS[item.safety ?? "safe"]],
       skipIf: [buildSkipIf(assessment.scope)],
       verify: [buildVerify(item)],
       rollback: [buildRollback(item, section)],
       assessment,
-      failureModes: buildFailureModes(item, section, assessment, guide, options),
+      failureModes: buildFailureModes(
+        item,
+        section,
+        assessment,
+        guide,
+        options,
+      ),
       techNotes: [],
       references: guide?.references ? [...guide.references] : [],
       videos: guide?.videos ? [...guide.videos] : [],
-    }
+    };
   }
 
-  const assessment = buildAssessment(item, section, guide, options)
-  const failureModes = buildFailureModes(item, section, assessment, guide, options)
+  const assessment = buildAssessment(item, section, guide, options);
+  const failureModes = buildFailureModes(
+    item,
+    section,
+    assessment,
+    guide,
+    options,
+  );
 
   return {
     intro: guide?.intro ?? deriveIntro(item),
     steps,
-    benefits: guide?.benefits && guide.benefits.length > 0 ? [...guide.benefits] : [getItemWhy(item) || 'May improve performance or stability.'],
-    risks: guide?.risks && guide.risks.length > 0 ? [...guide.risks] : [DEFAULT_RISKS[item.safety ?? 'safe']],
-    skipIf: guide?.skipIf && guide.skipIf.length > 0 ? [...guide.skipIf] : [buildSkipIf(assessment.scope)],
-    verify: guide?.verify && guide.verify.length > 0 ? [...guide.verify] : [buildVerify(item)],
-    rollback: guide?.rollback && guide.rollback.length > 0 ? [...guide.rollback] : [buildRollback(item, section)],
+    benefits: guide?.benefits && guide.benefits.length > 0
+      ? [...guide.benefits]
+      : [getItemWhy(item) || "May improve performance or stability."],
+    risks: guide?.risks && guide.risks.length > 0
+      ? [...guide.risks]
+      : [DEFAULT_RISKS[item.safety ?? "safe"]],
+    skipIf: guide?.skipIf && guide.skipIf.length > 0
+      ? [...guide.skipIf]
+      : [buildSkipIf(assessment.scope)],
+    verify: guide?.verify && guide.verify.length > 0
+      ? [...guide.verify]
+      : [buildVerify(item)],
+    rollback: guide?.rollback && guide.rollback.length > 0
+      ? [...guide.rollback]
+      : [buildRollback(item, section)],
     assessment,
     failureModes,
     techNotes: guide?.techNotes ? [...guide.techNotes] : [],
@@ -765,7 +1351,7 @@ function normalizeGuide(
     symptoms: guide?.symptoms,
     bottleneckHint: guide?.bottleneckHint,
     compatibilityNotes: guide?.compatibilityNotes,
-  }
+  };
 }
 
 export function normalizeManualItem(
@@ -773,2810 +1359,2930 @@ export function normalizeManualItem(
   section: ManualStepSection,
   options?: NormalizeOptions,
 ): NormalizedManualItem {
-  const guideTitle = item.guide?.title
+  const guideTitle = item.guide?.title;
   return {
     id: item.id,
     title: guideTitle ?? getItemTitle(item),
     value: getItemValue(item),
     why: getItemWhy(item),
-    impact: item.impact ?? 'medium',
-    difficulty: item.difficulty ?? 'moderate',
-    safety: item.safety ?? 'safe',
+    impact: item.impact ?? "medium",
+    difficulty: item.difficulty ?? "moderate",
+    safety: item.safety ?? "safe",
     automated: item.automated,
     guide: normalizeGuide(item, section, options),
-  }
+  };
 }
 
 const WINDOWS_DISPLAY_ALL: ManualStepSection = {
-  id: buildSectionId('windows-display'),
-  title: 'Windows Display Settings',
-  description: 'Classic mistakes that cost people frames without them knowing',
+  id: buildSectionId("windows-display"),
+  title: "Windows Display Settings",
+  description: "Classic mistakes that cost people frames without them knowing",
   items: [
     {
-      id: 'refresh-rate',
-      step: 'Settings > Display > Advanced display > Refresh rate',
+      id: "refresh-rate",
+      step: "Settings > Display > Advanced display > Refresh rate",
       check: "Set to your monitor's max (144Hz, 165Hz, 240Hz, etc.)",
-      why: 'The #1 classic mistake. People buy 144Hz monitors and run at 60Hz for months.',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      why:
+        "The #1 classic mistake. People buy 144Hz monitors and run at 60Hz for months.",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
       automated: true, // Now automated by Set-MonitorRefreshRate function
     },
     {
-      id: 'gpu-scheduling',
-      step: 'Settings > Display > Graphics > Default graphics settings',
-      check: 'Hardware-accelerated GPU scheduling: ON',
-      why: 'Modern GPUs benefit; can reduce latency 1-2ms.',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "gpu-scheduling",
+      step: "Settings > Display > Graphics > Default graphics settings",
+      check: "Hardware-accelerated GPU scheduling: ON",
+      why: "Modern GPUs benefit; can reduce latency 1-2ms.",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'vrr-enable',
-      step: 'Settings > Display > Graphics > Default graphics settings',
-      check: 'Variable refresh rate: ON',
-      why: 'Enables VRR for windowed games (G-Sync/FreeSync).',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "vrr-enable",
+      step: "Settings > Display > Graphics > Default graphics settings",
+      check: "Variable refresh rate: ON",
+      why: "Enables VRR for windowed games (G-Sync/FreeSync).",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'hdr-setting',
-      step: 'Settings > System > Display > HDR',
+      id: "hdr-setting",
+      step: "Settings > System > Display > HDR",
       check: "Only enable if monitor supports it AND you've calibrated",
-      why: 'Bad HDR is worse than no HDR. Washed out colors = misconfigured.',
-      impact: 'low',
-      difficulty: 'moderate',
-      safety: 'safe',
+      why: "Bad HDR is worse than no HDR. Washed out colors = misconfigured.",
+      impact: "low",
+      difficulty: "moderate",
+      safety: "safe",
     },
     {
-      id: 'display-scale',
-      step: 'Right-click desktop > Display settings > Scale',
-      check: '100% recommended for gaming, 125% max',
-      why: 'Higher scaling can cause input lag in some games.',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "display-scale",
+      step: "Right-click desktop > Display settings > Scale",
+      check: "100% recommended for gaming, 125% max",
+      why: "Higher scaling can cause input lag in some games.",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'game-mode-enable',
-      step: 'Settings → Gaming → Game Mode',
-      check: 'Toggle Game Mode to ON',
-      why: 'Prioritizes game processes and reduces background activity during gameplay.',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "game-mode-enable",
+      step: "Settings → Gaming → Game Mode",
+      check: "Toggle Game Mode to ON",
+      why:
+        "Prioritizes game processes and reduces background activity during gameplay.",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
       automated: {
         script: true,
-        module: 'performance.psm1',
-        function: 'Enable-GameMode',
-        registryPath: 'HKCU:\\Software\\Microsoft\\GameBar',
-        registryKey: 'AutoGameModeEnabled',
+        module: "performance.psm1",
+        function: "Enable-GameMode",
+        registryPath: "HKCU:\\Software\\Microsoft\\GameBar",
+        registryKey: "AutoGameModeEnabled",
         registryValue: 1,
-        registryType: 'DWORD',
-        scriptAction: 'Enables Windows Game Mode via registry',
+        registryType: "DWORD",
+        scriptAction: "Enables Windows Game Mode via registry",
       },
     },
     {
-      id: 'gamedvr-disable',
-      step: 'Settings → Gaming → Xbox Game Bar',
-      check: 'Toggle Record game clips and Open Xbox Game Bar to OFF',
-      why: 'Background recording overlay causes frame drops and input lag in competitive games.',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "gamedvr-disable",
+      step: "Settings → Gaming → Xbox Game Bar",
+      check: "Toggle Record game clips and Open Xbox Game Bar to OFF",
+      why:
+        "Background recording overlay causes frame drops and input lag in competitive games.",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
       automated: {
         script: true,
-        module: 'performance.psm1',
-        function: 'Disable-GameDVR',
-        registryPath: 'HKCU:\\System\\GameConfigStore',
-        registryKey: 'GameDVR_Enabled',
+        module: "performance.psm1",
+        function: "Disable-GameDVR",
+        registryPath: "HKCU:\\System\\GameConfigStore",
+        registryKey: "GameDVR_Enabled",
         registryValue: 0,
-        registryType: 'DWORD',
-        scriptAction: 'Disables Game Bar and background recording (sets multiple registry keys)',
+        registryType: "DWORD",
+        scriptAction:
+          "Disables Game Bar and background recording (sets multiple registry keys)",
       },
     },
     {
-      id: 'fullscreen-optimizations-disable',
-      step: 'Registry: HKCU:\\System\\GameConfigStore',
+      id: "fullscreen-optimizations-disable",
+      step: "Registry: HKCU:\\System\\GameConfigStore",
       check:
         'Set "GameDVR_DXGIHonorFSEWindowsCompatible" = 1 (or right-click game .exe → Properties → Compatibility → Disable fullscreen optimizations)',
-      why: 'Borderless fullscreen adds latency. True exclusive fullscreen is faster for competitive gaming.',
-      impact: 'medium',
-      difficulty: 'advanced',
-      safety: 'moderate',
+      why:
+        "Borderless fullscreen adds latency. True exclusive fullscreen is faster for competitive gaming.",
+      impact: "medium",
+      difficulty: "advanced",
+      safety: "moderate",
       automated: {
         script: true,
-        module: 'performance.psm1',
-        function: 'Disable-FullscreenOptimizations',
-        registryPath: 'HKCU:\\System\\GameConfigStore',
-        registryKey: 'GameDVR_DXGIHonorFSEWindowsCompatible',
+        module: "performance.psm1",
+        function: "Disable-FullscreenOptimizations",
+        registryPath: "HKCU:\\System\\GameConfigStore",
+        registryKey: "GameDVR_DXGIHonorFSEWindowsCompatible",
         registryValue: 1,
-        registryType: 'DWORD',
-        scriptAction: 'Disables FSO globally via registry (games default to true fullscreen)',
+        registryType: "DWORD",
+        scriptAction:
+          "Disables FSO globally via registry (games default to true fullscreen)",
       },
     },
     {
-      id: 'mpo-disable',
-      step: 'Registry: HKLM:\\SOFTWARE\\Microsoft\\Windows\\Dwm',
+      id: "mpo-disable",
+      step: "Registry: HKLM:\\SOFTWARE\\Microsoft\\Windows\\Dwm",
       check: 'Create DWORD "OverlayTestMode" = 5, then Reboot',
-      why: 'Can cause flickering, stutters, and frame pacing issues in some games.',
-      impact: 'medium',
-      difficulty: 'advanced',
-      safety: 'safe',
+      why:
+        "Can cause flickering, stutters, and frame pacing issues in some games.",
+      impact: "medium",
+      difficulty: "advanced",
+      safety: "safe",
       automated: {
         script: true,
-        module: 'performance.psm1',
-        function: 'Disable-MPO',
-        registryPath: 'HKLM:\\SOFTWARE\\Microsoft\\Windows\\Dwm',
-        registryKey: 'OverlayTestMode',
+        module: "performance.psm1",
+        function: "Disable-MPO",
+        registryPath: "HKLM:\\SOFTWARE\\Microsoft\\Windows\\Dwm",
+        registryKey: "OverlayTestMode",
         registryValue: 5,
-        registryType: 'DWORD',
-        scriptAction: 'Disables Hardware Compositor MPO',
+        registryType: "DWORD",
+        scriptAction: "Disables Hardware Compositor MPO",
       },
     },
   ] as const,
-} as const
+} as const;
 
 const WINDOWS_DISPLAY_PRO: ManualStepSection = {
-  id: buildSectionId('windows-display-pro'),
-  title: 'Windows Display (Pro)',
-  description: 'Additional display settings for competitive players',
-  personas: ['pro_gamer'],
+  id: buildSectionId("windows-display-pro"),
+  title: "Windows Display (Pro)",
+  description: "Additional display settings for competitive players",
+  personas: ["pro_gamer"],
   items: [
     {
-      id: 'gpu-preference',
-      step: 'Settings > Display > Graphics',
+      id: "gpu-preference",
+      step: "Settings > Display > Graphics",
       check: "Add your games and set to 'High performance'",
-      why: 'Forces discrete GPU, prevents iGPU mishaps on laptops.',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      why: "Forces discrete GPU, prevents iGPU mishaps on laptops.",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
   ] as const,
-} as const
+} as const;
 
 const NVIDIA_GAMER: ManualStepSection = {
-  id: buildPersonaSectionId(SECTION_PREFIXES.NVIDIA, 'gamer'),
-  title: 'NVIDIA Control Panel',
-  description: 'Right-click desktop > NVIDIA Control Panel',
+  id: buildPersonaSectionId(SECTION_PREFIXES.NVIDIA, "gamer"),
+  title: "NVIDIA Control Panel",
+  description: "Right-click desktop > NVIDIA Control Panel",
   hardware: GPU_TYPES.NVIDIA,
-  personas: ['gamer'],
+  personas: ["gamer"],
   items: [
     {
-      id: 'nv-low-latency',
-      setting: 'Low Latency Mode',
-      value: 'On (or use in-game Nvidia Reflex if available)',
-      why: 'In-game Reflex > driver setting. If game has Reflex (Fortnite, CS2, Valorant), use it instead.',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "nv-low-latency",
+      setting: "Low Latency Mode",
+      value: "On (or use in-game Nvidia Reflex if available)",
+      why:
+        "In-game Reflex > driver setting. If game has Reflex (Fortnite, CS2, Valorant), use it instead.",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'nv-digital-vibrance',
-      setting: 'Digital Vibrance',
-      value: '60%',
-      why: 'Boosts colors for easier enemy spotting without oversaturation.',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "nv-digital-vibrance",
+      setting: "Digital Vibrance",
+      value: "60%",
+      why: "Boosts colors for easier enemy spotting without oversaturation.",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'nv-power-mode',
-      setting: 'Power Management Mode',
-      value: 'Prefer Maximum Performance (test Optimal Power on high-end systems)',
-      why: 'Max Performance prevents downclocking. Some high-end builds (Ryzen 9 + RTX 4090) may benefit from Optimal Power for sustained loads.',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "nv-power-mode",
+      setting: "Power Management Mode",
+      value:
+        "Prefer Maximum Performance (test Optimal Power on high-end systems)",
+      why:
+        "Max Performance prevents downclocking. Some high-end builds (Ryzen 9 + RTX 4090) may benefit from Optimal Power for sustained loads.",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'nv-texture-quality',
-      setting: 'Texture Filtering Quality',
-      value: 'Quality',
-      why: 'Balanced visuals, no real performance hit.',
-      impact: 'low',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "nv-texture-quality",
+      setting: "Texture Filtering Quality",
+      value: "Quality",
+      why: "Balanced visuals, no real performance hit.",
+      impact: "low",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'nv-threaded-opt',
-      setting: 'Threaded Optimization',
-      value: 'Auto',
-      why: 'Let driver decide per-game.',
-      impact: 'low',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "nv-threaded-opt",
+      setting: "Threaded Optimization",
+      value: "Auto",
+      why: "Let driver decide per-game.",
+      impact: "low",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'nv-vsync',
-      setting: 'Vertical Sync',
-      value: 'Off',
-      why: 'Use in-game VSync or cap with RTSS instead.',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "nv-vsync",
+      setting: "Vertical Sync",
+      value: "Off",
+      why: "Use in-game VSync or cap with RTSS instead.",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'nv-gsync',
-      setting: 'G-SYNC',
-      value: 'Enable for fullscreen and windowed',
-      why: 'VRR everywhere = smoother experience.',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "nv-gsync",
+      setting: "G-SYNC",
+      value: "Enable for fullscreen and windowed",
+      why: "VRR everywhere = smoother experience.",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'nv-max-fps',
-      setting: 'Max Frame Rate',
-      value: '3 below monitor refresh (e.g., 141 for 144Hz)',
-      why: 'Keeps you in VRR range, prevents tearing at cap.',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "nv-max-fps",
+      setting: "Max Frame Rate",
+      value: "3 below monitor refresh (e.g., 141 for 144Hz)",
+      why: "Keeps you in VRR range, prevents tearing at cap.",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'nv-fan-curve',
-      setting: 'GPU Fan Curve (MSI Afterburner / vendor tool)',
-      value: 'More aggressive curve (e.g., 60% at 60°C, 80% at 70°C)',
-      why: 'Lower temps = higher sustained boost clocks. Trade some noise for performance.',
-      impact: 'medium',
-      difficulty: 'moderate',
-      safety: 'moderate',
+      id: "nv-fan-curve",
+      setting: "GPU Fan Curve (MSI Afterburner / vendor tool)",
+      value: "More aggressive curve (e.g., 60% at 60°C, 80% at 70°C)",
+      why:
+        "Lower temps = higher sustained boost clocks. Trade some noise for performance.",
+      impact: "medium",
+      difficulty: "moderate",
+      safety: "moderate",
     },
     {
-      id: 'nv-power-limit',
-      setting: 'Power Limit Slider',
-      value: 'Max (110-120% if available)',
-      why: "Doesn't force higher clocks but helps sustain them under load. Monitor temps.",
-      impact: 'medium',
-      difficulty: 'moderate',
-      safety: 'moderate',
+      id: "nv-power-limit",
+      setting: "Power Limit Slider",
+      value: "Max (110-120% if available)",
+      why:
+        "Doesn't force higher clocks but helps sustain them under load. Monitor temps.",
+      impact: "medium",
+      difficulty: "moderate",
+      safety: "moderate",
     },
     {
-      id: 'nv-driver-install',
-      setting: 'Driver Installation',
+      id: "nv-driver-install",
+      setting: "Driver Installation",
       value: 'Use "Custom Install" (not Express), uncheck GeForce Experience',
-      why: 'Custom install avoids bloatware. Match driver to GPU gen (560s for RTX 40, 580s for RTX 50).',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      why:
+        "Custom install avoids bloatware. Match driver to GPU gen (560s for RTX 40, 580s for RTX 50).",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'nv-driver-strategy',
-      setting: 'Driver Updates',
-      value: 'Update when new game requires it, otherwise wait for stability reports',
-      why: 'Day-1 drivers can be buggy. If stable, no need to chase newest. Roll back if issues appear.',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "nv-driver-strategy",
+      setting: "Driver Updates",
+      value:
+        "Update when new game requires it, otherwise wait for stability reports",
+      why:
+        "Day-1 drivers can be buggy. If stable, no need to chase newest. Roll back if issues appear.",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
   ] as const,
-} as const
+} as const;
 
 const NVIDIA_PRO_GAMER: ManualStepSection = {
-  id: buildPersonaSectionId(SECTION_PREFIXES.NVIDIA, 'pro_gamer'),
-  title: 'NVIDIA Control Panel',
-  description: 'Right-click desktop > NVIDIA Control Panel',
+  id: buildPersonaSectionId(SECTION_PREFIXES.NVIDIA, "pro_gamer"),
+  title: "NVIDIA Control Panel",
+  description: "Right-click desktop > NVIDIA Control Panel",
   hardware: GPU_TYPES.NVIDIA,
-  personas: ['pro_gamer'],
-  note: 'Pro Gamers: Consider NVIDIA Reflex in supported games (ON+Boost) - better than driver-level Ultra.',
+  personas: ["pro_gamer"],
+  note:
+    "Pro Gamers: Consider NVIDIA Reflex in supported games (ON+Boost) - better than driver-level Ultra.",
   items: [
     {
-      id: 'nv-pro-low-latency',
-      setting: 'Low Latency Mode',
-      value: 'Ultra (or use in-game Nvidia Reflex ON + Boost)',
-      why: 'Reflex in-game takes priority. Use driver Ultra only if game lacks Reflex support.',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "nv-pro-low-latency",
+      setting: "Low Latency Mode",
+      value: "Ultra (or use in-game Nvidia Reflex ON + Boost)",
+      why:
+        "Reflex in-game takes priority. Use driver Ultra only if game lacks Reflex support.",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'nv-pro-digital-vibrance',
-      setting: 'Digital Vibrance',
-      value: '70%',
-      why: 'Increases color saturation for better enemy visibility. Pro players (Peterbot, Veno) use 70%.',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "nv-pro-digital-vibrance",
+      setting: "Digital Vibrance",
+      value: "70%",
+      why:
+        "Increases color saturation for better enemy visibility. Pro players (Peterbot, Veno) use 70%.",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'nv-pro-power-mode',
-      setting: 'Power Management Mode',
-      value: 'Prefer Maximum Performance (test Optimal Power on high-end systems)',
-      why: 'No downclocking, ever. Some high-end builds (Ryzen 9 + RTX 4090) may benefit from Optimal Power for sustained loads.',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
-    },
-    {
-      id: 'nv-pro-texture-quality',
-      setting: 'Texture Filtering Quality',
-      value: 'High Performance',
-      why: 'Frames > fidelity for competitive.',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
-    },
-    {
-      id: 'nv-pro-threaded-opt',
-      setting: 'Threaded Optimization',
-      value: 'On',
-      why: 'Force multi-threaded driver for consistent frametimes.',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
-    },
-    {
-      id: 'nv-pro-vsync',
-      setting: 'Vertical Sync',
-      value: 'Off',
-      why: 'VSync = input lag. Use Reflex or uncapped.',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
-    },
-    {
-      id: 'nv-pro-gsync',
-      setting: 'G-SYNC',
-      value: 'Enable for fullscreen only',
-      why: 'Fullscreen exclusive = lowest latency path.',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
-    },
-    {
-      id: 'nv-pro-scaling-mode',
-      setting: 'Display Scaling (Adjust desktop size and position)',
+      id: "nv-pro-power-mode",
+      setting: "Power Management Mode",
       value:
-        'Native res: Scaling=No Scaling, Perform on Display. Stretched: Scaling=Full Screen, Perform on GPU.',
-      why: 'Display scaling has lower latency for native. GPU scaling required for stretched resolutions.',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+        "Prefer Maximum Performance (test Optimal Power on high-end systems)",
+      why:
+        "No downclocking, ever. Some high-end builds (Ryzen 9 + RTX 4090) may benefit from Optimal Power for sustained loads.",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'nv-pro-max-fps',
-      setting: 'Max Frame Rate',
-      value: 'Off or use RTSS',
-      why: 'RTSS frame limiter has less latency than driver.',
-      impact: 'medium',
-      difficulty: 'moderate',
-      safety: 'safe',
+      id: "nv-pro-texture-quality",
+      setting: "Texture Filtering Quality",
+      value: "High Performance",
+      why: "Frames > fidelity for competitive.",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'nv-pro-shader-cache',
-      setting: 'Shader Cache Size',
-      value: 'Unlimited',
-      why: 'Reduces stutter from shader compilation.',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "nv-pro-threaded-opt",
+      setting: "Threaded Optimization",
+      value: "On",
+      why: "Force multi-threaded driver for consistent frametimes.",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'nv-pro-per-game',
-      setting: 'Prefer maximum performance (per-game)',
-      value: 'Add competitive games',
-      why: 'Override any eco-mode settings.',
-      impact: 'medium',
-      difficulty: 'moderate',
-      safety: 'safe',
+      id: "nv-pro-vsync",
+      setting: "Vertical Sync",
+      value: "Off",
+      why: "VSync = input lag. Use Reflex or uncapped.",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'nv-pro-driver-install',
-      setting: 'Driver Installation',
+      id: "nv-pro-gsync",
+      setting: "G-SYNC",
+      value: "Enable for fullscreen only",
+      why: "Fullscreen exclusive = lowest latency path.",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
+    },
+    {
+      id: "nv-pro-scaling-mode",
+      setting: "Display Scaling (Adjust desktop size and position)",
+      value:
+        "Native res: Scaling=No Scaling, Perform on Display. Stretched: Scaling=Full Screen, Perform on GPU.",
+      why:
+        "Display scaling has lower latency for native. GPU scaling required for stretched resolutions.",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
+    },
+    {
+      id: "nv-pro-max-fps",
+      setting: "Max Frame Rate",
+      value: "Off or use RTSS",
+      why: "RTSS frame limiter has less latency than driver.",
+      impact: "medium",
+      difficulty: "moderate",
+      safety: "safe",
+    },
+    {
+      id: "nv-pro-shader-cache",
+      setting: "Shader Cache Size",
+      value: "Unlimited",
+      why: "Reduces stutter from shader compilation.",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
+    },
+    {
+      id: "nv-pro-per-game",
+      setting: "Prefer maximum performance (per-game)",
+      value: "Add competitive games",
+      why: "Override any eco-mode settings.",
+      impact: "medium",
+      difficulty: "moderate",
+      safety: "safe",
+    },
+    {
+      id: "nv-pro-driver-install",
+      setting: "Driver Installation",
       value: 'Use "Custom Install" (not Express), uncheck GeForce Experience',
-      why: 'Custom install avoids bloatware. Match driver to GPU gen (560s for RTX 40, 580s for RTX 50).',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      why:
+        "Custom install avoids bloatware. Match driver to GPU gen (560s for RTX 40, 580s for RTX 50).",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
   ] as const,
-} as const
+} as const;
 
 const NVIDIA_STREAMER: ManualStepSection = {
-  id: buildPersonaSectionId(SECTION_PREFIXES.NVIDIA, 'streamer'),
-  title: 'NVIDIA Control Panel',
-  description: 'Right-click desktop > NVIDIA Control Panel',
+  id: buildPersonaSectionId(SECTION_PREFIXES.NVIDIA, "streamer"),
+  title: "NVIDIA Control Panel",
+  description: "Right-click desktop > NVIDIA Control Panel",
   hardware: GPU_TYPES.NVIDIA,
-  personas: ['streamer'],
-  note: "Streamers: Don't use Ultra latency mode - it can cause dropped frames in OBS.",
+  personas: ["streamer"],
+  note:
+    "Streamers: Don't use Ultra latency mode - it can cause dropped frames in OBS.",
   items: [
     {
-      id: 'nv-stream-low-latency',
-      setting: 'Low Latency Mode',
-      value: 'On (or use in-game Nvidia Reflex if available)',
-      why: 'Ultra can cause frame drops during encoding. In-game Reflex is preferable to driver setting.',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "nv-stream-low-latency",
+      setting: "Low Latency Mode",
+      value: "On (or use in-game Nvidia Reflex if available)",
+      why:
+        "Ultra can cause frame drops during encoding. In-game Reflex is preferable to driver setting.",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'nv-stream-digital-vibrance',
-      setting: 'Digital Vibrance',
-      value: '50%',
-      why: 'Keep default/neutral colors for stream viewers while maintaining natural look.',
-      impact: 'low',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "nv-stream-digital-vibrance",
+      setting: "Digital Vibrance",
+      value: "50%",
+      why:
+        "Keep default/neutral colors for stream viewers while maintaining natural look.",
+      impact: "low",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'nv-stream-power-mode',
-      setting: 'Power Management Mode',
-      value: 'Prefer Maximum Performance',
-      why: 'Encoding needs consistent GPU power.',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "nv-stream-power-mode",
+      setting: "Power Management Mode",
+      value: "Prefer Maximum Performance",
+      why: "Encoding needs consistent GPU power.",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'nv-stream-vsync',
-      setting: 'Vertical Sync',
-      value: 'Off or Fast',
-      why: 'Fast Sync can help with capture smoothness.',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "nv-stream-vsync",
+      setting: "Vertical Sync",
+      value: "Off or Fast",
+      why: "Fast Sync can help with capture smoothness.",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'nv-stream-gsync',
-      setting: 'G-SYNC',
-      value: 'Enable for fullscreen and windowed',
-      why: 'Windowed games capture better with VRR.',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "nv-stream-gsync",
+      setting: "G-SYNC",
+      value: "Enable for fullscreen and windowed",
+      why: "Windowed games capture better with VRR.",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'nv-stream-cuda',
-      setting: 'CUDA - GPUs',
-      value: 'All',
-      why: 'OBS NVENC needs CUDA access.',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "nv-stream-cuda",
+      setting: "CUDA - GPUs",
+      value: "All",
+      why: "OBS NVENC needs CUDA access.",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'nv-stream-driver-install',
-      setting: 'Driver Installation',
+      id: "nv-stream-driver-install",
+      setting: "Driver Installation",
       value: 'Use "Custom Install" (not Express), uncheck GeForce Experience',
-      why: 'Custom install avoids bloatware. Match driver to GPU gen (560s for RTX 40, 580s for RTX 50).',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      why:
+        "Custom install avoids bloatware. Match driver to GPU gen (560s for RTX 40, 580s for RTX 50).",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
   ] as const,
-} as const
+} as const;
 
 const NVIDIA_BENCHMARKER: ManualStepSection = {
-  id: buildPersonaSectionId(SECTION_PREFIXES.NVIDIA, 'benchmarker'),
-  title: 'NVIDIA Control Panel',
-  description: 'Right-click desktop > NVIDIA Control Panel',
+  id: buildPersonaSectionId(SECTION_PREFIXES.NVIDIA, "benchmarker"),
+  title: "NVIDIA Control Panel",
+  description: "Right-click desktop > NVIDIA Control Panel",
   hardware: GPU_TYPES.NVIDIA,
-  personas: ['benchmarker'],
-  note: 'Benchmarkers: Run 3+ passes, discard first run (shader compilation), average the rest.',
+  personas: ["benchmarker"],
+  note:
+    "Benchmarkers: Run 3+ passes, discard first run (shader compilation), average the rest.",
   items: [
     {
-      id: 'nv-bench-low-latency',
-      setting: 'Low Latency Mode',
-      value: 'Off for benchmarks, Ultra for latency tests (or in-game Reflex)',
-      why: 'Off = consistent frametimes for comparisons. For latency testing, in-game Reflex is better than driver Ultra.',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "nv-bench-low-latency",
+      setting: "Low Latency Mode",
+      value: "Off for benchmarks, Ultra for latency tests (or in-game Reflex)",
+      why:
+        "Off = consistent frametimes for comparisons. For latency testing, in-game Reflex is better than driver Ultra.",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'nv-bench-digital-vibrance',
-      setting: 'Digital Vibrance',
-      value: '50% (default)',
-      why: 'Keep neutral for consistent benchmark conditions across tests.',
-      impact: 'low',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "nv-bench-digital-vibrance",
+      setting: "Digital Vibrance",
+      value: "50% (default)",
+      why: "Keep neutral for consistent benchmark conditions across tests.",
+      impact: "low",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'nv-bench-power-mode',
-      setting: 'Power Management Mode',
-      value: 'Prefer Maximum Performance',
-      why: 'Consistent power state for repeatable runs.',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "nv-bench-power-mode",
+      setting: "Power Management Mode",
+      value: "Prefer Maximum Performance",
+      why: "Consistent power state for repeatable runs.",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'nv-bench-vsync',
-      setting: 'Vertical Sync',
-      value: 'Off',
-      why: 'Uncapped for max FPS benchmarks.',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "nv-bench-vsync",
+      setting: "Vertical Sync",
+      value: "Off",
+      why: "Uncapped for max FPS benchmarks.",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'nv-bench-gsync',
-      setting: 'G-SYNC',
-      value: 'Off during benchmarks',
-      why: 'VRR can skew frametime graphs.',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "nv-bench-gsync",
+      setting: "G-SYNC",
+      value: "Off during benchmarks",
+      why: "VRR can skew frametime graphs.",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'nv-bench-max-fps',
-      setting: 'Max Frame Rate',
-      value: 'Off',
-      why: 'Let it rip for benchmark scores.',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "nv-bench-max-fps",
+      setting: "Max Frame Rate",
+      value: "Off",
+      why: "Let it rip for benchmark scores.",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'nv-bench-shader-cache',
-      setting: 'Shader Cache',
-      value: 'Clear before each run',
-      why: 'C:\\Users\\[you]\\AppData\\Local\\NVIDIA\\DXCache',
-      impact: 'medium',
-      difficulty: 'moderate',
-      safety: 'safe',
+      id: "nv-bench-shader-cache",
+      setting: "Shader Cache",
+      value: "Clear before each run",
+      why: "C:\\Users\\[you]\\AppData\\Local\\NVIDIA\\DXCache",
+      impact: "medium",
+      difficulty: "moderate",
+      safety: "safe",
     },
     {
-      id: 'nv-bench-driver-install',
-      setting: 'Driver Installation',
+      id: "nv-bench-driver-install",
+      setting: "Driver Installation",
       value: 'Use "Custom Install" (not Express), uncheck GeForce Experience',
-      why: 'Custom install avoids bloatware. Match driver to GPU gen (560s for RTX 40, 580s for RTX 50).',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      why:
+        "Custom install avoids bloatware. Match driver to GPU gen (560s for RTX 40, 580s for RTX 50).",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
   ] as const,
-} as const
+} as const;
 
 const AMD_GAMER: ManualStepSection = {
-  id: buildPersonaSectionId(SECTION_PREFIXES.AMD, 'gamer'),
-  title: 'AMD Adrenalin Settings',
-  description: 'Right-click desktop > AMD Software: Adrenalin Edition',
+  id: buildPersonaSectionId(SECTION_PREFIXES.AMD, "gamer"),
+  title: "AMD Adrenalin Settings",
+  description: "Right-click desktop > AMD Software: Adrenalin Edition",
   hardware: GPU_TYPES.AMD,
-  personas: ['gamer'],
+  personas: ["gamer"],
   items: [
     {
-      id: 'amd-anti-lag',
-      setting: 'Anti-Lag',
-      value: 'Enabled',
+      id: "amd-anti-lag",
+      setting: "Anti-Lag",
+      value: "Enabled",
       why: "AMD's answer to Reflex. Reduces input latency.",
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'amd-radeon-boost',
-      setting: 'Radeon Boost',
-      value: 'Enabled',
-      why: 'Dynamic resolution during fast motion. Barely noticeable, good FPS gain.',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "amd-radeon-boost",
+      setting: "Radeon Boost",
+      value: "Enabled",
+      why:
+        "Dynamic resolution during fast motion. Barely noticeable, good FPS gain.",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'amd-enhanced-sync',
-      setting: 'Enhanced Sync',
-      value: 'Off',
-      why: 'Can cause stuttering. Use FreeSync instead.',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "amd-enhanced-sync",
+      setting: "Enhanced Sync",
+      value: "Off",
+      why: "Can cause stuttering. Use FreeSync instead.",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'amd-freesync',
-      setting: 'FreeSync',
-      value: 'Enabled',
-      why: 'VRR for tear-free gaming.',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "amd-freesync",
+      setting: "FreeSync",
+      value: "Enabled",
+      why: "VRR for tear-free gaming.",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'amd-vsync',
-      setting: 'Wait for Vertical Refresh',
-      value: 'Off, unless application specifies',
-      why: 'Let games control VSync.',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "amd-vsync",
+      setting: "Wait for Vertical Refresh",
+      value: "Off, unless application specifies",
+      why: "Let games control VSync.",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'amd-frtc',
-      setting: 'Frame Rate Target Control',
-      value: '3 below refresh (e.g., 141)',
-      why: 'Stay in FreeSync range.',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "amd-frtc",
+      setting: "Frame Rate Target Control",
+      value: "3 below refresh (e.g., 141)",
+      why: "Stay in FreeSync range.",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'amd-fan-curve',
-      setting: 'GPU Fan Curve (AMD Software / Afterburner)',
-      value: 'More aggressive curve (e.g., 60% at 60°C, 80% at 70°C)',
-      why: 'Lower temps = higher sustained boost clocks. Trade some noise for performance.',
-      impact: 'medium',
-      difficulty: 'moderate',
-      safety: 'moderate',
+      id: "amd-fan-curve",
+      setting: "GPU Fan Curve (AMD Software / Afterburner)",
+      value: "More aggressive curve (e.g., 60% at 60°C, 80% at 70°C)",
+      why:
+        "Lower temps = higher sustained boost clocks. Trade some noise for performance.",
+      impact: "medium",
+      difficulty: "moderate",
+      safety: "moderate",
     },
     {
-      id: 'amd-power-limit',
-      setting: 'Power Limit Slider',
-      value: 'Max (typically +15-20%)',
-      why: "Doesn't force higher clocks but helps sustain them under load. Monitor temps.",
-      impact: 'medium',
-      difficulty: 'moderate',
-      safety: 'moderate',
+      id: "amd-power-limit",
+      setting: "Power Limit Slider",
+      value: "Max (typically +15-20%)",
+      why:
+        "Doesn't force higher clocks but helps sustain them under load. Monitor temps.",
+      impact: "medium",
+      difficulty: "moderate",
+      safety: "moderate",
     },
     {
-      id: 'amd-driver-strategy',
-      setting: 'Driver Updates',
-      value: 'Update when new game requires it, otherwise wait for stability reports',
-      why: 'Day-1 drivers can be buggy. If stable, no need to chase newest. Roll back if issues appear.',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "amd-driver-strategy",
+      setting: "Driver Updates",
+      value:
+        "Update when new game requires it, otherwise wait for stability reports",
+      why:
+        "Day-1 drivers can be buggy. If stable, no need to chase newest. Roll back if issues appear.",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
   ] as const,
-} as const
+} as const;
 
 const AMD_PRO_GAMER: ManualStepSection = {
-  id: buildPersonaSectionId(SECTION_PREFIXES.AMD, 'pro_gamer'),
-  title: 'AMD Adrenalin Settings',
-  description: 'Right-click desktop > AMD Software: Adrenalin Edition',
+  id: buildPersonaSectionId(SECTION_PREFIXES.AMD, "pro_gamer"),
+  title: "AMD Adrenalin Settings",
+  description: "Right-click desktop > AMD Software: Adrenalin Edition",
   hardware: GPU_TYPES.AMD,
-  personas: ['pro_gamer'],
+  personas: ["pro_gamer"],
   items: [
     {
-      id: 'amd-pro-anti-lag',
-      setting: 'Anti-Lag',
-      value: 'Enabled (Anti-Lag+ if supported)',
-      why: 'Anti-Lag+ is driver-level Reflex equivalent.',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "amd-pro-anti-lag",
+      setting: "Anti-Lag",
+      value: "Enabled (Anti-Lag+ if supported)",
+      why: "Anti-Lag+ is driver-level Reflex equivalent.",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'amd-pro-radeon-boost',
-      setting: 'Radeon Boost',
-      value: 'Disabled',
-      why: 'Competitive players want consistent resolution.',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "amd-pro-radeon-boost",
+      setting: "Radeon Boost",
+      value: "Disabled",
+      why: "Competitive players want consistent resolution.",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'amd-pro-enhanced-sync',
-      setting: 'Enhanced Sync',
-      value: 'Off',
-      why: 'Any sync = latency.',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "amd-pro-enhanced-sync",
+      setting: "Enhanced Sync",
+      value: "Off",
+      why: "Any sync = latency.",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'amd-pro-freesync',
-      setting: 'FreeSync',
-      value: 'Enabled',
-      why: 'Still helps with tearing without VSync latency.',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "amd-pro-freesync",
+      setting: "FreeSync",
+      value: "Enabled",
+      why: "Still helps with tearing without VSync latency.",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'amd-pro-chill',
-      setting: 'Radeon Chill',
-      value: 'Off',
-      why: 'Frame rate limiting = bad for competitive.',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "amd-pro-chill",
+      setting: "Radeon Chill",
+      value: "Off",
+      why: "Frame rate limiting = bad for competitive.",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'amd-pro-sharpening',
-      setting: 'Image Sharpening',
-      value: 'Off or minimal',
-      why: 'Processing overhead.',
-      impact: 'low',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "amd-pro-sharpening",
+      setting: "Image Sharpening",
+      value: "Off or minimal",
+      why: "Processing overhead.",
+      impact: "low",
+      difficulty: "quick",
+      safety: "safe",
     },
   ] as const,
-} as const
+} as const;
 
 const AMD_STREAMER: ManualStepSection = {
-  id: buildPersonaSectionId(SECTION_PREFIXES.AMD, 'streamer'),
-  title: 'AMD Adrenalin Settings',
-  description: 'Right-click desktop > AMD Software: Adrenalin Edition',
+  id: buildPersonaSectionId(SECTION_PREFIXES.AMD, "streamer"),
+  title: "AMD Adrenalin Settings",
+  description: "Right-click desktop > AMD Software: Adrenalin Edition",
   hardware: GPU_TYPES.AMD,
-  personas: ['streamer'],
+  personas: ["streamer"],
   items: [
     {
-      id: 'amd-stream-anti-lag',
-      setting: 'Anti-Lag',
-      value: 'Enabled',
-      why: 'Helps without hurting capture.',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "amd-stream-anti-lag",
+      setting: "Anti-Lag",
+      value: "Enabled",
+      why: "Helps without hurting capture.",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'amd-stream-radeon-boost',
-      setting: 'Radeon Boost',
-      value: 'Off',
-      why: 'Resolution changes look bad on stream.',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "amd-stream-radeon-boost",
+      setting: "Radeon Boost",
+      value: "Off",
+      why: "Resolution changes look bad on stream.",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'amd-stream-freesync',
-      setting: 'FreeSync',
-      value: 'Enabled',
-      why: 'Smooth frames = smooth stream.',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "amd-stream-freesync",
+      setting: "FreeSync",
+      value: "Enabled",
+      why: "Smooth frames = smooth stream.",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'amd-stream-relive',
-      setting: 'Record & Stream (ReLive)',
-      value: 'Configure if using AMD encoder',
-      why: 'Alternative to OBS NVENC.',
-      impact: 'medium',
-      difficulty: 'moderate',
-      safety: 'safe',
+      id: "amd-stream-relive",
+      setting: "Record & Stream (ReLive)",
+      value: "Configure if using AMD encoder",
+      why: "Alternative to OBS NVENC.",
+      impact: "medium",
+      difficulty: "moderate",
+      safety: "safe",
     },
   ] as const,
-} as const
+} as const;
 
 const BIOS_ALL: ManualStepSection = {
-  id: buildSectionId('bios-all'),
-  title: 'BIOS Settings',
-  description: 'Restart > DEL/F2 during POST > Enter BIOS',
+  id: buildSectionId("bios-all"),
+  title: "BIOS Settings",
+  description: "Restart > DEL/F2 during POST > Enter BIOS",
   items: [
     {
-      id: 'bios-xmp',
-      setting: 'XMP / EXPO / DOCP',
-      value: 'Enabled',
-      why: 'RAM runs at advertised speed instead of JEDEC (2133MHz). Free performance.',
-      impact: 'high',
-      difficulty: 'moderate',
-      safety: 'safe',
+      id: "bios-xmp",
+      setting: "XMP / EXPO / DOCP",
+      value: "Enabled",
+      why:
+        "RAM runs at advertised speed instead of JEDEC (2133MHz). Free performance.",
+      impact: "high",
+      difficulty: "moderate",
+      safety: "safe",
     },
     {
-      id: 'bios-rebar',
-      setting: 'Resizable BAR / Smart Access Memory',
-      value: 'Enabled',
-      why: 'GPU can access full VRAM. 5-10% in some games.',
-      impact: 'high',
-      difficulty: 'moderate',
-      safety: 'safe',
+      id: "bios-rebar",
+      setting: "Resizable BAR / Smart Access Memory",
+      value: "Enabled",
+      why: "GPU can access full VRAM. 5-10% in some games.",
+      impact: "high",
+      difficulty: "moderate",
+      safety: "safe",
     },
     {
-      id: 'bios-csm',
-      setting: 'CSM (Compatibility Support Module)',
-      value: 'Disabled',
-      why: 'Use UEFI boot. CSM is legacy.',
-      impact: 'low',
-      difficulty: 'moderate',
-      safety: 'moderate',
+      id: "bios-csm",
+      setting: "CSM (Compatibility Support Module)",
+      value: "Disabled",
+      why: "Use UEFI boot. CSM is legacy.",
+      impact: "low",
+      difficulty: "moderate",
+      safety: "moderate",
     },
     {
-      id: 'bios-above4g',
-      setting: 'Above 4G Decoding',
-      value: 'Enabled',
-      why: 'Required for Resizable BAR.',
-      impact: 'high',
-      difficulty: 'moderate',
-      safety: 'safe',
+      id: "bios-above4g",
+      setting: "Above 4G Decoding",
+      value: "Enabled",
+      why: "Required for Resizable BAR.",
+      impact: "high",
+      difficulty: "moderate",
+      safety: "safe",
     },
   ] as const,
-} as const
+} as const;
 
 const BIOS_AMD_X3D: ManualStepSection = {
-  id: buildSectionId('bios-amd-x3d'),
-  title: 'AMD X3D CPU Settings',
-  description: 'For 7800X3D, 9800X3D, and similar V-Cache CPUs',
-  note: "X3D users: Game Mode in Windows + Game Bar enabled = V-Cache optimizer works. Don't disable Game Bar!",
+  id: buildSectionId("bios-amd-x3d"),
+  title: "AMD X3D CPU Settings",
+  description: "For 7800X3D, 9800X3D, and similar V-Cache CPUs",
+  note:
+    "X3D users: Game Mode in Windows + Game Bar enabled = V-Cache optimizer works. Don't disable Game Bar!",
   items: [
     {
-      id: 'bios-cppc',
-      setting: 'CPPC (Collaborative Processor Performance Control)',
-      value: 'Enabled / Auto',
-      why: 'REQUIRED for Windows to use V-Cache optimizer. DO NOT disable.',
-      impact: 'high',
-      difficulty: 'moderate',
-      safety: 'safe',
+      id: "bios-cppc",
+      setting: "CPPC (Collaborative Processor Performance Control)",
+      value: "Enabled / Auto",
+      why: "REQUIRED for Windows to use V-Cache optimizer. DO NOT disable.",
+      impact: "high",
+      difficulty: "moderate",
+      safety: "safe",
     },
     {
-      id: 'bios-cppc-preferred',
-      setting: 'CPPC Preferred Cores',
-      value: 'Enabled / Auto',
-      why: 'Lets Windows know which cores have V-Cache.',
-      impact: 'high',
-      difficulty: 'moderate',
-      safety: 'safe',
+      id: "bios-cppc-preferred",
+      setting: "CPPC Preferred Cores",
+      value: "Enabled / Auto",
+      why: "Lets Windows know which cores have V-Cache.",
+      impact: "high",
+      difficulty: "moderate",
+      safety: "safe",
     },
     {
-      id: 'bios-pbo',
-      setting: 'PBO (Precision Boost Overdrive)',
-      value: 'Auto or Enabled',
+      id: "bios-pbo",
+      setting: "PBO (Precision Boost Overdrive)",
+      value: "Auto or Enabled",
       why: "Safe on X3D. Don't use Curve Optimizer aggressively.",
-      impact: 'medium',
-      difficulty: 'moderate',
-      safety: 'moderate',
+      impact: "medium",
+      difficulty: "moderate",
+      safety: "moderate",
     },
     {
-      id: 'bios-cpb',
-      setting: 'Core Performance Boost',
-      value: 'Enabled',
-      why: 'Allows boost clocks.',
-      impact: 'high',
-      difficulty: 'moderate',
-      safety: 'safe',
+      id: "bios-cpb",
+      setting: "Core Performance Boost",
+      value: "Enabled",
+      why: "Allows boost clocks.",
+      impact: "high",
+      difficulty: "moderate",
+      safety: "safe",
     },
     {
-      id: 'bios-x3d-power-plan',
-      setting: 'Windows Power Plan (Multi-CCD X3D only)',
-      value: "Avoid 'Prefer maximum performance' on 7950X3D/7900X3D/9950X3D/9900X3D",
-      why: 'Multi-CCD X3D: Max performance can push games onto the wrong CCD (non-V-Cache). Single-CCD (7800X3D/9800X3D) is fine with any power plan.',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "bios-x3d-power-plan",
+      setting: "Windows Power Plan (Multi-CCD X3D only)",
+      value:
+        "Avoid 'Prefer maximum performance' on 7950X3D/7900X3D/9950X3D/9900X3D",
+      why:
+        "Multi-CCD X3D: Max performance can push games onto the wrong CCD (non-V-Cache). Single-CCD (7800X3D/9800X3D) is fine with any power plan.",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
   ] as const,
-} as const
+} as const;
 
 const BIOS_INTEL: ManualStepSection = {
-  id: buildSectionId('bios-intel'),
-  title: 'Intel CPU Settings',
+  id: buildSectionId("bios-intel"),
+  title: "Intel CPU Settings",
   items: [
     {
-      id: 'bios-cstates',
-      setting: 'C-States',
-      value: 'Enabled for daily use, Disabled for benchmarking',
-      why: 'C-States save power but add wake latency.',
-      impact: 'medium',
-      difficulty: 'moderate',
-      safety: 'safe',
+      id: "bios-cstates",
+      setting: "C-States",
+      value: "Enabled for daily use, Disabled for benchmarking",
+      why: "C-States save power but add wake latency.",
+      impact: "medium",
+      difficulty: "moderate",
+      safety: "safe",
     },
     {
-      id: 'bios-speedshift',
-      setting: 'Speed Shift / HWP',
-      value: 'Enabled',
-      why: 'Modern Intel frequency scaling. Better than legacy SpeedStep.',
-      impact: 'medium',
-      difficulty: 'moderate',
-      safety: 'safe',
+      id: "bios-speedshift",
+      setting: "Speed Shift / HWP",
+      value: "Enabled",
+      why: "Modern Intel frequency scaling. Better than legacy SpeedStep.",
+      impact: "medium",
+      difficulty: "moderate",
+      safety: "safe",
     },
     {
-      id: 'bios-turbo',
-      setting: 'Turbo Boost',
-      value: 'Enabled',
-      why: 'Higher clocks when thermal headroom exists.',
-      impact: 'high',
-      difficulty: 'moderate',
-      safety: 'safe',
+      id: "bios-turbo",
+      setting: "Turbo Boost",
+      value: "Enabled",
+      why: "Higher clocks when thermal headroom exists.",
+      impact: "high",
+      difficulty: "moderate",
+      safety: "safe",
     },
   ] as const,
-} as const
+} as const;
 
 const DISCORD_GAMER: ManualStepSection = {
-  id: buildPersonaSectionId(SECTION_PREFIXES.DISCORD, 'gamer'),
-  title: 'Discord',
-  location: 'Settings (gear icon)',
-  personas: ['gamer'],
+  id: buildPersonaSectionId(SECTION_PREFIXES.DISCORD, "gamer"),
+  title: "Discord",
+  location: "Settings (gear icon)",
+  personas: ["gamer"],
   items: [
     {
-      id: 'discord-hw-accel',
-      path: 'App Settings > Advanced > Hardware Acceleration',
-      value: 'On (usually fine)',
-      why: 'Offloads to GPU. Disable only if you see issues.',
-      impact: 'low',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "discord-hw-accel",
+      path: "App Settings > Advanced > Hardware Acceleration",
+      value: "On (usually fine)",
+      why: "Offloads to GPU. Disable only if you see issues.",
+      impact: "low",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'discord-overlay',
-      path: 'App Settings > Game Overlay',
-      value: 'On if you want it',
-      why: 'Casual use, fine to keep.',
-      impact: 'low',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "discord-overlay",
+      path: "App Settings > Game Overlay",
+      value: "On if you want it",
+      why: "Casual use, fine to keep.",
+      impact: "low",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'discord-streamer-mode',
-      path: 'App Settings > Streamer Mode',
-      value: 'Off',
-      why: 'Only needed when streaming.',
-      impact: 'low',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "discord-streamer-mode",
+      path: "App Settings > Streamer Mode",
+      value: "Off",
+      why: "Only needed when streaming.",
+      impact: "low",
+      difficulty: "quick",
+      safety: "safe",
     },
   ] as const,
-} as const
+} as const;
 
 const DISCORD_PRO_GAMER: ManualStepSection = {
-  id: buildPersonaSectionId(SECTION_PREFIXES.DISCORD, 'pro_gamer'),
-  title: 'Discord',
-  location: 'Settings (gear icon)',
-  personas: ['pro_gamer'],
-  note: 'Pro tip: Run Discord in browser during matches = no background processes.',
+  id: buildPersonaSectionId(SECTION_PREFIXES.DISCORD, "pro_gamer"),
+  title: "Discord",
+  location: "Settings (gear icon)",
+  personas: ["pro_gamer"],
+  note:
+    "Pro tip: Run Discord in browser during matches = no background processes.",
   items: [
     {
-      id: 'discord-pro-hw-accel',
-      path: 'App Settings > Advanced > Hardware Acceleration',
-      value: 'Off',
-      why: 'Can cause micro-stutters in competitive games. CPU handles it fine.',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "discord-pro-hw-accel",
+      path: "App Settings > Advanced > Hardware Acceleration",
+      value: "Off",
+      why:
+        "Can cause micro-stutters in competitive games. CPU handles it fine.",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'discord-pro-overlay',
-      path: 'App Settings > Game Overlay',
-      value: 'Off',
-      why: 'Any overlay = potential frame drop. Disable everything.',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "discord-pro-overlay",
+      path: "App Settings > Game Overlay",
+      value: "Off",
+      why: "Any overlay = potential frame drop. Disable everything.",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
       automated: true, // Set-DiscordGamingSettings
     },
     {
-      id: 'discord-pro-activity',
-      path: 'App Settings > Activity Status',
-      value: 'Off',
-      why: 'Less background activity.',
-      impact: 'low',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "discord-pro-activity",
+      path: "App Settings > Activity Status",
+      value: "Off",
+      why: "Less background activity.",
+      impact: "low",
+      difficulty: "quick",
+      safety: "safe",
       automated: true, // Set-DiscordGamingSettings
     },
     {
-      id: 'discord-pro-echo',
-      path: 'Voice & Video > Echo Cancellation',
-      value: 'Off if good mic',
-      why: 'Processing overhead.',
-      impact: 'low',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "discord-pro-echo",
+      path: "Voice & Video > Echo Cancellation",
+      value: "Off if good mic",
+      why: "Processing overhead.",
+      impact: "low",
+      difficulty: "quick",
+      safety: "safe",
       automated: true, // Set-DiscordGamingSettings
     },
     {
-      id: 'discord-pro-noise',
-      path: 'Voice & Video > Noise Suppression',
-      value: 'Off or Krisp',
-      why: 'Standard mode uses more CPU.',
-      impact: 'low',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "discord-pro-noise",
+      path: "Voice & Video > Noise Suppression",
+      value: "Off or Krisp",
+      why: "Standard mode uses more CPU.",
+      impact: "low",
+      difficulty: "quick",
+      safety: "safe",
       automated: true, // Set-DiscordGamingSettings (sets to "standard")
     },
     {
-      id: 'discord-pro-agc',
-      path: 'Voice & Video > Automatic Gain Control',
-      value: 'Off',
-      why: 'Consistent mic levels, less processing.',
-      impact: 'low',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "discord-pro-agc",
+      path: "Voice & Video > Automatic Gain Control",
+      value: "Off",
+      why: "Consistent mic levels, less processing.",
+      impact: "low",
+      difficulty: "quick",
+      safety: "safe",
       automated: true, // Set-DiscordGamingSettings
     },
   ] as const,
-} as const
+} as const;
 
 const DISCORD_STREAMER: ManualStepSection = {
-  id: buildPersonaSectionId(SECTION_PREFIXES.DISCORD, 'streamer'),
-  title: 'Discord',
-  location: 'Settings (gear icon)',
-  personas: ['streamer'],
+  id: buildPersonaSectionId(SECTION_PREFIXES.DISCORD, "streamer"),
+  title: "Discord",
+  location: "Settings (gear icon)",
+  personas: ["streamer"],
   items: [
     {
-      id: 'discord-stream-hw-accel',
-      path: 'App Settings > Advanced > Hardware Acceleration',
-      value: 'On',
-      why: 'GPU handles Discord, CPU focuses on encoding.',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "discord-stream-hw-accel",
+      path: "App Settings > Advanced > Hardware Acceleration",
+      value: "On",
+      why: "GPU handles Discord, CPU focuses on encoding.",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'discord-stream-overlay',
-      path: 'App Settings > Game Overlay',
-      value: 'On for chat',
-      why: 'Read chat during gameplay.',
-      impact: 'low',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "discord-stream-overlay",
+      path: "App Settings > Game Overlay",
+      value: "On for chat",
+      why: "Read chat during gameplay.",
+      impact: "low",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'discord-stream-mode',
-      path: 'App Settings > Streamer Mode',
-      value: 'On when live',
-      why: 'Hides sensitive info automatically.',
-      impact: 'low',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "discord-stream-mode",
+      path: "App Settings > Streamer Mode",
+      value: "On when live",
+      why: "Hides sensitive info automatically.",
+      impact: "low",
+      difficulty: "quick",
+      safety: "safe",
     },
   ] as const,
-} as const
+} as const;
 
 const STEAM_GAMER: ManualStepSection = {
-  id: buildPersonaSectionId(SECTION_PREFIXES.STEAM, 'gamer'),
-  title: 'Steam',
-  location: 'Steam > Settings',
-  personas: ['gamer'],
+  id: buildPersonaSectionId(SECTION_PREFIXES.STEAM, "gamer"),
+  title: "Steam",
+  location: "Steam > Settings",
+  personas: ["gamer"],
   items: [
     {
-      id: 'steam-overlay',
-      path: 'In-Game > Steam Overlay',
-      value: 'On',
-      why: 'Useful for guides, chat, browser.',
-      impact: 'low',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "steam-overlay",
+      path: "In-Game > Steam Overlay",
+      value: "On",
+      why: "Useful for guides, chat, browser.",
+      impact: "low",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'steam-fps-counter',
-      path: 'In-Game > FPS counter',
-      value: 'Optional',
-      why: 'Built-in, low overhead.',
-      impact: 'low',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "steam-fps-counter",
+      path: "In-Game > FPS counter",
+      value: "Optional",
+      why: "Built-in, low overhead.",
+      impact: "low",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'steam-downloads',
-      path: 'Downloads > Allow downloads during gameplay',
-      value: 'Off',
-      why: 'Background downloads cause stutters.',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "steam-downloads",
+      path: "Downloads > Allow downloads during gameplay",
+      value: "Off",
+      why: "Background downloads cause stutters.",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'steam-gpu-render',
-      path: 'Interface > GPU accelerated rendering',
-      value: 'On',
-      why: 'Smoother Steam UI.',
-      impact: 'low',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "steam-gpu-render",
+      path: "Interface > GPU accelerated rendering",
+      value: "On",
+      why: "Smoother Steam UI.",
+      impact: "low",
+      difficulty: "quick",
+      safety: "safe",
     },
   ] as const,
-} as const
+} as const;
 
 const STEAM_PRO_GAMER: ManualStepSection = {
-  id: buildPersonaSectionId(SECTION_PREFIXES.STEAM, 'pro_gamer'),
-  title: 'Steam',
-  location: 'Steam > Settings',
-  personas: ['pro_gamer'],
-  note: 'Launch options for competitive games: -novid -high -threads X (check per-game)',
+  id: buildPersonaSectionId(SECTION_PREFIXES.STEAM, "pro_gamer"),
+  title: "Steam",
+  location: "Steam > Settings",
+  personas: ["pro_gamer"],
+  note:
+    "Launch options for competitive games: -novid -high -threads X (check per-game)",
   items: [
     {
-      id: 'steam-pro-overlay',
-      path: 'In-Game > Steam Overlay',
-      value: 'Off',
-      why: 'Any overlay = potential stutter.',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "steam-pro-overlay",
+      path: "In-Game > Steam Overlay",
+      value: "Off",
+      why: "Any overlay = potential stutter.",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
       automated: true, // Set-SteamGamingSettings
     },
     {
-      id: 'steam-pro-fps-counter',
-      path: 'In-Game > FPS counter',
-      value: 'Off (use RTSS)',
-      why: 'RTSS is more accurate and configurable.',
-      impact: 'low',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "steam-pro-fps-counter",
+      path: "In-Game > FPS counter",
+      value: "Off (use RTSS)",
+      why: "RTSS is more accurate and configurable.",
+      impact: "low",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'steam-pro-downloads',
-      path: 'Downloads > Allow downloads during gameplay',
-      value: 'Off',
-      why: 'Zero background network.',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "steam-pro-downloads",
+      path: "Downloads > Allow downloads during gameplay",
+      value: "Off",
+      why: "Zero background network.",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
       automated: true, // Set-SteamGamingSettings
     },
     {
-      id: 'steam-pro-low-bandwidth',
-      path: 'Library > Low Bandwidth Mode',
-      value: 'On',
-      why: 'Less network chatter.',
-      impact: 'low',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "steam-pro-low-bandwidth",
+      path: "Library > Low Bandwidth Mode",
+      value: "On",
+      why: "Less network chatter.",
+      impact: "low",
+      difficulty: "quick",
+      safety: "safe",
       automated: true, // Set-SteamGamingSettings
     },
     {
-      id: 'steam-pro-notifications',
-      path: 'Interface > Notify me about...',
-      value: 'Off',
-      why: 'No popups during matches.',
-      impact: 'low',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "steam-pro-notifications",
+      path: "Interface > Notify me about...",
+      value: "Off",
+      why: "No popups during matches.",
+      impact: "low",
+      difficulty: "quick",
+      safety: "safe",
     },
   ] as const,
-} as const
+} as const;
 
 const BROWSERS_ALL: ManualStepSection = {
-  id: buildSectionId('browsers-all'),
-  title: 'Browser Settings',
+  id: buildSectionId("browsers-all"),
+  title: "Browser Settings",
   description: "Browsers eat resources even when 'closed'",
-  note: 'Best practice: Close browsers before gaming. Use a lightweight browser (Brave) or mobile for Discord/Twitch.',
+  note:
+    "Best practice: Close browsers before gaming. Use a lightweight browser (Brave) or mobile for Discord/Twitch.",
   items: [
     {
-      id: 'chrome-hw-accel',
-      browser: 'Chrome/Edge',
-      path: 'Settings > System',
-      setting: 'Use hardware acceleration',
-      value: 'Off when gaming',
-      why: 'Can conflict with game GPU usage.',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "chrome-hw-accel",
+      browser: "Chrome/Edge",
+      path: "Settings > System",
+      setting: "Use hardware acceleration",
+      value: "Off when gaming",
+      why: "Can conflict with game GPU usage.",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'firefox-hw-accel',
-      browser: 'Firefox',
-      path: 'Settings > General > Performance',
-      setting: 'Use hardware acceleration',
-      value: 'Off when gaming',
-      why: 'Same GPU conflict issue.',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "firefox-hw-accel",
+      browser: "Firefox",
+      path: "Settings > General > Performance",
+      setting: "Use hardware acceleration",
+      value: "Off when gaming",
+      why: "Same GPU conflict issue.",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
   ] as const,
-} as const
+} as const;
 
 const RGB_PRO_GAMER: ManualStepSection = {
-  id: buildPersonaSectionId('rgb', 'pro_gamer'),
-  title: 'RGB Software',
-  description: 'Pretty lights, ugly overhead',
-  personas: ['pro_gamer'],
-  note: 'Store RGB profiles in hardware memory when possible. Then close the software.',
+  id: buildPersonaSectionId("rgb", "pro_gamer"),
+  title: "RGB Software",
+  description: "Pretty lights, ugly overhead",
+  personas: ["pro_gamer"],
+  note:
+    "Store RGB profiles in hardware memory when possible. Then close the software.",
   items: [
     {
-      id: 'rgb-icue',
-      software: 'iCUE (Corsair)',
-      action: 'Close before competitive matches',
-      why: 'Polling rate overhead on USB bus.',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "rgb-icue",
+      software: "iCUE (Corsair)",
+      action: "Close before competitive matches",
+      why: "Polling rate overhead on USB bus.",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'rgb-synapse',
-      software: 'Synapse (Razer)',
-      action: 'Close or use Hardware Mode',
-      why: 'Save profiles to device, run software-free.',
-      impact: 'medium',
-      difficulty: 'moderate',
-      safety: 'safe',
+      id: "rgb-synapse",
+      software: "Synapse (Razer)",
+      action: "Close or use Hardware Mode",
+      why: "Save profiles to device, run software-free.",
+      impact: "medium",
+      difficulty: "moderate",
+      safety: "safe",
     },
     {
-      id: 'rgb-armoury',
-      software: 'Armoury Crate (ASUS)',
-      action: 'Uninstall or disable services',
-      why: 'Notorious for background bloat.',
-      impact: 'medium',
-      difficulty: 'moderate',
-      safety: 'safe',
+      id: "rgb-armoury",
+      software: "Armoury Crate (ASUS)",
+      action: "Uninstall or disable services",
+      why: "Notorious for background bloat.",
+      impact: "medium",
+      difficulty: "moderate",
+      safety: "safe",
     },
     {
-      id: 'rgb-ghub',
-      software: 'G Hub (Logitech)',
-      action: 'Set profiles, then exit',
-      why: 'Onboard memory mode if available.',
-      impact: 'medium',
-      difficulty: 'moderate',
-      safety: 'safe',
+      id: "rgb-ghub",
+      software: "G Hub (Logitech)",
+      action: "Set profiles, then exit",
+      why: "Onboard memory mode if available.",
+      impact: "medium",
+      difficulty: "moderate",
+      safety: "safe",
     },
   ] as const,
-} as const
+} as const;
 
 const RGB_GAMER: ManualStepSection = {
-  id: buildPersonaSectionId('rgb', 'gamer'),
-  title: 'RGB Software',
-  description: 'Pretty lights, ugly overhead',
-  personas: ['gamer'],
+  id: buildPersonaSectionId("rgb", "gamer"),
+  title: "RGB Software",
+  description: "Pretty lights, ugly overhead",
+  personas: ["gamer"],
   items: [
     {
-      id: 'rgb-casual',
-      software: 'All RGB software',
+      id: "rgb-casual",
+      software: "All RGB software",
       action: "Keep if you want, it's fine",
-      why: 'Minimal impact for casual play.',
-      impact: 'low',
-      difficulty: 'quick',
-      safety: 'safe',
+      why: "Minimal impact for casual play.",
+      impact: "low",
+      difficulty: "quick",
+      safety: "safe",
     },
   ] as const,
-} as const
+} as const;
 
 const COOLING_ADVANCED: ManualStepSection = {
   id: buildSectionId(SECTION_PREFIXES.COOLING_ADVANCED),
-  title: 'Advanced Cooling',
-  description: 'Case fan optimization for better sustained performance',
-  note: 'Lower GPU/CPU temps = higher sustained boost clocks under load',
+  title: "Advanced Cooling",
+  description: "Case fan optimization for better sustained performance",
+  note: "Lower GPU/CPU temps = higher sustained boost clocks under load",
   items: [
     {
-      id: 'cooling-fan-control',
-      setting: 'Case Fans → GPU Temperature',
-      value: 'Use Fan Control app to tie case fans to GPU temp (not just CPU)',
-      why: 'Case fans exhaust GPU heat faster, keeping temps lower during gaming. Lower GPU temp = higher boost clocks sustained longer.',
-      impact: 'medium',
-      difficulty: 'moderate',
-      safety: 'safe',
+      id: "cooling-fan-control",
+      setting: "Case Fans → GPU Temperature",
+      value: "Use Fan Control app to tie case fans to GPU temp (not just CPU)",
+      why:
+        "Case fans exhaust GPU heat faster, keeping temps lower during gaming. Lower GPU temp = higher boost clocks sustained longer.",
+      impact: "medium",
+      difficulty: "moderate",
+      safety: "safe",
     },
     {
-      id: 'cooling-fan-curve-strategy',
-      setting: 'Fan Curve Strategy',
-      value: "Use 'max of CPU/GPU temp' rule so fans follow whichever component is hotter",
-      why: 'Ensures adequate cooling for both CPU and GPU workloads without manual switching.',
-      impact: 'medium',
-      difficulty: 'moderate',
-      safety: 'safe',
+      id: "cooling-fan-curve-strategy",
+      setting: "Fan Curve Strategy",
+      value:
+        "Use 'max of CPU/GPU temp' rule so fans follow whichever component is hotter",
+      why:
+        "Ensures adequate cooling for both CPU and GPU workloads without manual switching.",
+      impact: "medium",
+      difficulty: "moderate",
+      safety: "safe",
     },
     {
-      id: 'cooling-airflow-check',
-      setting: 'Case Airflow',
-      value: 'Ensure case can actually exhaust GPU heat (add intake/exhaust fans if needed)',
-      why: "Even aggressive GPU fan curves won't help if hot air just recirculates inside the case.",
-      impact: 'medium',
-      difficulty: 'advanced',
-      safety: 'safe',
+      id: "cooling-airflow-check",
+      setting: "Case Airflow",
+      value:
+        "Ensure case can actually exhaust GPU heat (add intake/exhaust fans if needed)",
+      why:
+        "Even aggressive GPU fan curves won't help if hot air just recirculates inside the case.",
+      impact: "medium",
+      difficulty: "advanced",
+      safety: "safe",
     },
   ] as const,
-} as const
+} as const;
 
 const COOLING_SOFTWARE: ManualStepSection = {
-  id: buildSectionId('cooling-software'),
-  title: 'Fan Control Software',
-  description: 'Coordinate chassis and GPU thermals for sustained boost clocks',
-  note: 'Fan Control allows case fans to respond to GPU temp, not just CPU. Download from getfancontrol.com or GitHub.',
+  id: buildSectionId("cooling-software"),
+  title: "Fan Control Software",
+  description: "Coordinate chassis and GPU thermals for sustained boost clocks",
+  note:
+    "Fan Control allows case fans to respond to GPU temp, not just CPU. Download from getfancontrol.com or GitHub.",
   items: [
     {
-      id: 'fan-control-download',
-      step: 'Download Fan Control (free, open-source)',
-      check: 'Install from getfancontrol.com or GitHub releases',
-      why: 'Allows chassis fans to respond to GPU temps, not just CPU. Better heat exhaust = higher sustained clocks during gaming.',
-      impact: 'medium',
-      difficulty: 'moderate',
-      safety: 'safe',
+      id: "fan-control-download",
+      step: "Download Fan Control (free, open-source)",
+      check: "Install from getfancontrol.com or GitHub releases",
+      why:
+        "Allows chassis fans to respond to GPU temps, not just CPU. Better heat exhaust = higher sustained clocks during gaming.",
+      impact: "medium",
+      difficulty: "moderate",
+      safety: "safe",
     },
     {
-      id: 'fan-control-dual-curve',
-      step: 'Fan Control > Create dual-source curve',
-      check: 'Set chassis fans to respond to MAX(CPU temp, GPU temp)',
-      why: 'Ensures fans ramp up for gaming (GPU heat) and productivity (CPU heat). Best of both worlds without manual switching.',
-      impact: 'medium',
-      difficulty: 'moderate',
-      safety: 'safe',
+      id: "fan-control-dual-curve",
+      step: "Fan Control > Create dual-source curve",
+      check: "Set chassis fans to respond to MAX(CPU temp, GPU temp)",
+      why:
+        "Ensures fans ramp up for gaming (GPU heat) and productivity (CPU heat). Best of both worlds without manual switching.",
+      impact: "medium",
+      difficulty: "moderate",
+      safety: "safe",
     },
   ] as const,
-} as const
+} as const;
 
 const PREFLIGHT_ALL: ManualStepSection = {
-  id: buildSectionId('preflight-all'),
-  title: 'Pre-Flight Checklist',
-  description: 'Quick sanity checks before a gaming session',
+  id: buildSectionId("preflight-all"),
+  title: "Pre-Flight Checklist",
+  description: "Quick sanity checks before a gaming session",
   items: [
     {
-      id: 'preflight-refresh-rate',
-      check: 'Monitor running at native refresh rate?',
-      how: 'Settings > Display > Advanced > Refresh rate',
-      fail: 'Stuck at 60Hz = wasted hardware',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "preflight-refresh-rate",
+      check: "Monitor running at native refresh rate?",
+      how: "Settings > Display > Advanced > Refresh rate",
+      fail: "Stuck at 60Hz = wasted hardware",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'preflight-vrr',
-      check: 'G-Sync/FreeSync indicator showing?',
-      how: 'Enable OSD in NVIDIA/AMD panel, look for VRR indicator',
-      fail: 'VRR not active = tearing or latency',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "preflight-vrr",
+      check: "G-Sync/FreeSync indicator showing?",
+      how: "Enable OSD in NVIDIA/AMD panel, look for VRR indicator",
+      fail: "VRR not active = tearing or latency",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'preflight-discrete-gpu',
-      check: 'Game running on discrete GPU (laptops)?',
-      how: 'Task Manager > GPU column, should show GPU 1',
-      fail: 'Using integrated GPU = terrible FPS',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "preflight-discrete-gpu",
+      check: "Game running on discrete GPU (laptops)?",
+      how: "Task Manager > GPU column, should show GPU 1",
+      fail: "Using integrated GPU = terrible FPS",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'preflight-downloads',
-      check: 'No background downloads?',
-      how: 'Check Steam, Windows Update, game launchers',
-      fail: 'Downloads cause network and disk stutters',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "preflight-downloads",
+      check: "No background downloads?",
+      how: "Check Steam, Windows Update, game launchers",
+      fail: "Downloads cause network and disk stutters",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'preflight-power-plan',
-      check: 'Power plan correct?',
-      how: 'powercfg /getactivescheme in terminal',
-      fail: 'Balanced/Power Saver = throttled performance',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "preflight-power-plan",
+      check: "Power plan correct?",
+      how: "powercfg /getactivescheme in terminal",
+      fail: "Balanced/Power Saver = throttled performance",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'preflight-timer',
-      check: 'Timer tool running? (if enabled)',
-      how: 'Check system tray for timer-tool.ps1',
-      fail: 'Default 15.6ms timer = micro-stutters',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "preflight-timer",
+      check: "Timer tool running? (if enabled)",
+      how: "Check system tray for timer-tool.ps1",
+      fail: "Default 15.6ms timer = micro-stutters",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'preflight-apps',
-      check: 'Unnecessary apps closed?',
-      how: 'Check system tray, Task Manager',
-      fail: 'Background apps steal frames',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "preflight-apps",
+      check: "Unnecessary apps closed?",
+      how: "Check system tray, Task Manager",
+      fail: "Background apps steal frames",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'preflight-drivers',
-      check: 'Drivers up to date?',
-      how: 'GeForce Experience / AMD Software / Windows Update',
-      fail: 'Old drivers = bugs, missing optimizations',
-      impact: 'medium',
-      difficulty: 'moderate',
-      safety: 'safe',
+      id: "preflight-drivers",
+      check: "Drivers up to date?",
+      how: "GeForce Experience / AMD Software / Windows Update",
+      fail: "Old drivers = bugs, missing optimizations",
+      impact: "medium",
+      difficulty: "moderate",
+      safety: "safe",
     },
     {
-      id: 'preflight-antivirus',
-      check: 'Using lightweight antivirus?',
-      how: 'Check system tray - prefer Windows Defender over heavy third-party AV',
-      fail: 'Norton/McAfee/Avast can add significant CPU/disk overhead during gaming',
-      impact: 'medium',
-      difficulty: 'moderate',
-      safety: 'safe',
+      id: "preflight-antivirus",
+      check: "Using lightweight antivirus?",
+      how:
+        "Check system tray - prefer Windows Defender over heavy third-party AV",
+      fail:
+        "Norton/McAfee/Avast can add significant CPU/disk overhead during gaming",
+      impact: "medium",
+      difficulty: "moderate",
+      safety: "safe",
     },
   ] as const,
-} as const
+} as const;
 
 const PREFLIGHT_PRO: ManualStepSection = {
-  id: buildSectionId('preflight-pro'),
-  title: 'Pre-Flight (Pro)',
-  description: 'Extra checks for competitive players',
-  personas: ['pro_gamer'],
+  id: buildSectionId("preflight-pro"),
+  title: "Pre-Flight (Pro)",
+  description: "Extra checks for competitive players",
+  personas: ["pro_gamer"],
   items: [
     {
-      id: 'preflight-pro-discord',
-      check: 'Discord hardware acceleration off?',
-      how: 'Discord Settings > Advanced',
-      fail: 'Can cause stutters in competitive',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "preflight-pro-discord",
+      check: "Discord hardware acceleration off?",
+      how: "Discord Settings > Advanced",
+      fail: "Can cause stutters in competitive",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'preflight-pro-overlay',
-      check: 'Steam overlay disabled for this game?',
-      how: 'Right-click game > Properties > In-Game',
-      fail: 'Overlay can drop frames',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "preflight-pro-overlay",
+      check: "Steam overlay disabled for this game?",
+      how: "Right-click game > Properties > In-Game",
+      fail: "Overlay can drop frames",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'preflight-pro-fullscreen',
-      check: 'Fullscreen exclusive (not borderless)?',
-      how: 'In-game display settings',
-      fail: 'Borderless adds 1+ frame of latency',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "preflight-pro-fullscreen",
+      check: "Fullscreen exclusive (not borderless)?",
+      how: "In-game display settings",
+      fail: "Borderless adds 1+ frame of latency",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'preflight-pro-reflex',
-      check: 'NVIDIA Reflex ON+Boost (if available)?',
-      how: 'In-game settings',
-      fail: 'Missing free latency reduction',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "preflight-pro-reflex",
+      check: "NVIDIA Reflex ON+Boost (if available)?",
+      how: "In-game settings",
+      fail: "Missing free latency reduction",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
   ] as const,
-} as const
+} as const;
 
 const TROUBLESHOOTING_WIFI_BLUETOOTH: ManualStepSection = {
-  id: buildSectionId('troubleshooting-wifi-bt'),
-  title: 'Wireless/Bluetooth Stutter Fix',
+  id: buildSectionId("troubleshooting-wifi-bt"),
+  title: "Wireless/Bluetooth Stutter Fix",
   description:
     "Onboard WiFi/Bluetooth adapters can cause mouse-move stutters that don't appear in synthetic benchmarks",
-  note: "This is a known issue where I/O from onboard wireless adapters causes GPU power to drop to ~20% during mouse movement, causing micro-stutters. Synthetic benchmarks won't show this because they have no I/O!",
+  note:
+    "This is a known issue where I/O from onboard wireless adapters causes GPU power to drop to ~20% during mouse movement, causing micro-stutters. Synthetic benchmarks won't show this because they have no I/O!",
   items: [
     {
-      id: 'wifi-bt-test',
-      step: 'Test: Move mouse during gameplay',
-      check: 'Watch GPU power/usage in overlay - does it drop when moving mouse?',
-      why: 'If GPU usage drops significantly when moving the mouse, onboard wireless adapters may be the culprit.',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "wifi-bt-test",
+      step: "Test: Move mouse during gameplay",
+      check:
+        "Watch GPU power/usage in overlay - does it drop when moving mouse?",
+      why:
+        "If GPU usage drops significantly when moving the mouse, onboard wireless adapters may be the culprit.",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'wifi-bt-bios-fix',
-      step: 'Best Fix: Disable in BIOS (if you can)',
-      check: 'BIOS > Onboard Devices > Disable WiFi/Bluetooth',
-      why: "Complete fix. Only do this if you don't need onboard wireless or have alternatives.",
-      impact: 'high',
-      difficulty: 'moderate',
-      safety: 'moderate',
+      id: "wifi-bt-bios-fix",
+      step: "Best Fix: Disable in BIOS (if you can)",
+      check: "BIOS > Onboard Devices > Disable WiFi/Bluetooth",
+      why:
+        "Complete fix. Only do this if you don't need onboard wireless or have alternatives.",
+      impact: "high",
+      difficulty: "moderate",
+      safety: "moderate",
     },
     {
-      id: 'wifi-bt-drivers',
-      step: 'Alternative: Install official motherboard drivers',
-      check: "Download from your motherboard manufacturer's support page (not Windows Update)",
-      why: 'May fix or reduce the issue. Generic Windows drivers are often the problem.',
-      impact: 'medium',
-      difficulty: 'moderate',
-      safety: 'safe',
+      id: "wifi-bt-drivers",
+      step: "Alternative: Install official motherboard drivers",
+      check:
+        "Download from your motherboard manufacturer's support page (not Windows Update)",
+      why:
+        "May fix or reduce the issue. Generic Windows drivers are often the problem.",
+      impact: "medium",
+      difficulty: "moderate",
+      safety: "safe",
     },
     {
-      id: 'wifi-bt-separate',
-      step: 'Workaround: Use separate adapters',
-      check: 'Disable onboard in BIOS, use PCIe WiFi card or USB Bluetooth dongle',
+      id: "wifi-bt-separate",
+      step: "Workaround: Use separate adapters",
+      check:
+        "Disable onboard in BIOS, use PCIe WiFi card or USB Bluetooth dongle",
       why: "Dedicated adapters don't share the same I/O path as onboard chips.",
-      impact: 'high',
-      difficulty: 'advanced',
-      safety: 'moderate',
+      impact: "high",
+      difficulty: "advanced",
+      safety: "moderate",
     },
   ] as const,
-} as const
+} as const;
 
 const TROUBLESHOOTING_PERFORMANCE: ManualStepSection = {
-  id: buildSectionId('troubleshooting-performance'),
-  title: 'Performance Issues',
-  description: 'Common FPS and stuttering problems',
+  id: buildSectionId("troubleshooting-performance"),
+  title: "Performance Issues",
+  description: "Common FPS and stuttering problems",
   items: [
     {
-      id: 'trouble-60fps-cap',
-      problem: 'Game runs at 60 FPS even though I have a 144Hz monitor',
+      id: "trouble-60fps-cap",
+      problem: "Game runs at 60 FPS even though I have a 144Hz monitor",
       causes: [
-        'V-Sync enabled in-game',
-        'Windows refresh rate set to 60Hz',
-        'Frame rate cap in game settings',
-        'NVIDIA Control Panel capping frames',
+        "V-Sync enabled in-game",
+        "Windows refresh rate set to 60Hz",
+        "Frame rate cap in game settings",
+        "NVIDIA Control Panel capping frames",
       ],
-      quickFix: 'Settings → Display → Advanced → Refresh rate → Set to 144Hz',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      quickFix: "Settings → Display → Advanced → Refresh rate → Set to 144Hz",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'trouble-micro-stutters',
-      problem: 'Micro-stutters every few seconds',
+      id: "trouble-micro-stutters",
+      problem: "Micro-stutters every few seconds",
       causes: [
-        'Background downloads (Steam, Windows Update)',
-        'Timer resolution at default 15.6ms',
-        'Power plan throttling',
-        'Shader compilation',
-      ],
-      quickFix: 'Run timer-tool.ps1, pause all downloads, set High Performance power plan',
-      impact: 'high',
-      difficulty: 'moderate',
-      safety: 'safe',
-    },
-    {
-      id: 'trouble-alt-tab',
-      problem: 'FPS drops when alt-tabbing',
-      causes: ['Fullscreen Optimizations enabled', 'Game loses GPU priority', 'V-Sync mismatch'],
-      quickFix:
-        'Right-click game .exe → Properties → Compatibility → Disable fullscreen optimizations',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
-    },
-    {
-      id: 'trouble-high-fps-laggy',
-      problem: 'High FPS but feels laggy',
-      causes: [
-        'High input latency (render queue)',
-        'V-Sync enabled',
-        'Pre-rendered frames too high',
-        'Display not in VRR range',
+        "Background downloads (Steam, Windows Update)",
+        "Timer resolution at default 15.6ms",
+        "Power plan throttling",
+        "Shader compilation",
       ],
       quickFix:
-        'Enable NVIDIA Low Latency Mode Ultra or Reflex, disable V-Sync, cap FPS 3 below refresh',
-      impact: 'high',
-      difficulty: 'moderate',
-      safety: 'safe',
+        "Run timer-tool.ps1, pause all downloads, set High Performance power plan",
+      impact: "high",
+      difficulty: "moderate",
+      safety: "safe",
     },
     {
-      id: 'trouble-igpu',
-      problem: 'Game uses integrated GPU instead of dedicated',
+      id: "trouble-alt-tab",
+      problem: "FPS drops when alt-tabbing",
       causes: [
-        'Laptop hybrid graphics',
-        'Windows GPU preference not set',
-        'Monitor plugged into wrong port',
+        "Fullscreen Optimizations enabled",
+        "Game loses GPU priority",
+        "V-Sync mismatch",
       ],
       quickFix:
-        'Settings → Display → Graphics → Add game → High performance. Check monitor is plugged into GPU, not motherboard.',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+        "Right-click game .exe → Properties → Compatibility → Disable fullscreen optimizations",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'trouble-1-percent-lows',
-      problem: 'Terrible 1% lows / stuttering',
-      causes: ['RAM not in XMP/EXPO', 'Background apps', 'CPU thermal throttling', 'Driver issues'],
+      id: "trouble-high-fps-laggy",
+      problem: "High FPS but feels laggy",
+      causes: [
+        "High input latency (render queue)",
+        "V-Sync enabled",
+        "Pre-rendered frames too high",
+        "Display not in VRR range",
+      ],
       quickFix:
-        'Enable XMP in BIOS, close background apps, check temps with HWiNFO, DDU and reinstall drivers',
-      impact: 'high',
-      difficulty: 'moderate',
-      safety: 'safe',
+        "Enable NVIDIA Low Latency Mode Ultra or Reflex, disable V-Sync, cap FPS 3 below refresh",
+      impact: "high",
+      difficulty: "moderate",
+      safety: "safe",
+    },
+    {
+      id: "trouble-igpu",
+      problem: "Game uses integrated GPU instead of dedicated",
+      causes: [
+        "Laptop hybrid graphics",
+        "Windows GPU preference not set",
+        "Monitor plugged into wrong port",
+      ],
+      quickFix:
+        "Settings → Display → Graphics → Add game → High performance. Check monitor is plugged into GPU, not motherboard.",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
+    },
+    {
+      id: "trouble-1-percent-lows",
+      problem: "Terrible 1% lows / stuttering",
+      causes: [
+        "RAM not in XMP/EXPO",
+        "Background apps",
+        "CPU thermal throttling",
+        "Driver issues",
+      ],
+      quickFix:
+        "Enable XMP in BIOS, close background apps, check temps with HWiNFO, DDU and reinstall drivers",
+      impact: "high",
+      difficulty: "moderate",
+      safety: "safe",
     },
   ] as const,
-} as const
+} as const;
 
 const TROUBLESHOOTING_AUDIO: ManualStepSection = {
-  id: buildSectionId('troubleshooting-audio'),
-  title: 'Audio Issues',
-  description: 'Crackling, directional audio, and mic problems',
+  id: buildSectionId("troubleshooting-audio"),
+  title: "Audio Issues",
+  description: "Crackling, directional audio, and mic problems",
   items: [
     {
-      id: 'trouble-audio-crackling',
-      problem: 'Audio crackling/popping during games',
+      id: "trouble-audio-crackling",
+      problem: "Audio crackling/popping during games",
       causes: [
-        'DPC latency spikes',
-        'Audio driver issues',
-        'Sample rate mismatch',
-        'USB power saving',
+        "DPC latency spikes",
+        "Audio driver issues",
+        "Sample rate mismatch",
+        "USB power saving",
       ],
       quickFix:
-        'Run LatencyMon to diagnose. Disable USB selective suspend. Update audio drivers from manufacturer.',
-      impact: 'medium',
-      difficulty: 'moderate',
-      safety: 'safe',
+        "Run LatencyMon to diagnose. Disable USB selective suspend. Update audio drivers from manufacturer.",
+      impact: "medium",
+      difficulty: "moderate",
+      safety: "safe",
     },
     {
-      id: 'trouble-audio-directional',
+      id: "trouble-audio-directional",
       problem: "Can't hear footsteps / directional audio is off",
-      causes: ['Virtual surround enabled', 'Loudness equalization on', 'Wrong audio channels'],
+      causes: [
+        "Virtual surround enabled",
+        "Loudness equalization on",
+        "Wrong audio channels",
+      ],
       quickFix:
-        'Disable Windows Sonic/Dolby Atmos. Use stereo. Disable audio enhancements in Sound settings.',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+        "Disable Windows Sonic/Dolby Atmos. Use stereo. Disable audio enhancements in Sound settings.",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'trouble-mic-quiet',
+      id: "trouble-mic-quiet",
       problem: "Mic too quiet / others can't hear me",
-      causes: ['Mic boost disabled', 'Wrong input device', 'Discord noise gate too aggressive'],
+      causes: [
+        "Mic boost disabled",
+        "Wrong input device",
+        "Discord noise gate too aggressive",
+      ],
       quickFix:
-        'Sound settings → Recording → Microphone → Properties → Levels → Enable Mic Boost (+10-20dB)',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+        "Sound settings → Recording → Microphone → Properties → Levels → Enable Mic Boost (+10-20dB)",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
   ] as const,
-} as const
+} as const;
 
 const TROUBLESHOOTING_NETWORK: ManualStepSection = {
-  id: buildSectionId('troubleshooting-network'),
-  title: 'Network Issues',
-  description: 'Ping, packet loss, and connection problems',
+  id: buildSectionId("troubleshooting-network"),
+  title: "Network Issues",
+  description: "Ping, packet loss, and connection problems",
   items: [
     {
-      id: 'trouble-high-ping',
-      problem: 'High ping in games but speed test is fine',
+      id: "trouble-high-ping",
+      problem: "High ping in games but speed test is fine",
       causes: [
-        'QoS not configured',
-        'Background uploads',
-        'WiFi interference',
-        'ISP routing issues',
+        "QoS not configured",
+        "Background uploads",
+        "WiFi interference",
+        "ISP routing issues",
       ],
       quickFix:
-        'Use Ethernet. Disable background apps. Try different DNS (1.1.1.1 or 8.8.8.8). Check for packet loss with: ping google.com -t',
-      impact: 'high',
-      difficulty: 'moderate',
-      safety: 'safe',
+        "Use Ethernet. Disable background apps. Try different DNS (1.1.1.1 or 8.8.8.8). Check for packet loss with: ping google.com -t",
+      impact: "high",
+      difficulty: "moderate",
+      safety: "safe",
     },
     {
-      id: 'trouble-rubberbanding',
-      problem: 'Rubber-banding / teleporting in-game',
-      causes: ['Packet loss', 'WiFi instability', 'Server issues', 'Firewall blocking'],
+      id: "trouble-rubberbanding",
+      problem: "Rubber-banding / teleporting in-game",
+      causes: [
+        "Packet loss",
+        "WiFi instability",
+        "Server issues",
+        "Firewall blocking",
+      ],
       quickFix:
-        'Test with: ping google.com -t (look for timeouts/spikes). Switch to Ethernet if on WiFi.',
-      impact: 'high',
-      difficulty: 'moderate',
-      safety: 'safe',
+        "Test with: ping google.com -t (look for timeouts/spikes). Switch to Ethernet if on WiFi.",
+      impact: "high",
+      difficulty: "moderate",
+      safety: "safe",
     },
     {
-      id: 'trouble-nat-type',
-      problem: 'NAT type Strict / Moderate',
-      causes: ['Router UPnP disabled', 'Ports not forwarded', 'Double NAT (modem + router)'],
+      id: "trouble-nat-type",
+      problem: "NAT type Strict / Moderate",
+      causes: [
+        "Router UPnP disabled",
+        "Ports not forwarded",
+        "Double NAT (modem + router)",
+      ],
       quickFix:
-        'Enable UPnP in router settings. Port forward game-specific ports. Check if modem has routing enabled (put in bridge mode).',
-      impact: 'high',
-      difficulty: 'advanced',
-      safety: 'moderate',
+        "Enable UPnP in router settings. Port forward game-specific ports. Check if modem has routing enabled (put in bridge mode).",
+      impact: "high",
+      difficulty: "advanced",
+      safety: "moderate",
     },
   ] as const,
-} as const
+} as const;
 
 const TROUBLESHOOTING_CRASHES: ManualStepSection = {
-  id: buildSectionId('troubleshooting-crashes'),
-  title: 'Crashes & Stability',
-  description: 'CTDs, blue screens, and random restarts',
+  id: buildSectionId("troubleshooting-crashes"),
+  title: "Crashes & Stability",
+  description: "CTDs, blue screens, and random restarts",
   items: [
     {
-      id: 'trouble-ctd',
-      problem: 'Game crashes to desktop with no error',
+      id: "trouble-ctd",
+      problem: "Game crashes to desktop with no error",
       causes: [
-        'GPU driver issue',
-        'Overclock instability',
-        'Corrupted game files',
-        'Anti-cheat conflict',
+        "GPU driver issue",
+        "Overclock instability",
+        "Corrupted game files",
+        "Anti-cheat conflict",
       ],
       quickFix:
-        'DDU and reinstall GPU drivers. Remove any overclock. Verify game files in launcher. Check Windows Event Viewer for clues.',
-      impact: 'high',
-      difficulty: 'moderate',
-      safety: 'safe',
+        "DDU and reinstall GPU drivers. Remove any overclock. Verify game files in launcher. Check Windows Event Viewer for clues.",
+      impact: "high",
+      difficulty: "moderate",
+      safety: "safe",
     },
     {
-      id: 'trouble-bsod',
-      problem: 'Blue screen (BSOD) during gaming',
-      causes: ['Unstable overclock', 'Driver conflict', 'RAM issues', 'Overheating'],
-      quickFix:
-        'Reset BIOS to defaults. Run memtest86 overnight. Check temps with HWiNFO. Note the STOP code and search it.',
-      impact: 'high',
-      difficulty: 'advanced',
-      safety: 'moderate',
-    },
-    {
-      id: 'trouble-restart',
-      problem: 'PC restarts during gaming (no BSOD)',
+      id: "trouble-bsod",
+      problem: "Blue screen (BSOD) during gaming",
       causes: [
-        'PSU insufficient for GPU power spikes',
-        'CPU/GPU overheating',
-        'Overclock instability',
+        "Unstable overclock",
+        "Driver conflict",
+        "RAM issues",
+        "Overheating",
       ],
       quickFix:
-        'Check temps during gaming (>95°C = throttling). Ensure PSU has enough wattage + headroom. Remove any overclock. Check PSU cables are fully seated.',
-      impact: 'high',
-      difficulty: 'advanced',
-      safety: 'moderate',
+        "Reset BIOS to defaults. Run memtest86 overnight. Check temps with HWiNFO. Note the STOP code and search it.",
+      impact: "high",
+      difficulty: "advanced",
+      safety: "moderate",
+    },
+    {
+      id: "trouble-restart",
+      problem: "PC restarts during gaming (no BSOD)",
+      causes: [
+        "PSU insufficient for GPU power spikes",
+        "CPU/GPU overheating",
+        "Overclock instability",
+      ],
+      quickFix:
+        "Check temps during gaming (>95°C = throttling). Ensure PSU has enough wattage + headroom. Remove any overclock. Check PSU cables are fully seated.",
+      impact: "high",
+      difficulty: "advanced",
+      safety: "moderate",
     },
   ] as const,
-} as const
+} as const;
 
 const PERIPHERAL_MOUSE_ALL: ManualStepSection = {
-  id: buildSectionId('peripheral-mouse-all'),
-  title: 'Mouse Settings',
-  description: 'Essential mouse configuration for gaming',
+  id: buildSectionId("peripheral-mouse-all"),
+  title: "Mouse Settings",
+  description: "Essential mouse configuration for gaming",
   items: [
     {
-      id: 'mouse-polling',
-      setting: 'Polling Rate',
-      value: '1000Hz minimum, 4000Hz+ if supported',
-      why: 'Higher = more frequent position updates = smoother tracking',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "mouse-polling",
+      setting: "Polling Rate",
+      value: "1000Hz minimum, 4000Hz+ if supported",
+      why: "Higher = more frequent position updates = smoother tracking",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'mouse-dpi',
-      setting: 'DPI',
-      value: 'Personal preference, 400-1600 common for FPS',
-      why: 'Higher DPI ≠ better. Find your eDPI sweet spot (DPI × in-game sens).',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "mouse-dpi",
+      setting: "DPI",
+      value: "Personal preference, 400-1600 common for FPS",
+      why:
+        "Higher DPI ≠ better. Find your eDPI sweet spot (DPI × in-game sens).",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'mouse-angle-snapping',
-      setting: 'Angle Snapping',
-      value: 'Off',
-      why: 'Artificial straightening = bad for raw aim',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "mouse-angle-snapping",
+      setting: "Angle Snapping",
+      value: "Off",
+      why: "Artificial straightening = bad for raw aim",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'mouse-lod',
-      setting: 'LOD (Lift-off Distance)',
-      value: 'Low/1mm if available',
-      why: 'Reduces unwanted tracking when lifting mouse to reposition',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "mouse-lod",
+      setting: "LOD (Lift-off Distance)",
+      value: "Low/1mm if available",
+      why: "Reduces unwanted tracking when lifting mouse to reposition",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'mouse-debounce',
-      setting: 'Debounce',
-      value: 'Lowest stable setting',
-      why: 'Lower = faster click registration, but too low may cause double-clicks',
-      impact: 'medium',
-      difficulty: 'moderate',
-      safety: 'safe',
+      id: "mouse-debounce",
+      setting: "Debounce",
+      value: "Lowest stable setting",
+      why:
+        "Lower = faster click registration, but too low may cause double-clicks",
+      impact: "medium",
+      difficulty: "moderate",
+      safety: "safe",
     },
   ] as const,
-} as const
+} as const;
 
 const PERIPHERAL_MOUSE_PRO: ManualStepSection = {
-  id: buildSectionId('peripheral-mouse-pro'),
-  title: 'Mouse (Pro)',
-  description: 'Advanced mouse settings for competitive players',
-  personas: ['pro_gamer'],
+  id: buildSectionId("peripheral-mouse-pro"),
+  title: "Mouse (Pro)",
+  description: "Advanced mouse settings for competitive players",
+  personas: ["pro_gamer"],
   items: [
     {
-      id: 'mouse-pro-calibration',
-      setting: 'Surface Calibration',
-      value: 'Calibrate to your mousepad',
-      why: 'Optimal tracking for your specific surface',
-      impact: 'medium',
-      difficulty: 'moderate',
-      safety: 'safe',
+      id: "mouse-pro-calibration",
+      setting: "Surface Calibration",
+      value: "Calibrate to your mousepad",
+      why: "Optimal tracking for your specific surface",
+      impact: "medium",
+      difficulty: "moderate",
+      safety: "safe",
     },
     {
-      id: 'mouse-pro-dpi-stages',
-      setting: 'DPI Stages',
-      value: 'Remove unused stages',
-      why: 'Prevents accidental DPI changes mid-game',
-      impact: 'low',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "mouse-pro-dpi-stages",
+      setting: "DPI Stages",
+      value: "Remove unused stages",
+      why: "Prevents accidental DPI changes mid-game",
+      impact: "low",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'mouse-pro-onboard',
-      setting: 'Onboard Memory',
-      value: 'Save profile to mouse',
-      why: 'Settings work without software running (less background processes)',
-      impact: 'medium',
-      difficulty: 'moderate',
-      safety: 'safe',
+      id: "mouse-pro-onboard",
+      setting: "Onboard Memory",
+      value: "Save profile to mouse",
+      why: "Settings work without software running (less background processes)",
+      impact: "medium",
+      difficulty: "moderate",
+      safety: "safe",
     },
     {
-      id: 'mouse-acceleration-disable',
-      setting: 'Mouse Acceleration',
-      value: 'Disabled',
-      why: 'Raw mouse input for precise aiming. Windows acceleration causes non-linear mouse movement.',
-      impact: 'high',
-      difficulty: 'advanced',
-      safety: 'safe',
+      id: "mouse-acceleration-disable",
+      setting: "Mouse Acceleration",
+      value: "Disabled",
+      why:
+        "Raw mouse input for precise aiming. Windows acceleration causes non-linear mouse movement.",
+      impact: "high",
+      difficulty: "advanced",
+      safety: "safe",
       automated: {
         script: true,
-        module: 'peripherals.psm1',
-        function: 'Disable-MouseAcceleration',
-        registryPath: 'HKCU:\\Control Panel\\Mouse',
-        registryKey: 'MouseSpeed',
+        module: "peripherals.psm1",
+        function: "Disable-MouseAcceleration",
+        registryPath: "HKCU:\\Control Panel\\Mouse",
+        registryKey: "MouseSpeed",
         registryValue: 0,
-        registryType: 'String',
-        scriptAction: 'Sets MouseSpeed=0, MouseThreshold1=0, MouseThreshold2=0 in registry',
+        registryType: "String",
+        scriptAction:
+          "Sets MouseSpeed=0, MouseThreshold1=0, MouseThreshold2=0 in registry",
       },
       manualSteps: [
-        'Open Registry Editor (regedit)',
-        'Navigate to HKCU:\\Control Panel\\Mouse',
+        "Open Registry Editor (regedit)",
+        "Navigate to HKCU:\\Control Panel\\Mouse",
         'Set "MouseSpeed" = "0"',
         'Set "MouseThreshold1" = "0"',
         'Set "MouseThreshold2" = "0"',
-        'Reboot for changes to take effect',
+        "Reboot for changes to take effect",
       ],
     },
   ] as const,
-} as const
+} as const;
 
 const PERIPHERAL_KEYBOARD_ALL: ManualStepSection = {
-  id: buildSectionId('peripheral-keyboard-all'),
-  title: 'Keyboard Settings',
-  description: 'Essential keyboard configuration',
+  id: buildSectionId("peripheral-keyboard-all"),
+  title: "Keyboard Settings",
+  description: "Essential keyboard configuration",
   items: [
     {
-      id: 'kb-polling',
-      setting: 'Polling Rate',
-      value: '1000Hz+',
-      why: 'Faster key press registration',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "kb-polling",
+      setting: "Polling Rate",
+      value: "1000Hz+",
+      why: "Faster key press registration",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'kb-nkro',
-      setting: 'N-Key Rollover (NKRO)',
-      value: 'Enabled / Full',
-      why: 'All simultaneous key presses register (important for complex inputs)',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "kb-nkro",
+      setting: "N-Key Rollover (NKRO)",
+      value: "Enabled / Full",
+      why:
+        "All simultaneous key presses register (important for complex inputs)",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'kb-game-mode',
-      setting: 'Game Mode',
-      value: 'Enable during gaming',
-      why: 'Disables Windows key to prevent accidental alt-tabs',
-      impact: 'low',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "kb-game-mode",
+      setting: "Game Mode",
+      value: "Enable during gaming",
+      why: "Disables Windows key to prevent accidental alt-tabs",
+      impact: "low",
+      difficulty: "quick",
+      safety: "safe",
     },
   ] as const,
-} as const
+} as const;
 
 const PERIPHERAL_KEYBOARD_PRO: ManualStepSection = {
-  id: buildSectionId('peripheral-keyboard-pro'),
-  title: 'Keyboard (Pro)',
-  description: 'Advanced keyboard settings for competitive players',
-  personas: ['pro_gamer'],
+  id: buildSectionId("peripheral-keyboard-pro"),
+  title: "Keyboard (Pro)",
+  description: "Advanced keyboard settings for competitive players",
+  personas: ["pro_gamer"],
   items: [
     {
-      id: 'kb-pro-rapid-trigger',
-      setting: 'Rapid Trigger (if available)',
-      value: 'Enable for movement keys',
-      why: 'Faster direction changes in strafing games (Wooting, etc.)',
-      impact: 'high',
-      difficulty: 'moderate',
-      safety: 'safe',
+      id: "kb-pro-rapid-trigger",
+      setting: "Rapid Trigger (if available)",
+      value: "Enable for movement keys",
+      why: "Faster direction changes in strafing games (Wooting, etc.)",
+      impact: "high",
+      difficulty: "moderate",
+      safety: "safe",
     },
     {
-      id: 'kb-pro-actuation',
-      setting: 'Actuation Point',
-      value: 'Adjust based on preference',
-      why: 'Higher for less fatigue, lower for speed (analog keyboards)',
-      impact: 'medium',
-      difficulty: 'moderate',
-      safety: 'safe',
+      id: "kb-pro-actuation",
+      setting: "Actuation Point",
+      value: "Adjust based on preference",
+      why: "Higher for less fatigue, lower for speed (analog keyboards)",
+      impact: "medium",
+      difficulty: "moderate",
+      safety: "safe",
     },
   ] as const,
-} as const
+} as const;
 
 const PERIPHERAL_AUDIO_ALL: ManualStepSection = {
-  id: buildSectionId('peripheral-audio-all'),
-  title: 'Audio/Headset Settings',
-  description: 'Sound settings in Windows',
+  id: buildSectionId("peripheral-audio-all"),
+  title: "Audio/Headset Settings",
+  description: "Sound settings in Windows",
   location:
-    'Right-click speaker icon → Sound settings → Device properties → Additional device properties',
+    "Right-click speaker icon → Sound settings → Device properties → Additional device properties",
   items: [
     {
-      id: 'audio-sample-rate',
-      setting: 'Sample Rate',
-      value: '48000 Hz',
-      why: 'Match game audio (most games use 48kHz)',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "audio-sample-rate",
+      setting: "Sample Rate",
+      value: "48000 Hz",
+      why: "Match game audio (most games use 48kHz)",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'audio-bit-depth',
-      setting: 'Bit Depth',
-      value: '24-bit',
-      why: 'Higher dynamic range than 16-bit',
-      impact: 'low',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "audio-bit-depth",
+      setting: "Bit Depth",
+      value: "24-bit",
+      why: "Higher dynamic range than 16-bit",
+      impact: "low",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'audio-spatial',
-      setting: 'Spatial Audio',
-      value: 'Off for competitive, preference otherwise',
-      why: 'Virtual surround can muddy directional audio in competitive',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "audio-spatial",
+      setting: "Spatial Audio",
+      value: "Off for competitive, preference otherwise",
+      why: "Virtual surround can muddy directional audio in competitive",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
       automated: true, // Set-AudioDeviceProperties
     },
     {
-      id: 'audio-exclusive',
-      setting: 'Exclusive Mode',
-      value: 'Allow applications to take exclusive control',
-      why: 'Reduces audio latency',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "audio-exclusive",
+      setting: "Exclusive Mode",
+      value: "Allow applications to take exclusive control",
+      why: "Reduces audio latency",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
       automated: true, // Set-AudioDeviceProperties
     },
   ] as const,
-} as const
+} as const;
 
 const PERIPHERAL_AUDIO_PRO: ManualStepSection = {
-  id: buildSectionId('peripheral-audio-pro'),
-  title: 'Audio (Pro)',
-  description: 'Competitive audio settings',
-  personas: ['pro_gamer'],
-  location: 'Speaker properties → Enhancements tab',
+  id: buildSectionId("peripheral-audio-pro"),
+  title: "Audio (Pro)",
+  description: "Competitive audio settings",
+  personas: ["pro_gamer"],
+  location: "Speaker properties → Enhancements tab",
   items: [
     {
-      id: 'audio-pro-sonic',
-      setting: 'Windows Sonic/Dolby Atmos',
-      value: 'Off',
-      why: 'Adds processing latency. Use stereo for competitive.',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "audio-pro-sonic",
+      setting: "Windows Sonic/Dolby Atmos",
+      value: "Off",
+      why: "Adds processing latency. Use stereo for competitive.",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'audio-pro-loudness',
-      setting: 'Loudness Equalization',
-      value: 'Off',
-      why: 'Compresses dynamic range, makes footsteps harder to hear',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "audio-pro-loudness",
+      setting: "Loudness Equalization",
+      value: "Off",
+      why: "Compresses dynamic range, makes footsteps harder to hear",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'audio-pro-enhance',
-      setting: 'Audio Enhancements',
-      value: 'All Off',
-      why: 'Pure unprocessed signal to headphones',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "audio-pro-enhance",
+      setting: "Audio Enhancements",
+      value: "All Off",
+      why: "Pure unprocessed signal to headphones",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
       automated: true, // Set-AudioDeviceProperties
     },
   ] as const,
-} as const
+} as const;
 
 const NETWORK_ALL: ManualStepSection = {
-  id: buildSectionId('network-all'),
-  title: 'Network Optimization',
-  description: 'Network settings to reduce latency and improve online gaming performance',
+  id: buildSectionId("network-all"),
+  title: "Network Optimization",
+  description:
+    "Network settings to reduce latency and improve online gaming performance",
   items: [
     {
-      id: 'nagle-algorithm-disable',
+      id: "nagle-algorithm-disable",
       setting: "Nagle's Algorithm",
-      value: 'Disabled',
-      why: 'TCP packet coalescing adds latency. Disable for real-time gaming traffic.',
-      impact: 'medium',
-      difficulty: 'advanced',
-      safety: 'safe',
+      value: "Disabled",
+      why:
+        "TCP packet coalescing adds latency. Disable for real-time gaming traffic.",
+      impact: "medium",
+      difficulty: "advanced",
+      safety: "safe",
       automated: {
         script: true,
-        module: 'network.psm1',
-        function: 'Disable-NagleAlgorithm',
+        module: "network.psm1",
+        function: "Disable-NagleAlgorithm",
         registryPath:
-          'HKLM:\\SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters\\Interfaces\\{adapter-guid}',
-        registryKey: 'TcpAckFrequency',
+          "HKLM:\\SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters\\Interfaces\\{adapter-guid}",
+        registryKey: "TcpAckFrequency",
         registryValue: 1,
-        registryType: 'DWORD',
-        scriptAction: 'Sets TcpAckFrequency=1 and TCPNoDelay=1 for all network adapters',
+        registryType: "DWORD",
+        scriptAction:
+          "Sets TcpAckFrequency=1 and TCPNoDelay=1 for all network adapters",
       },
       manualSteps: [
-        'Open Registry Editor as Administrator',
-        'Navigate to HKLM:\\SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters\\Interfaces',
-        'Find your active network adapter GUID (check ipconfig /all)',
+        "Open Registry Editor as Administrator",
+        "Navigate to HKLM:\\SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters\\Interfaces",
+        "Find your active network adapter GUID (check ipconfig /all)",
         'Create DWORD "TcpAckFrequency" = 1',
         'Create DWORD "TCPNoDelay" = 1',
-        'Reboot',
+        "Reboot",
       ],
     },
     {
-      id: 'network-throttling-disable',
-      setting: 'Network Throttling Index',
-      value: 'Disabled (0xFFFFFFFF)',
-      why: 'Windows limits network bandwidth by default. Remove limit for gaming.',
-      impact: 'medium',
-      difficulty: 'advanced',
-      safety: 'safe',
+      id: "network-throttling-disable",
+      setting: "Network Throttling Index",
+      value: "Disabled (0xFFFFFFFF)",
+      why:
+        "Windows limits network bandwidth by default. Remove limit for gaming.",
+      impact: "medium",
+      difficulty: "advanced",
+      safety: "safe",
       automated: {
         script: true,
-        module: 'network.psm1',
-        function: 'Disable-NetworkThrottling',
+        module: "network.psm1",
+        function: "Disable-NetworkThrottling",
         registryPath:
-          'HKLM:\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile',
-        registryKey: 'NetworkThrottlingIndex',
+          "HKLM:\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile",
+        registryKey: "NetworkThrottlingIndex",
         registryValue: 0xffffffff,
-        registryType: 'DWORD',
-        scriptAction: 'Removes network bandwidth throttling',
+        registryType: "DWORD",
+        scriptAction: "Removes network bandwidth throttling",
       },
       manualSteps: [
-        'Open Registry Editor as Administrator',
-        'Navigate to HKLM:\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile',
+        "Open Registry Editor as Administrator",
+        "Navigate to HKLM:\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile",
         'Set "NetworkThrottlingIndex" = 0xFFFFFFFF (hex)',
-        'Reboot',
+        "Reboot",
       ],
     },
   ] as const,
-} as const
+} as const;
 
 const PERFORMANCE_ALL: ManualStepSection = {
-  id: buildSectionId('performance-all'),
-  title: 'Performance Tweaks',
-  description: 'Advanced Windows performance optimizations for competitive gaming',
+  id: buildSectionId("performance-all"),
+  title: "Performance Tweaks",
+  description:
+    "Advanced Windows performance optimizations for competitive gaming",
   items: [
     {
-      id: 'win32-priority-separation',
-      setting: 'Win32PrioritySeparation',
-      value: '0x26 (Short, Variable, High foreground boost)',
-      why: 'Gives foreground applications (games) more CPU time slices for better performance.',
-      impact: 'medium',
-      difficulty: 'advanced',
-      safety: 'moderate',
+      id: "win32-priority-separation",
+      setting: "Win32PrioritySeparation",
+      value: "0x26 (Short, Variable, High foreground boost)",
+      why:
+        "Gives foreground applications (games) more CPU time slices for better performance.",
+      impact: "medium",
+      difficulty: "advanced",
+      safety: "moderate",
       automated: {
         script: true,
-        module: 'performance.psm1',
-        function: 'Set-Win32PrioritySeparation',
-        registryPath: 'HKLM:\\SYSTEM\\CurrentControlSet\\Control\\PriorityControl',
-        registryKey: 'Win32PrioritySeparation',
+        module: "performance.psm1",
+        function: "Set-Win32PrioritySeparation",
+        registryPath:
+          "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\PriorityControl",
+        registryKey: "Win32PrioritySeparation",
         registryValue: 0x26,
-        registryType: 'DWORD',
-        scriptAction: 'Sets Windows scheduler to prioritize foreground processes',
+        registryType: "DWORD",
+        scriptAction:
+          "Sets Windows scheduler to prioritize foreground processes",
       },
       manualSteps: [
-        'Open Registry Editor as Administrator',
-        'Navigate to HKLM:\\SYSTEM\\CurrentControlSet\\Control\\PriorityControl',
+        "Open Registry Editor as Administrator",
+        "Navigate to HKLM:\\SYSTEM\\CurrentControlSet\\Control\\PriorityControl",
         'Set "Win32PrioritySeparation" = 0x26 (hex) or 38 (decimal)',
-        'Reboot',
+        "Reboot",
       ],
     },
   ] as const,
-} as const
+} as const;
 
 const GAME_LAUNCH_FPS: ManualStepSection = {
-  id: buildSectionId('game-launch-fps'),
-  title: 'FPS / Shooter Games',
-  description: 'Launch options for competitive shooters',
+  id: buildSectionId("game-launch-fps"),
+  title: "FPS / Shooter Games",
+  description: "Launch options for competitive shooters",
   items: [
     {
-      id: 'game-cs2',
-      game: 'CS2 / CS:GO',
-      platform: 'Steam',
-      launchOptions: '-novid -high -tickrate 128 +fps_max 0',
+      id: "game-cs2",
+      game: "CS2 / CS:GO",
+      platform: "Steam",
+      launchOptions: "-novid -high -tickrate 128 +fps_max 0",
       notes: [
-        '-novid: Skip intro video',
-        '-high: High CPU priority',
-        '-tickrate 128: Practice server tickrate',
-        '+fps_max 0: Uncapped (or set to monitor refresh + 1)',
-        'In-game: NVIDIA Reflex = On + Boost',
-        'In-game: Multicore Rendering = Enabled',
+        "-novid: Skip intro video",
+        "-high: High CPU priority",
+        "-tickrate 128: Practice server tickrate",
+        "+fps_max 0: Uncapped (or set to monitor refresh + 1)",
+        "In-game: NVIDIA Reflex = On + Boost",
+        "In-game: Multicore Rendering = Enabled",
       ],
-      impact: 'high',
-      difficulty: 'moderate',
-      safety: 'safe',
+      impact: "high",
+      difficulty: "moderate",
+      safety: "safe",
     },
     {
-      id: 'game-valorant',
-      game: 'Valorant',
-      platform: 'Riot',
+      id: "game-valorant",
+      game: "Valorant",
+      platform: "Riot",
       notes: [
-        'No launch options (Riot launcher)',
-        'In-game: NVIDIA Reflex = On + Boost',
-        'In-game: Multithreaded Rendering = On',
-        'In-game: Limit FPS = Off or slightly above refresh',
-        'Note: Vanguard anti-cheat runs at boot',
-        'Warning: Some Core Isolation settings conflict with Vanguard',
+        "No launch options (Riot launcher)",
+        "In-game: NVIDIA Reflex = On + Boost",
+        "In-game: Multithreaded Rendering = On",
+        "In-game: Limit FPS = Off or slightly above refresh",
+        "Note: Vanguard anti-cheat runs at boot",
+        "Warning: Some Core Isolation settings conflict with Vanguard",
       ],
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'game-apex',
-      game: 'Apex Legends',
-      platform: 'Steam',
-      launchOptions: '-novid -high +fps_max unlimited',
+      id: "game-apex",
+      game: "Apex Legends",
+      platform: "Steam",
+      launchOptions: "-novid -high +fps_max unlimited",
       notes: [
-        'Origin/EA App: +fps_max unlimited',
-        'In-game: NVIDIA Reflex = Enabled + Boost',
-        'In-game: Adaptive Resolution FPS Target = 0 (disabled)',
-        'In-game: V-Sync = Disabled',
+        "Origin/EA App: +fps_max unlimited",
+        "In-game: NVIDIA Reflex = Enabled + Boost",
+        "In-game: Adaptive Resolution FPS Target = 0 (disabled)",
+        "In-game: V-Sync = Disabled",
         'Config: videoconfig.txt → setting.fps_max "0"',
       ],
-      impact: 'high',
-      difficulty: 'moderate',
-      safety: 'safe',
+      impact: "high",
+      difficulty: "moderate",
+      safety: "safe",
     },
     {
-      id: 'game-overwatch2',
-      game: 'Overwatch 2',
-      platform: 'Battle.net',
-      launchOptions: '--tank_WorkerThreadCount X',
+      id: "game-overwatch2",
+      game: "Overwatch 2",
+      platform: "Battle.net",
+      launchOptions: "--tank_WorkerThreadCount X",
       notes: [
-        'Replace X with your physical core count',
-        'In-game: NVIDIA Reflex = Enabled',
-        'In-game: Reduce Buffering = On (crucial for latency!)',
-        'In-game: Limit FPS = Display-based or custom cap',
-        'In-game: Triple Buffering = Off',
+        "Replace X with your physical core count",
+        "In-game: NVIDIA Reflex = Enabled",
+        "In-game: Reduce Buffering = On (crucial for latency!)",
+        "In-game: Limit FPS = Display-based or custom cap",
+        "In-game: Triple Buffering = Off",
       ],
-      impact: 'high',
-      difficulty: 'moderate',
-      safety: 'safe',
+      impact: "high",
+      difficulty: "moderate",
+      safety: "safe",
     },
     {
-      id: 'game-fortnite',
-      game: 'Fortnite',
-      platform: 'Epic',
-      launchOptions: '-USEALLAVAILABLECORES',
+      id: "game-fortnite",
+      game: "Fortnite",
+      platform: "Epic",
+      launchOptions: "-USEALLAVAILABLECORES",
       notes: [
-        'Epic launcher → Settings → Additional Command Line',
-        '-PREFERREDPROCESSOR X: Pin to specific core (advanced)',
-        'In-game: NVIDIA Reflex = On + Boost',
-        'In-game: DirectX 12 for newer GPUs, DX11 for stability',
-        'In-game: Rendering Mode = Performance for max FPS',
+        "Epic launcher → Settings → Additional Command Line",
+        "-PREFERREDPROCESSOR X: Pin to specific core (advanced)",
+        "In-game: NVIDIA Reflex = On + Boost",
+        "In-game: DirectX 12 for newer GPUs, DX11 for stability",
+        "In-game: Rendering Mode = Performance for max FPS",
       ],
-      impact: 'high',
-      difficulty: 'moderate',
-      safety: 'safe',
+      impact: "high",
+      difficulty: "moderate",
+      safety: "safe",
     },
   ] as const,
-} as const
+} as const;
 
 const GAME_LAUNCH_MOBA: ManualStepSection = {
-  id: buildSectionId('game-launch-moba'),
-  title: 'MOBA / Strategy Games',
-  description: 'Launch options for MOBAs and RTS games',
+  id: buildSectionId("game-launch-moba"),
+  title: "MOBA / Strategy Games",
+  description: "Launch options for MOBAs and RTS games",
   items: [
     {
-      id: 'game-dota2',
-      game: 'Dota 2',
-      platform: 'Steam',
-      launchOptions: '-novid -high -dx11 +fps_max 0',
+      id: "game-dota2",
+      game: "Dota 2",
+      platform: "Steam",
+      launchOptions: "-novid -high -dx11 +fps_max 0",
       notes: [
-        '-dx11: Force DirectX 11 (more stable than Vulkan for some)',
-        '-vulkan: Try Vulkan for AMD GPUs',
-        'In-game: Compute Shaders = Enabled',
-        'In-game: Async Compute = Enabled (NVIDIA 10-series+)',
+        "-dx11: Force DirectX 11 (more stable than Vulkan for some)",
+        "-vulkan: Try Vulkan for AMD GPUs",
+        "In-game: Compute Shaders = Enabled",
+        "In-game: Async Compute = Enabled (NVIDIA 10-series+)",
       ],
-      impact: 'medium',
-      difficulty: 'moderate',
-      safety: 'safe',
+      impact: "medium",
+      difficulty: "moderate",
+      safety: "safe",
     },
     {
-      id: 'game-lol',
-      game: 'League of Legends',
-      platform: 'Riot',
+      id: "game-lol",
+      game: "League of Legends",
+      platform: "Riot",
       notes: [
-        'No launch options (Riot launcher)',
-        'In-game: Cap FPS to monitor refresh (prevents GPU heat)',
-        'In-game: V-Sync = Off',
-        'Config: game.cfg → [Performance] → TargetFrameRate',
-        'Client: Low Spec Mode = faster load times',
+        "No launch options (Riot launcher)",
+        "In-game: Cap FPS to monitor refresh (prevents GPU heat)",
+        "In-game: V-Sync = Off",
+        "Config: game.cfg → [Performance] → TargetFrameRate",
+        "Client: Low Spec Mode = faster load times",
       ],
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
   ] as const,
-} as const
+} as const;
 
 const OBS_OUTPUT: ManualStepSection = {
   id: buildSectionId(SECTION_PREFIXES.OBS_OUTPUT),
-  title: 'OBS Output Settings',
-  description: 'Settings → Output → Streaming/Recording',
-  personas: ['streamer'],
+  title: "OBS Output Settings",
+  description: "Settings → Output → Streaming/Recording",
+  personas: ["streamer"],
   items: [
     {
-      id: 'obs-encoder',
-      setting: 'Encoder',
-      value: 'NVENC (NVIDIA) or AMF (AMD)',
-      why: 'Hardware encoding = minimal CPU impact, GPU handles it',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "obs-encoder",
+      setting: "Encoder",
+      value: "NVENC (NVIDIA) or AMF (AMD)",
+      why: "Hardware encoding = minimal CPU impact, GPU handles it",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'obs-rate-control',
-      setting: 'Rate Control',
-      value: 'CBR for streaming, CQP for recording',
-      why: 'CBR = consistent bitrate for Twitch/YouTube',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "obs-rate-control",
+      setting: "Rate Control",
+      value: "CBR for streaming, CQP for recording",
+      why: "CBR = consistent bitrate for Twitch/YouTube",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'obs-bitrate',
-      setting: 'Bitrate (1080p60)',
-      value: '6000 Kbps (Twitch), 10000+ (YouTube)',
-      why: 'Twitch caps at 6000, YouTube allows more headroom',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "obs-bitrate",
+      setting: "Bitrate (1080p60)",
+      value: "6000 Kbps (Twitch), 10000+ (YouTube)",
+      why: "Twitch caps at 6000, YouTube allows more headroom",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'obs-keyframe',
-      setting: 'Keyframe Interval',
-      value: '2 seconds',
-      why: 'Required by most streaming platforms',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "obs-keyframe",
+      setting: "Keyframe Interval",
+      value: "2 seconds",
+      why: "Required by most streaming platforms",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'obs-preset',
-      setting: 'Preset',
-      value: 'Quality or Max Quality',
-      why: 'NVENC Quality ≈ x264 Medium with only ~10% GPU usage',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "obs-preset",
+      setting: "Preset",
+      value: "Quality or Max Quality",
+      why: "NVENC Quality ≈ x264 Medium with only ~10% GPU usage",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'obs-profile',
-      setting: 'Profile',
-      value: 'High',
-      why: 'Better compression efficiency than Baseline or Main',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "obs-profile",
+      setting: "Profile",
+      value: "High",
+      why: "Better compression efficiency than Baseline or Main",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'obs-lookahead',
-      setting: 'Look-ahead',
-      value: 'Off for low latency, On for quality',
-      why: 'Adds encoding delay but better bitrate allocation',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "obs-lookahead",
+      setting: "Look-ahead",
+      value: "Off for low latency, On for quality",
+      why: "Adds encoding delay but better bitrate allocation",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'obs-psycho-visual',
-      setting: 'Psycho Visual Tuning',
-      value: 'On',
-      why: 'Better perceived quality at same bitrate',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "obs-psycho-visual",
+      setting: "Psycho Visual Tuning",
+      value: "On",
+      why: "Better perceived quality at same bitrate",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'obs-bframes',
-      setting: 'Max B-frames',
-      value: '2',
-      why: 'Balance of quality and encoding latency',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "obs-bframes",
+      setting: "Max B-frames",
+      value: "2",
+      why: "Balance of quality and encoding latency",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
   ] as const,
-} as const
+} as const;
 
 const OBS_VIDEO: ManualStepSection = {
   id: buildSectionId(SECTION_PREFIXES.OBS_VIDEO),
-  title: 'OBS Video Settings',
-  description: 'Settings → Video',
-  personas: ['streamer'],
+  title: "OBS Video Settings",
+  description: "Settings → Video",
+  personas: ["streamer"],
   items: [
     {
-      id: 'obs-canvas-res',
-      setting: 'Base (Canvas) Resolution',
-      value: 'Your monitor resolution',
-      why: 'Capture at native, scale down if needed',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "obs-canvas-res",
+      setting: "Base (Canvas) Resolution",
+      value: "Your monitor resolution",
+      why: "Capture at native, scale down if needed",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'obs-output-res',
-      setting: 'Output (Scaled) Resolution',
-      value: '1920x1080 for most',
-      why: 'Higher than 1080p rarely worth the bitrate on Twitch',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "obs-output-res",
+      setting: "Output (Scaled) Resolution",
+      value: "1920x1080 for most",
+      why: "Higher than 1080p rarely worth the bitrate on Twitch",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'obs-downscale',
-      setting: 'Downscale Filter',
-      value: 'Lanczos (Sharpened scaling, 36 samples)',
-      why: 'Best quality downscale, slight performance cost',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "obs-downscale",
+      setting: "Downscale Filter",
+      value: "Lanczos (Sharpened scaling, 36 samples)",
+      why: "Best quality downscale, slight performance cost",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'obs-fps',
-      setting: 'FPS',
-      value: '60 FPS',
-      why: 'Match your content. 30 FPS is fine for slow-paced games.',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "obs-fps",
+      setting: "FPS",
+      value: "60 FPS",
+      why: "Match your content. 30 FPS is fine for slow-paced games.",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
   ] as const,
-} as const
+} as const;
 
 const OBS_ADVANCED: ManualStepSection = {
   id: buildSectionId(SECTION_PREFIXES.OBS_ADVANCED),
-  title: 'OBS Advanced Settings',
-  description: 'Settings → Advanced',
-  personas: ['streamer'],
+  title: "OBS Advanced Settings",
+  description: "Settings → Advanced",
+  personas: ["streamer"],
   items: [
     {
-      id: 'obs-priority',
-      setting: 'Process Priority',
-      value: 'Above Normal',
-      why: 'OBS gets CPU time over background apps, but not before games',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "obs-priority",
+      setting: "Process Priority",
+      value: "Above Normal",
+      why: "OBS gets CPU time over background apps, but not before games",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'obs-renderer',
-      setting: 'Renderer',
-      value: 'Direct3D 11',
-      why: 'Most compatible. Avoid Vulkan unless troubleshooting.',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "obs-renderer",
+      setting: "Renderer",
+      value: "Direct3D 11",
+      why: "Most compatible. Avoid Vulkan unless troubleshooting.",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'obs-color-format',
-      setting: 'Color Format',
-      value: 'NV12',
-      why: 'Standard for streaming, hardware encoder native format',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "obs-color-format",
+      setting: "Color Format",
+      value: "NV12",
+      why: "Standard for streaming, hardware encoder native format",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'obs-color-space',
-      setting: 'Color Space',
-      value: '709',
-      why: 'HD standard color space',
-      impact: 'low',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "obs-color-space",
+      setting: "Color Space",
+      value: "709",
+      why: "HD standard color space",
+      impact: "low",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'obs-color-range',
-      setting: 'Color Range',
-      value: 'Partial',
-      why: 'Full range can cause issues on some platforms/players',
-      impact: 'low',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "obs-color-range",
+      setting: "Color Range",
+      value: "Partial",
+      why: "Full range can cause issues on some platforms/players",
+      impact: "low",
+      difficulty: "quick",
+      safety: "safe",
     },
   ] as const,
-} as const
+} as const;
 
 const OBS_SOURCES: ManualStepSection = {
   id: buildSectionId(SECTION_PREFIXES.OBS_SOURCES),
-  title: 'OBS Source Settings',
-  description: 'When adding game sources',
-  personas: ['streamer'],
-  note: 'Game Capture is always preferred over Display Capture when the game supports it',
+  title: "OBS Source Settings",
+  description: "When adding game sources",
+  personas: ["streamer"],
+  note:
+    "Game Capture is always preferred over Display Capture when the game supports it",
   items: [
     {
-      id: 'obs-capture-type',
-      setting: 'Game Capture vs Display Capture',
-      value: 'Game Capture when possible',
-      why: 'Lower overhead, captures only the game, not entire screen',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "obs-capture-type",
+      setting: "Game Capture vs Display Capture",
+      value: "Game Capture when possible",
+      why: "Lower overhead, captures only the game, not entire screen",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'obs-capture-mode',
-      setting: 'Game Capture → Mode',
-      value: 'Capture specific window',
+      id: "obs-capture-mode",
+      setting: "Game Capture → Mode",
+      value: "Capture specific window",
       why: "More reliable than 'Capture any fullscreen application'",
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'obs-sli-capture',
-      setting: 'Game Capture → SLI/Crossfire Capture',
-      value: 'Off unless multi-GPU',
-      why: 'Adds overhead when enabled unnecessarily',
-      impact: 'low',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "obs-sli-capture",
+      setting: "Game Capture → SLI/Crossfire Capture",
+      value: "Off unless multi-GPU",
+      why: "Adds overhead when enabled unnecessarily",
+      impact: "low",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'obs-transparency',
-      setting: 'Game Capture → Allow Transparency',
-      value: 'Off',
-      why: 'Unnecessary processing for most games',
-      impact: 'low',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "obs-transparency",
+      setting: "Game Capture → Allow Transparency",
+      value: "Off",
+      why: "Unnecessary processing for most games",
+      impact: "low",
+      difficulty: "quick",
+      safety: "safe",
     },
   ] as const,
-} as const
+} as const;
 
 const OBS_TROUBLESHOOTING: ManualStepSection = {
-  id: buildSectionId('obs-troubleshooting'),
-  title: 'Common Streaming Issues',
-  description: 'Quick fixes for OBS problems',
-  personas: ['streamer'],
+  id: buildSectionId("obs-troubleshooting"),
+  title: "Common Streaming Issues",
+  description: "Quick fixes for OBS problems",
+  personas: ["streamer"],
   items: [
     {
-      id: 'obs-encoding-overload',
-      problem: 'Encoding overloaded',
-      solution: 'Lower preset (Quality → Performance) or output resolution',
+      id: "obs-encoding-overload",
+      problem: "Encoding overloaded",
+      solution: "Lower preset (Quality → Performance) or output resolution",
       why: "GPU encoder can't keep up with encoding demand",
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'obs-dropped-network',
-      problem: 'Dropped frames (Network)',
-      solution: 'Lower bitrate or check upload speed',
+      id: "obs-dropped-network",
+      problem: "Dropped frames (Network)",
+      solution: "Lower bitrate or check upload speed",
       why: "Internet can't sustain the set bitrate",
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'obs-dropped-rendering',
-      problem: 'Dropped frames (Rendering)',
-      solution: 'Cap game FPS, close background apps',
-      why: 'GPU overloaded between game rendering and encoding',
-      impact: 'high',
-      difficulty: 'moderate',
-      safety: 'safe',
+      id: "obs-dropped-rendering",
+      problem: "Dropped frames (Rendering)",
+      solution: "Cap game FPS, close background apps",
+      why: "GPU overloaded between game rendering and encoding",
+      impact: "high",
+      difficulty: "moderate",
+      safety: "safe",
     },
     {
-      id: 'obs-game-stutters',
-      problem: 'Game stutters while streaming',
-      solution: 'Use NVENC/AMF, cap FPS 10 below max',
-      why: 'Leave GPU headroom for encoding work',
-      impact: 'high',
-      difficulty: 'moderate',
-      safety: 'safe',
+      id: "obs-game-stutters",
+      problem: "Game stutters while streaming",
+      solution: "Use NVENC/AMF, cap FPS 10 below max",
+      why: "Leave GPU headroom for encoding work",
+      impact: "high",
+      difficulty: "moderate",
+      safety: "safe",
     },
     {
-      id: 'obs-black-screen',
-      problem: 'Black screen in Game Capture',
-      solution: 'Run OBS as admin, or use Display Capture',
-      why: 'Anti-cheat or game capture hook compatibility issue',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "obs-black-screen",
+      problem: "Black screen in Game Capture",
+      solution: "Run OBS as admin, or use Display Capture",
+      why: "Anti-cheat or game capture hook compatibility issue",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
   ] as const,
-} as const
+} as const;
 
 const DIAGNOSTIC_TOOLS_PERFORMANCE: ManualStepSection = {
-  id: buildSectionId('diagnostic-performance'),
-  title: 'Performance Diagnostics',
-  description: 'Tools to diagnose FPS issues, stuttering, and system bottlenecks',
+  id: buildSectionId("diagnostic-performance"),
+  title: "Performance Diagnostics",
+  description:
+    "Tools to diagnose FPS issues, stuttering, and system bottlenecks",
   items: [
     {
-      id: 'diag-latencymon',
-      tool: 'LatencyMon',
-      use: 'Diagnose DPC latency spikes causing audio crackle or micro-stutters',
-      arsenalKey: 'latencymon',
-      impact: 'high',
-      difficulty: 'moderate',
-      safety: 'safe',
+      id: "diag-latencymon",
+      tool: "LatencyMon",
+      use:
+        "Diagnose DPC latency spikes causing audio crackle or micro-stutters",
+      arsenalKey: "latencymon",
+      impact: "high",
+      difficulty: "moderate",
+      safety: "safe",
     },
     {
-      id: 'diag-hwinfo',
-      tool: 'HWiNFO64',
-      use: 'Monitor temps, clocks, and detect thermal throttling during gaming',
-      arsenalKey: 'hwinfo',
-      impact: 'high',
-      difficulty: 'moderate',
-      safety: 'safe',
+      id: "diag-hwinfo",
+      tool: "HWiNFO64",
+      use: "Monitor temps, clocks, and detect thermal throttling during gaming",
+      arsenalKey: "hwinfo",
+      impact: "high",
+      difficulty: "moderate",
+      safety: "safe",
     },
     {
-      id: 'diag-capframex',
-      tool: 'CapFrameX',
-      use: 'Capture and analyze frametimes for detailed benchmark comparisons',
-      arsenalKey: 'capframex',
-      impact: 'medium',
-      difficulty: 'moderate',
-      safety: 'safe',
+      id: "diag-capframex",
+      tool: "CapFrameX",
+      use: "Capture and analyze frametimes for detailed benchmark comparisons",
+      arsenalKey: "capframex",
+      impact: "medium",
+      difficulty: "moderate",
+      safety: "safe",
     },
     {
-      id: 'diag-afterburner',
-      tool: 'MSI Afterburner',
-      use: 'GPU monitoring overlay, frametime graphs, and overclocking',
-      arsenalKey: 'msiafterburner',
-      impact: 'high',
-      difficulty: 'moderate',
-      safety: 'safe',
+      id: "diag-afterburner",
+      tool: "MSI Afterburner",
+      use: "GPU monitoring overlay, frametime graphs, and overclocking",
+      arsenalKey: "msiafterburner",
+      impact: "high",
+      difficulty: "moderate",
+      safety: "safe",
     },
     {
-      id: 'diag-procexp',
-      tool: 'Process Explorer',
-      use: 'Deep process inspection, find CPU/memory hogs',
-      arsenalKey: 'sysinternals',
-      impact: 'medium',
-      difficulty: 'moderate',
-      safety: 'safe',
+      id: "diag-procexp",
+      tool: "Process Explorer",
+      use: "Deep process inspection, find CPU/memory hogs",
+      arsenalKey: "sysinternals",
+      impact: "medium",
+      difficulty: "moderate",
+      safety: "safe",
     },
   ] as const,
-} as const
+} as const;
 
 const DIAGNOSTIC_TOOLS_HARDWARE: ManualStepSection = {
-  id: buildSectionId('diagnostic-hardware'),
-  title: 'Hardware Diagnostics',
-  description: 'Tools to test and verify hardware stability',
+  id: buildSectionId("diagnostic-hardware"),
+  title: "Hardware Diagnostics",
+  description: "Tools to test and verify hardware stability",
   items: [
     {
-      id: 'diag-ddu',
-      tool: 'DDU (Display Driver Uninstaller)',
-      use: 'Clean GPU driver removal before fresh install - fixes many issues',
-      arsenalKey: 'ddu',
-      impact: 'high',
-      difficulty: 'moderate',
-      safety: 'safe',
+      id: "diag-ddu",
+      tool: "DDU (Display Driver Uninstaller)",
+      use: "Clean GPU driver removal before fresh install - fixes many issues",
+      arsenalKey: "ddu",
+      impact: "high",
+      difficulty: "moderate",
+      safety: "safe",
     },
     {
-      id: 'diag-crystaldisk',
-      tool: 'CrystalDiskMark',
-      use: 'Test SSD/HDD speeds, diagnose slow load times',
-      arsenalKey: 'crystaldiskmark',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "diag-crystaldisk",
+      tool: "CrystalDiskMark",
+      use: "Test SSD/HDD speeds, diagnose slow load times",
+      arsenalKey: "crystaldiskmark",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'diag-memtest',
-      tool: 'memtest86',
-      use: 'Test RAM stability overnight - catches unstable XMP profiles',
-      impact: 'high',
-      difficulty: 'advanced',
-      safety: 'safe',
+      id: "diag-memtest",
+      tool: "memtest86",
+      use: "Test RAM stability overnight - catches unstable XMP profiles",
+      impact: "high",
+      difficulty: "advanced",
+      safety: "safe",
     },
     {
-      id: 'diag-occt',
-      tool: 'OCCT',
-      use: 'Stress test CPU, GPU, RAM, and PSU to find stability issues',
-      impact: 'high',
-      difficulty: 'moderate',
-      safety: 'moderate',
+      id: "diag-occt",
+      tool: "OCCT",
+      use: "Stress test CPU, GPU, RAM, and PSU to find stability issues",
+      impact: "high",
+      difficulty: "moderate",
+      safety: "moderate",
     },
     {
-      id: 'diag-prime95',
-      tool: 'Prime95',
-      use: 'Heavy CPU stress test, reveals thermal throttling',
-      impact: 'high',
-      difficulty: 'moderate',
-      safety: 'moderate',
+      id: "diag-prime95",
+      tool: "Prime95",
+      use: "Heavy CPU stress test, reveals thermal throttling",
+      impact: "high",
+      difficulty: "moderate",
+      safety: "moderate",
     },
   ] as const,
-} as const
+} as const;
 
 const DIAGNOSTIC_TOOLS_NETWORK: ManualStepSection = {
-  id: buildSectionId('diagnostic-network'),
-  title: 'Network Diagnostics',
-  description: 'Tools to diagnose ping, packet loss, and connection issues',
+  id: buildSectionId("diagnostic-network"),
+  title: "Network Diagnostics",
+  description: "Tools to diagnose ping, packet loss, and connection issues",
   items: [
     {
-      id: 'diag-winmtr',
-      tool: 'WinMTR',
-      use: 'Network path analysis - find where packet loss occurs between you and server',
-      impact: 'high',
-      difficulty: 'moderate',
-      safety: 'safe',
+      id: "diag-winmtr",
+      tool: "WinMTR",
+      use:
+        "Network path analysis - find where packet loss occurs between you and server",
+      impact: "high",
+      difficulty: "moderate",
+      safety: "safe",
     },
     {
-      id: 'diag-pingplotter',
-      tool: 'PingPlotter',
-      use: 'Visual network route analysis with graphs over time',
-      impact: 'high',
-      difficulty: 'moderate',
-      safety: 'safe',
+      id: "diag-pingplotter",
+      tool: "PingPlotter",
+      use: "Visual network route analysis with graphs over time",
+      impact: "high",
+      difficulty: "moderate",
+      safety: "safe",
     },
     {
-      id: 'diag-wireshark',
-      tool: 'Wireshark',
-      use: 'Deep packet inspection - for advanced network troubleshooting',
-      impact: 'medium',
-      difficulty: 'advanced',
-      safety: 'safe',
+      id: "diag-wireshark",
+      tool: "Wireshark",
+      use: "Deep packet inspection - for advanced network troubleshooting",
+      impact: "medium",
+      difficulty: "advanced",
+      safety: "safe",
     },
   ] as const,
-} as const
+} as const;
 
 const DIAGNOSTIC_TOOLS_CRASHES: ManualStepSection = {
-  id: buildSectionId('diagnostic-crashes'),
-  title: 'Crash Diagnostics',
-  description: 'Tools to analyze BSODs and game crashes',
+  id: buildSectionId("diagnostic-crashes"),
+  title: "Crash Diagnostics",
+  description: "Tools to analyze BSODs and game crashes",
   items: [
     {
-      id: 'diag-whocrashed',
-      tool: 'WhoCrashed',
-      use: 'Analyze BSOD minidump files, identifies faulty drivers',
-      impact: 'high',
-      difficulty: 'moderate',
-      safety: 'safe',
+      id: "diag-whocrashed",
+      tool: "WhoCrashed",
+      use: "Analyze BSOD minidump files, identifies faulty drivers",
+      impact: "high",
+      difficulty: "moderate",
+      safety: "safe",
     },
     {
-      id: 'diag-bluescreenview',
-      tool: 'BlueScreenView',
-      use: 'Simple BSOD log viewer, shows crash history',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "diag-bluescreenview",
+      tool: "BlueScreenView",
+      use: "Simple BSOD log viewer, shows crash history",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'diag-eventviewer',
-      tool: 'Event Viewer',
-      use: 'Built-in Windows logs - check Application and System for errors',
-      impact: 'high',
-      difficulty: 'moderate',
-      safety: 'safe',
+      id: "diag-eventviewer",
+      tool: "Event Viewer",
+      use: "Built-in Windows logs - check Application and System for errors",
+      impact: "high",
+      difficulty: "moderate",
+      safety: "safe",
     },
   ] as const,
-} as const
+} as const;
 
 const UBIQUITI_GAMING: ManualStepSection = {
   id: buildSectionId(SECTION_PREFIXES.UBIQUITI_GAMING),
-  title: 'Ubiquiti/UniFi Router (Gaming)',
-  description: 'Router settings for optimal gaming latency',
-  location: 'UniFi Network App → Settings',
-  note: 'Ethernet > WiFi always. If WiFi, use 5GHz on a clear channel.',
+  title: "Ubiquiti/UniFi Router (Gaming)",
+  description: "Router settings for optimal gaming latency",
+  location: "UniFi Network App → Settings",
+  note: "Ethernet > WiFi always. If WiFi, use 5GHz on a clear channel.",
   items: [
     {
-      id: 'unifi-sqm',
-      setting: 'Smart Queues (Traffic Management)',
-      value: 'Enable on WAN with fq_codel algorithm',
-      why: 'Eliminates bufferbloat - the #1 cause of latency spikes under load. Set to 90-95% of true upload/download speeds.',
-      impact: 'high',
-      difficulty: 'advanced',
-      safety: 'safe',
+      id: "unifi-sqm",
+      setting: "Smart Queues (Traffic Management)",
+      value: "Enable on WAN with fq_codel algorithm",
+      why:
+        "Eliminates bufferbloat - the #1 cause of latency spikes under load. Set to 90-95% of true upload/download speeds.",
+      impact: "high",
+      difficulty: "advanced",
+      safety: "safe",
     },
     {
-      id: 'unifi-dscp',
-      setting: 'Traffic Management → DSCP Tagging',
-      value: 'Tag gaming traffic as EF (46) or CS6 (48)',
-      why: 'Prioritizes game packets over downloads/streaming when bandwidth is constrained.',
-      impact: 'medium',
-      difficulty: 'advanced',
-      safety: 'safe',
+      id: "unifi-dscp",
+      setting: "Traffic Management → DSCP Tagging",
+      value: "Tag gaming traffic as EF (46) or CS6 (48)",
+      why:
+        "Prioritizes game packets over downloads/streaming when bandwidth is constrained.",
+      impact: "medium",
+      difficulty: "advanced",
+      safety: "safe",
     },
     {
-      id: 'unifi-wifi-channel',
-      setting: 'WiFi → Channel Optimization',
-      value: '5GHz: 80MHz width on clear DFS channel, 2.4GHz: 20MHz width channel 1/6/11',
-      why: 'Wider = faster but more interference. Use WiFi analyzer to find cleanest channels. DFS channels often less congested.',
-      impact: 'high',
-      difficulty: 'moderate',
-      safety: 'safe',
+      id: "unifi-wifi-channel",
+      setting: "WiFi → Channel Optimization",
+      value:
+        "5GHz: 80MHz width on clear DFS channel, 2.4GHz: 20MHz width channel 1/6/11",
+      why:
+        "Wider = faster but more interference. Use WiFi analyzer to find cleanest channels. DFS channels often less congested.",
+      impact: "high",
+      difficulty: "moderate",
+      safety: "safe",
     },
     {
-      id: 'unifi-band-steering',
-      setting: 'WiFi → Band Steering',
-      value: 'Prefer 5GHz',
-      why: 'Forces capable devices to faster, less congested 5GHz band with lower latency.',
-      impact: 'medium',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "unifi-band-steering",
+      setting: "WiFi → Band Steering",
+      value: "Prefer 5GHz",
+      why:
+        "Forces capable devices to faster, less congested 5GHz band with lower latency.",
+      impact: "medium",
+      difficulty: "quick",
+      safety: "safe",
     },
     {
-      id: 'unifi-disable-features',
-      setting: 'Disable unnecessary features',
-      value: 'Turn off: Deep Packet Inspection (DPI), IDS/IPS (if not needed), Guest Portal',
-      why: 'Each feature adds CPU processing overhead and latency. Enable only what you actively use.',
-      impact: 'medium',
-      difficulty: 'moderate',
-      safety: 'moderate',
+      id: "unifi-disable-features",
+      setting: "Disable unnecessary features",
+      value:
+        "Turn off: Deep Packet Inspection (DPI), IDS/IPS (if not needed), Guest Portal",
+      why:
+        "Each feature adds CPU processing overhead and latency. Enable only what you actively use.",
+      impact: "medium",
+      difficulty: "moderate",
+      safety: "moderate",
     },
     {
-      id: 'unifi-bufferbloat-test',
-      setting: 'Verify setup',
-      value: 'Test at waveform.com/tools/bufferbloat after configuring Smart Queues',
-      why: 'Should achieve A or A+ grade with <20ms bufferbloat under load. If not, adjust SQM bandwidth limits.',
-      impact: 'high',
-      difficulty: 'quick',
-      safety: 'safe',
+      id: "unifi-bufferbloat-test",
+      setting: "Verify setup",
+      value:
+        "Test at waveform.com/tools/bufferbloat after configuring Smart Queues",
+      why:
+        "Should achieve A or A+ grade with <20ms bufferbloat under load. If not, adjust SQM bandwidth limits.",
+      impact: "high",
+      difficulty: "quick",
+      safety: "safe",
     },
   ] as const,
-} as const
+} as const;
 
 export type SectionCategory =
-  | 'windows'
-  | 'gpu'
-  | 'bios'
-  | 'software'
-  | 'peripherals'
-  | 'network'
-  | 'performance'
-  | 'preflight'
-  | 'troubleshooting'
-  | 'games'
-  | 'streaming'
-  | 'diagnostics'
+  | "windows"
+  | "gpu"
+  | "bios"
+  | "software"
+  | "peripherals"
+  | "network"
+  | "performance"
+  | "preflight"
+  | "troubleshooting"
+  | "games"
+  | "streaming"
+  | "diagnostics";
 
 export interface SectionGroup {
-  readonly id: SectionCategory
-  readonly title: string
-  readonly icon: string
-  readonly sections: readonly ManualStepSection[]
-  readonly videos?: readonly VideoResource[]
+  readonly id: SectionCategory;
+  readonly title: string;
+  readonly icon: string;
+  readonly sections: readonly ManualStepSection[];
+  readonly videos?: readonly VideoResource[];
 }
 
 const VIDEOS = {
   INTEL_SETTINGS: {
-    id: 'intel-settings',
-    title: 'Intel CPU Settings You NEED to Change',
-    creator: 'JayzTwoCents',
-    videoId: 'B3EW5lRIZYc',
-    description: 'Essential BIOS and Windows settings for Intel CPUs',
+    id: "intel-settings",
+    title: "Intel CPU Settings You NEED to Change",
+    creator: "JayzTwoCents",
+    videoId: "B3EW5lRIZYc",
+    description: "Essential BIOS and Windows settings for Intel CPUs",
   },
   POST_BUILD: {
-    id: 'post-build',
-    title: 'What to do AFTER Building Your PC',
-    creator: 'JayzTwoCents',
-    videoId: 'xhHtHMQygzE',
-    description: 'First steps after a fresh Windows install',
+    id: "post-build",
+    title: "What to do AFTER Building Your PC",
+    creator: "JayzTwoCents",
+    videoId: "xhHtHMQygzE",
+    description: "First steps after a fresh Windows install",
   },
   STUTTERING_FIXES: {
-    id: 'stuttering-fixes',
-    title: 'Fix Game Stuttering & Micro-Stutters',
-    creator: 'JayzTwoCents',
-    videoId: 'YWTZkB9rVU0',
-    description: 'Diagnose and fix stuttering issues including mouse-move stutters',
+    id: "stuttering-fixes",
+    title: "Fix Game Stuttering & Micro-Stutters",
+    creator: "JayzTwoCents",
+    videoId: "YWTZkB9rVU0",
+    description:
+      "Diagnose and fix stuttering issues including mouse-move stutters",
   },
   PC_PERFORMANCE: {
-    id: 'pc-performance-setup',
+    id: "pc-performance-setup",
     title: "You're HURTING your Performance! Check these things NOW!",
-    creator: 'JayzTwoCents',
-    videoId: 'kRJZpcbVXIg',
-    description: 'XMP/EXPO, fan curves, Fan Control software, VBS optimization',
+    creator: "JayzTwoCents",
+    videoId: "kRJZpcbVXIg",
+    description: "XMP/EXPO, fan curves, Fan Control software, VBS optimization",
   },
   NVIDIA_CS2: {
-    id: 'nvidia-cs2-settings',
-    title: 'Best Nvidia Settings for Counter-Strike 2',
-    creator: 'Gaming Optimization Guide',
-    videoId: 'FVhgaHfhMTg',
-    description: 'Comprehensive Nvidia Control Panel settings for CS2',
+    id: "nvidia-cs2-settings",
+    title: "Best Nvidia Settings for Counter-Strike 2",
+    creator: "Gaming Optimization Guide",
+    videoId: "FVhgaHfhMTg",
+    description: "Comprehensive Nvidia Control Panel settings for CS2",
   },
   NVIDIA_2026: {
-    id: 'nvidia-gaming-2026',
-    title: 'Nvidia Settings for Gaming Updated 2026',
-    creator: 'Gaming Optimization Guide',
-    videoId: '5mtCUTUNzs0',
-    description: 'Driver installation, digital vibrance, Reflex, and advanced settings',
+    id: "nvidia-gaming-2026",
+    title: "Nvidia Settings for Gaming Updated 2026",
+    creator: "Gaming Optimization Guide",
+    videoId: "5mtCUTUNzs0",
+    description:
+      "Driver installation, digital vibrance, Reflex, and advanced settings",
   },
   BUFFERBLOAT_LAG: {
-    id: 'bufferbloat-lag',
-    title: 'Bufferbloat & Lag - Why Framing Matters',
-    creator: 'Battle(non)sense',
-    videoId: 'LjJW_s5gQ9Y',
-    description: 'Explains bufferbloat, latency spikes, and mitigation',
+    id: "bufferbloat-lag",
+    title: "Bufferbloat & Lag - Why Framing Matters",
+    creator: "Battle(non)sense",
+    videoId: "LjJW_s5gQ9Y",
+    description: "Explains bufferbloat, latency spikes, and mitigation",
   },
   OBS_SECRET_SAUCE: {
-    id: 'obs-secret-sauce',
+    id: "obs-secret-sauce",
     title: "My OBS Studio 'Secret Sauce' EXPLAINED!",
-    creator: 'EposVox',
-    videoId: 'fQ04pIcpMkM',
-    description: 'Detailed OBS settings, quality vs performance trade-offs',
+    creator: "EposVox",
+    videoId: "fQ04pIcpMkM",
+    description: "Detailed OBS settings, quality vs performance trade-offs",
   },
   XMP_PROFILE: {
-    id: 'xmp-profile',
-    title: 'How to set your memory speed and XMP Profile',
-    creator: 'JayzTwoCents',
-    videoId: 'NTWEzTV8B54',
-    description: 'Step-by-step XMP/EXPO memory setup',
+    id: "xmp-profile",
+    title: "How to set your memory speed and XMP Profile",
+    creator: "JayzTwoCents",
+    videoId: "NTWEzTV8B54",
+    description: "Step-by-step XMP/EXPO memory setup",
   },
   DF_WIN11_2026: {
-    id: 'df-win11-2026',
-    title: 'Will Windows 11 Gaming Truly, Actually Improve in 2026?',
-    creator: 'DF Clips',
-    videoId: 'quaF75xVKNg',
-    description: 'Windows gaming improvements and trade-offs',
+    id: "df-win11-2026",
+    title: "Will Windows 11 Gaming Truly, Actually Improve in 2026?",
+    creator: "DF Clips",
+    videoId: "quaF75xVKNg",
+    description: "Windows gaming improvements and trade-offs",
   },
-} as const
+} as const;
 
 const SECTION_GROUPS: readonly SectionGroup[] = [
   {
-    id: 'windows',
-    title: 'Windows Display',
-    icon: 'monitor',
+    id: "windows",
+    title: "Windows Display",
+    icon: "monitor",
     sections: [WINDOWS_DISPLAY_ALL, WINDOWS_DISPLAY_PRO],
     videos: [VIDEOS.DF_WIN11_2026, VIDEOS.POST_BUILD],
   },
   {
-    id: 'gpu',
-    title: 'GPU Settings',
-    icon: 'gpu',
+    id: "gpu",
+    title: "GPU Settings",
+    icon: "gpu",
     sections: [
       NVIDIA_GAMER,
       NVIDIA_PRO_GAMER,
@@ -3589,16 +4295,16 @@ const SECTION_GROUPS: readonly SectionGroup[] = [
     videos: [VIDEOS.NVIDIA_CS2, VIDEOS.NVIDIA_2026],
   },
   {
-    id: 'bios',
-    title: 'BIOS Settings',
-    icon: 'chip',
+    id: "bios",
+    title: "BIOS Settings",
+    icon: "chip",
     sections: [BIOS_ALL, BIOS_AMD_X3D, BIOS_INTEL],
     videos: [VIDEOS.XMP_PROFILE, VIDEOS.INTEL_SETTINGS],
   },
   {
-    id: 'software',
-    title: 'Software Settings',
-    icon: 'apps',
+    id: "software",
+    title: "Software Settings",
+    icon: "apps",
     sections: [
       DISCORD_GAMER,
       DISCORD_PRO_GAMER,
@@ -3614,9 +4320,9 @@ const SECTION_GROUPS: readonly SectionGroup[] = [
     videos: [VIDEOS.PC_PERFORMANCE],
   },
   {
-    id: 'peripherals',
-    title: 'Peripherals',
-    icon: 'mouse',
+    id: "peripherals",
+    title: "Peripherals",
+    icon: "mouse",
     sections: [
       PERIPHERAL_MOUSE_ALL,
       PERIPHERAL_MOUSE_PRO,
@@ -3627,28 +4333,28 @@ const SECTION_GROUPS: readonly SectionGroup[] = [
     ],
   },
   {
-    id: 'network',
-    title: 'Network Configuration',
-    icon: 'network',
+    id: "network",
+    title: "Network Configuration",
+    icon: "network",
     sections: [NETWORK_ALL, UBIQUITI_GAMING],
     videos: [VIDEOS.BUFFERBLOAT_LAG],
   },
   {
-    id: 'performance',
-    title: 'Performance Tweaks',
-    icon: 'zap',
+    id: "performance",
+    title: "Performance Tweaks",
+    icon: "zap",
     sections: [PERFORMANCE_ALL],
   },
   {
-    id: 'preflight',
-    title: 'Pre-Flight Checklist',
-    icon: 'checklist',
+    id: "preflight",
+    title: "Pre-Flight Checklist",
+    icon: "checklist",
     sections: [PREFLIGHT_ALL, PREFLIGHT_PRO],
   },
   {
-    id: 'troubleshooting',
-    title: 'Troubleshooting',
-    icon: 'wrench',
+    id: "troubleshooting",
+    title: "Troubleshooting",
+    icon: "wrench",
     sections: [
       TROUBLESHOOTING_PERFORMANCE,
       TROUBLESHOOTING_AUDIO,
@@ -3659,22 +4365,28 @@ const SECTION_GROUPS: readonly SectionGroup[] = [
     videos: [VIDEOS.STUTTERING_FIXES],
   },
   {
-    id: 'games',
-    title: 'Game Launch Options',
-    icon: 'gamepad',
+    id: "games",
+    title: "Game Launch Options",
+    icon: "gamepad",
     sections: [GAME_LAUNCH_FPS, GAME_LAUNCH_MOBA],
   },
   {
-    id: 'streaming',
-    title: 'Streaming (OBS)',
-    icon: 'broadcast',
-    sections: [OBS_OUTPUT, OBS_VIDEO, OBS_ADVANCED, OBS_SOURCES, OBS_TROUBLESHOOTING],
+    id: "streaming",
+    title: "Streaming (OBS)",
+    icon: "broadcast",
+    sections: [
+      OBS_OUTPUT,
+      OBS_VIDEO,
+      OBS_ADVANCED,
+      OBS_SOURCES,
+      OBS_TROUBLESHOOTING,
+    ],
     videos: [VIDEOS.OBS_SECRET_SAUCE],
   },
   {
-    id: 'diagnostics',
-    title: 'Diagnostic Tools',
-    icon: 'stethoscope',
+    id: "diagnostics",
+    title: "Diagnostic Tools",
+    icon: "stethoscope",
     sections: [
       DIAGNOSTIC_TOOLS_PERFORMANCE,
       DIAGNOSTIC_TOOLS_HARDWARE,
@@ -3682,7 +4394,7 @@ const SECTION_GROUPS: readonly SectionGroup[] = [
       DIAGNOSTIC_TOOLS_CRASHES,
     ],
   },
-] as const
+] as const;
 
 /**
  * Filter sections based on persona and GPU type
@@ -3696,50 +4408,59 @@ function filterSections(
   return sections.filter((section) => {
     if (section.hardware) {
       if (gpuType === GPU_TYPES.INTEL) {
-        return false
+        return false;
       }
       if (section.hardware !== gpuType) {
-        return false
+        return false;
       }
     }
 
     if (section.personas && !section.personas.includes(persona)) {
-      return false
+      return false;
     }
 
-    return true
-  })
+    return true;
+  });
 }
 
 /**
  * Get filtered section groups for a specific persona and GPU
  */
-export function getFilteredSectionGroups(persona: PresetType, gpuType: GpuType): SectionGroup[] {
+export function getFilteredSectionGroups(
+  persona: PresetType,
+  gpuType: GpuType,
+): SectionGroup[] {
   return SECTION_GROUPS.map((group) => ({
     ...group,
     sections: filterSections(group.sections, persona, gpuType),
-  })).filter((group) => group.sections.length > 0)
+  })).filter((group) => group.sections.length > 0);
 }
 
 /**
  * Count total items across all filtered sections
  */
 export function countTotalItems(persona: PresetType, gpuType: GpuType): number {
-  const groups = getFilteredSectionGroups(persona, gpuType)
+  const groups = getFilteredSectionGroups(persona, gpuType);
   return groups.reduce(
     (total, group) =>
       total +
-      group.sections.reduce((sectionTotal, section) => sectionTotal + section.items.length, 0),
+      group.sections.reduce(
+        (sectionTotal, section) => sectionTotal + section.items.length,
+        0,
+      ),
     0,
-  )
+  );
 }
 
-export function auditManualSteps(groups: readonly SectionGroup[], options?: NormalizeOptions): void {
-  if (!options?.warn && !import.meta.env?.DEV) return
+export function auditManualSteps(
+  groups: readonly SectionGroup[],
+  options?: NormalizeOptions,
+): void {
+  if (!options?.warn && !import.meta.env?.DEV) return;
   for (const group of groups) {
     for (const section of group.sections) {
       for (const item of section.items as readonly ManualItem[]) {
-        normalizeManualItem(item, section, options)
+        normalizeManualItem(item, section, options);
       }
     }
   }
