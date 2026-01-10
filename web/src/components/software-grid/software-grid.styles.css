@@ -29,50 +29,88 @@
   }
 
   .software-grid.list-view {
-    grid-template-columns: 1fr;
-    gap: var(--space-xs);
-    max-height: 480px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-2xs);
+    max-height: 540px;
 
     & .software-card {
       aspect-ratio: unset;
       height: auto;
+      min-height: 36px;
       flex-direction: row;
       justify-content: flex-start;
-      padding: var(--space-sm) var(--space-md);
-      gap: var(--space-md);
+      align-items: center;
+      padding: var(--space-2xs) var(--space-sm);
+      gap: var(--space-sm);
+      border-radius: var(--radius-xs);
+      border-width: 1px;
+
+      &::after {
+        top: -4px;
+        right: -4px;
+        width: 16px;
+        height: 16px;
+      }
+
+      &::before {
+        top: 0;
+        right: 0;
+        width: 10px;
+        height: 10px;
+      }
 
       & .card-overlay {
         display: none;
       }
+
+      & .card-label {
+        flex-direction: row;
+        justify-content: flex-start;
+        align-items: center;
+        padding: 0;
+        gap: var(--space-sm);
+        text-align: left;
+      }
     }
 
     & .software-card .logo {
-      width: 32px;
-      height: 32px;
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
     }
 
     & .software-card .name {
-      font-size: 0.875rem;
+      font-size: var(--text-xs);
+      font-weight: 600;
       text-align: left;
       flex: 1;
       color: var(--text-primary);
+      -webkit-line-clamp: 1;
+      min-width: 0;
     }
 
     & .software-card .list-desc {
-      display: block;
-      color: var(--text-secondary);
-      font-size: 0.75rem;
-      flex: 2;
+      display: none;
     }
 
     & .software-card .list-category {
       display: block;
-      font-size: 0.65rem;
+      font-size: var(--text-2xs);
+      font-weight: 600;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.03em;
       color: var(--text-hint);
-      width: 80px;
-      text-align: right;
+      opacity: 0.6;
+      flex-shrink: 0;
+      padding: 1px 4px;
+      background: var(--white-5);
+      border-radius: 2px;
+    }
+
+    & .software-card.selected .list-category {
+      color: var(--accent);
+      background: var(--accent-10);
+      opacity: 1;
     }
   }
 

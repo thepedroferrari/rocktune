@@ -415,18 +415,13 @@ function handleBadgeMouseLeave(event: MouseEvent) {
   }
 
   .proof-chip {
-    --chip-bg: oklch(0.15 0.02 285 / 0.4);
-    --chip-border: oklch(0.35 0.04 285);
-    --chip-text: oklch(0.7 0.04 285);
-    --chip-glow: oklch(0.55 0.1 195 / 0);
-
     display: inline-flex;
     align-items: center;
     gap: var(--space-2xs);
     padding: var(--space-xs) var(--space-sm);
-    background: var(--chip-bg);
-    border: 1px solid var(--chip-border);
-    color: var(--chip-text);
+    background: oklch(0.15 0.02 285 / 0.5);
+    border: 1px solid oklch(0.4 0.06 285);
+    color: oklch(0.75 0.06 285);
     font-family: var(--font-mono);
     font-size: 0.75rem;
     font-weight: 500;
@@ -441,7 +436,7 @@ function handleBadgeMouseLeave(event: MouseEvent) {
       6px 100%,
       0 calc(100% - 6px)
     );
-    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition: all 0.15s var(--ease-out-expo);
     cursor: pointer;
   }
 
@@ -450,40 +445,48 @@ function handleBadgeMouseLeave(event: MouseEvent) {
     height: 14px;
     flex-shrink: 0;
     opacity: 0.7;
-    transition: opacity 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition: opacity 0.15s ease;
   }
 
   .chip-label {
     line-height: 1;
   }
 
-  .proof-chip:where(a):hover,
-  .proof-chip:where(a):focus-visible {
-    --chip-bg: oklch(0.18 0.04 195 / 0.5);
-    --chip-border: oklch(0.55 0.12 195);
-    --chip-text: oklch(0.85 0.08 195);
-    --chip-glow: oklch(0.7 0.2 195 / 0.4);
-
-    box-shadow:
-      0 0 20px var(--chip-glow),
-      0 4px 12px oklch(0 0 0 / 0.3);
-    transform: translateY(-2px) scale(1.02);
+  .proof-chip:where(a):hover {
+    background: oklch(0.18 0.03 285 / 0.6);
+    border-color: oklch(0.55 0.1 285);
+    color: oklch(0.85 0.08 285);
+    transform: translateY(-1px);
   }
 
-  .proof-chip:where(a):hover .chip-icon,
-  .proof-chip:where(a):focus-visible .chip-icon {
+  .proof-chip:where(a):hover .chip-icon {
     opacity: 1;
   }
 
   .proof-chip:where(a):active {
-    transform: translateY(0) scale(1);
+    transform: translateY(0);
     transition-duration: 0.1s;
   }
 
-  /* Keyboard focus ring (accessibility) */
   .proof-chip:focus-visible {
-    outline: 2px solid var(--fold-cyan);
+    outline: 2px solid var(--accent);
     outline-offset: 2px;
+    background: oklch(0.2 0.04 285 / 0.7);
+    border-color: oklch(0.6 0.12 285);
+  }
+
+  @media (prefers-contrast: more) {
+    .proof-chip {
+      background: oklch(0.2 0.04 285 / 0.7);
+      border-width: 2px;
+      border-color: oklch(0.6 0.1 285);
+      color: oklch(0.9 0.08 285);
+    }
+
+    .proof-chip:where(a):hover {
+      border-color: oklch(0.75 0.15 195);
+      color: oklch(0.95 0.1 195);
+    }
   }
 
   .hero-cta {
