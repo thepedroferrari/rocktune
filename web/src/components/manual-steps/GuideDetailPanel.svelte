@@ -49,7 +49,7 @@ const HINTS_STORAGE_KEY = 'panel-hints-dismissed'
 
 let hintsVisible = $state(true)
 let hintsFading = $state(false)
-let fadeScheduled = false
+let fadeScheduled = $state(false)
 
 function isHintsDismissed(): boolean {
   if (typeof localStorage === 'undefined') return false
@@ -89,6 +89,11 @@ $effect(() => {
   if (isOpen) {
     if (isHintsDismissed()) {
       hintsVisible = false
+      hintsFading = false
+    } else {
+      hintsVisible = true
+      hintsFading = false
+      fadeScheduled = false
     }
   }
 })
@@ -224,10 +229,32 @@ function formatGuideHtml(text: string): string {
     .join('<br />')
 }
 
-// Handle Escape key to close
 function handleKeydown(e: KeyboardEvent) {
   if (e.key === 'Escape') {
     onClose()
+    return
+  }
+
+  if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+    return
+  }
+
+  if (e.key === 'a' || e.key === 'A') {
+    if (hasPrev && onPrev) {
+      e.preventDefault()
+      e.stopPropagation()
+      handleActionClick(() => onPrev())
+    }
+  } else if (e.key === 'd' || e.key === 'D') {
+    if (hasNext && onNext) {
+      e.preventDefault()
+      e.stopPropagation()
+      handleActionClick(() => onNext())
+    }
+  } else if (e.key === ' ') {
+    e.preventDefault()
+    e.stopPropagation()
+    handleActionClick(onToggleComplete)
   }
 }
 
