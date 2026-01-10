@@ -151,10 +151,15 @@ const KEY_PATTERN = Object.keys(KEY_ALIASES)
   .map((key) => key.replace(/ /g, '\\s+'))
   .join('|')
 
-const KEY_SEQUENCE_REGEX = new RegExp(`\\b(?:${KEY_PATTERN})(?:\\s*\\+\\s*(?:${KEY_PATTERN}))+`, 'gi')
-const REGISTRY_PATH_REGEX = /\b(?:HKLM|HKCU|HKEY_LOCAL_MACHINE|HKEY_CURRENT_USER|HKCR|HKU|HKCC)[^\s,;)]*/gi
+const KEY_SEQUENCE_REGEX = new RegExp(
+  `\\b(?:${KEY_PATTERN})(?:\\s*\\+\\s*(?:${KEY_PATTERN}))+`,
+  'gi',
+)
+const REGISTRY_PATH_REGEX =
+  /\b(?:HKLM|HKCU|HKEY_LOCAL_MACHINE|HKEY_CURRENT_USER|HKCR|HKU|HKCC)[^\s,;)]*/gi
 const FILE_PATH_REGEX = /\b[A-Z]:\\[^\s,;)]*/g
-const MENU_PATH_REGEX = /\b(?:Settings|System|Control Panel|NVIDIA Control Panel|AMD Software|AMD Adrenalin|Registry Editor|BIOS|UEFI|Task Manager|Device Manager|Steam|Discord|OBS|Right-click desktop|Desktop)[^.,;\n]*?(?:>|→)[^.,;\n]+(?:\s*(?:>|→)\s*[^.,;\n]+)*/gi
+const MENU_PATH_REGEX =
+  /\b(?:Settings|System|Control Panel|NVIDIA Control Panel|AMD Software|AMD Adrenalin|Registry Editor|BIOS|UEFI|Task Manager|Device Manager|Steam|Discord|OBS|Right-click desktop|Desktop)[^.,;\n]*?(?:>|→)[^.,;\n]+(?:\s*(?:>|→)\s*[^.,;\n]+)*/gi
 
 function escapeHtml(value: string): string {
   return value
@@ -179,7 +184,10 @@ function replaceTokens(
 }
 
 function renderKbdSequence(sequence: string): string {
-  const parts = sequence.split(/\s*\+\s*/).map((part) => part.trim()).filter(Boolean)
+  const parts = sequence
+    .split(/\s*\+\s*/)
+    .map((part) => part.trim())
+    .filter(Boolean)
   return parts
     .map((part) => {
       const key = part.toLowerCase().replace(/\s+/g, ' ')
@@ -210,9 +218,24 @@ function formatGuideLine(text: string): string {
   const tokens: string[] = []
   let working = text
   working = replaceTokens(working, KEY_SEQUENCE_REGEX, tokens, (match) => renderKbdSequence(match))
-  working = replaceTokens(working, REGISTRY_PATH_REGEX, tokens, (match) => `<code class="guide-inline-code">${escapeHtml(match)}</code>`)
-  working = replaceTokens(working, FILE_PATH_REGEX, tokens, (match) => `<code class="guide-inline-code">${escapeHtml(match)}</code>`)
-  working = replaceTokens(working, MENU_PATH_REGEX, tokens, (match) => `<code class="guide-inline-code">${escapeHtml(match)}</code>`)
+  working = replaceTokens(
+    working,
+    REGISTRY_PATH_REGEX,
+    tokens,
+    (match) => `<code class="guide-inline-code">${escapeHtml(match)}</code>`,
+  )
+  working = replaceTokens(
+    working,
+    FILE_PATH_REGEX,
+    tokens,
+    (match) => `<code class="guide-inline-code">${escapeHtml(match)}</code>`,
+  )
+  working = replaceTokens(
+    working,
+    MENU_PATH_REGEX,
+    tokens,
+    (match) => `<code class="guide-inline-code">${escapeHtml(match)}</code>`,
+  )
 
   let escaped = escapeHtml(working)
   tokens.forEach((html, index) => {
