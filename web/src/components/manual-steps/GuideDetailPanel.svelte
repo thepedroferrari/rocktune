@@ -75,7 +75,7 @@ function incrementInteraction() {
       setTimeout(() => {
         hintsVisible = false
         localStorage.setItem(HINTS_STORAGE_KEY, 'true')
-      }, 500)
+      }, 1000)
     }, 5000)
   }
 }
@@ -953,7 +953,7 @@ $effect(() => {
       inset 0 1px 0 color-mix(in oklch, white 10%, transparent);
     text-transform: uppercase;
     opacity: 1;
-    transition: opacity 500ms ease-out;
+    transition: opacity 1000ms ease-out;
 
     &.fading {
       opacity: 0;
@@ -961,9 +961,9 @@ $effect(() => {
   }
 
   .btn-key--action {
-    color: var(--bg-primary);
+    color: currentColor;
     background: transparent;
-    border: 1.5px solid color-mix(in oklch, var(--bg-primary) 50%, transparent);
+    border: 1.5px solid currentColor;
     box-shadow: none;
   }
 </style>
