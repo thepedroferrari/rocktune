@@ -10,13 +10,32 @@
     padding-top: 48px;
   }
 
+  /* Step container wraps step + wizard-nav as a single viewport unit */
+  .step-container {
+    min-height: calc(100dvh - var(--nav-height, 44px));
+    display: flex;
+    flex-direction: column;
+  }
+
+  .step-container .step {
+    flex: 0 1 auto;
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-2xl) 0;
+    border-bottom: none;
+  }
+
+  .step-container .wizard-nav {
+    flex-shrink: 0;
+    margin-top: auto;
+  }
+
   .step {
-    padding: 0 0 var(--space-xl) 0;
+    padding: var(--space-2xl) 0 var(--space-xl) 0;
     border-bottom: 1px solid var(--border);
   }
 
-  .step:last-child,
-  .step:has(+ .wizard-nav) {
+  .step:last-child {
     border-bottom: none;
   }
 
@@ -189,8 +208,17 @@
   }
 
   @media (max-width: 768px) {
+    .step-container {
+      /* Disable full viewport height on mobile for better scrolling */
+      min-height: auto;
+    }
+
+    .step-container .step {
+      padding: var(--space-lg) var(--space-xs) var(--space-md) var(--space-xs);
+    }
+
     .step {
-      padding: 0 var(--space-xs) var(--space-md) var(--space-xs);
+      padding: var(--space-lg) var(--space-xs) var(--space-md) var(--space-xs);
     }
 
     .upgrades-grid,

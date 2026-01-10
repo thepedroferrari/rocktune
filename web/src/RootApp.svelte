@@ -344,101 +344,110 @@ onMount(() => {
 
 <main class="container" id="main-content">
 
-  <section id="quick-start" class="step step--quickstart">
-    <div class="quickstart-header">
-      <div class="quickstart-accent quickstart-accent--left" aria-hidden="true"></div>
-      <div class="quickstart-title-wrap">
-        <h2 class="quickstart-title">Quick Start</h2>
-        <p class="quickstart-subtitle">Choose a preset or build your own loadout below</p>
+  <div class="step-container">
+    <section id="quick-start" class="step step--quickstart">
+      <div class="quickstart-header">
+        <div class="quickstart-accent quickstart-accent--left" aria-hidden="true"></div>
+        <div class="quickstart-title-wrap">
+          <h2 class="quickstart-title">Quick Start</h2>
+          <p class="quickstart-subtitle">Choose a preset or build your own loadout below</p>
+        </div>
+        <div class="quickstart-accent quickstart-accent--right" aria-hidden="true"></div>
       </div>
-      <div class="quickstart-accent quickstart-accent--right" aria-hidden="true"></div>
-    </div>
-    <PresetSection />
-  </section>
+      <PresetSection />
+    </section>
 
-  <nav class="wizard-nav" aria-label="Continue to Hardware">
-    <a
-      href="#hardware"
-      class="wizard-next-btn"
-      onclick={async (e) => {
-        e.preventDefault();
-        await scrollToSection({ sectionId: 'hardware' });
-      }}
-    >
-      <span class="wizard-next-text">Next: Hardware</span>
-      <svg class="wizard-next-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <polyline points="6 9 12 15 18 9" />
-      </svg>
-    </a>
-  </nav>
+    <nav class="wizard-nav" aria-label="Continue to Hardware">
+      <a
+        href="#hardware"
+        class="wizard-next-btn"
+        onclick={async (e) => {
+          e.preventDefault();
+          await scrollToSection({ sectionId: 'hardware' });
+        }}
+      >
+        <span class="wizard-next-text">Next: Hardware</span>
+        <svg class="wizard-next-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </a>
+    </nav>
+  </div>
 
-  {#await import('./components/HardwareSection.svelte')}
-    <SectionSkeleton height="400px" />
-  {:then { default: HardwareSection }}
-    <HardwareSection />
-  {/await}
+  <div class="step-container">
+    {#await import('./components/HardwareSection.svelte')}
+      <SectionSkeleton height="400px" />
+    {:then { default: HardwareSection }}
+      <HardwareSection />
+    {/await}
 
-  <nav class="wizard-nav" aria-label="Continue to Peripherals">
-    <a
-      href="#peripherals"
-      class="wizard-next-btn"
-      onclick={async (e) => {
-        e.preventDefault();
-        await scrollToSection({ sectionId: 'peripherals' });
-      }}
-    >
-      <span class="wizard-next-text">Next: Peripherals</span>
-      <svg class="wizard-next-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <polyline points="6 9 12 15 18 9" />
-      </svg>
-    </a>
-  </nav>
+    <nav class="wizard-nav" aria-label="Continue to Peripherals">
+      <a
+        href="#peripherals"
+        class="wizard-next-btn"
+        onclick={async (e) => {
+          e.preventDefault();
+          await scrollToSection({ sectionId: 'peripherals' });
+        }}
+      >
+        <span class="wizard-next-text">Next: Peripherals</span>
+        <svg class="wizard-next-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </a>
+    </nav>
+  </div>
 
-  {#await import('./components/PeripheralsSection.svelte')}
-    <SectionSkeleton height="350px" />
-  {:then { default: PeripheralsSection }}
-    <PeripheralsSection />
-  {/await}
+  <div class="step-container">
+    {#await import('./components/PeripheralsSection.svelte')}
+      <SectionSkeleton height="350px" />
+    {:then { default: PeripheralsSection }}
+      <PeripheralsSection />
+    {/await}
 
-  <nav class="wizard-nav" aria-label="Continue to Tweaks">
-    <a
-      href="#optimizations"
-      class="wizard-next-btn"
-      onclick={async (e) => {
-        e.preventDefault();
-        await scrollToSection({ sectionId: 'optimizations' });
-      }}
-    >
-      <span class="wizard-next-text">Next: Tweaks</span>
-      <svg class="wizard-next-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <polyline points="6 9 12 15 18 9" />
-      </svg>
-    </a>
-  </nav>
+    <nav class="wizard-nav" aria-label="Continue to Tweaks">
+      <a
+        href="#optimizations"
+        class="wizard-next-btn"
+        onclick={async (e) => {
+          e.preventDefault();
+          await scrollToSection({ sectionId: 'optimizations' });
+        }}
+      >
+        <span class="wizard-next-text">Next: Tweaks</span>
+        <svg class="wizard-next-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </a>
+    </nav>
+  </div>
 
-  {#await import('./components/OptimizationsSection.svelte')}
-    <SectionSkeleton height="800px" />
-  {:then { default: OptimizationsSection }}
-    <OptimizationsSection />
-  {/await}
+  <div class="step-container">
+    {#await import('./components/OptimizationsSection.svelte')}
+      <SectionSkeleton height="800px" />
+    {:then { default: OptimizationsSection }}
+      <OptimizationsSection />
+    {/await}
 
-  <nav class="wizard-nav" aria-label="Continue to Arsenal">
-    <a
-      href="#software"
-      class="wizard-next-btn"
-      onclick={async (e) => {
-        e.preventDefault();
-        await scrollToSection({ sectionId: 'software' });
-      }}
-    >
-      <span class="wizard-next-text">Next: Arsenal</span>
-      <svg class="wizard-next-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <polyline points="6 9 12 15 18 9" />
-      </svg>
-    </a>
-  </nav>
+    <nav class="wizard-nav" aria-label="Continue to Arsenal">
+      <a
+        href="#software"
+        class="wizard-next-btn"
+        onclick={async (e) => {
+          e.preventDefault();
+          await scrollToSection({ sectionId: 'software' });
+        }}
+      >
+        <span class="wizard-next-text">Next: Arsenal</span>
+        <svg class="wizard-next-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </a>
+    </nav>
+  </div>
 
-  <section id="software" class="step step--arsenal">
+  <div class="step-container">
+    <section id="software" class="step step--arsenal">
     <header class="step-banner">
       <div class="step-banner__marker">4</div>
       <div class="step-banner__content">
@@ -501,21 +510,22 @@ onMount(() => {
     {/if}
   </section>
 
-  <nav class="wizard-nav" aria-label="Continue to Forge">
-    <a
-      href="#generate"
-      class="wizard-next-btn"
-      onclick={async (e) => {
-        e.preventDefault();
-        await scrollToSection({ sectionId: 'generate' });
-      }}
-    >
-      <span class="wizard-next-text">Next: Forge Script</span>
-      <svg class="wizard-next-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <polyline points="6 9 12 15 18 9" />
-      </svg>
-    </a>
-  </nav>
+    <nav class="wizard-nav" aria-label="Continue to Forge">
+      <a
+        href="#generate"
+        class="wizard-next-btn"
+        onclick={async (e) => {
+          e.preventDefault();
+          await scrollToSection({ sectionId: 'generate' });
+        }}
+      >
+        <span class="wizard-next-text">Next: Forge Script</span>
+        <svg class="wizard-next-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </a>
+    </nav>
+  </div>
 
   {#await import('./components/ForgeSection.svelte')}
     <SectionSkeleton height="600px" />

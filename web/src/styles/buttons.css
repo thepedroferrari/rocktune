@@ -8,8 +8,11 @@
   .wizard-nav {
     display: flex;
     justify-content: center;
-    padding: var(--space-xl) 0;
-    margin-bottom: var(--space-2xl);
+    padding: var(--space-md) 0 var(--space-2xl) 0;
+  }
+
+  .step-container .wizard-nav {
+    padding: var(--space-lg) 0 var(--space-xl) 0;
   }
 
   .wizard-next-btn {
@@ -74,6 +77,11 @@
       margin-top: var(--space-md);
       padding: 0 var(--space-sm);
       border-top: none;
+    }
+
+    .step-container .wizard-nav {
+      position: sticky;
+      padding: 0 var(--space-sm) var(--space-md);
     }
 
     .wizard-next-btn {
