@@ -990,6 +990,10 @@
            }
          }
        }
+
+       &.step--arsenal {
+         padding-bottom: 0;
+       }
      }
 
      .step--quickstart {

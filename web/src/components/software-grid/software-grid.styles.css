@@ -7,26 +7,32 @@
     overflow-y: auto;
     overflow-x: hidden;
     scrollbar-gutter: stable;
-    padding: var(--space-sm);
+    padding: var(--space-sm) var(--space-sm) calc(var(--space-xl) * 3);
     position: relative;
+
     &::-webkit-scrollbar {
       width: 6px;
     }
+
     &::-webkit-scrollbar-track {
       background: var(--bg-tertiary);
     }
+
     &::-webkit-scrollbar-thumb {
       background: var(--border-light);
       border-radius: 3px;
+
       &:hover {
         background: var(--accent);
       }
     }
   }
+
   .software-grid.list-view {
     grid-template-columns: 1fr;
     gap: var(--space-xs);
     max-height: 480px;
+
     & .software-card {
       aspect-ratio: unset;
       height: auto;
@@ -34,26 +40,31 @@
       justify-content: flex-start;
       padding: var(--space-sm) var(--space-md);
       gap: var(--space-md);
+
       & .card-overlay {
         display: none;
       }
     }
+
     & .software-card .logo {
       width: 32px;
       height: 32px;
     }
-      & .software-card .name {
-        font-size: 0.875rem;
-        text-align: left;
-        flex: 1;
-        color: var(--text-primary);
-      }
+
+    & .software-card .name {
+      font-size: 0.875rem;
+      text-align: left;
+      flex: 1;
+      color: var(--text-primary);
+    }
+
     & .software-card .list-desc {
       display: block;
       color: var(--text-secondary);
       font-size: 0.75rem;
       flex: 2;
     }
+
     & .software-card .list-category {
       display: block;
       font-size: 0.65rem;
@@ -64,12 +75,14 @@
       text-align: right;
     }
   }
+
   @media (max-width: 768px) {
     .software-grid {
       grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
       gap: var(--space-sm);
     }
   }
+
   @media (max-width: 480px) {
     .software-grid {
       grid-template-columns: repeat(3, 1fr);
