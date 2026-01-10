@@ -26,6 +26,7 @@ interface Props {
   onNext?: () => void
   hasPrev?: boolean
   hasNext?: boolean
+  categoryTitle?: string
 }
 
 let {
@@ -39,9 +40,58 @@ let {
   onNext,
   hasPrev = false,
   hasNext = false,
+  categoryTitle = '',
 }: Props = $props()
 
 let panelRef = $state<HTMLElement | null>(null)
+
+const HINTS_STORAGE_KEY = 'panel-hints-dismissed'
+
+let hintsVisible = $state(true)
+let hintsFading = $state(false)
+let fadeScheduled = false
+
+function isHintsDismissed(): boolean {
+  if (typeof localStorage === 'undefined') return false
+  return localStorage.getItem(HINTS_STORAGE_KEY) === 'true'
+}
+
+function getInteractionCount(): number {
+  if (typeof localStorage === 'undefined') return 0
+  return parseInt(localStorage.getItem(HINTS_STORAGE_KEY + '-count') || '0', 10)
+}
+
+function incrementInteraction() {
+  if (typeof localStorage === 'undefined') return
+  if (isHintsDismissed() || fadeScheduled) return
+
+  const count = getInteractionCount() + 1
+  localStorage.setItem(HINTS_STORAGE_KEY + '-count', count.toString())
+
+  if (count >= 3 && hintsVisible) {
+    fadeScheduled = true
+    setTimeout(() => {
+      hintsFading = true
+      setTimeout(() => {
+        hintsVisible = false
+        localStorage.setItem(HINTS_STORAGE_KEY, 'true')
+      }, 500)
+    }, 5000)
+  }
+}
+
+function handleActionClick(action: () => void) {
+  incrementInteraction()
+  action()
+}
+
+$effect(() => {
+  if (isOpen) {
+    if (isHintsDismissed()) {
+      hintsVisible = false
+    }
+  }
+})
 
 function formatImpact(value: number): string {
   if (value > 0) return `+${value}`
@@ -217,7 +267,12 @@ $effect(() => {
     transition:fly={{ x: 400, duration: 300, easing: cubicOut }}
   >
     <header class="panel-header">
-      <h3 id="panel-title" class="panel-title">{item.title}</h3>
+      <div class="panel-header-text">
+        {#if categoryTitle}
+          <span class="panel-category">{categoryTitle}</span>
+        {/if}
+        <h3 id="panel-title" class="panel-title panel-title--accent">{item.title}</h3>
+      </div>
       <button
         type="button"
         class="panel-close"
@@ -486,32 +541,44 @@ $effect(() => {
     </div>
 
     <footer class="panel-footer">
-      <button
-        type="button"
-        class="panel-nav"
-        onclick={() => onPrev && onPrev()}
-        disabled={!hasPrev}
-        aria-label="Previous item"
-      >
-        <span aria-hidden="true">‹</span>
-      </button>
-      <button
-        type="button"
-        class="panel-action"
-        class:completed={isCompleted}
-        onclick={() => onToggleComplete()}
-      >
-        {isCompleted ? 'Marked as Done' : 'Mark as Done'}
-      </button>
-      <button
-        type="button"
-        class="panel-nav"
-        onclick={() => onNext && onNext()}
-        disabled={!hasNext}
-        aria-label="Next item"
-      >
-        <span aria-hidden="true">›</span>
-      </button>
+      <div class="panel-footer-actions">
+        <button
+          type="button"
+          class="panel-nav"
+          onclick={() => handleActionClick(() => onPrev && onPrev())}
+          disabled={!hasPrev}
+          aria-label="Previous item (A)"
+        >
+          <span class="btn-label">‹ Prev</span>
+          {#if hintsVisible}
+            <kbd class="btn-key" class:fading={hintsFading}>A</kbd>
+          {/if}
+        </button>
+        <button
+          type="button"
+          class="panel-action"
+          class:completed={isCompleted}
+          onclick={() => handleActionClick(onToggleComplete)}
+        >
+          {#if isCompleted}<span class="btn-check">✓</span>{/if}
+          <span class="btn-label">{isCompleted ? 'Done' : 'Mark Done'}</span>
+          {#if hintsVisible}
+            <kbd class="btn-key btn-key--action" class:fading={hintsFading}>Space</kbd>
+          {/if}
+        </button>
+        <button
+          type="button"
+          class="panel-nav"
+          onclick={() => handleActionClick(() => onNext && onNext())}
+          disabled={!hasNext}
+          aria-label="Next item (D)"
+        >
+          {#if hintsVisible}
+            <kbd class="btn-key" class:fading={hintsFading}>D</kbd>
+          {/if}
+          <span class="btn-label">Next ›</span>
+        </button>
+      </div>
     </footer>
   </aside>
 {/if}
@@ -531,7 +598,7 @@ $effect(() => {
     right: 0;
     bottom: 0;
     z-index: 1000;
-    width: min(420px, 90vw);
+    width: min(500px, 90vw);
     display: flex;
     flex-direction: column;
     background: var(--bg-elevated);
@@ -549,12 +616,39 @@ $effect(() => {
     background: color-mix(in oklch, var(--cyber-cyan) 3%, var(--bg-elevated));
   }
 
+  .panel-header-text {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .panel-category {
+    font-size: var(--text-xs);
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--cyber-cyan);
+  }
+
   .panel-title {
     margin: 0;
     font-size: var(--text-lg);
     font-weight: 600;
     color: var(--text-primary);
     line-height: 1.4;
+  }
+
+  .panel-title--accent {
+    color: var(--cyber-cyan);
+  }
+
+  @supports (background-clip: text) or (-webkit-background-clip: text) {
+    .panel-title--accent {
+      background: linear-gradient(120deg, var(--cyber-cyan), var(--cyber-yellow));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
   }
 
   .panel-close {
@@ -788,55 +882,120 @@ $effect(() => {
   }
 
   .panel-footer {
-    display: grid;
-    grid-template-columns: 40px 1fr 40px;
-    gap: var(--space-sm);
+    display: flex;
+    flex-direction: column;
     align-items: center;
-    padding: var(--space-lg);
+    gap: var(--space-sm);
+    padding: var(--space-md) var(--space-lg);
     border-top: 1px solid var(--border);
     background: var(--bg-elevated);
   }
 
-  .panel-action {
+  .panel-footer-actions {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: var(--space-sm);
     width: 100%;
-    padding: var(--space-sm);
+  }
+
+  .panel-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    padding: 12px 24px;
     font-family: var(--font-mono);
     font-size: var(--text-sm);
     font-weight: 600;
     color: var(--bg-primary);
     background: var(--cyber-yellow);
     border: none;
-    border-radius: 6px;
+    border-radius: 8px;
     cursor: pointer;
     transition: all var(--duration-fast) ease;
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 0 20px color-mix(in oklch, var(--cyber-yellow) 50%, transparent);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
   }
 
   .panel-action.completed {
-    background: var(--safe);
+    background: transparent;
+    border: 1.5px solid var(--cyber-yellow);
+    color: var(--cyber-yellow);
   }
 
   .panel-nav {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
-    border: 1px solid var(--border);
-    background: color-mix(in oklch, var(--bg-secondary) 70%, transparent);
-    color: var(--text-secondary);
-    font-size: var(--text-lg);
+    gap: var(--space-xs);
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 1px solid color-mix(in oklch, var(--text-primary) 22%, transparent);
+    background: color-mix(in oklch, var(--bg-secondary) 80%, transparent);
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--text-primary);
     cursor: pointer;
     transition: all var(--duration-fast) ease;
+
+    &:hover:not(:disabled) {
+      border-color: var(--cyber-cyan);
+      color: var(--cyber-cyan);
+    }
+
+    &:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
   }
 
-  .panel-nav:hover:not(:disabled) {
-    color: var(--text-primary);
-    border-color: var(--text-dim);
+  .btn-label {
+    white-space: nowrap;
   }
 
-  .panel-nav:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
+  .btn-key {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: linear-gradient(
+      180deg,
+      color-mix(in oklch, var(--bg-tertiary) 90%, white) 0%,
+      var(--bg-tertiary) 100%
+    );
+    border: 1px solid color-mix(in oklch, var(--text-dim) 50%, transparent);
+    border-radius: 4px;
+    box-shadow:
+      0 2px 0 color-mix(in oklch, var(--text-dim) 40%, transparent),
+      inset 0 1px 0 color-mix(in oklch, white 10%, transparent);
+    text-transform: uppercase;
+    opacity: 1;
+    transition: opacity 500ms ease-out;
+
+    &.fading {
+      opacity: 0;
+    }
+  }
+
+  .btn-key--action {
+    color: var(--bg-primary);
+    background: transparent;
+    border: 1.5px solid color-mix(in oklch, var(--bg-primary) 50%, transparent);
+    box-shadow: none;
   }
 </style>

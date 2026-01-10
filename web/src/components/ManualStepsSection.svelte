@@ -166,6 +166,24 @@
     return map;
   });
 
+  const groupBySectionId = $derived.by(() => {
+    const map = new Map<string, string>();
+    for (const group of filteredGroups) {
+      for (const section of group.sections) {
+        map.set(section.id, group.id);
+      }
+    }
+    return map;
+  });
+
+  const groupTitleById = $derived.by(() => {
+    const map = new Map<string, string>();
+    for (const group of filteredGroups) {
+      map.set(group.id, group.title);
+    }
+    return map;
+  });
+
   const totalItems = $derived.by(() => {
     const persona = app.activePreset ?? "gamer";
     const gpu = app.hardware.gpu;
@@ -752,6 +770,13 @@
     return panelState.nodes.get(key) ?? null;
   });
 
+  const selectedCategoryTitle = $derived.by(() => {
+    if (!selectedItem) return null;
+    const groupId = groupBySectionId.get(selectedItem.section.id);
+    if (!groupId) return selectedItem.section.title;
+    return groupTitleById.get(groupId) ?? selectedItem.section.title;
+  });
+
   function selectPanelNode(key: string | null) {
     if (!key) return;
     const node = panelState.nodes.get(key);
@@ -795,6 +820,108 @@
         return "M12 2L2 7l10 5 10-5-10-5z";
     }
   }
+
+  function getCategoryItems(group: (typeof filteredGroups)[number]): PanelItem[] {
+    const items: PanelItem[] = [];
+    for (const section of group.sections) {
+      const filtered = getFilteredItems(
+        section.id,
+        section.items as readonly AnyItem[],
+      );
+      for (const item of filtered) {
+        items.push({
+          item,
+          section,
+          key: buildPanelKey(item, section.id),
+        });
+      }
+    }
+    return items;
+  }
+
+  const categoryNav = $derived.by(() => {
+    return filteredGroups
+      .map((group) => ({
+        id: group.id,
+        items: getCategoryItems(group),
+      }))
+      .filter((group) => group.items.length > 0);
+  });
+
+  function findCategoryIndex(groupId: string | undefined | null): number {
+    if (!groupId) return -1;
+    return categoryNav.findIndex((group) => group.id === groupId);
+  }
+
+  function selectCategoryRelative(offset: -1 | 1) {
+    if (!selectedItem) return;
+    const currentGroupId = groupBySectionId.get(selectedItem.section.id);
+    const currentIndex = findCategoryIndex(currentGroupId);
+    if (currentIndex === -1) return;
+    const nextIndex = currentIndex + offset;
+    const target = categoryNav[nextIndex];
+    if (!target || target.items.length === 0) return;
+    selectPanelNode(target.items[0].key);
+  }
+
+  function isEditableTarget(target: EventTarget | null): boolean {
+    if (!(target instanceof HTMLElement)) return false;
+    const tag = target.tagName.toLowerCase();
+    return (
+      tag === "input" ||
+      tag === "textarea" ||
+      tag === "select" ||
+      target.isContentEditable
+    );
+  }
+
+  function handlePanelHotkeys(event: KeyboardEvent) {
+    if (!selectedItem) return;
+    if (isEditableTarget(event.target)) return;
+    const key = event.key.toLowerCase();
+    const isSpace = key === " " || event.code === "Space";
+
+    if (key === "w") {
+      event.preventDefault();
+      event.stopPropagation();
+      selectCategoryRelative(-1);
+      return;
+    }
+    if (key === "s") {
+      event.preventDefault();
+      event.stopPropagation();
+      selectCategoryRelative(1);
+      return;
+    }
+    if (key === "a") {
+      event.preventDefault();
+      event.stopPropagation();
+      selectPanelNode(selectedNode?.prevKey ?? null);
+      return;
+    }
+    if (key === "d") {
+      event.preventDefault();
+      event.stopPropagation();
+      selectPanelNode(selectedNode?.nextKey ?? null);
+      return;
+    }
+    if (isSpace) {
+      event.preventDefault();
+      event.stopPropagation();
+      const item = selectedItem.item;
+      const section = selectedItem.section;
+      toggleItem(section.id, getItemId(item));
+    }
+  }
+
+  $effect(() => {
+    if (!selectedItem) return;
+    const handler = (event: KeyboardEvent) => handlePanelHotkeys(event);
+    window.addEventListener("keydown", handler);
+    return () => {
+      window.removeEventListener("keydown", handler);
+    };
+  });
 </script>
 
 <section id="guide" class="step step--guide guide">
@@ -1748,6 +1875,7 @@
     hasNext={Boolean(selectedNode?.nextKey)}
     onPrev={() => selectPanelNode(selectedNode?.prevKey ?? null)}
     onNext={() => selectPanelNode(selectedNode?.nextKey ?? null)}
+    categoryTitle={selectedCategoryTitle ?? section.title}
   />
 {/if}
 
