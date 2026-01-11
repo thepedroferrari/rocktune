@@ -101,7 +101,7 @@ function Get-SectionTotal {
         return 1
     }
 
-    $matches = Select-String -Path $ScriptPath -Pattern 'Write-Section\s+["\']' -AllMatches
+    $matches = Select-String -Path $ScriptPath -Pattern 'Write-Section\s+["'']' -AllMatches
     return [math]::Max(1, $matches.Count)
 }
 
