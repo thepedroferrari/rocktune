@@ -1286,7 +1286,10 @@ export function buildScript(
 
   const hasLudicrous = LUDICROUS_KEYS.some((key) => selected.has(key));
 
-  lines.push("#Requires -RunAsAdministrator");
+  // Note: We don't use #Requires -RunAsAdministrator because it causes PowerShell
+  // to exit silently when the script is run via right-click > "Run with PowerShell".
+  // Instead, we check manually below and show a proper error message with a pause.
+
   // Add param block for -Undo and -SkipBackup switches
   lines.push("param(");
   lines.push("    [switch]$Undo,");
@@ -1958,6 +1961,15 @@ export function buildScript(
   lines.push("    $mutex.ReleaseMutex()");
   lines.push("    $mutex.Dispose()");
   lines.push("}");
+  lines.push("");
+  lines.push("# Keep window open so user can see results");
+  lines.push('Write-Host ""');
+  lines.push(
+    'Write-Host "  Press any key to exit..." -ForegroundColor DarkGray',
+  );
+  lines.push(
+    'try { $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown") } catch { Read-Host }',
+  );
 
   return lines.join("\n");
 }
