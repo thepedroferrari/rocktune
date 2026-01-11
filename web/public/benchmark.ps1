@@ -1088,11 +1088,11 @@ try {
                     Write-Ok "$($package.Name) launched (PID $($process.Id))."
                 } else {
                     Write-Warn "$($package.Name) launched but exited immediately. Try starting it manually:"
-                    Write-Warn "  $($package["Path"])"
+                    Write-Warn "  $($package['Path'])"
                 }
             } catch {
                 Write-Warn "Failed to launch $($package.Name). Try starting it manually:"
-                Write-Warn "  $($package["Path"])"
+                Write-Warn "  $($package['Path'])"
                 Write-Warn "Error: $($_.Exception.Message)"
             }
         } else {
