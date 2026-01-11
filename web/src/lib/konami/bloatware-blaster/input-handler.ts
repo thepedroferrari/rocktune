@@ -11,8 +11,6 @@ export class InputHandler {
   private shootCooldown: number
 
   constructor(mode: GameMode = 'normal') {
-    // Normal: 500ms cooldown (classic Space Invaders)
-    // Rocktunned: 100ms cooldown (machine gun mode!)
     this.shootCooldown = mode === 'rocktunned' ? 100 : 500
 
     this.handleKeyDown = this.handleKeyDown.bind(this)
