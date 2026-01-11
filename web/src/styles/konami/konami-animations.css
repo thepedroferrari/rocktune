@@ -1,0 +1,71 @@
+/**
+ * Konami Easter Egg Animations
+ * Year countdown and screen bloop animations
+ */
+
+/* Year Countdown */
+.year-countdown {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: var(--bg-primary);
+	z-index: 1;
+}
+
+.year-text {
+	font-family: var(--font-mono);
+	font-size: clamp(8rem, 20vw, 18rem);
+	font-weight: 900;
+	color: var(--neon-cyan);
+	text-shadow:
+		0 0 40px var(--neon-cyan),
+		0 0 80px var(--neon-magenta),
+		0 0 120px var(--neon-yellow);
+	animation: chromaticPulse 0.3s ease-in-out infinite alternate;
+	perspective: 800px;
+	transform-style: preserve-3d;
+}
+
+/* Screen Bloop - CRT turn-on animation */
+.screen-bloop {
+	position: absolute;
+	inset: 0;
+	background: #000;
+	z-index: 2;
+	animation: crt-bloop 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+@keyframes crt-bloop {
+	0% {
+		clip-path: ellipse(0% 0% at 50% 50%);
+		filter: brightness(3);
+	}
+	40% {
+		clip-path: ellipse(100% 1% at 50% 50%); /* Horizontal beam */
+		filter: brightness(2.5);
+	}
+	70% {
+		clip-path: ellipse(100% 50% at 50% 50%); /* Scanlines reveal */
+		filter: brightness(1.5);
+	}
+	100% {
+		clip-path: ellipse(100% 100% at 50% 50%);
+		filter: brightness(1);
+	}
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+	.year-text {
+		animation: none;
+		text-shadow: 0 0 40px var(--neon-cyan);
+	}
+
+	.screen-bloop {
+		animation: none;
+		clip-path: ellipse(100% 100% at 50% 50%);
+		filter: brightness(1);
+	}
+}

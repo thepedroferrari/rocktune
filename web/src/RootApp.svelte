@@ -47,6 +47,12 @@ const LUDICROUS_KEYS = [
 ] as const
 
 import { showToast } from '$lib/toast.svelte'
+import { KonamiDetector } from '$lib/konami/konami-detector'
+import {
+	activateKonami,
+	deactivateKonami,
+	getKonamiState,
+} from '$lib/konami/konami-state.svelte'
 import HeroSection from './components/HeroSection.svelte'
 import PresetSection from './components/PresetSection.svelte'
 import SRAnnounce from './components/SRAnnounce.svelte'
@@ -314,9 +320,25 @@ function tryLoadFromShareURL(): void {
   }
 }
 
+const konamiState = getKonamiState()
+
 onMount(() => {
-  tryLoadFromShareURL()
-  void hydrateCatalog()
+	tryLoadFromShareURL()
+	void hydrateCatalog()
+
+	// Konami Code easter egg
+	const detector = new KonamiDetector()
+	detector.start()
+
+	const unsubscribe = detector.onActivate(() => {
+		activateKonami()
+		showToast('🎮 Konami Code activated! Prepare for blast-off...', 'success', 2000)
+	})
+
+	return () => {
+		detector.stop()
+		unsubscribe()
+	}
 })
 </script>
 
@@ -547,4 +569,10 @@ onMount(() => {
 {/if}
 
 <Toast />
+
+{#if konamiState.active}
+	{#await import('./components/konami/KonamiEffect.svelte') then { default: KonamiEffect }}
+		<KonamiEffect onexit={deactivateKonami} />
+	{/await}
+{/if}
 
