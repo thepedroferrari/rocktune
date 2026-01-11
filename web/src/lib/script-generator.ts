@@ -269,6 +269,9 @@ $script:RebootRequired = $false
 $script:RebootReasons = @()
 
 $script:ServiceChanges = @()
+$script:ScheduledTaskChanges = @()
+$script:BcdeditChanges = @()
+$script:DNSChanges = @()
 
 $script:Banner = ${ASCII_BANNER.trim()}
 
@@ -316,8 +319,31 @@ function Set-Reg-Verified {
 }
 function Disable-Task {
     param([string]$TaskPath)
-    try { Disable-ScheduledTask -TaskName $TaskPath -EA SilentlyContinue | Out-Null; return $true }
+    try {
+        $task = Get-ScheduledTask -TaskName $TaskPath -EA SilentlyContinue
+        if ($task -and $task.State -ne 'Disabled') {
+            Disable-ScheduledTask -TaskName $TaskPath -EA Stop | Out-Null
+            $script:ScheduledTaskChanges += [PSCustomObject]@{
+                Name = $TaskPath
+                OriginalState = $task.State.ToString()
+            }
+        }
+        return $true
+    }
     catch { return $false }
+}
+function Set-Bcdedit {
+    param([string]$Setting, [string]$Value, [string]$UndoCmd)
+    $result = bcdedit /set $Setting $Value 2>&1
+    if ($LASTEXITCODE -eq 0) {
+        $script:BcdeditChanges += [PSCustomObject]@{
+            Setting = $Setting
+            Value = $Value
+            UndoCommand = $UndoCmd
+        }
+        return $true
+    }
+    return $false
 }
 
 function Set-ServiceSafe {
@@ -508,15 +534,24 @@ function Backup-RegKey {
 
 function Save-BackupManifest {
     if (-not $script:BackupDir) { return }
-    if ($script:BackupManifest.Count -eq 0 -and $script:ServiceChanges.Count -eq 0) { return }
+    $hasChanges = $script:BackupManifest.Count -gt 0 -or $script:ServiceChanges.Count -gt 0 -or $script:ScheduledTaskChanges.Count -gt 0 -or $script:BcdeditChanges.Count -gt 0 -or $script:DNSChanges.Count -gt 0
+    if (-not $hasChanges) { return }
 
-    # Save registry manifest
+    # Save all manifests
     $manifestPath = Join-Path $script:BackupDir "manifest.json"
     $script:BackupManifest | ConvertTo-Json -Depth 3 | Set-Content $manifestPath -Encoding UTF8
 
-    # Save service changes manifest
     $svcManifestPath = Join-Path $script:BackupDir "services.json"
     $script:ServiceChanges | ConvertTo-Json -Depth 3 | Set-Content $svcManifestPath -Encoding UTF8
+
+    $taskManifestPath = Join-Path $script:BackupDir "tasks.json"
+    $script:ScheduledTaskChanges | ConvertTo-Json -Depth 3 | Set-Content $taskManifestPath -Encoding UTF8
+
+    $bcdeditManifestPath = Join-Path $script:BackupDir "bcdedit.json"
+    $script:BcdeditChanges | ConvertTo-Json -Depth 3 | Set-Content $bcdeditManifestPath -Encoding UTF8
+
+    $dnsManifestPath = Join-Path $script:BackupDir "dns.json"
+    $script:DNSChanges | ConvertTo-Json -Depth 3 | Set-Content $dnsManifestPath -Encoding UTF8
 
     # Generate comprehensive restore script
     $restorePath = Join-Path $script:BackupDir "Restore-RockTune.ps1"
@@ -567,6 +602,63 @@ function Save-BackupManifest {
         '            $restored++'
         '        } catch {'
         '            Write-Host "  [FAIL] Service: $($svc.Name)" -ForegroundColor Red'
+        '            $failed++'
+        '        }'
+        '    }'
+        '}'
+        ''
+        '# Restore scheduled tasks'
+        "if (Test-Path \`"$taskManifestPath\`") {"
+        "    \\$taskManifest = Get-Content \`"$taskManifestPath\`" | ConvertFrom-Json"
+        '    foreach ($task in $taskManifest) {'
+        '        try {'
+        '            if ($task.OriginalState -eq "Ready") {'
+        '                Enable-ScheduledTask -TaskName $task.Name -ErrorAction Stop | Out-Null'
+        '                Write-Host "  [OK] Task: $($task.Name) -> Enabled" -ForegroundColor Green'
+        '                $restored++'
+        '            }'
+        '        } catch {'
+        '            Write-Host "  [FAIL] Task: $($task.Name)" -ForegroundColor Red'
+        '            $failed++'
+        '        }'
+        '    }'
+        '}'
+        ''
+        '# Restore bcdedit settings'
+        "if (Test-Path \`"$bcdeditManifestPath\`") {"
+        "    \\$bcdeditManifest = Get-Content \`"$bcdeditManifestPath\`" | ConvertFrom-Json"
+        '    foreach ($bcd in $bcdeditManifest) {'
+        '        try {'
+        '            $null = Invoke-Expression $bcd.UndoCommand 2>&1'
+        '            if ($LASTEXITCODE -eq 0) {'
+        '                Write-Host "  [OK] BCD: $($bcd.Setting)" -ForegroundColor Green'
+        '                $restored++'
+        '            } else {'
+        '                Write-Host "  [FAIL] BCD: $($bcd.Setting)" -ForegroundColor Red'
+        '                $failed++'
+        '            }'
+        '        } catch {'
+        '            Write-Host "  [FAIL] BCD: $($bcd.Setting) - $($_.Exception.Message)" -ForegroundColor Red'
+        '            $failed++'
+        '        }'
+        '    }'
+        '}'
+        ''
+        '# Restore DNS settings'
+        "if (Test-Path \`"$dnsManifestPath\`") {"
+        "    \\$dnsManifest = Get-Content \`"$dnsManifestPath\`" | ConvertFrom-Json"
+        '    foreach ($dns in $dnsManifest) {'
+        '        try {'
+        '            if ($dns.OriginalDNS) {'
+        '                $servers = $dns.OriginalDNS -split ","'
+        '                Set-DnsClientServerAddress -InterfaceIndex $dns.InterfaceIndex -ServerAddresses $servers -ErrorAction Stop'
+        '            } else {'
+        '                Set-DnsClientServerAddress -InterfaceIndex $dns.InterfaceIndex -ResetServerAddresses -ErrorAction Stop'
+        '            }'
+        '            Write-Host "  [OK] DNS: $($dns.AdapterName)" -ForegroundColor Green'
+        '            $restored++'
+        '        } catch {'
+        '            Write-Host "  [FAIL] DNS: $($dns.AdapterName)" -ForegroundColor Red'
         '            $failed++'
         '        }'
         '    }'
@@ -1065,6 +1157,30 @@ export function buildScript(
   lines.push('    Write-Host ""');
   lines.push('    Read-Host "Press Enter to exit"');
   lines.push("    exit 1");
+  lines.push("}");
+  lines.push("");
+  // Process lock to prevent concurrent execution
+  lines.push("# Prevent concurrent execution (mutex)");
+  lines.push('$mutexName = "Global\\RockTune-Optimization-Lock"');
+  lines.push("$mutex = $null");
+  lines.push("try {");
+  lines.push(
+    "    $mutex = [System.Threading.Mutex]::OpenExisting($mutexName)",
+  );
+  lines.push('    Write-Host ""');
+  lines.push(
+    '    Write-Host "  [ERROR] Another RockTune instance is already running!" -ForegroundColor Red',
+  );
+  lines.push(
+    '    Write-Host "  Wait for it to complete or close it before starting a new session." -ForegroundColor Yellow',
+  );
+  lines.push('    Write-Host ""');
+  lines.push("    exit 1");
+  lines.push("} catch [System.Threading.WaitHandleCannotBeOpenedException] {");
+  lines.push("    # Mutex doesn't exist, create it");
+  lines.push(
+    "    $mutex = New-Object System.Threading.Mutex($true, $mutexName)",
+  );
   lines.push("}");
   lines.push("");
   // Handle -Undo switch at script start
@@ -1684,6 +1800,14 @@ export function buildScript(
     lines.push("");
     lines.push("Show-RockTuneMenu");
   }
+
+  // Release mutex at script end
+  lines.push("");
+  lines.push("# Release process lock");
+  lines.push("if ($mutex) {");
+  lines.push("    $mutex.ReleaseMutex()");
+  lines.push("    $mutex.Dispose()");
+  lines.push("}");
 
   return lines.join("\n");
 }
@@ -3440,13 +3564,16 @@ function generatePerformanceOpts(
     lines.push(
       "# [CAUTION] Disable HPET - requires reboot, test with benchmarks",
     );
-    lines.push("$hpetResult = bcdedit /set useplatformclock false 2>&1");
-    lines.push("$tickResult = bcdedit /set disabledynamictick yes 2>&1");
-    lines.push("if ($LASTEXITCODE -eq 0) {");
+    lines.push(
+      'if (Set-Bcdedit "useplatformclock" "false" "bcdedit /deletevalue useplatformclock") {',
+    );
+    lines.push(
+      '    Set-Bcdedit "disabledynamictick" "yes" "bcdedit /deletevalue disabledynamictick" | Out-Null',
+    );
     lines.push('    Write-OK "HPET disabled"');
     lines.push('    Add-RebootReason "HPET disabled"');
     lines.push("} else {");
-    lines.push('    Write-Fail "HPET: $hpetResult"');
+    lines.push('    Write-Fail "HPET: bcdedit failed"');
     lines.push("}");
   }
 
@@ -3599,8 +3726,12 @@ function generatePerformanceOpts(
     lines.push(
       'Write-Host "  [!!] DANGER: Disabling kernel exploit protections" -ForegroundColor Red',
     );
-    lines.push("$r1 = bcdedit /set isolatedcontext No 2>&1");
-    lines.push("$r2 = bcdedit /set allowedinmemorysettings 0x0 2>&1");
+    lines.push(
+      'Set-Bcdedit "isolatedcontext" "No" "bcdedit /deletevalue isolatedcontext" | Out-Null',
+    );
+    lines.push(
+      'Set-Bcdedit "allowedinmemorysettings" "0x0" "bcdedit /deletevalue allowedinmemorysettings" | Out-Null',
+    );
     lines.push(
       'Set-Reg "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\kernel" "DisableExceptionChainValidation" 1',
     );
@@ -3618,14 +3749,13 @@ function generatePerformanceOpts(
     lines.push(
       'Write-Host "  [!!] DANGER: Disabling DEP - Buffer overflow exploits work again" -ForegroundColor Red',
     );
-    lines.push("$depResult = bcdedit /set nx AlwaysOff 2>&1");
-    lines.push("if ($LASTEXITCODE -eq 0) {");
+    lines.push('if (Set-Bcdedit "nx" "AlwaysOff" "bcdedit /set nx OptIn") {');
     lines.push('    Write-OK "DEP DISABLED"');
     lines.push(
       '    Add-RebootReason "DEP (Data Execution Prevention) disabled"',
     );
     lines.push("} else {");
-    lines.push('    Write-Fail "DEP disable failed: $depResult"');
+    lines.push('    Write-Fail "DEP disable failed"');
     lines.push("}");
     lines.push(
       'Write-Host "  [!!] Re-enable with: bcdedit /set nx OptIn" -ForegroundColor Yellow',
@@ -3657,8 +3787,14 @@ function generatePerformanceOpts(
       "# [RISKY] Disable SMT/Hyperthreading - significantly reduces multitasking",
     );
     lines.push("$cores = (Get-CimInstance Win32_Processor).NumberOfCores");
+    // Need to use raw bcdedit here since value is dynamic, but still track for undo
     lines.push("$smtResult = bcdedit /set numproc $cores 2>&1");
     lines.push("if ($LASTEXITCODE -eq 0) {");
+    lines.push("    $script:BcdeditChanges += [PSCustomObject]@{");
+    lines.push('        Setting = "numproc"');
+    lines.push("        Value = $cores.ToString()");
+    lines.push('        UndoCommand = "bcdedit /deletevalue numproc"');
+    lines.push("    }");
     lines.push('    Write-OK "SMT disabled (cores limited to $cores)"');
     lines.push('    Add-RebootReason "SMT/Hyperthreading disabled"');
     lines.push("} else {");
@@ -3859,9 +3995,22 @@ function generateNetworkOpts(
       dnsServers.cloudflare;
     const dnsLabel = escapePsDoubleQuoted(dnsProvider);
     lines.push(`# Set DNS to ${dnsLabel}`);
+    // Capture original DNS before changing (for restore)
     lines.push(
-      `Get-NetAdapter | Where-Object {$_.Status -eq "Up"} | Set-DnsClientServerAddress -ServerAddresses "${primary}","${secondary}"`,
+      'Get-NetAdapter | Where-Object {$_.Status -eq "Up"} | ForEach-Object {',
     );
+    lines.push(
+      "    $origDns = (Get-DnsClientServerAddress -InterfaceIndex $_.ifIndex -AddressFamily IPv4 -EA SilentlyContinue).ServerAddresses",
+    );
+    lines.push("    $script:DNSChanges += [PSCustomObject]@{");
+    lines.push("        AdapterName = $_.Name");
+    lines.push("        InterfaceIndex = $_.ifIndex");
+    lines.push('        OriginalDNS = ($origDns -join ",")');
+    lines.push("    }");
+    lines.push(
+      `    Set-DnsClientServerAddress -InterfaceIndex $_.ifIndex -ServerAddresses "${primary}","${secondary}"`,
+    );
+    lines.push("}");
     lines.push(`Write-OK "DNS set to ${dnsLabel} (${primary}, ${secondary})"`);
   }
 
@@ -4261,30 +4410,49 @@ function generatePrivacyOpts(selected: Set<string>): string[] {
     lines.push(
       'Set-Reg "HKLM:\\SOFTWARE\\Microsoft\\Windows\\Shell\\Copilot\\BingChat" "IsUserEligible" 0',
     );
+    // Remove installed Copilot packages
     lines.push(
       "Get-AppxPackage -AllUsers *Copilot* -EA SilentlyContinue | Remove-AppxPackage -AllUsers -EA SilentlyContinue",
     );
     lines.push(
       "Get-AppxPackage -AllUsers Microsoft.MicrosoftOfficeHub -EA SilentlyContinue | Remove-AppxPackage -AllUsers -EA SilentlyContinue",
     );
-    lines.push('Write-OK "Copilot disabled and removed"');
+    // Remove provisioned packages (prevents reinstall on updates)
+    lines.push(
+      "Get-AppxProvisionedPackage -Online -EA SilentlyContinue | Where-Object { $_.DisplayName -like '*Copilot*' } | Remove-AppxProvisionedPackage -Online -EA SilentlyContinue | Out-Null",
+    );
+    lines.push(
+      "Get-AppxProvisionedPackage -Online -EA SilentlyContinue | Where-Object { $_.DisplayName -eq 'Microsoft.MicrosoftOfficeHub' } | Remove-AppxProvisionedPackage -Online -EA SilentlyContinue | Out-Null",
+    );
+    lines.push('Write-OK "Copilot disabled, removed, and deprovisioned"');
   }
 
   if (selected.has("bloatware")) {
-    lines.push("# [CAUTION] Remove bloatware apps");
+    lines.push("# [CAUTION] Remove bloatware apps (installed + provisioned)");
     lines.push(
       '$bloatApps = @("Microsoft.BingNews", "Microsoft.GetHelp", "Microsoft.Getstarted", "Microsoft.MicrosoftSolitaireCollection", "Microsoft.People", "Microsoft.PowerAutomateDesktop", "Microsoft.Todos", "Microsoft.WindowsAlarms", "Microsoft.WindowsFeedbackHub", "Microsoft.WindowsMaps", "Microsoft.WindowsSoundRecorder", "Microsoft.YourPhone", "Microsoft.ZuneMusic", "Microsoft.ZuneVideo", "Clipchamp.Clipchamp", "Microsoft.549981C3F5F10", "*Copilot*", "Microsoft.Windows.Ai.Copilot.Provider", "Microsoft.MicrosoftOfficeHub")',
     );
     lines.push("$removedCount = 0");
+    lines.push("$deprovisionedCount = 0");
     lines.push("foreach ($app in $bloatApps) {");
+    // Remove installed packages
     lines.push(
       "    $pkg = Get-AppxPackage -Name $app -AllUsers -EA SilentlyContinue",
     );
     lines.push(
       "    if ($pkg) { $pkg | Remove-AppxPackage -AllUsers -EA SilentlyContinue; $removedCount++ }",
     );
+    // Remove provisioned packages (prevents reinstall on updates)
+    lines.push(
+      "    $prov = Get-AppxProvisionedPackage -Online -EA SilentlyContinue | Where-Object { $_.DisplayName -like $app }",
+    );
+    lines.push(
+      "    if ($prov) { $prov | Remove-AppxProvisionedPackage -Online -EA SilentlyContinue | Out-Null; $deprovisionedCount++ }",
+    );
     lines.push("}");
-    lines.push('Write-OK "Bloatware: $removedCount apps removed"');
+    lines.push(
+      'Write-OK "Bloatware: $removedCount removed, $deprovisionedCount deprovisioned (won\'t return on updates)"',
+    );
   }
 
   if (selected.has("privacy_tier3")) {
