@@ -246,13 +246,14 @@ function Show-RockTuneFinalChecklist {
         return (" " * $pad)
     }
 
-    $bannerLines = @(
-        "  ____   ___   ____ _  __ _______ _   _ _   _ _____",
-        " |  _ \ / _ \ / ___| |/ /|_   _| | | | | \ | | ____|",
-        " | |_) | | | | |   | ' /   | | | | | | |  \| |  _|",
-        " |  _ `<| |_| | |___| . \   | | | |_| | | |\  | |___",
-        " |_| \_\\___/ \____|_|\_\  |_|  \___/|_|_| \_|_____|"
-    )
+    $banner = @'
+  ____   ___   ____ _  __ _______ _   _ _   _ _____
+ |  _ \ / _ \ / ___| |/ /|_   _| | | | | \ | | ____|
+ | |_) | | | | |   | ' /   | | | | | | |  \| |  _|
+ |  _ <| |_| | |___| . \   | | | |_| | | |\  | |___
+ |_| \_\\___/ \____|_|\_\  |_|  \___/|_|_| \_|_____|
+'@
+    $bannerLines = $banner -split "`n"
 
     $bannerMax = ($bannerLines | Measure-Object -Property Length -Maximum).Maximum
     $bannerPad = Get-LeftPad -Width $consoleWidth -MaxLineLength $bannerMax
