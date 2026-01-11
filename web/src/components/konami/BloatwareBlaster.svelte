@@ -1,16 +1,16 @@
 <script lang="ts">
 /**
- * Bloatware Blaster - Space Invaders Game
+ * Bloatware Invaders - Space Invaders Game
  * Main game component that manages the canvas, game engine, and UI
  */
 
-import { onMount } from 'svelte'
 import { GameEngine, type GameStatus } from '$lib/konami/bloatware-blaster/game-engine'
-import { InputHandler } from '$lib/konami/bloatware-blaster/input-handler'
+import { type GameMode, InputHandler } from '$lib/konami/bloatware-blaster/input-handler'
 import { Renderer } from '$lib/konami/bloatware-blaster/renderer'
-import WinScreen from './WinScreen.svelte'
-import LoseScreen from './LoseScreen.svelte'
 import GameUI from './GameUI.svelte'
+import LoseScreen from './LoseScreen.svelte'
+import StartScreen from './StartScreen.svelte'
+import WinScreen from './WinScreen.svelte'
 
 interface Props {
 	onexit?: () => void
@@ -19,12 +19,14 @@ interface Props {
 let { onexit }: Props = $props()
 
 let canvas: HTMLCanvasElement | null = $state(null)
+let mode: GameMode | null = $state(null)
 let score = $state(0)
 let lives = $state(3)
 let status: GameStatus = $state('playing')
 
-onMount(() => {
-	if (!canvas) return
+$effect(() => {
+	// Wait for mode selection and canvas to be ready
+	if (mode === null || !canvas) return
 
 	// Set canvas size
 	const maxWidth = Math.min(window.innerWidth * 0.9, 800)
@@ -32,10 +34,10 @@ onMount(() => {
 	canvas.width = maxWidth
 	canvas.height = maxHeight
 
-	// Initialize game systems
+	// Initialize game systems with selected mode
 	const renderer = new Renderer(canvas)
-	const input = new InputHandler()
-	const engine = new GameEngine(canvas, renderer, input)
+	const input = new InputHandler(mode) // Pass mode for shooting cooldown
+	const engine = new GameEngine(canvas, renderer, input, mode) // Pass mode
 
 	// Set up callbacks
 	engine.setCallbacks({
@@ -61,23 +63,27 @@ onMount(() => {
 })
 
 function handleRestart() {
-	// Reload the component by calling onexit and reactivating
-	onexit?.()
-	setTimeout(() => {
-		window.location.reload()
-	}, 100)
+	// Reset to mode selection screen (no page reload!)
+	mode = null
+	score = 0
+	lives = 3
+	status = 'playing'
 }
 </script>
 
 <div class="bloatware-blaster">
-	<canvas bind:this={canvas} class="game-canvas"></canvas>
+	{#if mode === null}
+		<StartScreen onstart={(selectedMode) => { mode = selectedMode }} />
+	{:else}
+		<canvas bind:this={canvas} class="game-canvas"></canvas>
 
-	{#if status === 'playing'}
-		<GameUI {score} {lives} />
-	{:else if status === 'won'}
-		<WinScreen {score} onexit={onexit} />
-	{:else if status === 'lost'}
-		<LoseScreen {score} onrestart={handleRestart} onexit={onexit} />
+		{#if status === 'playing'}
+			<GameUI {score} {lives} />
+		{:else if status === 'won'}
+			<WinScreen {score} onexit={onexit} />
+		{:else if status === 'lost'}
+			<LoseScreen {score} onrestart={handleRestart} onexit={onexit} />
+		{/if}
 	{/if}
 </div>
 
@@ -93,7 +99,7 @@ function handleRestart() {
 
 	.game-canvas {
 		border: 2px solid var(--neon-cyan);
-		box-shadow: 0 0 20px var(--neon-cyan);
+		box-shadow: 0 0 40px var(--neon-cyan); /* Bigger glow for more impact */
 		border-radius: 4px;
 	}
 </style>

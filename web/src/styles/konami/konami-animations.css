@@ -18,12 +18,17 @@
 	font-family: var(--font-mono);
 	font-size: clamp(8rem, 20vw, 18rem);
 	font-weight: 900;
-	color: var(--neon-cyan);
+
+	/* Bright yellow with crisp cyan outline for maximum legibility */
+	color: oklch(0.95 0.28 100); /* Bright yellow - high contrast */
 	text-shadow:
-		0 0 40px var(--neon-cyan),
-		0 0 80px var(--neon-magenta),
-		0 0 120px var(--neon-yellow);
-	animation: chromaticPulse 0.3s ease-in-out infinite alternate;
+		2px 2px 0 oklch(0.92 0.25 195), /* Cyan outline */
+		-2px -2px 0 oklch(0.92 0.25 195),
+		2px -2px 0 oklch(0.92 0.25 195),
+		-2px 2px 0 oklch(0.92 0.25 195),
+		0 0 30px oklch(0.95 0.28 100 / 0.5); /* Subtle glow only */
+
+	/* Keep 3D effect */
 	perspective: 800px;
 	transform-style: preserve-3d;
 }
@@ -59,8 +64,7 @@
 /* Respect reduced motion */
 @media (prefers-reduced-motion: reduce) {
 	.year-text {
-		animation: none;
-		text-shadow: 0 0 40px var(--neon-cyan);
+		/* Already legible, no changes needed */
 	}
 
 	.screen-bloop {

@@ -19,7 +19,7 @@ const konamiState = getKonamiState()
 
 <div class="lose-screen">
 	<div class="lose-modal">
-		<h1 class="lose-title">SYSTEM OVERLOADED</h1>
+		<h1 class="lose-title">BLOATWARE OVERLOAD!</h1>
 
 		<div class="lose-stats">
 			<div class="stat">

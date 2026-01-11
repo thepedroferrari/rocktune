@@ -29,7 +29,7 @@ onMount(() => {
 
 <div class="win-screen">
 	<div class="win-modal">
-		<h1 class="win-title">SYSTEM OPTIMIZED!</h1>
+		<h1 class="win-title">BLOATWARE ELIMINATED!</h1>
 
 		<div class="win-stats">
 			<div class="stat">

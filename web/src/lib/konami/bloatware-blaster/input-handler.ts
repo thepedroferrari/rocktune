@@ -3,12 +3,18 @@
  * Keyboard input management for game controls
  */
 
+export type GameMode = "normal" | "rocktunned";
+
 export class InputHandler {
   private keys = new Set<string>();
   private lastShootTime = 0;
-  private readonly shootCooldown = 500; // ms
+  private shootCooldown: number;
 
-  constructor() {
+  constructor(mode: GameMode = "normal") {
+    // Normal: 500ms cooldown (classic Space Invaders)
+    // Rocktunned: 100ms cooldown (machine gun mode!)
+    this.shootCooldown = mode === "rocktunned" ? 100 : 500;
+
     this.handleKeyDown = this.handleKeyDown.bind(this);
     this.handleKeyUp = this.handleKeyUp.bind(this);
   }

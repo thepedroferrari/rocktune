@@ -13,7 +13,7 @@ import {
 import { getBloatwareType } from "./bloatware-data";
 import { rectsIntersect } from "./collision";
 import { Bullet, Invader, Player, Shield } from "./entities";
-import type { InputHandler } from "./input-handler";
+import type { GameMode, InputHandler } from "./input-handler";
 import type { Renderer } from "./renderer";
 
 const INVADER_ROWS = 5;
@@ -22,9 +22,9 @@ const INVADER_START_X = 100;
 const INVADER_START_Y = 50;
 const INVADER_SPACING_X = 60;
 const INVADER_SPACING_Y = 40;
-const INVADER_BASE_SPEED = 30; // px/s
-const INVADER_SPEED_INCREASE = 0.1; // 10% increase per row destroyed
-const INVADER_MOVE_DELAY = 30; // frames
+const INVADER_BASE_SPEED = 6; // px/s (5x slower for better gameplay)
+const INVADER_SPEED_INCREASE = 0.15; // 15% increase per row destroyed
+const INVADER_MOVE_DELAY = 20; // frames (smoother movement)
 const INVADER_DROP_DISTANCE = 20;
 const MAX_PLAYER_BULLETS = 10;
 const MAX_ENEMY_BULLETS = 20;
@@ -72,6 +72,7 @@ export class GameEngine {
     canvas: HTMLCanvasElement,
     renderer: Renderer,
     input: InputHandler,
+    private mode: GameMode = "normal",
   ) {
     this.canvas = canvas;
     this.renderer = renderer;
