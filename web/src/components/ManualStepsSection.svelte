@@ -679,25 +679,26 @@ function buildPanelKey(item: AnyItem, sectionId: string): string {
   return `${sectionId}::${getItemId(item)}`
 }
 
-function getPanelItems(): PanelItem[] {
+function getPanelItemsFromGroups(): PanelItem[] {
   const items: PanelItem[] = []
-  if (sortBy === 'category') {
-    for (const group of filteredGroups) {
-      for (const section of group.sections) {
-        const filtered = getFilteredItems(section.id, section.items as readonly AnyItem[])
-        for (const item of filtered) {
-          items.push({
-            item,
-            section,
-            key: buildPanelKey(item, section.id),
-          })
-        }
+  for (const group of filteredGroups) {
+    for (const section of group.sections) {
+      const filtered = getFilteredItems(section.id, section.items as readonly AnyItem[])
+      for (const item of filtered) {
+        items.push({
+          item,
+          section,
+          key: buildPanelKey(item, section.id),
+        })
       }
     }
-    return items
   }
+  return items
+}
 
-  if (!displayGroups) return items
+function getPanelItemsFromDisplayGroups(): PanelItem[] {
+  if (!displayGroups) return []
+  const items: PanelItem[] = []
   for (const group of displayGroups) {
     for (const flatItem of group.items) {
       const section = sectionLookup.get(flatItem.sectionId)
@@ -710,6 +711,10 @@ function getPanelItems(): PanelItem[] {
     }
   }
   return items
+}
+
+function getPanelItems(): PanelItem[] {
+  return sortBy === 'category' ? getPanelItemsFromGroups() : getPanelItemsFromDisplayGroups()
 }
 
 function* generatePanelNodes(items: PanelItem[]): Generator<PanelNode> {
@@ -1823,8 +1828,8 @@ $effect(() => {
   {@const itemTooltip = buildItemTooltip(item)}
   {@const normalizedItem = normalizeManualItem(item, section)}
   {@const automationInfo =
-    item.automated && typeof item.automated === "object"
-      ? item.automated
+    item.automated && typeof item.automated === "object" && item.automated.module && item.automated.function
+      ? { module: item.automated.module, function: item.automated.function, registryPath: item.automated.registryPath }
       : null}
   <GuideDetailPanel
     isOpen={true}

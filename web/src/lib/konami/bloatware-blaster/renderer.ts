@@ -39,7 +39,7 @@ export class Renderer {
     this.drawBloatwareIcon(invader.type.id, invader.x, invader.y, invader.width)
   }
 
-  private drawBloatwareIcon(type: string, x: number, y: number, size: number): void {
+  private drawBloatwareIcon(_type: string, x: number, y: number, size: number): void {
     const gap = size * 0.04 // 4% gap between panes
     const paneWidth = (size - gap) / 2
     const paneHeight = (size - gap) / 2

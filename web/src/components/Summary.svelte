@@ -6,7 +6,7 @@
  * Uses Svelte 5 $derived for all computed values.
  */
 import { app, getSelectedCount } from '$lib/state.svelte'
-import type { CpuType, GpuType, PresetKey } from '$lib/types'
+import type { CpuType, GpuType } from '$lib/types'
 
 const softwareCount = $derived(getSelectedCount())
 const optimizationCount = $derived(app.optimizations.size)
@@ -24,16 +24,18 @@ const gpuLabels: Record<GpuType, string> = {
   intel: 'Intel Arc',
 }
 
-const presetLabels: Record<PresetKey, string> = {
+const presetLabels = {
   competitive: 'Competitive',
   streaming: 'Streaming',
   balanced: 'Balanced',
   minimal: 'Minimal',
-}
+} as const
 
 const cpuLabel = $derived(cpuLabels[app.hardware.cpu] || app.hardware.cpu)
 const gpuLabel = $derived(gpuLabels[app.hardware.gpu] || app.hardware.gpu)
-const presetLabel = $derived(app.activePreset ? presetLabels[app.activePreset] : null)
+const presetLabel = $derived(
+  app.activePreset ? presetLabels[app.activePreset as keyof typeof presetLabels] : null,
+)
 </script>
 
 <div class="summary-shell">

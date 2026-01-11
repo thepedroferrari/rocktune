@@ -255,6 +255,7 @@ export interface NormalizeOptions {
   readonly today?: string
 }
 
+// @knip/ignore — Used internally within this file and exported for external consumers
 export const MANUAL_REVIEW_DATE = '2026-01-09'
 export const MANUAL_REVIEW_STALE_DAYS = 180
 
@@ -1097,53 +1098,23 @@ function buildAssessment(
   const normalizedRisk =
     override.risk === undefined ? null : override.risk <= 0 ? 0 : ((override.risk - 1) as RiskScore)
 
+  const lastReviewedValue = override.lastReviewed ?? MANUAL_REVIEW_DATE
+  const appliesTo = computeAppliesTo(override, section)
+  const sources = computeMergedSources(override, guide, item)
+
   const assessment: NormalizedGuideAssessment = {
     ...DEFAULT_ASSESSMENT,
     ...override,
     scope,
     confidence: override.confidence ?? null,
     risk: normalizedRisk,
-    lastReviewed: override.lastReviewed ?? MANUAL_REVIEW_DATE,
+    lastReviewed: lastReviewedValue,
     impact: override.impact ?? {},
+    ...(appliesTo && { appliesTo }),
+    ...(sources && { sources }),
   }
 
-  if (section.hardware) {
-    assessment.appliesTo = assessment.appliesTo ?? [
-      section.hardware === GPU_TYPES.NVIDIA
-        ? 'NVIDIA GPUs'
-        : section.hardware === GPU_TYPES.AMD
-          ? 'AMD GPUs'
-          : 'Intel GPUs',
-    ]
-  }
-
-  const refSources = REFERENCE_SOURCES_BY_ID[item.id] ?? []
-  const guideSources = guide?.references ?? []
-  const assessmentSources = assessment.sources ?? []
-  const mergedSources = [...assessmentSources, ...guideSources, ...refSources]
-  if (mergedSources.length > 0) {
-    assessment.sources = mergedSources
-  }
-
-  if (hasExplicitAssessment && !hasLastReviewed) {
-    warnManual(`Missing lastReviewed for "${item.id}"`, options?.warn)
-  }
-
-  if (!assessment.lastReviewed) {
-    assessment.lastReviewed = MANUAL_REVIEW_DATE
-  }
-
-  const lastReviewed = assessment.lastReviewed
-  if (lastReviewed) {
-    const parsed = Date.parse(lastReviewed)
-    if (!Number.isNaN(parsed)) {
-      const today = Date.parse(options?.today ?? MANUAL_REVIEW_DATE)
-      const ageDays = Math.floor((today - parsed) / (1000 * 60 * 60 * 24))
-      if (ageDays > MANUAL_REVIEW_STALE_DAYS) {
-        warnManual(`Stale lastReviewed (${lastReviewed}) for "${item.id}"`, options?.warn)
-      }
-    }
-  }
+  validateAssessmentReview(item, hasExplicitAssessment, hasLastReviewed, lastReviewedValue, options)
 
   return assessment
 }
@@ -1235,36 +1206,106 @@ function buildSkipIf(scope: GuideAssessment['scope']): string {
   return DEFAULT_SKIP_IF
 }
 
+function buildGuideSteps(item: ManualItem, section: ManualStepSection): readonly string[] {
+  const guide = item.guide ?? GUIDE_OVERRIDES[item.id]
+  if (guide?.steps && guide.steps.length > 0) {
+    return normalizeSteps(guide.steps)
+  }
+  if (item.manualSteps && item.manualSteps.length > 0) {
+    return normalizeSteps(item.manualSteps)
+  }
+  return normalizeSteps(deriveSteps(item, section))
+}
+
+function buildGuideField<T>(guideValue: readonly T[] | undefined, fallback: T[]): readonly T[] {
+  return guideValue && guideValue.length > 0 ? [...guideValue] : fallback
+}
+
+function computeAppliesTo(
+  override: Partial<GuideAssessment>,
+  section: ManualStepSection,
+): readonly string[] | undefined {
+  if (override.appliesTo) return override.appliesTo
+  if (!section.hardware) return undefined
+  return [
+    section.hardware === GPU_TYPES.NVIDIA
+      ? 'NVIDIA GPUs'
+      : section.hardware === GPU_TYPES.AMD
+        ? 'AMD GPUs'
+        : 'Intel GPUs',
+  ]
+}
+
+function computeMergedSources(
+  override: Partial<GuideAssessment>,
+  guide: GuideCopy | undefined,
+  item: ManualItem,
+): readonly string[] | undefined {
+  const refSources = REFERENCE_SOURCES_BY_ID[item.id] ?? []
+  const guideSources = guide?.references ?? []
+  const assessmentSources = override.sources ?? []
+  const merged = [...assessmentSources, ...guideSources, ...refSources]
+  return merged.length > 0 ? merged : undefined
+}
+
+function validateAssessmentReview(
+  item: ManualItem,
+  hasExplicitAssessment: boolean,
+  hasLastReviewed: boolean,
+  lastReviewedValue: string,
+  options?: NormalizeOptions,
+): void {
+  if (hasExplicitAssessment && !hasLastReviewed) {
+    warnManual(`Missing lastReviewed for "${item.id}"`, options?.warn)
+  }
+
+  if (lastReviewedValue) {
+    const parsed = Date.parse(lastReviewedValue)
+    if (!Number.isNaN(parsed)) {
+      const today = Date.parse(options?.today ?? MANUAL_REVIEW_DATE)
+      const ageDays = Math.floor((today - parsed) / (1000 * 60 * 60 * 24))
+      if (ageDays > MANUAL_REVIEW_STALE_DAYS) {
+        warnManual(`Stale lastReviewed (${lastReviewedValue}) for "${item.id}"`, options?.warn)
+      }
+    }
+  }
+}
+
+function buildMissingStepsGuide(
+  item: ManualItem,
+  section: ManualStepSection,
+  guide: GuideCopy | undefined,
+  assessment: NormalizedGuideAssessment,
+  options?: NormalizeOptions,
+): NormalizedGuideCopy {
+  return {
+    intro: deriveIntro(item),
+    steps: ['This item needs steps — do not proceed yet.'],
+    benefits: [getItemWhy(item) || 'This may improve performance or stability.'],
+    risks: [DEFAULT_RISKS[item.safety ?? 'safe']],
+    skipIf: [buildSkipIf(assessment.scope)],
+    verify: [buildVerify(item)],
+    rollback: [buildRollback(item, section)],
+    assessment,
+    failureModes: buildFailureModes(item, section, assessment, guide, options),
+    techNotes: [],
+    references: guide?.references ? [...guide.references] : [],
+    videos: guide?.videos ? [...guide.videos] : [],
+  }
+}
+
 function normalizeGuide(
   item: ManualItem,
   section: ManualStepSection,
   options?: NormalizeOptions,
 ): NormalizedGuideCopy {
   const guide = item.guide ?? GUIDE_OVERRIDES[item.id]
-  const steps =
-    guide?.steps && guide.steps.length > 0
-      ? normalizeSteps(guide.steps)
-      : item.manualSteps && item.manualSteps.length > 0
-        ? normalizeSteps(item.manualSteps)
-        : normalizeSteps(deriveSteps(item, section))
+  const steps = buildGuideSteps(item, section)
 
   if (steps.length === 0) {
     warnManual(`Missing steps for "${item.id}"`, options?.warn)
     const assessment = buildAssessment(item, section, guide, options)
-    return {
-      intro: deriveIntro(item),
-      steps: ['This item needs steps — do not proceed yet.'],
-      benefits: [getItemWhy(item) || 'This may improve performance or stability.'],
-      risks: [DEFAULT_RISKS[item.safety ?? 'safe']],
-      skipIf: [buildSkipIf(assessment.scope)],
-      verify: [buildVerify(item)],
-      rollback: [buildRollback(item, section)],
-      assessment,
-      failureModes: buildFailureModes(item, section, assessment, guide, options),
-      techNotes: [],
-      references: guide?.references ? [...guide.references] : [],
-      videos: guide?.videos ? [...guide.videos] : [],
-    }
+    return buildMissingStepsGuide(item, section, guide, assessment, options)
   }
 
   const assessment = buildAssessment(item, section, guide, options)
@@ -1273,23 +1314,13 @@ function normalizeGuide(
   return {
     intro: guide?.intro ?? deriveIntro(item),
     steps,
-    benefits:
-      guide?.benefits && guide.benefits.length > 0
-        ? [...guide.benefits]
-        : [getItemWhy(item) || 'May improve performance or stability.'],
-    risks:
-      guide?.risks && guide.risks.length > 0
-        ? [...guide.risks]
-        : [DEFAULT_RISKS[item.safety ?? 'safe']],
-    skipIf:
-      guide?.skipIf && guide.skipIf.length > 0
-        ? [...guide.skipIf]
-        : [buildSkipIf(assessment.scope)],
-    verify: guide?.verify && guide.verify.length > 0 ? [...guide.verify] : [buildVerify(item)],
-    rollback:
-      guide?.rollback && guide.rollback.length > 0
-        ? [...guide.rollback]
-        : [buildRollback(item, section)],
+    benefits: buildGuideField(guide?.benefits, [
+      getItemWhy(item) || 'May improve performance or stability.',
+    ]),
+    risks: buildGuideField(guide?.risks, [DEFAULT_RISKS[item.safety ?? 'safe']]),
+    skipIf: buildGuideField(guide?.skipIf, [buildSkipIf(assessment.scope)]),
+    verify: buildGuideField(guide?.verify, [buildVerify(item)]),
+    rollback: buildGuideField(guide?.rollback, [buildRollback(item, section)]),
     assessment,
     failureModes,
     techNotes: guide?.techNotes ? [...guide.techNotes] : [],

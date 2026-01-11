@@ -37,7 +37,7 @@ $effect(() => {
   // Initialize game systems with selected mode
   const renderer = new Renderer(canvas)
   const input = new InputHandler(mode) // Pass mode for shooting cooldown
-  const engine = new GameEngine(canvas, renderer, input, mode) // Pass mode
+  const engine = new GameEngine(canvas, renderer, input)
 
   // Set up callbacks
   engine.setCallbacks({

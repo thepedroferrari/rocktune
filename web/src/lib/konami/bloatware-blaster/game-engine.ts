@@ -13,7 +13,7 @@ import {
 import { getBloatwareType } from './bloatware-data'
 import { rectsIntersect } from './collision'
 import { Bullet, Invader, Player, Shield } from './entities'
-import type { GameMode, InputHandler } from './input-handler'
+import type { InputHandler } from './input-handler'
 import type { Renderer } from './renderer'
 
 const INVADER_ROWS = 5
@@ -70,12 +70,7 @@ export class GameEngine {
   private onLivesChange?: (lives: number) => void
   private onStatusChange?: (status: GameStatus) => void
 
-  constructor(
-    canvas: HTMLCanvasElement,
-    renderer: Renderer,
-    input: InputHandler,
-    private mode: GameMode = 'normal',
-  ) {
+  constructor(canvas: HTMLCanvasElement, renderer: Renderer, input: InputHandler) {
     this.canvas = canvas
     this.renderer = renderer
     this.input = input
@@ -164,7 +159,18 @@ export class GameEngine {
     // Update player
     this.player.update(dt, this.input.getKeys(), this.canvas.width)
 
-    // Player shooting
+    // Handle player actions and entity updates
+    this.handlePlayerShooting()
+    this.updateBullets(dt)
+    this.checkCollisions()
+    this.handleEnemyShooting()
+    this.handleInvaderMovement(dt)
+
+    // Check win/lose conditions
+    this.checkWinLose()
+  }
+
+  private handlePlayerShooting(): void {
     if (this.input.isPressed('Space') && this.input.canShoot()) {
       for (const bullet of this.bullets) {
         if (!bullet.active) {
@@ -174,42 +180,61 @@ export class GameEngine {
         }
       }
     }
+  }
 
-    // Update bullets
+  private updateBullets(dt: number): void {
     for (const bullet of this.bullets) {
       bullet.update(dt, this.canvas.height, 'up')
     }
     for (const bullet of this.enemyBullets) {
       bullet.update(dt, this.canvas.height, 'down')
     }
+  }
 
-    // Check bullet collisions with invaders
+  private checkCollisions(): void {
+    this.checkPlayerBulletCollisions()
+    this.checkEnemyBulletCollisions()
+  }
+
+  private checkPlayerBulletCollisions(): void {
     for (const bullet of this.bullets) {
       if (bullet.active) {
-        for (const invader of this.invaders) {
-          if (invader.alive && rectsIntersect(bullet.getRect(), invader.getRect())) {
-            bullet.deactivate()
-            invader.destroy()
-            this.score += 10
-            this.onScoreChange?.(this.score)
-            playExplosion()
-            break
-          }
-        }
-
-        // Check bullet collisions with shields
-        for (const shield of this.shields) {
-          if (!shield.isDestroyed() && rectsIntersect(bullet.getRect(), shield.getRect())) {
-            bullet.deactivate()
-            shield.takeDamage()
-            playHit()
-            break
-          }
-        }
+        this.checkPlayerBulletInvaderCollisions(bullet)
+        this.checkPlayerBulletShieldCollisions(bullet)
       }
     }
+  }
 
-    // Check enemy bullet collisions with player
+  private checkPlayerBulletInvaderCollisions(bullet: Bullet): void {
+    for (const invader of this.invaders) {
+      if (invader.alive && rectsIntersect(bullet.getRect(), invader.getRect())) {
+        bullet.deactivate()
+        invader.destroy()
+        this.score += 10
+        this.onScoreChange?.(this.score)
+        playExplosion()
+        break
+      }
+    }
+  }
+
+  private checkPlayerBulletShieldCollisions(bullet: Bullet): void {
+    for (const shield of this.shields) {
+      if (!shield.isDestroyed() && rectsIntersect(bullet.getRect(), shield.getRect())) {
+        bullet.deactivate()
+        shield.takeDamage()
+        playHit()
+        break
+      }
+    }
+  }
+
+  private checkEnemyBulletCollisions(): void {
+    this.checkEnemyBulletPlayerCollisions()
+    this.checkEnemyBulletShieldCollisions()
+  }
+
+  private checkEnemyBulletPlayerCollisions(): void {
     for (const bullet of this.enemyBullets) {
       if (bullet.active && rectsIntersect(bullet.getRect(), this.player.getRect())) {
         bullet.deactivate()
@@ -217,8 +242,9 @@ export class GameEngine {
         break
       }
     }
+  }
 
-    // Check enemy bullet collisions with shields
+  private checkEnemyBulletShieldCollisions(): void {
     for (const bullet of this.enemyBullets) {
       if (bullet.active) {
         for (const shield of this.shields) {
@@ -231,8 +257,9 @@ export class GameEngine {
         }
       }
     }
+  }
 
-    // Enemy shooting
+  private handleEnemyShooting(): void {
     this.enemyShootTimer++
     if (this.enemyShootTimer >= ENEMY_SHOOT_DELAY) {
       this.enemyShootTimer = 0
@@ -253,16 +280,14 @@ export class GameEngine {
         }
       }
     }
+  }
 
-    // Move invaders
+  private handleInvaderMovement(dt: number): void {
     this.moveTimer++
     if (this.moveTimer >= INVADER_MOVE_DELAY) {
       this.moveTimer = 0
       this.moveInvaders(dt)
     }
-
-    // Check win/lose conditions
-    this.checkWinLose()
   }
 
   private moveInvaders(dt: number): void {

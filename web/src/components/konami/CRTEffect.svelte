@@ -5,12 +5,18 @@
  */
 
 import '../../styles/konami/crt-effects.css'
+
+interface Props {
+  children: import('svelte').Snippet
+}
+
+let { children }: Props = $props()
 </script>
 
 <div class="crt-overlay">
 	<div class="crt-container">
 		<div class="crt-content">
-			<slot />
+			{@render children()}
 		</div>
 		<div class="crt-scanlines" aria-hidden="true"></div>
 		<div class="crt-chromatic" aria-hidden="true"></div>

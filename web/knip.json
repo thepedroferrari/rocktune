@@ -3,8 +3,15 @@
     "src/main.ts",
     "src/RootApp.svelte",
     "src/components/PreviewModal.svelte",
-    "scripts/*.ts"
+    "scripts/*.ts",
+    "src/lib/manual-steps.ts"
   ],
   "project": ["src/**/*.{ts,svelte}", "scripts/**/*.ts"],
-  "ignore": ["src/**/*.test.ts", "src/**/*.spec.ts"]
+  "ignore": [
+    "src/**/*.test.ts",
+    "src/**/*.spec.ts",
+    "src/components/konami/**",
+    "src/lib/konami/**",
+    "src/lib/preflight.ts"
+  ]
 }

@@ -58,7 +58,7 @@ function isHintsDismissed(): boolean {
 
 function getInteractionCount(): number {
   if (typeof localStorage === 'undefined') return 0
-  return parseInt(localStorage.getItem(HINTS_STORAGE_KEY + '-count') || '0', 10)
+  return parseInt(localStorage.getItem(`${HINTS_STORAGE_KEY}-count`) || '0', 10)
 }
 
 function incrementInteraction() {
@@ -66,7 +66,7 @@ function incrementInteraction() {
   if (isHintsDismissed() || fadeScheduled) return
 
   const count = getInteractionCount() + 1
-  localStorage.setItem(HINTS_STORAGE_KEY + '-count', count.toString())
+  localStorage.setItem(`${HINTS_STORAGE_KEY}-count`, count.toString())
 
   if (count >= 3 && hintsVisible) {
     fadeScheduled = true
