@@ -3,58 +3,58 @@
  * Listens for the classic Konami Code sequence: ↑↑↓↓←→←→BA Enter
  */
 
-type KonamiCallback = () => void;
+type KonamiCallback = () => void
 
 const KONAMI_SEQUENCE = [
-  "ArrowUp",
-  "ArrowUp",
-  "ArrowDown",
-  "ArrowDown",
-  "ArrowLeft",
-  "ArrowRight",
-  "ArrowLeft",
-  "ArrowRight",
-  "KeyB",
-  "KeyA",
-  "Enter",
-] as const;
+  'ArrowUp',
+  'ArrowUp',
+  'ArrowDown',
+  'ArrowDown',
+  'ArrowLeft',
+  'ArrowRight',
+  'ArrowLeft',
+  'ArrowRight',
+  'KeyB',
+  'KeyA',
+  'Enter',
+] as const
 
-const RESET_TIMEOUT = 2000; // Reset sequence after 2 seconds of inactivity
+const RESET_TIMEOUT = 2000 // Reset sequence after 2 seconds of inactivity
 
 export class KonamiDetector {
-  private buffer: string[] = [];
-  private callbacks = new Set<KonamiCallback>();
-  private resetTimer: ReturnType<typeof setTimeout> | null = null;
-  private handleKeyDown: ((e: KeyboardEvent) => void) | null = null;
+  private buffer: string[] = []
+  private callbacks = new Set<KonamiCallback>()
+  private resetTimer: ReturnType<typeof setTimeout> | null = null
+  private handleKeyDown: ((e: KeyboardEvent) => void) | null = null
 
   /**
    * Start listening for Konami Code
    */
   start(): void {
     if (this.handleKeyDown) {
-      return; // Already started
+      return // Already started
     }
 
     this.handleKeyDown = (e: KeyboardEvent) => {
       // Add key to buffer
-      this.buffer.push(e.code);
+      this.buffer.push(e.code)
 
       // Keep only last 11 keys (length of Konami Code)
       if (this.buffer.length > KONAMI_SEQUENCE.length) {
-        this.buffer.shift();
+        this.buffer.shift()
       }
 
       // Check if sequence matches
       if (this.isSequenceComplete()) {
-        this.triggerCallbacks();
-        this.reset();
+        this.triggerCallbacks()
+        this.reset()
       }
 
       // Reset buffer after inactivity
-      this.resetBufferAfterTimeout();
-    };
+      this.resetBufferAfterTimeout()
+    }
 
-    window.addEventListener("keydown", this.handleKeyDown);
+    window.addEventListener('keydown', this.handleKeyDown)
   }
 
   /**
@@ -62,28 +62,28 @@ export class KonamiDetector {
    */
   stop(): void {
     if (this.handleKeyDown) {
-      window.removeEventListener("keydown", this.handleKeyDown);
-      this.handleKeyDown = null;
+      window.removeEventListener('keydown', this.handleKeyDown)
+      this.handleKeyDown = null
     }
 
     if (this.resetTimer) {
-      clearTimeout(this.resetTimer);
-      this.resetTimer = null;
+      clearTimeout(this.resetTimer)
+      this.resetTimer = null
     }
 
-    this.reset();
+    this.reset()
   }
 
   /**
    * Register a callback to be called when Konami Code is detected
    */
   onActivate(callback: KonamiCallback): () => void {
-    this.callbacks.add(callback);
+    this.callbacks.add(callback)
 
     // Return unsubscribe function
     return () => {
-      this.callbacks.delete(callback);
-    };
+      this.callbacks.delete(callback)
+    }
   }
 
   /**
@@ -91,10 +91,10 @@ export class KonamiDetector {
    */
   private isSequenceComplete(): boolean {
     if (this.buffer.length !== KONAMI_SEQUENCE.length) {
-      return false;
+      return false
     }
 
-    return KONAMI_SEQUENCE.every((key, index) => this.buffer[index] === key);
+    return KONAMI_SEQUENCE.every((key, index) => this.buffer[index] === key)
   }
 
   /**
@@ -102,7 +102,7 @@ export class KonamiDetector {
    */
   private triggerCallbacks(): void {
     for (const callback of this.callbacks) {
-      callback();
+      callback()
     }
   }
 
@@ -110,11 +110,11 @@ export class KonamiDetector {
    * Reset the key buffer
    */
   private reset(): void {
-    this.buffer = [];
+    this.buffer = []
 
     if (this.resetTimer) {
-      clearTimeout(this.resetTimer);
-      this.resetTimer = null;
+      clearTimeout(this.resetTimer)
+      this.resetTimer = null
     }
   }
 
@@ -123,11 +123,11 @@ export class KonamiDetector {
    */
   private resetBufferAfterTimeout(): void {
     if (this.resetTimer) {
-      clearTimeout(this.resetTimer);
+      clearTimeout(this.resetTimer)
     }
 
     this.resetTimer = setTimeout(() => {
-      this.reset();
-    }, RESET_TIMEOUT);
+      this.reset()
+    }, RESET_TIMEOUT)
   }
 }

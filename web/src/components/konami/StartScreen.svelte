@@ -5,13 +5,13 @@
  */
 
 interface Props {
-	onstart?: (mode: "normal" | "rocktunned") => void
+  onstart?: (mode: 'normal' | 'rocktunned') => void
 }
 
 let { onstart }: Props = $props()
 
-function handleModeSelect(mode: "normal" | "rocktunned") {
-	onstart?.(mode)
+function handleModeSelect(mode: 'normal' | 'rocktunned') {
+  onstart?.(mode)
 }
 </script>
 

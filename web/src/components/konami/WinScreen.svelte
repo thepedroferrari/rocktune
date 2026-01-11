@@ -1,33 +1,30 @@
 <script lang="ts">
-  /**
-   * Win Screen
-   * Victory modal with FF victory fanfare
-   */
+/**
+ * Win Screen
+ * Victory modal with FF victory fanfare
+ */
 
-  import { onMount } from "svelte";
-  import { playVictoryFanfare } from "$lib/konami/audio/ff-fanfare";
-  import {
-    updateHighScore,
-    getKonamiState,
-  } from "$lib/konami/konami-state.svelte";
+import { onMount } from 'svelte'
+import { playVictoryFanfare } from '$lib/konami/audio/ff-fanfare'
+import { updateHighScore, getKonamiState } from '$lib/konami/konami-state.svelte'
 
-  interface Props {
-    score: number;
-    onexit?: () => void;
-  }
+interface Props {
+  score: number
+  onexit?: () => void
+}
 
-  let { score, onexit }: Props = $props();
+let { score, onexit }: Props = $props()
 
-  const konamiState = getKonamiState();
-  const isNewHighScore = $derived(score > konamiState.highScore);
+const konamiState = getKonamiState()
+const isNewHighScore = $derived(score > konamiState.highScore)
 
-  onMount(() => {
-    // Play victory fanfare
-    playVictoryFanfare();
+onMount(() => {
+  // Play victory fanfare
+  playVictoryFanfare()
 
-    // Update high score
-    updateHighScore(score);
-  });
+  // Update high score
+  updateHighScore(score)
+})
 </script>
 
 <div class="win-screen">

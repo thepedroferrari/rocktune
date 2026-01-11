@@ -3,32 +3,32 @@
  * Reactive state using Svelte 5 $state runes
  */
 
-const STORAGE_KEY = "rocktune_konami_highscore";
+const STORAGE_KEY = 'rocktune_konami_highscore'
 
 interface KonamiState {
-  active: boolean;
-  highScore: number;
+  active: boolean
+  highScore: number
 }
 
 const state: KonamiState = $state({
   active: false,
   highScore: loadHighScore(),
-});
+})
 
 /**
  * Load high score from localStorage
  */
 function loadHighScore(): number {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored = localStorage.getItem(STORAGE_KEY)
     if (stored) {
-      const parsed = Number.parseInt(stored, 10);
-      return Number.isNaN(parsed) ? 0 : parsed;
+      const parsed = Number.parseInt(stored, 10)
+      return Number.isNaN(parsed) ? 0 : parsed
     }
   } catch {
     // localStorage not available or error
   }
-  return 0;
+  return 0
 }
 
 /**
@@ -36,7 +36,7 @@ function loadHighScore(): number {
  */
 function saveHighScore(score: number): void {
   try {
-    localStorage.setItem(STORAGE_KEY, score.toString());
+    localStorage.setItem(STORAGE_KEY, score.toString())
   } catch {
     // localStorage not available or error
   }
@@ -46,21 +46,21 @@ function saveHighScore(score: number): void {
  * Get the Konami state (reactive)
  */
 export function getKonamiState(): KonamiState {
-  return state;
+  return state
 }
 
 /**
  * Activate the Konami easter egg
  */
 export function activateKonami(): void {
-  state.active = true;
+  state.active = true
 }
 
 /**
  * Deactivate the Konami easter egg
  */
 export function deactivateKonami(): void {
-  state.active = false;
+  state.active = false
 }
 
 /**
@@ -68,7 +68,7 @@ export function deactivateKonami(): void {
  */
 export function updateHighScore(score: number): void {
   if (score > state.highScore) {
-    state.highScore = score;
-    saveHighScore(score);
+    state.highScore = score
+    saveHighScore(score)
   }
 }

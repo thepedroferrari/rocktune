@@ -305,7 +305,6 @@ function getGroupProgress(sections: readonly ManualStepSection[]) {
   let total = 0
 
   for (const section of sections) {
-    // Filter out automated items if "Manual only" is ON
     const filteredItems = showManualOnly
       ? section.items.filter((item) => !item.automated)
       : section.items

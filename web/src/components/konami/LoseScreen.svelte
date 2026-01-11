@@ -7,9 +7,9 @@
 import { getKonamiState } from '$lib/konami/konami-state.svelte'
 
 interface Props {
-	score: number
-	onrestart?: () => void
-	onexit?: () => void
+  score: number
+  onrestart?: () => void
+  onexit?: () => void
 }
 
 let { score, onrestart, onexit }: Props = $props()

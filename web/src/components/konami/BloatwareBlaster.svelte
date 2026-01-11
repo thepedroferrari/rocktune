@@ -13,7 +13,7 @@ import StartScreen from './StartScreen.svelte'
 import WinScreen from './WinScreen.svelte'
 
 interface Props {
-	onexit?: () => void
+  onexit?: () => void
 }
 
 let { onexit }: Props = $props()
@@ -25,49 +25,49 @@ let lives = $state(3)
 let status: GameStatus = $state('playing')
 
 $effect(() => {
-	// Wait for mode selection and canvas to be ready
-	if (mode === null || !canvas) return
+  // Wait for mode selection and canvas to be ready
+  if (mode === null || !canvas) return
 
-	// Set canvas size
-	const maxWidth = Math.min(window.innerWidth * 0.9, 800)
-	const maxHeight = Math.min(window.innerHeight * 0.8, 600)
-	canvas.width = maxWidth
-	canvas.height = maxHeight
+  // Set canvas size
+  const maxWidth = Math.min(window.innerWidth * 0.9, 800)
+  const maxHeight = Math.min(window.innerHeight * 0.8, 600)
+  canvas.width = maxWidth
+  canvas.height = maxHeight
 
-	// Initialize game systems with selected mode
-	const renderer = new Renderer(canvas)
-	const input = new InputHandler(mode) // Pass mode for shooting cooldown
-	const engine = new GameEngine(canvas, renderer, input, mode) // Pass mode
+  // Initialize game systems with selected mode
+  const renderer = new Renderer(canvas)
+  const input = new InputHandler(mode) // Pass mode for shooting cooldown
+  const engine = new GameEngine(canvas, renderer, input, mode) // Pass mode
 
-	// Set up callbacks
-	engine.setCallbacks({
-		onScoreChange: (newScore) => {
-			score = newScore
-		},
-		onLivesChange: (newLives) => {
-			lives = newLives
-		},
-		onStatusChange: (newStatus) => {
-			status = newStatus
-		},
-	})
+  // Set up callbacks
+  engine.setCallbacks({
+    onScoreChange: (newScore) => {
+      score = newScore
+    },
+    onLivesChange: (newLives) => {
+      lives = newLives
+    },
+    onStatusChange: (newStatus) => {
+      status = newStatus
+    },
+  })
 
-	// Start game
-	input.start()
-	engine.start()
+  // Start game
+  input.start()
+  engine.start()
 
-	return () => {
-		engine.stop()
-		input.stop()
-	}
+  return () => {
+    engine.stop()
+    input.stop()
+  }
 })
 
 function handleRestart() {
-	// Reset to mode selection screen (no page reload!)
-	mode = null
-	score = 0
-	lives = 3
-	status = 'playing'
+  // Reset to mode selection screen (no page reload!)
+  mode = null
+  score = 0
+  lives = 3
+  status = 'playing'
 }
 </script>
 

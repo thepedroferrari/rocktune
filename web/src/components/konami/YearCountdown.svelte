@@ -9,7 +9,7 @@ import { playBlip, playPowerup } from '$lib/konami/audio/retro-sounds'
 import '../../styles/konami/konami-animations.css'
 
 interface Props {
-	oncomplete?: () => void
+  oncomplete?: () => void
 }
 
 let { oncomplete }: Props = $props()
@@ -24,52 +24,52 @@ let currentYear = $state(START_YEAR)
 let rotationY = $state(0)
 
 onMount(() => {
-	let yearTimer: ReturnType<typeof setInterval> | null = null
-	let rotationFrame: number | null = null
-	let startTime = Date.now()
+  let yearTimer: ReturnType<typeof setInterval> | null = null
+  let rotationFrame: number | null = null
+  let startTime = Date.now()
 
-	// Year countdown interval
-	yearTimer = setInterval(() => {
-		const elapsed = Date.now() - startTime
-		const yearsElapsed = Math.floor(elapsed / MS_PER_YEAR)
-		const newYear = START_YEAR - yearsElapsed
+  // Year countdown interval
+  yearTimer = setInterval(() => {
+    const elapsed = Date.now() - startTime
+    const yearsElapsed = Math.floor(elapsed / MS_PER_YEAR)
+    const newYear = START_YEAR - yearsElapsed
 
-		if (newYear <= END_YEAR) {
-			currentYear = END_YEAR
-			playBlip(END_YEAR)
-			if (yearTimer) clearInterval(yearTimer)
+    if (newYear <= END_YEAR) {
+      currentYear = END_YEAR
+      playBlip(END_YEAR)
+      if (yearTimer) clearInterval(yearTimer)
 
-			// Wait 1 second after final year before starting bloop
-			setTimeout(() => {
-				playPowerup()
-				if (rotationFrame) cancelAnimationFrame(rotationFrame)
-				oncomplete?.()
-			}, 1000)
-		} else if (newYear !== currentYear) {
-			currentYear = newYear
-			playBlip(newYear)
-		}
-	}, MS_PER_YEAR)
+      // Wait 1 second after final year before starting bloop
+      setTimeout(() => {
+        playPowerup()
+        if (rotationFrame) cancelAnimationFrame(rotationFrame)
+        oncomplete?.()
+      }, 1000)
+    } else if (newYear !== currentYear) {
+      currentYear = newYear
+      playBlip(newYear)
+    }
+  }, MS_PER_YEAR)
 
-	// 3D rotation animation (smooth)
-	const animateRotation = () => {
-		const elapsed = Date.now() - startTime
-		const progress = Math.min(elapsed / DURATION_MS, 1)
+  // 3D rotation animation (smooth)
+  const animateRotation = () => {
+    const elapsed = Date.now() - startTime
+    const progress = Math.min(elapsed / DURATION_MS, 1)
 
-		// Oscillating rotation -15 to +15 degrees
-		rotationY = Math.sin(progress * Math.PI * 4) * 15
+    // Oscillating rotation -15 to +15 degrees
+    rotationY = Math.sin(progress * Math.PI * 4) * 15
 
-		if (progress < 1) {
-			rotationFrame = requestAnimationFrame(animateRotation)
-		}
-	}
+    if (progress < 1) {
+      rotationFrame = requestAnimationFrame(animateRotation)
+    }
+  }
 
-	rotationFrame = requestAnimationFrame(animateRotation)
+  rotationFrame = requestAnimationFrame(animateRotation)
 
-	return () => {
-		if (yearTimer) clearInterval(yearTimer)
-		if (rotationFrame) cancelAnimationFrame(rotationFrame)
-	}
+  return () => {
+    if (yearTimer) clearInterval(yearTimer)
+    if (rotationFrame) cancelAnimationFrame(rotationFrame)
+  }
 })
 </script>
 

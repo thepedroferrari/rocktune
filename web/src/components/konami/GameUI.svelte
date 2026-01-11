@@ -5,8 +5,8 @@
  */
 
 interface Props {
-	score: number
-	lives: number
+  score: number
+  lives: number
 }
 
 let { score, lives }: Props = $props()

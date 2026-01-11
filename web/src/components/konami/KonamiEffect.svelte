@@ -15,7 +15,7 @@ import BloatwareBlaster from './BloatwareBlaster.svelte'
 import { playThunk } from '$lib/konami/audio/retro-sounds'
 
 interface Props {
-	onexit?: () => void
+  onexit?: () => void
 }
 
 let { onexit }: Props = $props()
@@ -24,27 +24,27 @@ type Phase = 'countdown' | 'bloop' | 'game'
 let phase: Phase = $state('countdown')
 
 function handleCountdownComplete() {
-	phase = 'bloop'
-	setTimeout(() => playThunk(), 1000) // Delay 1s to sync with bloop animation
+  phase = 'bloop'
+  setTimeout(() => playThunk(), 1000) // Delay 1s to sync with bloop animation
 }
 
 function handleBloopComplete() {
-	phase = 'game'
+  phase = 'game'
 }
 
 // Global ESC handler to exit at any time
 onMount(() => {
-	const handleKeyDown = (e: KeyboardEvent) => {
-		if (e.key === 'Escape') {
-			onexit?.()
-		}
-	}
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      onexit?.()
+    }
+  }
 
-	window.addEventListener('keydown', handleKeyDown)
+  window.addEventListener('keydown', handleKeyDown)
 
-	return () => {
-		window.removeEventListener('keydown', handleKeyDown)
-	}
+  return () => {
+    window.removeEventListener('keydown', handleKeyDown)
+  }
 })
 </script>
 
