@@ -1,216 +1,234 @@
 <script lang="ts">
-/**
- * PresetCard - Holographic battle profile card
- *
- * Features:
- * - Spring physics for smooth 3D tilt effect
- * - Holographic shine/glare layers
- * - Rarity-based color schemes
- * - Intensity bar for risk visualization
- */
+  /**
+   * PresetCard - Holographic battle profile card
+   *
+   * Features:
+   * - Spring physics for smooth 3D tilt effect
+   * - Holographic shine/glare layers
+   * - Rarity-based color schemes
+   * - Intensity bar for risk visualization
+   */
 
-import type { TierBreakdown } from '$lib/presets'
-import type { PresetType } from '$lib/types'
-import { adjust, clamp, round, SPRING_PRESETS, Spring } from '../utils/spring'
+  import type { TierBreakdown } from "$lib/presets";
+  import type { PresetType } from "$lib/types";
+  import {
+    adjust,
+    clamp,
+    round,
+    SPRING_PRESETS,
+    Spring,
+  } from "../utils/spring";
 
-interface Props {
-  preset: PresetType
-  label: string
-  description?: string
-  bestFor?: string
-  rarity?: 'legendary' | 'epic' | 'rare' | 'uncommon' | 'common'
-  intensity?: number
-  riskLevel?: 'low' | 'medium' | 'high'
-  overheadLabel?: string
-  latencyLabel?: string
-  traits?: readonly string[]
-  softwareCount: number
-  optimizationCount?: number
-  tierBreakdown?: TierBreakdown
-  active?: boolean
-  onSelect: (preset: PresetType) => void
-}
-
-const {
-  preset,
-  label,
-  description = '',
-  bestFor = '',
-  rarity = 'common',
-  intensity = 50,
-  riskLevel = 'low',
-  overheadLabel = '',
-  latencyLabel = '',
-  traits = [],
-  softwareCount,
-  optimizationCount = 0,
-  tierBreakdown,
-  active = false,
-  onSelect,
-}: Props = $props()
-
-const riskLabels = {
-  low: 'Low',
-  medium: 'Medium',
-  high: 'High',
-} as const
-const riskText = $derived(
-  riskLevel === 'low'
-    ? preset === 'gamer' || preset === 'streamer'
-      ? 'Safe'
-      : preset === 'pro_gamer'
-        ? 'Low'
-        : riskLabels[riskLevel]
-    : riskLabels[riskLevel],
-)
-
-let rotator: HTMLElement | undefined = $state()
-const springRotate = new Spring({ x: 0, y: 0 }, SPRING_PRESETS.INTERACTIVE)
-const springGlare = new Spring({ x: 50, y: 50, o: 0 }, SPRING_PRESETS.INTERACTIVE)
-const springBackground = new Spring({ x: 50, y: 50 }, SPRING_PRESETS.INTERACTIVE)
-
-let interacting = $state(false)
-let animationId: number | null = null
-
-let pointerX = $state('50%')
-let pointerY = $state('50%')
-let pointerFromCenter = $state('0')
-let pointerFromTop = $state('0.5')
-let pointerFromLeft = $state('0.5')
-let cardOpacity = $state('0')
-let rotateX = $state('0deg')
-let rotateY = $state('0deg')
-let backgroundX = $state('50%')
-let backgroundY = $state('50%')
-let transform = $state('')
-
-function applyStyles() {
-  const glareX = springGlare.current.x
-  const glareY = springGlare.current.y
-  const glareO = springGlare.current.o ?? 0
-
-  const pfc = clamp(Math.sqrt((glareY - 50) ** 2 + (glareX - 50) ** 2) / 50, 0, 1)
-  const pft = glareY / 100
-  const pfl = glareX / 100
-
-  pointerX = `${round(glareX)}%`
-  pointerY = `${round(glareY)}%`
-  pointerFromCenter = round(pfc).toString()
-  pointerFromTop = round(pft).toString()
-  pointerFromLeft = round(pfl).toString()
-  cardOpacity = round(glareO).toString()
-  rotateX = `${round(springRotate.current.x)}deg`
-  rotateY = `${round(springRotate.current.y)}deg`
-  backgroundX = `${round(springBackground.current.x)}%`
-  backgroundY = `${round(springBackground.current.y)}%`
-
-  transform = `rotateY(${round(springRotate.current.x)}deg) rotateX(${round(
-    springRotate.current.y,
-  )}deg)`
-}
-
-function animate() {
-  springRotate.update()
-  springGlare.update()
-  springBackground.update()
-  applyStyles()
-
-  const settled =
-    springRotate.isSettled() && springGlare.isSettled() && springBackground.isSettled()
-
-  if (!settled || interacting) {
-    animationId = requestAnimationFrame(animate)
-  } else {
-    animationId = null
-  }
-}
-
-function startAnimation() {
-  if (animationId === null) {
-    animationId = requestAnimationFrame(animate)
-  }
-}
-
-function handlePointerMove(e: PointerEvent) {
-  if (!rotator) return
-  const rect = rotator.getBoundingClientRect()
-
-  const absolute = {
-    x: e.clientX - rect.left,
-    y: e.clientY - rect.top,
+  interface Props {
+    preset: PresetType;
+    label: string;
+    description?: string;
+    bestFor?: string;
+    rarity?: "legendary" | "epic" | "rare" | "uncommon" | "common";
+    intensity?: number;
+    riskLevel?: "low" | "medium" | "high";
+    overheadLabel?: string;
+    latencyLabel?: string;
+    traits?: readonly string[];
+    softwareCount: number;
+    optimizationCount?: number;
+    tierBreakdown?: TierBreakdown;
+    active?: boolean;
+    onSelect: (preset: PresetType) => void;
   }
 
-  const percent = {
-    x: clamp(round((100 / rect.width) * absolute.x)),
-    y: clamp(round((100 / rect.height) * absolute.y)),
+  const {
+    preset,
+    label,
+    description = "",
+    bestFor = "",
+    rarity = "common",
+    intensity = 50,
+    riskLevel = "low",
+    overheadLabel = "",
+    latencyLabel = "",
+    traits = [],
+    softwareCount,
+    optimizationCount = 0,
+    tierBreakdown,
+    active = false,
+    onSelect,
+  }: Props = $props();
+
+  const riskLabels = {
+    low: "Low",
+    medium: "Medium",
+    high: "High",
+  } as const;
+  const riskText = $derived(
+    riskLevel === "low"
+      ? preset === "gamer" || preset === "streamer"
+        ? "Safe"
+        : preset === "pro_gamer"
+          ? "Low"
+          : riskLabels[riskLevel]
+      : riskLabels[riskLevel],
+  );
+
+  let rotator: HTMLElement | undefined = $state();
+  const springRotate = new Spring({ x: 0, y: 0 }, SPRING_PRESETS.INTERACTIVE);
+  const springGlare = new Spring(
+    { x: 50, y: 50, o: 0 },
+    SPRING_PRESETS.INTERACTIVE,
+  );
+  const springBackground = new Spring(
+    { x: 50, y: 50 },
+    SPRING_PRESETS.INTERACTIVE,
+  );
+
+  let interacting = $state(false);
+  let animationId: number | null = null;
+
+  let pointerX = $state("50%");
+  let pointerY = $state("50%");
+  let pointerFromCenter = $state("0");
+  let pointerFromTop = $state("0.5");
+  let pointerFromLeft = $state("0.5");
+  let cardOpacity = $state("0");
+  let rotateX = $state("0deg");
+  let rotateY = $state("0deg");
+  let backgroundX = $state("50%");
+  let backgroundY = $state("50%");
+  let transform = $state("");
+
+  function applyStyles() {
+    const glareX = springGlare.current.x;
+    const glareY = springGlare.current.y;
+    const glareO = springGlare.current.o ?? 0;
+
+    const pfc = clamp(
+      Math.sqrt((glareY - 50) ** 2 + (glareX - 50) ** 2) / 50,
+      0,
+      1,
+    );
+    const pft = glareY / 100;
+    const pfl = glareX / 100;
+
+    pointerX = `${round(glareX)}%`;
+    pointerY = `${round(glareY)}%`;
+    pointerFromCenter = round(pfc).toString();
+    pointerFromTop = round(pft).toString();
+    pointerFromLeft = round(pfl).toString();
+    cardOpacity = round(glareO).toString();
+    rotateX = `${round(springRotate.current.x)}deg`;
+    rotateY = `${round(springRotate.current.y)}deg`;
+    backgroundX = `${round(springBackground.current.x)}%`;
+    backgroundY = `${round(springBackground.current.y)}%`;
+
+    transform = `rotateY(${round(springRotate.current.x)}deg) rotateX(${round(
+      springRotate.current.y,
+    )}deg)`;
   }
 
-  const center = {
-    x: percent.x - 50,
-    y: percent.y - 50,
-  }
+  function animate() {
+    springRotate.update();
+    springGlare.update();
+    springBackground.update();
+    applyStyles();
 
-  springBackground.set({
-    x: adjust(percent.x, 0, 100, 37, 63),
-    y: adjust(percent.y, 0, 100, 33, 67),
-  })
+    const settled =
+      springRotate.isSettled() &&
+      springGlare.isSettled() &&
+      springBackground.isSettled();
 
-  springRotate.set({
-    x: round(center.x / 3.5),
-    y: round(-(center.y / 3.5)),
-  })
-
-  springGlare.set({
-    x: round(percent.x),
-    y: round(percent.y),
-    o: 1,
-  })
-
-  startAnimation()
-}
-
-function handlePointerEnter() {
-  interacting = true
-  const { stiffness, damping } = SPRING_PRESETS.INTERACTIVE
-  springRotate.stiffness = stiffness
-  springRotate.damping = damping
-  springGlare.stiffness = stiffness
-  springGlare.damping = damping
-  springBackground.stiffness = stiffness
-  springBackground.damping = damping
-  startAnimation()
-}
-
-function handlePointerLeave() {
-  interacting = false
-  const { stiffness, damping } = SPRING_PRESETS.GENTLE
-
-  springRotate.stiffness = stiffness
-  springRotate.damping = damping
-  springRotate.set({ x: 0, y: 0 })
-
-  springGlare.stiffness = stiffness
-  springGlare.damping = damping
-  springGlare.set({ x: 50, y: 50, o: 0 })
-
-  springBackground.stiffness = stiffness
-  springBackground.damping = damping
-  springBackground.set({ x: 50, y: 50 })
-
-  startAnimation()
-}
-
-function handleClick() {
-  onSelect(preset)
-}
-
-$effect(() => {
-  return () => {
-    if (animationId !== null) {
-      cancelAnimationFrame(animationId)
+    if (!settled || interacting) {
+      animationId = requestAnimationFrame(animate);
+    } else {
+      animationId = null;
     }
   }
-})
+
+  function startAnimation() {
+    if (animationId === null) {
+      animationId = requestAnimationFrame(animate);
+    }
+  }
+
+  function handlePointerMove(e: PointerEvent) {
+    if (!rotator) return;
+    const rect = rotator.getBoundingClientRect();
+
+    const absolute = {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    };
+
+    const percent = {
+      x: clamp(round((100 / rect.width) * absolute.x)),
+      y: clamp(round((100 / rect.height) * absolute.y)),
+    };
+
+    const center = {
+      x: percent.x - 50,
+      y: percent.y - 50,
+    };
+
+    springBackground.set({
+      x: adjust(percent.x, 0, 100, 37, 63),
+      y: adjust(percent.y, 0, 100, 33, 67),
+    });
+
+    springRotate.set({
+      x: round(center.x / 3.5),
+      y: round(-(center.y / 3.5)),
+    });
+
+    springGlare.set({
+      x: round(percent.x),
+      y: round(percent.y),
+      o: 1,
+    });
+
+    startAnimation();
+  }
+
+  function handlePointerEnter() {
+    interacting = true;
+    const { stiffness, damping } = SPRING_PRESETS.INTERACTIVE;
+    springRotate.stiffness = stiffness;
+    springRotate.damping = damping;
+    springGlare.stiffness = stiffness;
+    springGlare.damping = damping;
+    springBackground.stiffness = stiffness;
+    springBackground.damping = damping;
+    startAnimation();
+  }
+
+  function handlePointerLeave() {
+    interacting = false;
+    const { stiffness, damping } = SPRING_PRESETS.GENTLE;
+
+    springRotate.stiffness = stiffness;
+    springRotate.damping = damping;
+    springRotate.set({ x: 0, y: 0 });
+
+    springGlare.stiffness = stiffness;
+    springGlare.damping = damping;
+    springGlare.set({ x: 50, y: 50, o: 0 });
+
+    springBackground.stiffness = stiffness;
+    springBackground.damping = damping;
+    springBackground.set({ x: 50, y: 50 });
+
+    startAnimation();
+  }
+
+  function handleClick() {
+    onSelect(preset);
+  }
+
+  $effect(() => {
+    return () => {
+      if (animationId !== null) {
+        cancelAnimationFrame(animationId);
+      }
+    };
+  });
 </script>
 
 <button
@@ -218,6 +236,9 @@ $effect(() => {
   class="preset-card"
   class:active
   class:interacting
+  role="radio"
+  aria-checked={active}
+  aria-label={label}
   data-preset={preset}
   data-rarity={rarity}
   style:--pointer-x={pointerX}
@@ -235,7 +256,7 @@ $effect(() => {
   <div
     bind:this={rotator}
     class="preset-card__rotator"
-    style:transform={transform}
+    style:transform
     onpointermove={handlePointerMove}
     onpointerenter={handlePointerEnter}
     onpointerleave={handlePointerLeave}
@@ -257,12 +278,10 @@ $effect(() => {
         </div>
       </div>
 
-      
       <div class="preset-card__bar">
         <div class="bar-fill" style:--fill={`${intensity}%`}></div>
       </div>
 
-      
       <dl class="preset-card__stats">
         {#if overheadLabel}
           <dt class="stat-label">Overhead</dt>
@@ -276,12 +295,18 @@ $effect(() => {
         {#if tierBreakdown}
           <dd class="stat-value stat-value--breakdown">
             {#if tierBreakdown.risky > 0}
-              <span class="tier-count tier-count--risky" title="Risky">{tierBreakdown.risky}</span>
+              <span class="tier-count tier-count--risky" title="Risky"
+                >{tierBreakdown.risky}</span
+              >
             {/if}
             {#if tierBreakdown.caution > 0}
-              <span class="tier-count tier-count--caution" title="Caution">{tierBreakdown.caution}</span>
+              <span class="tier-count tier-count--caution" title="Caution"
+                >{tierBreakdown.caution}</span
+              >
             {/if}
-            <span class="tier-count tier-count--safe" title="Safe">{tierBreakdown.safe}</span>
+            <span class="tier-count tier-count--safe" title="Safe"
+              >{tierBreakdown.safe}</span
+            >
           </dd>
         {:else}
           <dd class="stat-value">{optimizationCount}</dd>
@@ -293,10 +318,7 @@ $effect(() => {
       </dl>
     </div>
 
-    
     <div class="preset-card__shine"></div>
     <div class="preset-card__glare"></div>
   </div>
 </button>
-
-

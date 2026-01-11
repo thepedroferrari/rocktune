@@ -24,7 +24,7 @@ function handleSelect(preset: PresetType) {
 </script>
 
 <div class="presets-scroll-container">
-  <div class="presets">
+  <div class="presets" role="radiogroup" aria-label="Preset selection">
     {#each PRESET_ORDER as preset (preset)}
       {@const meta = PRESET_META[preset]}
       {@const config = PRESETS[preset]}
@@ -49,5 +49,4 @@ function handleSelect(preset: PresetType) {
     {/each}
   </div>
 </div>
-
 

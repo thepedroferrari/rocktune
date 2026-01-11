@@ -28,6 +28,8 @@ const PROFILE_BADGES = PRESET_ORDER.map((id) => {
   }
 })
 
+const activePreset = $derived(app.activePreset)
+
 function getDefaultSelection(): PackageKey[] {
   return Object.entries(app.software)
     .filter(([, pkg]) => pkg.selected)
@@ -220,6 +222,8 @@ function handleBadgeMouseLeave(event: MouseEvent) {
             type="button"
             class="profile-badge"
             class:profile-badge--default={badge.isDefault}
+            class:profile-badge--active={activePreset === badge.id}
+            aria-pressed={activePreset === badge.id}
             data-rarity={badge.rarity}
             onclick={() => selectAndScroll(badge.id)}
             onmousemove={handleBadgeMouseMove}
@@ -594,6 +598,13 @@ function handleBadgeMouseLeave(event: MouseEvent) {
 
   .profile-badge--default:hover {
     filter: brightness(1.3);
+  }
+
+  .profile-badge--active {
+    text-shadow:
+      0 0 24px var(--rarity-glow),
+      0 0 50px var(--rarity-glow);
+    filter: brightness(1.35);
   }
 
   .profile-badge:active {

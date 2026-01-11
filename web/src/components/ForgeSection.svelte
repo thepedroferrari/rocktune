@@ -18,6 +18,7 @@ import {
   setIncludeTimer,
   setScriptDownloaded,
 } from '$lib/state.svelte'
+import { showToast } from '$lib/toast.svelte'
 import { SCRIPT_FILENAME } from '$lib/types'
 import { downloadText } from '../utils/download'
 import ShareModal from './ShareModal.svelte'
@@ -90,6 +91,7 @@ async function handleCopyHash() {
   const success = await copyToClipboard(checksum)
   if (success) {
     copied = true
+    showToast('SHA-256 hash copied!', 'success')
     setTimeout(() => {
       copied = false
     }, 2000)

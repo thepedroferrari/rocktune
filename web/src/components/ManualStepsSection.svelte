@@ -43,6 +43,8 @@ import {
 } from '$lib/progress.svelte'
 import { buildSectionId } from '$lib/section-ids'
 import { app } from '$lib/state.svelte'
+import { copyToClipboard } from '$lib/checksum'
+import { showToast } from '$lib/toast.svelte'
 import { type StructuredTooltip, tooltip } from '../utils/tooltips'
 import Icon from './ui/Icon.svelte'
 import GuideDetailPanel from './manual-steps/GuideDetailPanel.svelte'
@@ -419,24 +421,13 @@ function getSafety(item: AnyItem): SafetyLevel {
 let copiedId = $state<string | null>(null)
 
 async function copyLaunchOptions(launchOptions: string, gameId: string) {
-  try {
-    await navigator.clipboard.writeText(launchOptions)
-    copiedId = gameId
-    setTimeout(() => {
-      copiedId = null
-    }, 2000)
-  } catch {
-    const textarea = document.createElement('textarea')
-    textarea.value = launchOptions
-    document.body.appendChild(textarea)
-    textarea.select()
-    document.execCommand('copy')
-    document.body.removeChild(textarea)
-    copiedId = gameId
-    setTimeout(() => {
-      copiedId = null
-    }, 2000)
-  }
+  const success = await copyToClipboard(launchOptions)
+  if (!success) return
+  copiedId = gameId
+  showToast('Launch options copied!', 'success')
+  setTimeout(() => {
+    copiedId = null
+  }, 2000)
 }
 
 function scrollToGroup(groupId: string) {
@@ -1015,9 +1006,16 @@ $effect(() => {
             <button
               class="guide__select"
               type="button"
-              aria-label="Sort options"
+              aria-label={`Sort: ${
+                sortBy === "category"
+                  ? "Category"
+                  : sortBy === "impact"
+                    ? "Impact"
+                    : "Difficulty"
+              }`}
               aria-haspopup="listbox"
               aria-expanded={sortOpen}
+              aria-controls="guide-sort-dropdown"
               onclick={() => (sortOpen = !sortOpen)}
             >
               <span class="guide__select-label">
@@ -1038,7 +1036,11 @@ $effect(() => {
               </svg>
             </button>
             {#if sortOpen}
-              <div class="guide__select-dropdown" role="listbox">
+              <div
+                class="guide__select-dropdown"
+                role="listbox"
+                id="guide-sort-dropdown"
+              >
                 <button
                   class="guide__select-option"
                   class:selected={sortBy === "category"}
@@ -1127,9 +1129,18 @@ $effect(() => {
             <button
               class="guide__select"
               type="button"
-              aria-label="Filter options"
+              aria-label={`Show: ${
+                filterBy === "all"
+                  ? "All"
+                  : filterBy === "incomplete"
+                    ? "Incomplete"
+                    : filterBy === "quick-wins"
+                      ? "Quick Wins"
+                      : "High Impact"
+              }`}
               aria-haspopup="listbox"
               aria-expanded={filterOpen}
+              aria-controls="guide-filter-dropdown"
               onclick={() => (filterOpen = !filterOpen)}
             >
               <span class="guide__select-label">
@@ -1152,7 +1163,11 @@ $effect(() => {
               </svg>
             </button>
             {#if filterOpen}
-              <div class="guide__select-dropdown" role="listbox">
+              <div
+                class="guide__select-dropdown"
+                role="listbox"
+                id="guide-filter-dropdown"
+              >
                 <button
                   class="guide__select-option"
                   class:selected={filterBy === "all"}
@@ -1428,7 +1443,7 @@ $effect(() => {
                                       item.game,
                                     )}
                                 >
-                                  {copiedId === item.game ? "✓" : "Copy"}
+                                  {copiedId === item.game ? "Copied" : "Copy"}
                                 </button>
                               </div>
                             {/if}

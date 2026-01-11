@@ -1156,7 +1156,9 @@ function buildFailureModes(
     }
   }
 
-  warnManual(`Missing failureModes for "${item.id}" (required by risk/scope)`, options?.warn)
+  if (assessment.scope !== 'symptomOnly') {
+    warnManual(`Missing failureModes for "${item.id}" (required by risk/scope)`, options?.warn)
+  }
   return [defaultMode]
 }
 

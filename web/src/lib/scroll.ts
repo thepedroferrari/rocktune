@@ -17,6 +17,27 @@ interface ScrollToSectionOptions {
   timeout?: number
 }
 
+const prefersReducedMotion =
+  typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+function resolveBehavior(target: HTMLElement, behavior: ScrollBehavior): ScrollBehavior {
+  if (behavior !== 'smooth') return behavior
+  if (prefersReducedMotion) return 'auto'
+  const distance = Math.abs(target.getBoundingClientRect().top)
+  return distance > 1200 ? 'auto' : 'smooth'
+}
+
+export function scrollToTop(behavior: ScrollBehavior = 'smooth'): void {
+  if (typeof window === 'undefined') return
+  if (behavior !== 'smooth') {
+    window.scrollTo({ top: 0, behavior })
+    return
+  }
+  const distance = Math.abs(window.scrollY)
+  const resolvedBehavior = prefersReducedMotion || distance > 1200 ? 'auto' : 'smooth'
+  window.scrollTo({ top: 0, behavior: resolvedBehavior })
+}
+
 /**
  * Scroll to a section, waiting for it to exist and render if needed
  *
@@ -49,7 +70,8 @@ export async function scrollToSection({
 
   // If element exists and has content, scroll immediately
   if (target && target.offsetHeight > 0) {
-    target.scrollIntoView({ behavior, block })
+    const resolvedBehavior = resolveBehavior(target, behavior)
+    target.scrollIntoView({ behavior: resolvedBehavior, block })
     return true
   }
 
@@ -73,7 +95,8 @@ export async function scrollToSection({
 
         // Use requestAnimationFrame to ensure layout is complete
         requestAnimationFrame(() => {
-          el.scrollIntoView({ behavior, block })
+          const resolvedBehavior = resolveBehavior(el, behavior)
+          el.scrollIntoView({ behavior: resolvedBehavior, block })
           resolve(true)
         })
       }

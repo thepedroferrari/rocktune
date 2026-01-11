@@ -11,7 +11,7 @@
 
 import { slide } from 'svelte/transition'
 import { preloadSection, type SectionId } from '../lib/preload'
-import { scrollToSection } from '../lib/scroll'
+import { scrollToSection, scrollToTop } from '../lib/scroll'
 import ShareModal from './ShareModal.svelte'
 
 let shareModalOpen = $state(false)
@@ -123,7 +123,7 @@ function handleMobileShare() {
     type="button"
     class="nav-brand"
     aria-label="RockTune - Back to top"
-    onclick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+    onclick={() => scrollToTop()}
   >
     <svg class="brand-icon" viewBox="0 0 24 24" fill="currentColor">
       <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />

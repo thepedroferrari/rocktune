@@ -8,6 +8,16 @@
 import CpuSelector from './CpuSelector.svelte'
 import DriverCards from './DriverCards.svelte'
 import GpuSelector from './GpuSelector.svelte'
+
+let helpOpen = $state(false)
+
+function toggleHelp() {
+  helpOpen = !helpOpen
+}
+
+function closeHelp() {
+  helpOpen = false
+}
 </script>
 
 <section id="hardware" class="step">
@@ -21,8 +31,10 @@ import GpuSelector from './GpuSelector.svelte'
       <button
         type="button"
         class="step-banner__action"
-        popovertarget="hardware-help"
+        aria-expanded={helpOpen}
+        aria-controls="hardware-help"
         style="anchor-name: --hw-help-anchor"
+        onclick={toggleHelp}
       >
         Don't know your specs?
         <svg
@@ -41,7 +53,16 @@ import GpuSelector from './GpuSelector.svelte'
     </div>
   </header>
 
-  <div id="hardware-help" popover class="hardware-help-panel">
+  <div
+    id="hardware-help"
+    class="hardware-help-panel"
+    role="dialog"
+    aria-label="Hardware help"
+    hidden={!helpOpen}
+  >
+    <button type="button" class="hardware-help-panel__close" onclick={closeHelp}>
+      Close
+    </button>
     <section class="help-section">
       <h3>How to find your CPU</h3>
       <p>
