@@ -270,75 +270,75 @@ function Show-RockTuneFinalChecklist {
         @{
             Title = "FIRST STEPS"
             Lines = @(
-                "[ ] Confirm the tools are open",
-                "    - CapFrameX is running",
-                "    - Unigine Superposition is open",
-                "    - LatencyMon is open"
+                '[ ] Confirm the tools are open',
+                '    - CapFrameX is running',
+                '    - Unigine Superposition is open',
+                '    - LatencyMon is open'
             )
         },
         @{
             Title = "CONFIGURE CAPFRAMEX (ONCE)"
             Lines = @(
-                "[ ] Capture API: PresentMon",
-                "[ ] Capture duration: 60s",
-                "[ ] Start delay: 3s",
-                "[ ] Hotkey: F11 (start/stop capture)"
+                '[ ] Capture API: PresentMon',
+                '[ ] Capture duration: 60s',
+                '[ ] Start delay: 3s',
+                '[ ] Hotkey: F11 (start/stop capture)'
             )
         },
         @{
             Title = "CONFIGURE SUPERPOSITION (ONCE)"
             Lines = @(
-                "[ ] Preset: 1080p Medium",
-                "[ ] Fullscreen: On",
-                "[ ] VSync: Off"
+                '[ ] Preset: 1080p Medium',
+                '[ ] Fullscreen: On',
+                '[ ] VSync: Off'
             )
         },
         @{
             Title = "BEFORE CHANGES"
             Lines = @(
-                "[ ] Warm-up run (no capture)",
-                "    - Click RUN in Superposition",
-                "    - Let the run finish",
-                "[ ] Captured runs (before)",
-                "    - Press F11 at start, F11 at end",
-                "    - Do 2 valid runs; discard first if shader compilation occurs"
+                '[ ] Warm-up run (no capture)',
+                '    - Click RUN in Superposition',
+                '    - Let the run finish',
+                '[ ] Captured runs (before)',
+                '    - Press F11 at start, F11 at end',
+                '    - Do 2 valid runs; discard first if shader compilation occurs'
             )
         },
         @{
             Title = "LATENCYMON"
             Lines = @(
-                "[ ] Click Start, run for ~5 minutes",
-                "    - Screenshot Main tab",
-                "    - Screenshot Drivers tab"
+                '[ ] Click Start, run for ~5 minutes',
+                '    - Screenshot Main tab',
+                '    - Screenshot Drivers tab'
             )
         },
         @{
             Title = "APPLY ROCKTUNE CHANGES"
             Lines = @(
-                "[ ] Run your optimization flow",
-                "[ ] Reboot if requested"
+                '[ ] Run your optimization flow',
+                '[ ] Reboot if requested'
             )
         },
         @{
             Title = "AFTER CHANGES"
             Lines = @(
-                "[ ] Repeat the captured runs",
-                "    - Same settings, same steps, same number of runs"
+                '[ ] Repeat the captured runs',
+                '    - Same settings, same steps, same number of runs'
             )
         },
         @{
             Title = "EXPORT EVIDENCE"
             Lines = @(
-                "[ ] CapFrameX -> Analysis -> Aggregate",
-                "[ ] Export CSV + HTML summary"
+                '[ ] CapFrameX -> Analysis -> Aggregate',
+                '[ ] Export CSV + HTML summary'
             )
         },
         @{
             Title = "OPTIONAL INPUT LAG (FREE METHOD)"
             Lines = @(
-                "[ ] Record 10 clicks at 240fps",
-                "[ ] Count frames from click to pixel change",
-                "[ ] 1 frame at 240fps = 4.17ms"
+                '[ ] Record 10 clicks at 240fps',
+                '[ ] Count frames from click to pixel change',
+                '[ ] 1 frame at 240fps = 4.17ms'
             )
         }
     )

@@ -294,6 +294,11 @@ export const OPT_ID_TO_VALUE: Record<number, OptimizationKey | null> = {
   105: 'amd_ulps_disable',
   106: 'nvidia_p0_state',
   107: 'network_binding_strip',
+  108: 'nic_interrupt_mod',
+  109: 'nic_flow_control',
+  110: 'nic_energy_efficient',
+  111: 'browser_background',
+  112: 'scheduled_tasks_gaming',
 }
 
 export const OPT_VALUE_TO_ID: Record<OptimizationKey, number> = Object.fromEntries(
