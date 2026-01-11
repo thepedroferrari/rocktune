@@ -249,26 +249,29 @@ function Set-AudioDeviceProperties {
             Write-Log "  Open Sound settings > Device properties > Additional device properties" "INFO"
         }
 
-        # Spatial audio
+        # Spatial audio (uses protected registry - requires ownership change)
         if ($DisableSpatialAudio) {
             $spatialPath = Join-Path $devicePath "FxProperties"
-            Set-RegistryValue -Path $spatialPath -Name "{e4870e26-3cc5-4cd2-ba46-ca0a9a70ed04},3" -Value 0 -Type "DWORD"
-            $changesMade = $true
-            Write-Log "  ✓ Spatial audio disabled" "INFO"
+            if (Set-ProtectedRegistryValue -Path $spatialPath -Name "{e4870e26-3cc5-4cd2-ba46-ca0a9a70ed04},3" -Value 0 -Type "DWORD") {
+                $changesMade = $true
+                Write-Log "  ✓ Spatial audio disabled" "INFO"
+            }
         }
 
-        # Exclusive mode
+        # Exclusive mode (uses protected registry - requires ownership change)
         if ($EnableExclusiveMode) {
-            Set-RegistryValue -Path $devicePath -Name "PKEY_AudioEndpoint_Disable_SysFx" -Value 0 -Type "DWORD"
-            $changesMade = $true
-            Write-Log "  ✓ Exclusive mode enabled" "INFO"
+            if (Set-ProtectedRegistryValue -Path $devicePath -Name "PKEY_AudioEndpoint_Disable_SysFx" -Value 0 -Type "DWORD") {
+                $changesMade = $true
+                Write-Log "  ✓ Exclusive mode enabled" "INFO"
+            }
         }
 
-        # Audio enhancements
+        # Audio enhancements (uses protected registry - requires ownership change)
         if ($DisableEnhancements) {
-            Set-RegistryValue -Path $devicePath -Name "{fc52a749-4be9-4510-896e-966ba6525980},3" -Value 0 -Type "DWORD"
-            $changesMade = $true
-            Write-Log "  ✓ Audio enhancements disabled" "INFO"
+            if (Set-ProtectedRegistryValue -Path $devicePath -Name "{fc52a749-4be9-4510-896e-966ba6525980},3" -Value 0 -Type "DWORD") {
+                $changesMade = $true
+                Write-Log "  ✓ Audio enhancements disabled" "INFO"
+            }
         }
 
         if ($changesMade) {

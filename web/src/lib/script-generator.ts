@@ -331,6 +331,129 @@ function Set-Reg-Verified {
         else { Write-Warn "$Label (expected $Value, got $after)" }
     } else { Write-Fail "$Label" }
 }
+function Set-ProtectedRegValue {
+    # Sets a registry value on ACL-protected keys (like audio device keys)
+    # by temporarily taking ownership and granting admin permissions
+    param([string]$Path, [string]$Name, $Value, [string]$Type = "DWORD", [switch]$PassThru)
+
+    $success = $false
+    $originalOwner = $null
+    $originalAcl = $null
+
+    try {
+        # First try normal registry write
+        if (-not (Test-Path $Path)) {
+            New-Item -Path $Path -Force -ErrorAction Stop | Out-Null
+        }
+        New-ItemProperty -Path $Path -Name $Name -Value $Value -PropertyType $Type -Force -ErrorAction Stop | Out-Null
+        $success = $true
+    } catch [System.Security.SecurityException], [System.UnauthorizedAccessException] {
+        # Need to take ownership and grant permissions
+        try {
+            # Convert PowerShell path to registry key path
+            $regPath = $Path -replace '^HKLM:\\\\', 'HKEY_LOCAL_MACHINE\\' -replace '^HKCU:\\\\', 'HKEY_CURRENT_USER\\'
+            $regPath = $regPath -replace '^Microsoft.PowerShell.Core\\\\Registry::', ''
+
+            # Determine the hive and subpath
+            if ($regPath -match '^HKEY_LOCAL_MACHINE\\\\(.+)$') {
+                $hive = [Microsoft.Win32.Registry]::LocalMachine
+                $subKey = $Matches[1]
+            } elseif ($regPath -match '^HKEY_CURRENT_USER\\\\(.+)$') {
+                $hive = [Microsoft.Win32.Registry]::CurrentUser
+                $subKey = $Matches[1]
+            } else {
+                throw "Unsupported registry hive: $regPath"
+            }
+
+            # Enable SeRestorePrivilege and SeTakeOwnershipPrivilege
+            $tokenPriv = @'
+using System;
+using System.Runtime.InteropServices;
+public class TokenPriv {
+    [DllImport("advapi32.dll", SetLastError=true)]
+    public static extern bool OpenProcessToken(IntPtr ProcessHandle, uint DesiredAccess, out IntPtr TokenHandle);
+    [DllImport("advapi32.dll", SetLastError=true)]
+    public static extern bool LookupPrivilegeValue(string lpSystemName, string lpName, out long lpLuid);
+    [DllImport("advapi32.dll", SetLastError=true)]
+    public static extern bool AdjustTokenPrivileges(IntPtr TokenHandle, bool DisableAllPrivileges, ref TOKEN_PRIVILEGES NewState, uint BufferLength, IntPtr PreviousState, IntPtr ReturnLength);
+    [StructLayout(LayoutKind.Sequential)]
+    public struct TOKEN_PRIVILEGES {
+        public uint PrivilegeCount;
+        public long Luid;
+        public uint Attributes;
+    }
+    public const uint SE_PRIVILEGE_ENABLED = 0x00000002;
+    public const uint TOKEN_ADJUST_PRIVILEGES = 0x0020;
+    public const uint TOKEN_QUERY = 0x0008;
+
+    public static void EnablePrivilege(string privilege) {
+        IntPtr hToken;
+        if (!OpenProcessToken(System.Diagnostics.Process.GetCurrentProcess().Handle, TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, out hToken))
+            return;
+        TOKEN_PRIVILEGES tp = new TOKEN_PRIVILEGES();
+        tp.PrivilegeCount = 1;
+        tp.Attributes = SE_PRIVILEGE_ENABLED;
+        if (!LookupPrivilegeValue(null, privilege, out tp.Luid))
+            return;
+        AdjustTokenPrivileges(hToken, false, ref tp, 0, IntPtr.Zero, IntPtr.Zero);
+    }
+}
+'@
+            if (-not ([System.Management.Automation.PSTypeName]'TokenPriv').Type) {
+                Add-Type -TypeDefinition $tokenPriv -Language CSharp
+            }
+            [TokenPriv]::EnablePrivilege("SeTakeOwnershipPrivilege")
+            [TokenPriv]::EnablePrivilege("SeRestorePrivilege")
+
+            # Open the key with TakeOwnership permission
+            $key = $hive.OpenSubKey($subKey, [Microsoft.Win32.RegistryKeyPermissionCheck]::ReadWriteSubTree,
+                [System.Security.AccessControl.RegistryRights]::TakeOwnership)
+
+            if ($null -eq $key) {
+                throw "Cannot open registry key for ownership: $subKey"
+            }
+
+            # Save original ACL
+            $originalAcl = $key.GetAccessControl()
+            $originalOwner = $originalAcl.GetOwner([System.Security.Principal.NTAccount])
+
+            # Take ownership as Administrators
+            $adminSid = New-Object System.Security.Principal.SecurityIdentifier("S-1-5-32-544")
+            $acl = $key.GetAccessControl([System.Security.AccessControl.AccessControlSections]::Owner)
+            $acl.SetOwner($adminSid)
+            $key.SetAccessControl($acl)
+            $key.Close()
+
+            # Re-open with ChangePermissions
+            $key = $hive.OpenSubKey($subKey, [Microsoft.Win32.RegistryKeyPermissionCheck]::ReadWriteSubTree,
+                [System.Security.AccessControl.RegistryRights]::ChangePermissions)
+
+            # Grant Administrators full control
+            $acl = $key.GetAccessControl()
+            $rule = New-Object System.Security.AccessControl.RegistryAccessRule(
+                $adminSid,
+                [System.Security.AccessControl.RegistryRights]::FullControl,
+                [System.Security.AccessControl.InheritanceFlags]::None,
+                [System.Security.AccessControl.PropagationFlags]::None,
+                [System.Security.AccessControl.AccessControlType]::Allow)
+            $acl.AddAccessRule($rule)
+            $key.SetAccessControl($acl)
+            $key.Close()
+
+            # Now set the value
+            New-ItemProperty -Path $Path -Name $Name -Value $Value -PropertyType $Type -Force -ErrorAction Stop | Out-Null
+            $success = $true
+
+        } catch {
+            # Fallback failed - report it
+            Write-Warn "Cannot modify protected key: $Path\\$Name"
+        }
+    } catch {
+        Write-ErrorLog "Protected Registry: $Path\\$Name" $_
+    }
+
+    if ($PassThru) { return $success }
+}
 function Disable-Task {
     param([string]$TaskPath, [string]$Label)
     try {
@@ -795,21 +918,24 @@ function Set-AudioDeviceProperties {
         # Sample rate/bit depth require complex binary values - manual config only
         Write-Warn "Sample rate/bit depth: Configure manually in Sound settings (Advanced → Default Format)"
 
-        # Spatial audio
+        # Spatial audio (uses protected registry - requires ownership change)
         if ($DisableSpatialAudio) {
             $spatialPath = Join-Path $devicePath "FxProperties"
-            New-ItemProperty -Path $spatialPath -Name "{e4870e26-3cc5-4cd2-ba46-ca0a9a70ed04},3" -Value 0 -PropertyType DWORD -Force | Out-Null
-            Write-OK "Spatial audio disabled"
+            if (Set-ProtectedRegValue -Path $spatialPath -Name "{e4870e26-3cc5-4cd2-ba46-ca0a9a70ed04},3" -Value 0 -PassThru) {
+                Write-OK "Spatial audio disabled"
+            }
         }
-        # Exclusive mode
+        # Exclusive mode (uses protected registry - requires ownership change)
         if ($EnableExclusiveMode) {
-            New-ItemProperty -Path $devicePath -Name "PKEY_AudioEndpoint_Disable_SysFx" -Value 0 -PropertyType DWORD -Force | Out-Null
-            Write-OK "Exclusive mode enabled"
+            if (Set-ProtectedRegValue -Path $devicePath -Name "PKEY_AudioEndpoint_Disable_SysFx" -Value 0 -PassThru) {
+                Write-OK "Exclusive mode enabled"
+            }
         }
-        # Audio enhancements
+        # Audio enhancements (uses protected registry - requires ownership change)
         if ($DisableEnhancements) {
-            New-ItemProperty -Path $devicePath -Name "{fc52a749-4be9-4510-896e-966ba6525980},3" -Value 0 -PropertyType DWORD -Force | Out-Null
-            Write-OK "Audio enhancements disabled"
+            if (Set-ProtectedRegValue -Path $devicePath -Name "{fc52a749-4be9-4510-896e-966ba6525980},3" -Value 0 -PassThru) {
+                Write-OK "Audio enhancements disabled"
+            }
         }
         Write-OK "Audio device configured (restart audio service or reboot to apply)"
     } catch { Write-Warn "Failed to configure audio device: $_" }
