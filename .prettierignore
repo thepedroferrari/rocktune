@@ -1,0 +1,21 @@
+# Prettier ignore - Prevent auto-formatting of PowerShell files
+# PowerShell has strict syntax requirements (e.g., here-string terminators at column 1)
+
+# PowerShell files
+*.ps1
+*.psm1
+*.psd1
+
+# Build outputs
+dist/
+node_modules/
+.svelte-kit/
+
+# Generated files
+web/public/run.ps1
+web/dist/
+
+# Lock files
+pnpm-lock.yaml
+package-lock.json
+deno.lock

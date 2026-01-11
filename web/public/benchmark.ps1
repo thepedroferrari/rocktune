@@ -246,6 +246,9 @@ function Show-RockTuneFinalChecklist {
         return (" " * $pad)
     }
 
+    # WARNING: Do NOT auto-format this section!
+    # The closing '@' MUST be at column 1 (no indentation) for PowerShell here-string syntax.
+    # IDEs/formatters that indent this line will break the script.
     $banner = @'
   ____   ___   ____ _  __ _______ _   _ _   _ _____
  |  _ \ / _ \ / ___| |/ /|_   _| | | | | \ | | ____|

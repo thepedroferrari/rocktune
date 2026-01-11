@@ -1,0 +1,49 @@
+# EditorConfig - Prevent formatters from breaking PowerShell syntax
+# https://editorconfig.org
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# PowerShell files - DO NOT AUTO-FORMAT
+# Critical: Here-string terminators ('@ or "@) MUST be at column 1
+[*.ps1]
+indent_style = space
+indent_size = 4
+trim_trailing_whitespace = false
+# Disable auto-formatting in most IDEs
+max_line_length = off
+
+[*.psm1]
+indent_style = space
+indent_size = 4
+trim_trailing_whitespace = false
+max_line_length = off
+
+# TypeScript/JavaScript
+[*.{ts,js,mjs,cjs}]
+indent_style = space
+indent_size = 2
+
+# Svelte
+[*.svelte]
+indent_style = space
+indent_size = 2
+
+# JSON
+[*.json]
+indent_style = space
+indent_size = 2
+
+# YAML
+[*.{yml,yaml}]
+indent_style = space
+indent_size = 2
+
+# Markdown
+[*.md]
+trim_trailing_whitespace = false
