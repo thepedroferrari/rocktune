@@ -246,17 +246,13 @@ function Show-RockTuneFinalChecklist {
         return (" " * $pad)
     }
 
-    # WARNING: Do NOT auto-format this section!
-    # The here-string closing marker MUST be at column 1 (no indentation).
-    # IDEs/formatters that indent this line will break the script.
-    $banner = @'
-  ____   ___   ____ _  __ _______ _   _ _   _ _____
- |  _ \ / _ \ / ___| |/ /|_   _| | | | | \ | | ____|
- | |_) | | | | |   | ' /   | | | | | | |  \| |  _|
- |  _ <| |_| | |___| . \   | | | |_| | | |\  | |___
- |_| \_\\___/ \____|_|\_\  |_|  \___/|_|_| \_|_____|
-'@
-    $bannerLines = $banner -split "`n"
+    $bannerLines = @(
+        "  ____   ___   ____ _  __ _______ _   _ _   _ _____",
+        " |  _ \ / _ \ / ___| |/ /|_   _| | | | | \ | | ____|",
+        " | |_) | | | | |   | ' /   | | | | | | |  \| |  _|",
+        " |  _ `<| |_| | |___| . \   | | | |_| | | |\  | |___",
+        " |_| \_\\___/ \____|_|\_\  |_|  \___/|_|_| \_|_____|"
+    )
 
     $bannerMax = ($bannerLines | Measure-Object -Property Length -Maximum).Maximum
     $bannerPad = Get-LeftPad -Width $consoleWidth -MaxLineLength $bannerMax

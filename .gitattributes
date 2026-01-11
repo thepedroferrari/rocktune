@@ -3,10 +3,10 @@
 # Auto-detect text files and normalize to LF
 * text=auto eol=lf
 
-# PowerShell files - LF line endings (PowerShell Core handles both CRLF and LF)
-*.ps1 text eol=lf
-*.psm1 text eol=lf
-*.psd1 text eol=lf
+# PowerShell files - Do NOT normalize (keep as-is to prevent syntax issues)
+*.ps1 -text
+*.psm1 -text
+*.psd1 -text
 
 # Explicitly mark as text
 *.ts text
