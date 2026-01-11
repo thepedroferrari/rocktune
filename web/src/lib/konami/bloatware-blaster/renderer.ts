@@ -78,40 +78,35 @@ export class Renderer {
     );
 
     // Draw evil eyes in TOP-LEFT red pane
-    const eyeRadius = paneWidth * 0.15;
-    const eyeSpacing = paneWidth * 0.4;
+    const eyeRadius = paneWidth * 0.22; // Bigger eyes
+    const eyeSpacing = paneWidth * 0.5; // More spacing
     const eyeCenterY = y + paneHeight / 2;
     const leftEyeX = x + paneWidth / 2 - eyeSpacing / 2;
     const rightEyeX = x + paneWidth / 2 + eyeSpacing / 2;
 
-    // Left eye
-    this.ctx.fillStyle = "oklch(0.60 0.40 10)";
+    // Left eye - bright yellow outer
+    this.ctx.fillStyle = "oklch(0.95 0.35 100)"; // Bright yellow
     this.ctx.beginPath();
     this.ctx.arc(leftEyeX, eyeCenterY, eyeRadius, 0, Math.PI * 2);
     this.ctx.fill();
 
-    // Left eye glow
-    this.ctx.shadowBlur = size * 0.15;
-    this.ctx.shadowColor = "oklch(0.80 0.45 10)";
-    this.ctx.fillStyle = "oklch(0.80 0.45 10)";
+    // Left eye - dark red pupil
+    this.ctx.fillStyle = "oklch(0.30 0.40 10)"; // Dark red
     this.ctx.beginPath();
-    this.ctx.arc(leftEyeX, eyeCenterY, eyeRadius * 0.6, 0, Math.PI * 2);
+    this.ctx.arc(leftEyeX, eyeCenterY, eyeRadius * 0.5, 0, Math.PI * 2);
     this.ctx.fill();
 
-    // Right eye
-    this.ctx.fillStyle = "oklch(0.60 0.40 10)";
+    // Right eye - bright yellow outer
+    this.ctx.fillStyle = "oklch(0.95 0.35 100)"; // Bright yellow
     this.ctx.beginPath();
     this.ctx.arc(rightEyeX, eyeCenterY, eyeRadius, 0, Math.PI * 2);
     this.ctx.fill();
 
-    // Right eye glow
-    this.ctx.fillStyle = "oklch(0.80 0.45 10)";
+    // Right eye - dark red pupil
+    this.ctx.fillStyle = "oklch(0.30 0.40 10)"; // Dark red
     this.ctx.beginPath();
-    this.ctx.arc(rightEyeX, eyeCenterY, eyeRadius * 0.6, 0, Math.PI * 2);
+    this.ctx.arc(rightEyeX, eyeCenterY, eyeRadius * 0.5, 0, Math.PI * 2);
     this.ctx.fill();
-
-    // Reset shadow
-    this.ctx.shadowBlur = 0;
 
     this.ctx.restore();
   }

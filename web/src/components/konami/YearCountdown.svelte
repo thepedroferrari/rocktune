@@ -39,14 +39,12 @@ onMount(() => {
 			playBlip(END_YEAR)
 			if (yearTimer) clearInterval(yearTimer)
 
-			// Wait 500ms after final year, play powerup, then call oncomplete
+			// Wait 1 second after final year before starting bloop
 			setTimeout(() => {
 				playPowerup()
 				if (rotationFrame) cancelAnimationFrame(rotationFrame)
-				setTimeout(() => {
-					oncomplete?.()
-				}, 500)
-			}, 500)
+				oncomplete?.()
+			}, 1000)
 		} else if (newYear !== currentYear) {
 			currentYear = newYear
 			playBlip(newYear)

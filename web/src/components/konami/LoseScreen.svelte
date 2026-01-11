@@ -102,6 +102,7 @@ const konamiState = getKonamiState()
 
 	.stat {
 		font-family: var(--font-mono);
+		text-align: center;
 	}
 
 	.stat-label {

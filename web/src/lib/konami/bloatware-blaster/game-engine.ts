@@ -29,7 +29,7 @@ const INVADER_DROP_DISTANCE = 20;
 const MAX_PLAYER_BULLETS = 10;
 const MAX_ENEMY_BULLETS = 20;
 const ENEMY_SHOOT_DELAY = 60; // frames
-const ENEMY_SHOOT_CHANCE = 0.1; // 10% per frame
+const ENEMY_SHOOT_CHANCE = 0.25; // 25% per frame
 const SHIELD_COUNT = 4;
 const SHIELD_START_X = 150;
 const SHIELD_Y = 450;
@@ -58,6 +58,8 @@ export class GameEngine {
   private invaderSpeed = INVADER_BASE_SPEED;
   private moveTimer = 0;
   private enemyShootTimer = 0;
+  private gameStartTime = 0;
+  private gameTime = 0; // seconds
 
   // Animation loop
   private lastTime = 0;
@@ -120,6 +122,7 @@ export class GameEngine {
 
   start(): void {
     this.lastTime = performance.now();
+    this.gameStartTime = this.lastTime;
     this.loop(this.lastTime);
   }
 
@@ -155,6 +158,9 @@ export class GameEngine {
   };
 
   private update(dt: number): void {
+    // Update game time
+    this.gameTime = (performance.now() - this.gameStartTime) / 1000;
+
     // Update player
     this.player.update(dt, this.input.getKeys(), this.canvas.width);
 
@@ -313,6 +319,27 @@ export class GameEngine {
     // Check if all invaders destroyed (win)
     const aliveCount = this.invaders.filter((inv) => inv.alive).length;
     if (aliveCount === 0) {
+      // Calculate final score with multipliers
+      const basePoints = this.score;
+      const livesBonus = this.lives * 100; // 100 points per life
+      const shieldHealth = this.shields.reduce(
+        (sum, shield) => sum + shield.health,
+        0,
+      );
+      const shieldBonus = shieldHealth * 10; // 10 points per shield health point
+
+      // Time bonus: faster = better (max 2x multiplier if under 30s, decreasing to 1x at 120s)
+      const timeMultiplier = Math.max(
+        1,
+        2 - this.gameTime / 120,
+      );
+
+      // Final score = (base + bonuses) * time multiplier
+      this.score = Math.round(
+        (basePoints + livesBonus + shieldBonus) * timeMultiplier,
+      );
+      this.onScoreChange?.(this.score);
+
       this.status = "won";
       this.onStatusChange?.(this.status);
       this.stop();
