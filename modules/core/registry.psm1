@@ -434,10 +434,168 @@ function Test-RegistryValueExists {
 }
 
 
+function Set-ProtectedRegistryValue {
+    <#
+    .SYNOPSIS
+        Sets a registry value on ACL-protected keys by temporarily taking ownership.
+    .DESCRIPTION
+        Some registry keys (like audio device keys under MMDevices) are owned by
+        TrustedInstaller and have restrictive ACLs. This function temporarily takes
+        ownership, grants admin permissions, sets the value, then optionally restores
+        the original ACL.
+    .PARAMETER Path
+        Registry key path (HKLM:\ or HKCU:\).
+    .PARAMETER Name
+        Registry value name.
+    .PARAMETER Value
+        Registry value data.
+    .PARAMETER Type
+        Registry value type (DWORD, String, etc).
+    .OUTPUTS
+        [bool] True on success, false on failure.
+    .NOTES
+        Requires Administrator. Enables SeTakeOwnershipPrivilege and SeRestorePrivilege.
+    #>
+
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$Path,
+
+        [Parameter(Mandatory=$true)]
+        [string]$Name,
+
+        [Parameter(Mandatory=$true)]
+        [object]$Value,
+
+        [string]$Type = "DWORD"
+    )
+
+    $success = $false
+
+    try {
+        # First try normal registry write
+        if (-not (Test-Path $Path)) {
+            New-Item -Path $Path -Force -ErrorAction Stop | Out-Null
+        }
+        New-ItemProperty -Path $Path -Name $Name -Value $Value -PropertyType $Type -Force -ErrorAction Stop | Out-Null
+        Write-Log "Set protected registry value: $Path\$Name = $Value ($Type)" "SUCCESS"
+        $success = $true
+    }
+    catch [System.Security.SecurityException], [System.UnauthorizedAccessException] {
+        # Need to take ownership and grant permissions
+        try {
+            # Convert PowerShell path to registry key path
+            $regPath = $Path -replace '^HKLM:\\', 'HKEY_LOCAL_MACHINE\' -replace '^HKCU:\\', 'HKEY_CURRENT_USER\'
+            $regPath = $regPath -replace '^Microsoft.PowerShell.Core\\Registry::', ''
+
+            # Determine the hive and subpath
+            if ($regPath -match '^HKEY_LOCAL_MACHINE\\(.+)$') {
+                $hive = [Microsoft.Win32.Registry]::LocalMachine
+                $subKey = $Matches[1]
+            }
+            elseif ($regPath -match '^HKEY_CURRENT_USER\\(.+)$') {
+                $hive = [Microsoft.Win32.Registry]::CurrentUser
+                $subKey = $Matches[1]
+            }
+            else {
+                throw "Unsupported registry hive: $regPath"
+            }
+
+            # Enable SeRestorePrivilege and SeTakeOwnershipPrivilege
+            $tokenPriv = @'
+using System;
+using System.Runtime.InteropServices;
+public class TokenPrivilege {
+    [DllImport("advapi32.dll", SetLastError=true)]
+    public static extern bool OpenProcessToken(IntPtr ProcessHandle, uint DesiredAccess, out IntPtr TokenHandle);
+    [DllImport("advapi32.dll", SetLastError=true)]
+    public static extern bool LookupPrivilegeValue(string lpSystemName, string lpName, out long lpLuid);
+    [DllImport("advapi32.dll", SetLastError=true)]
+    public static extern bool AdjustTokenPrivileges(IntPtr TokenHandle, bool DisableAllPrivileges, ref TOKEN_PRIVILEGES NewState, uint BufferLength, IntPtr PreviousState, IntPtr ReturnLength);
+    [StructLayout(LayoutKind.Sequential)]
+    public struct TOKEN_PRIVILEGES {
+        public uint PrivilegeCount;
+        public long Luid;
+        public uint Attributes;
+    }
+    public const uint SE_PRIVILEGE_ENABLED = 0x00000002;
+    public const uint TOKEN_ADJUST_PRIVILEGES = 0x0020;
+    public const uint TOKEN_QUERY = 0x0008;
+
+    public static void EnablePrivilege(string privilege) {
+        IntPtr hToken;
+        if (!OpenProcessToken(System.Diagnostics.Process.GetCurrentProcess().Handle, TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, out hToken))
+            return;
+        TOKEN_PRIVILEGES tp = new TOKEN_PRIVILEGES();
+        tp.PrivilegeCount = 1;
+        tp.Attributes = SE_PRIVILEGE_ENABLED;
+        if (!LookupPrivilegeValue(null, privilege, out tp.Luid))
+            return;
+        AdjustTokenPrivileges(hToken, false, ref tp, 0, IntPtr.Zero, IntPtr.Zero);
+    }
+}
+'@
+            if (-not ([System.Management.Automation.PSTypeName]'TokenPrivilege').Type) {
+                Add-Type -TypeDefinition $tokenPriv -Language CSharp
+            }
+            [TokenPrivilege]::EnablePrivilege("SeTakeOwnershipPrivilege")
+            [TokenPrivilege]::EnablePrivilege("SeRestorePrivilege")
+
+            # Open the key with TakeOwnership permission
+            $key = $hive.OpenSubKey($subKey, [Microsoft.Win32.RegistryKeyPermissionCheck]::ReadWriteSubTree,
+                [System.Security.AccessControl.RegistryRights]::TakeOwnership)
+
+            if ($null -eq $key) {
+                throw "Cannot open registry key for ownership: $subKey"
+            }
+
+            # Take ownership as Administrators
+            $adminSid = New-Object System.Security.Principal.SecurityIdentifier("S-1-5-32-544")
+            $acl = $key.GetAccessControl([System.Security.AccessControl.AccessControlSections]::Owner)
+            $acl.SetOwner($adminSid)
+            $key.SetAccessControl($acl)
+            $key.Close()
+
+            # Re-open with ChangePermissions
+            $key = $hive.OpenSubKey($subKey, [Microsoft.Win32.RegistryKeyPermissionCheck]::ReadWriteSubTree,
+                [System.Security.AccessControl.RegistryRights]::ChangePermissions)
+
+            # Grant Administrators full control
+            $acl = $key.GetAccessControl()
+            $rule = New-Object System.Security.AccessControl.RegistryAccessRule(
+                $adminSid,
+                [System.Security.AccessControl.RegistryRights]::FullControl,
+                [System.Security.AccessControl.InheritanceFlags]::None,
+                [System.Security.AccessControl.PropagationFlags]::None,
+                [System.Security.AccessControl.AccessControlType]::Allow)
+            $acl.AddAccessRule($rule)
+            $key.SetAccessControl($acl)
+            $key.Close()
+
+            # Now set the value
+            New-ItemProperty -Path $Path -Name $Name -Value $Value -PropertyType $Type -Force -ErrorAction Stop | Out-Null
+            Write-Log "Set protected registry value (after ownership change): $Path\$Name = $Value ($Type)" "SUCCESS"
+            $success = $true
+
+        }
+        catch {
+            Write-Log "Cannot modify protected key: $Path\$Name - $_" "WARNING"
+        }
+    }
+    catch {
+        Write-Log "Failed to set protected registry value $Path\$Name : $_" "ERROR"
+    }
+
+    return $success
+}
+
+
 Export-ModuleMember -Function @(
     'Backup-RegistryKey',
     'Restore-RegistryKey',
     'Set-RegistryValue',
+    'Set-ProtectedRegistryValue',
     'Get-RegistryValue',
     'Remove-RegistryValue',
     'Test-RegistryKeyExists',
