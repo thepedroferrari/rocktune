@@ -97,6 +97,7 @@ const konamiState = getKonamiState()
 		display: flex;
 		flex-direction: column;
 		gap: var(--space-lg);
+		align-items: center;
 	}
 
 	.stat {

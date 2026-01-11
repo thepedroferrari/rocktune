@@ -22,7 +22,7 @@ export class Renderer {
   }
 
   drawPlayer(player: Player): void {
-    this.ctx.fillStyle = "oklch(0.92 0.25 195)"; // Brighter neon-cyan
+    this.ctx.fillStyle = "oklch(0.8 0.40 185)";
     this.ctx.fillRect(player.x, player.y, player.width, player.height);
   }
 
@@ -50,152 +50,68 @@ export class Renderer {
     y: number,
     size: number,
   ): void {
-    const centerX = x + size / 2;
-    const centerY = y + size / 2;
+    const gap = size * 0.04; // 4% gap between panes
+    const paneWidth = (size - gap) / 2;
+    const paneHeight = (size - gap) / 2;
 
     this.ctx.save();
 
-    switch (type) {
-      case "telemetry": // 📡 Satellite dish
-        // Draw antenna
-        this.ctx.strokeStyle = "oklch(0.8 0.2 20)"; // Bright orange
-        this.ctx.lineWidth = 3;
-        this.ctx.beginPath();
-        this.ctx.arc(centerX, centerY, size * 0.3, Math.PI, 0); // Dish arc
-        this.ctx.stroke();
-        this.ctx.beginPath();
-        this.ctx.moveTo(centerX, centerY);
-        this.ctx.lineTo(centerX, centerY + size * 0.4); // Pole
-        this.ctx.stroke();
-        // Draw signal waves
-        this.ctx.lineWidth = 2;
-        for (let i = 1; i <= 3; i++) {
-          this.ctx.beginPath();
-          this.ctx.arc(
-            centerX,
-            centerY - size * 0.15,
-            size * 0.15 * i,
-            -Math.PI * 0.3,
-            -Math.PI * 0.7,
-            true,
-          );
-          this.ctx.stroke();
-        }
-        break;
+    // TOP-LEFT: Red/Orange pane (with evil eyes)
+    this.ctx.fillStyle = "oklch(0.70 0.40 30)";
+    this.ctx.fillRect(x, y, paneWidth, paneHeight);
 
-      case "cortana": // 🎤 Microphone
-        this.ctx.fillStyle = "oklch(0.75 0.25 250)"; // Bright purple
-        // Mic capsule
-        this.ctx.beginPath();
-        this.ctx.ellipse(
-          centerX,
-          centerY - size * 0.15,
-          size * 0.2,
-          size * 0.3,
-          0,
-          0,
-          Math.PI * 2,
-        );
-        this.ctx.fill();
-        // Mic stand
-        this.ctx.fillRect(
-          centerX - size * 0.05,
-          centerY + size * 0.15,
-          size * 0.1,
-          size * 0.2,
-        );
-        // Base
-        this.ctx.beginPath();
-        this.ctx.arc(
-          centerX,
-          centerY + size * 0.35,
-          size * 0.15,
-          0,
-          Math.PI * 2,
-        );
-        this.ctx.fill();
-        break;
+    // TOP-RIGHT: Green pane
+    this.ctx.fillStyle = "oklch(0.70 0.35 145)";
+    this.ctx.fillRect(x + paneWidth + gap, y, paneWidth, paneHeight);
 
-      case "onedrive": // ☁️ Cloud
-        this.ctx.fillStyle = "oklch(0.9 0.15 210)"; // Bright blue
-        // Cloud shape (3 overlapping circles)
-        this.ctx.beginPath();
-        this.ctx.arc(
-          centerX - size * 0.15,
-          centerY,
-          size * 0.2,
-          0,
-          Math.PI * 2,
-        );
-        this.ctx.arc(
-          centerX,
-          centerY - size * 0.1,
-          size * 0.25,
-          0,
-          Math.PI * 2,
-        );
-        this.ctx.arc(
-          centerX + size * 0.15,
-          centerY,
-          size * 0.2,
-          0,
-          Math.PI * 2,
-        );
-        this.ctx.fill();
-        break;
+    // BOTTOM-LEFT: Blue pane
+    this.ctx.fillStyle = "oklch(0.65 0.35 245)";
+    this.ctx.fillRect(x, y + paneHeight + gap, paneWidth, paneHeight);
 
-      case "search": // 🔍 Magnifying glass
-        this.ctx.strokeStyle = "oklch(0.85 0.3 330)"; // Bright magenta
-        this.ctx.lineWidth = 3;
-        // Glass circle
-        this.ctx.beginPath();
-        this.ctx.arc(
-          centerX - size * 0.1,
-          centerY - size * 0.1,
-          size * 0.25,
-          0,
-          Math.PI * 2,
-        );
-        this.ctx.stroke();
-        // Handle
-        this.ctx.beginPath();
-        this.ctx.moveTo(centerX + size * 0.1, centerY + size * 0.1);
-        this.ctx.lineTo(centerX + size * 0.3, centerY + size * 0.3);
-        this.ctx.stroke();
-        break;
+    // BOTTOM-RIGHT: Yellow pane
+    this.ctx.fillStyle = "oklch(0.85 0.35 95)";
+    this.ctx.fillRect(
+      x + paneWidth + gap,
+      y + paneHeight + gap,
+      paneWidth,
+      paneHeight,
+    );
 
-      case "xbox": // 🎮 Game controller
-        this.ctx.fillStyle = "oklch(0.8 0.2 160)"; // Bright teal
-        // Controller body
-        this.ctx.beginPath();
-        this.ctx.roundRect(
-          centerX - size * 0.3,
-          centerY - size * 0.15,
-          size * 0.6,
-          size * 0.3,
-          size * 0.1,
-        );
-        this.ctx.fill();
-        // D-pad (left)
-        this.ctx.fillStyle = "oklch(0.3 0.05 160)";
-        this.ctx.fillRect(
-          centerX - size * 0.2,
-          centerY - size * 0.05,
-          size * 0.1,
-          size * 0.1,
-        );
-        // Buttons (right)
-        this.ctx.beginPath();
-        this.ctx.arc(
-          centerX + size * 0.15,
-          centerY,
-          size * 0.05,
-          0,
-          Math.PI * 2,
-        );
-        this.ctx.fill();
-        break;
-    }
+    // Draw evil eyes in TOP-LEFT red pane
+    const eyeRadius = paneWidth * 0.15;
+    const eyeSpacing = paneWidth * 0.4;
+    const eyeCenterY = y + paneHeight / 2;
+    const leftEyeX = x + paneWidth / 2 - eyeSpacing / 2;
+    const rightEyeX = x + paneWidth / 2 + eyeSpacing / 2;
+
+    // Left eye
+    this.ctx.fillStyle = "oklch(0.60 0.40 10)";
+    this.ctx.beginPath();
+    this.ctx.arc(leftEyeX, eyeCenterY, eyeRadius, 0, Math.PI * 2);
+    this.ctx.fill();
+
+    // Left eye glow
+    this.ctx.shadowBlur = size * 0.15;
+    this.ctx.shadowColor = "oklch(0.80 0.45 10)";
+    this.ctx.fillStyle = "oklch(0.80 0.45 10)";
+    this.ctx.beginPath();
+    this.ctx.arc(leftEyeX, eyeCenterY, eyeRadius * 0.6, 0, Math.PI * 2);
+    this.ctx.fill();
+
+    // Right eye
+    this.ctx.fillStyle = "oklch(0.60 0.40 10)";
+    this.ctx.beginPath();
+    this.ctx.arc(rightEyeX, eyeCenterY, eyeRadius, 0, Math.PI * 2);
+    this.ctx.fill();
+
+    // Right eye glow
+    this.ctx.fillStyle = "oklch(0.80 0.45 10)";
+    this.ctx.beginPath();
+    this.ctx.arc(rightEyeX, eyeCenterY, eyeRadius * 0.6, 0, Math.PI * 2);
+    this.ctx.fill();
+
+    // Reset shadow
+    this.ctx.shadowBlur = 0;
 
     this.ctx.restore();
   }
@@ -204,7 +120,7 @@ export class Renderer {
     if (shield.isDestroyed()) return;
 
     const opacity = shield.getOpacity();
-    this.ctx.fillStyle = `oklch(0.92 0.25 195 / ${opacity})`; // Brighter neon-cyan with opacity
+    this.ctx.fillStyle = `oklch(0.92 0.40 195 / ${opacity})`; // Brighter neon-cyan with opacity
     const rect = shield.getRect();
     this.ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
   }

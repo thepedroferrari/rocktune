@@ -25,7 +25,7 @@ let phase: Phase = $state('countdown')
 
 function handleCountdownComplete() {
 	phase = 'bloop'
-	playThunk() // Play bloop sound immediately
+	setTimeout(() => playThunk(), 1000) // Delay 1s to sync with bloop animation
 }
 
 function handleBloopComplete() {

@@ -22,13 +22,11 @@ function handleModeSelect(mode: "normal" | "rocktunned") {
 
 		<div class="mode-buttons">
 			<button class="mode-button normal" onclick={() => handleModeSelect("normal")}>
-				<div class="mode-label">PLAY (NORMAL)</div>
-				<div class="mode-desc">Classic 500ms firing rate</div>
+				<div class="mode-label">NORMAL MODE</div>
 			</button>
 
 			<button class="mode-button rocktunned" onclick={() => handleModeSelect("rocktunned")}>
-				<div class="mode-label">PLAY (ROCKTUNNED)</div>
-				<div class="mode-desc">🔥 Machine Gun Mode - 100ms burst fire!</div>
+				<div class="mode-label">ROCKTUNNED MODE</div>
 			</button>
 		</div>
 
@@ -145,12 +143,6 @@ function handleModeSelect(mode: "normal" | "rocktunned") {
 	.mode-label {
 		font-size: 1.5rem;
 		font-weight: 700;
-		margin-block-end: var(--space-xs);
-	}
-
-	.mode-desc {
-		font-size: 1rem;
-		opacity: 0.9;
 	}
 
 	.start-hint {

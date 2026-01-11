@@ -22,14 +22,14 @@ const INVADER_START_X = 100;
 const INVADER_START_Y = 50;
 const INVADER_SPACING_X = 60;
 const INVADER_SPACING_Y = 40;
-const INVADER_BASE_SPEED = 6; // px/s (5x slower for better gameplay)
+const INVADER_BASE_SPEED = 18; // pixels per second
 const INVADER_SPEED_INCREASE = 0.15; // 15% increase per row destroyed
 const INVADER_MOVE_DELAY = 20; // frames (smoother movement)
 const INVADER_DROP_DISTANCE = 20;
 const MAX_PLAYER_BULLETS = 10;
 const MAX_ENEMY_BULLETS = 20;
 const ENEMY_SHOOT_DELAY = 60; // frames
-const ENEMY_SHOOT_CHANCE = 0.01; // 1% per frame
+const ENEMY_SHOOT_CHANCE = 0.1; // 10% per frame
 const SHIELD_COUNT = 4;
 const SHIELD_START_X = 150;
 const SHIELD_Y = 450;
@@ -362,10 +362,10 @@ export class GameEngine {
 
     // Draw bullets
     for (const bullet of this.bullets) {
-      this.renderer.drawBullet(bullet, "oklch(0.92 0.2 100)"); // --neon-yellow
+      this.renderer.drawBullet(bullet, "oklch(0.92 0.35 100)"); // --neon-yellow
     }
     for (const bullet of this.enemyBullets) {
-      this.renderer.drawBullet(bullet, "oklch(0.72 0.18 10)"); // --risky (red)
+      this.renderer.drawBullet(bullet, "oklch(0.72 0.30 10)"); // --risky (red)
     }
   }
 }

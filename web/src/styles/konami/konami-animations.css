@@ -20,13 +20,13 @@
 	font-weight: 900;
 
 	/* Bright yellow with crisp cyan outline for maximum legibility */
-	color: oklch(0.95 0.28 100); /* Bright yellow - high contrast */
+	color: oklch(0.95 0.40 100); /* Bright yellow - high contrast */
 	text-shadow:
-		2px 2px 0 oklch(0.92 0.25 195), /* Cyan outline */
-		-2px -2px 0 oklch(0.92 0.25 195),
-		2px -2px 0 oklch(0.92 0.25 195),
-		-2px 2px 0 oklch(0.92 0.25 195),
-		0 0 30px oklch(0.95 0.28 100 / 0.5); /* Subtle glow only */
+		2px 2px 0 oklch(0.92 0.40 195), /* Cyan outline */
+		-2px -2px 0 oklch(0.92 0.40 195),
+		2px -2px 0 oklch(0.92 0.40 195),
+		-2px 2px 0 oklch(0.92 0.40 195),
+		0 0 30px oklch(0.95 0.40 100 / 0.5); /* Subtle glow only */
 
 	/* Keep 3D effect */
 	perspective: 800px;
