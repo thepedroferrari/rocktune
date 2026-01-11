@@ -406,6 +406,7 @@ const CAUTION_OPTIMIZATIONS = {
   SYSMAIN_DISABLE: 'sysmain_disable',
 
   SERVICES_SEARCH_OFF: 'services_search_off',
+  SCHEDULED_TASKS_GAMING: 'scheduled_tasks_gaming',
 
   MEMORY_GAMING: 'memory_gaming',
   POWER_THROTTLE_OFF: 'power_throttle_off',

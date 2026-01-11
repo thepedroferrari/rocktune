@@ -281,6 +281,20 @@ function Write-OK { param([string]$M) $script:SuccessCount++; Write-Host "  [OK]
 function Write-Fail { param([string]$M) $script:FailCount++; Write-Host "  [FAIL] $M" -ForegroundColor Red }
 function Write-Warn { param([string]$M) $script:WarningCount++; Write-Host "  [!] $M" -ForegroundColor Yellow }
 function Add-RebootReason { param([string]$R) $script:RebootRequired = $true; $script:RebootReasons += $R }
+function Write-ErrorLog {
+    param([string]$Context, [System.Management.Automation.ErrorRecord]$Err)
+    $script:FailCount++
+    Write-Host "  [FAIL] $Context" -ForegroundColor Red
+    if ($Err) {
+        Write-Host "         $($Err.Exception.Message)" -ForegroundColor DarkRed
+        # Log stack trace to file for debugging (don't spam console)
+        if ($script:BackupDir) {
+            $logPath = Join-Path $script:BackupDir "error.log"
+            $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+            "$timestamp | $Context | $($Err.Exception.Message)\`n$($Err.ScriptStackTrace)" | Add-Content $logPath
+        }
+    }
+}
 function Set-Reg {
     param([string]$Path, [string]$Name, $Value, [string]$Type = "DWORD", [switch]$PassThru)
     # Backup the registry key before modifying (if backup is enabled)
@@ -302,7 +316,7 @@ function Set-Reg {
         Write-Warn "Unauthorized: $Path\\$Name - check permissions or ownership"
         $success = $false
     } catch {
-        Write-Warn "Failed to set $Path\\$Name : $($_.Exception.Message)"
+        Write-ErrorLog "Registry: $Path\\$Name" $_
         $success = $false
     }
     if ($PassThru) { return $success }
@@ -318,19 +332,23 @@ function Set-Reg-Verified {
     } else { Write-Fail "$Label" }
 }
 function Disable-Task {
-    param([string]$TaskPath)
+    param([string]$TaskPath, [string]$Label)
     try {
         $task = Get-ScheduledTask -TaskName $TaskPath -EA SilentlyContinue
-        if ($task -and $task.State -ne 'Disabled') {
+        if (-not $task) { return $true }  # Task doesn't exist, that's fine
+        if ($task.State -ne 'Disabled') {
             Disable-ScheduledTask -TaskName $TaskPath -EA Stop | Out-Null
             $script:ScheduledTaskChanges += [PSCustomObject]@{
                 Name = $TaskPath
                 OriginalState = $task.State.ToString()
             }
+            if ($Label) { Write-OK $Label }
         }
         return $true
+    } catch {
+        if ($Label) { Write-ErrorLog "Task: $Label" $_ }
+        return $false
     }
-    catch { return $false }
 }
 function Set-Bcdedit {
     param([string]$Setting, [string]$Value, [string]$UndoCmd)
@@ -356,7 +374,13 @@ function Set-ServiceSafe {
     $originalStartType = (Get-WmiObject Win32_Service -Filter "Name='$Name'" -EA SilentlyContinue).StartMode
     try {
         if ($Stop) { Stop-Service -Name $Name -Force -ErrorAction Stop }
-        Set-Service -Name $Name -StartupType $StartupType -ErrorAction Stop
+        # PS 5.0 doesn't support AutomaticDelayedStart via Set-Service, use sc.exe fallback
+        if (($PSVersionTable.PSVersion.Major -lt 6) -and ($StartupType -eq "AutomaticDelayedStart")) {
+            $scResult = sc.exe config $Name start=delayed-auto 2>&1
+            if ($LASTEXITCODE -ne 0) { throw "sc.exe failed: $scResult" }
+        } else {
+            Set-Service -Name $Name -StartupType $StartupType -ErrorAction Stop
+        }
         $script:ServiceChanges += [PSCustomObject]@{
             Name = $Name
             Original = $originalStartType
@@ -371,7 +395,7 @@ function Set-ServiceSafe {
         if ($Label) { Write-Warn "$Label - cannot modify (may be in use)" }
         return $false
     } catch {
-        if ($Label) { Write-Warn "$Label - $($_.Exception.Message)" }
+        if ($Label) { Write-ErrorLog "Service: $Label" $_ } else { Write-ErrorLog "Service: $Name" $_ }
         return $false
     }
 }
@@ -394,7 +418,7 @@ function Remove-RegKeySafe {
         if ($Label) { Write-Warn "$Label - unauthorized" }
         return $false
     } catch {
-        if ($Label) { Write-Warn "$Label - $($_.Exception.Message)" }
+        if ($Label) { Write-ErrorLog "Remove key: $Label" $_ } else { Write-ErrorLog "Remove key: $Path" $_ }
         return $false
     }
 }
@@ -2411,6 +2435,35 @@ function generatePreflightScan(
     );
   }
 
+  if (selected.has("scheduled_tasks_gaming")) {
+    lines.push("# Scan: Gaming-disruptive scheduled tasks");
+    lines.push("$disruptiveTasks = @(");
+    lines.push('    "\\Microsoft\\Windows\\WindowsUpdate\\Scheduled Start",');
+    lines.push(
+      '    "\\Microsoft\\Windows\\UpdateOrchestrator\\Schedule Scan",',
+    );
+    lines.push(
+      '    "\\Microsoft\\Windows\\Windows Defender\\Windows Defender Scheduled Scan",',
+    );
+    lines.push('    "\\Microsoft\\Windows\\Defrag\\ScheduledDefrag"');
+    lines.push(")");
+    lines.push("$enabledTasks = 0");
+    lines.push("foreach ($t in $disruptiveTasks) {");
+    lines.push(
+      '    $task = Get-ScheduledTask -TaskPath ($t -replace "\\\\[^\\\\]+$", "\\") -TaskName ($t -split "\\\\" | Select-Object -Last 1) -EA SilentlyContinue',
+    );
+    lines.push(
+      '    if ($task -and $task.State -ne "Disabled") { $enabledTasks++ }',
+    );
+    lines.push("}");
+    lines.push(
+      'if ($enabledTasks -eq 0) { Add-ScanResult "Gaming-disruptive tasks" "Disabled" "Disabled" "OK" }',
+    );
+    lines.push(
+      'else { Add-ScanResult "Gaming-disruptive tasks" "$enabledTasks enabled" "Disabled" "CHANGE" }',
+    );
+  }
+
   // === AUDIO OPTIMIZATIONS ===
   if (selected.has("audio_enhancements")) {
     lines.push("# Scan: Audio enhancements (registry)");
@@ -3121,6 +3174,7 @@ function generatePreflightScan(
     "privacy_tier2",
     "services_search_off",
     "sysmain_disable",
+    "scheduled_tasks_gaming",
     "privacy_tier3",
     "audio_enhancements",
     "audio_exclusive",
@@ -3385,6 +3439,77 @@ function generateSystemOpts(selected: Set<string>): string[] {
     lines.push("# Disable Windows Search indexing");
     lines.push(
       'Set-ServiceSafe -Name "WSearch" -StartupType Manual -Stop -Label "Windows Search set to Manual (stops disk indexing)"',
+    );
+  }
+
+  if (selected.has("scheduled_tasks_gaming")) {
+    lines.push("# [CAUTION] Disable gaming-disruptive scheduled tasks");
+    lines.push(
+      "# These tasks can cause microstutters and frame drops during gameplay",
+    );
+    lines.push("");
+    lines.push("$gamingDisruptiveTasks = @(");
+    lines.push(
+      "    # Windows Update background scans (can spike CPU/disk during games)",
+    );
+    lines.push('    "\\Microsoft\\Windows\\WindowsUpdate\\Scheduled Start",');
+    lines.push(
+      '    "\\Microsoft\\Windows\\UpdateOrchestrator\\Schedule Scan",',
+    );
+    lines.push(
+      '    "\\Microsoft\\Windows\\UpdateOrchestrator\\Schedule Wake To Work",',
+    );
+    lines.push('    "\\Microsoft\\Windows\\UpdateOrchestrator\\USO_UxBroker",');
+    lines.push("");
+    lines.push(
+      "    # Defender scheduled scans (real-time stays on, just no full scans)",
+    );
+    lines.push(
+      '    "\\Microsoft\\Windows\\Windows Defender\\Windows Defender Scheduled Scan",',
+    );
+    lines.push(
+      '    "\\Microsoft\\Windows\\Windows Defender\\Windows Defender Cache Maintenance",',
+    );
+    lines.push(
+      '    "\\Microsoft\\Windows\\Windows Defender\\Windows Defender Cleanup",',
+    );
+    lines.push(
+      '    "\\Microsoft\\Windows\\Windows Defender\\Windows Defender Verification",',
+    );
+    lines.push("");
+    lines.push("    # Automatic maintenance (causes disk/CPU spikes)");
+    lines.push(
+      '    "\\Microsoft\\Windows\\TaskScheduler\\Regular Maintenance",',
+    );
+    lines.push('    "\\Microsoft\\Windows\\Diagnosis\\Scheduled",');
+    lines.push('    "\\Microsoft\\Windows\\Maintenance\\WinSAT",');
+    lines.push("");
+    lines.push(
+      "    # Disk operations (SSD TRIM is handled by controller, defrag causes stutters)",
+    );
+    lines.push('    "\\Microsoft\\Windows\\Defrag\\ScheduledDefrag",');
+    lines.push("");
+    lines.push(
+      "    # Telemetry/diagnostics (overlaps with privacy_tier2 but ensures coverage)",
+    );
+    lines.push(
+      '    "\\Microsoft\\Windows\\Application Experience\\Microsoft Compatibility Appraiser",',
+    );
+    lines.push(
+      '    "\\Microsoft\\Windows\\Application Experience\\ProgramDataUpdater",',
+    );
+    lines.push("");
+    lines.push("    # Xbox/Game Bar telemetry");
+    lines.push('    "\\Microsoft\\XblGameSave\\XblGameSaveTask",');
+    lines.push('    "\\Microsoft\\XblGameSave\\XblGameSaveTaskLogon"');
+    lines.push(")");
+    lines.push("");
+    lines.push("$disabledCount = 0");
+    lines.push("foreach ($taskPath in $gamingDisruptiveTasks) {");
+    lines.push("    if (Disable-Task $taskPath) { $disabledCount++ }");
+    lines.push("}");
+    lines.push(
+      'Write-OK "Disabled $disabledCount gaming-disruptive scheduled tasks"',
     );
   }
 
@@ -4904,6 +5029,35 @@ export function buildVerificationScript(selection: SelectionState): string {
     lines.push("$sysMain = Get-Service SysMain -EA SilentlyContinue");
     lines.push(
       'if ($sysMain -and $sysMain.Status -eq "Stopped") { Write-Pass "SysMain/Superfetch disabled" } else { Write-Fail "SysMain may still be running" }',
+    );
+  }
+
+  if (selected.has("scheduled_tasks_gaming")) {
+    lines.push("# Check gaming-disruptive scheduled tasks");
+    lines.push("$gamingTasks = @(");
+    lines.push('    "\\Microsoft\\Windows\\WindowsUpdate\\Scheduled Start",');
+    lines.push(
+      '    "\\Microsoft\\Windows\\UpdateOrchestrator\\Schedule Scan",',
+    );
+    lines.push(
+      '    "\\Microsoft\\Windows\\Windows Defender\\Windows Defender Scheduled Scan",',
+    );
+    lines.push('    "\\Microsoft\\Windows\\Defrag\\ScheduledDefrag"');
+    lines.push(")");
+    lines.push("$enabledCount = 0");
+    lines.push("foreach ($t in $gamingTasks) {");
+    lines.push(
+      '    $task = Get-ScheduledTask -TaskPath ($t -replace "\\\\[^\\\\]+$", "\\") -TaskName ($t -split "\\\\" | Select-Object -Last 1) -EA SilentlyContinue',
+    );
+    lines.push(
+      '    if ($task -and $task.State -ne "Disabled") { $enabledCount++ }',
+    );
+    lines.push("}");
+    lines.push(
+      'if ($enabledCount -eq 0) { Write-Pass "Gaming-disruptive scheduled tasks disabled" }',
+    );
+    lines.push(
+      'else { Write-Fail "$enabledCount gaming-disruptive tasks still enabled" }',
     );
   }
 
