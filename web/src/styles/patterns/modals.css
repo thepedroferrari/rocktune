@@ -145,10 +145,22 @@
   flex-shrink: 0;
 }
 
-.modal-base--sm { --_width: 360px; }
-.modal-base--md { --_width: 540px; }
-.modal-base--lg { --_width: 700px; }
-.modal-base--xl { --_width: 900px; }
+.modal-base--sm {
+  --_width: 360px;
+}
+
+.modal-base--md {
+  --_width: 540px;
+}
+
+.modal-base--lg {
+  --_width: 700px;
+}
+
+.modal-base--xl {
+  --_width: 900px;
+}
+
 .modal-base--full {
   --_width: calc(100vw - 2rem);
   --_max-height: calc(100vh - 2rem);

@@ -191,16 +191,16 @@ export interface ManualStepSection {
   readonly personas?: readonly PresetType[]
   readonly hardware?: GpuType
   readonly items:
-    | readonly ManualStepItem[]
-    | readonly SettingItem[]
-    | readonly SoftwareSettingItem[]
-    | readonly BrowserSettingItem[]
-    | readonly RgbSettingItem[]
-    | readonly PreflightCheck[]
-    | readonly TroubleshootingItem[]
-    | readonly GameLaunchItem[]
-    | readonly StreamingTroubleshootItem[]
-    | readonly DiagnosticTool[]
+  | readonly ManualStepItem[]
+  | readonly SettingItem[]
+  | readonly SoftwareSettingItem[]
+  | readonly BrowserSettingItem[]
+  | readonly RgbSettingItem[]
+  | readonly PreflightCheck[]
+  | readonly TroubleshootingItem[]
+  | readonly GameLaunchItem[]
+  | readonly StreamingTroubleshootItem[]
+  | readonly DiagnosticTool[]
 }
 
 export type ManualItem =
@@ -1064,9 +1064,9 @@ function isRegistryOrSystemTweak(item: ManualItem, section: ManualStepSection): 
   if (typeof item.automated === 'object') {
     return Boolean(
       item.automated.registryPath ||
-        item.automated.bcdedit ||
-        item.automated.service ||
-        item.automated.scheduledTask,
+      item.automated.bcdedit ||
+      item.automated.service ||
+      item.automated.scheduledTask,
     )
   }
   return false

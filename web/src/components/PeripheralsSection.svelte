@@ -1,32 +1,40 @@
 <script lang="ts">
-/**
- * Peripherals Section - Companion software for gaming gear and monitors
- *
- * Replaces the static HTML peripherals section with reactive Svelte components.
- */
+  /**
+   * Peripherals Section - Companion software for gaming gear and monitors
+   *
+   * Replaces the static HTML peripherals section with reactive Svelte components.
+   */
 
-import {
-  MONITOR_LINKS,
-  MONITOR_OPTIONS,
-  PERIPHERAL_LINKS,
-  PERIPHERAL_OPTIONS,
-} from '$lib/peripherals'
-import { app, toggleMonitorSoftware, togglePeripheral } from '$lib/state.svelte'
-import { isMonitorSoftwareType, isPeripheralType } from '$lib/types'
+  import {
+    MONITOR_LINKS,
+    MONITOR_OPTIONS,
+    PERIPHERAL_LINKS,
+    PERIPHERAL_OPTIONS,
+  } from "$lib/peripherals";
+  import {
+    app,
+    toggleMonitorSoftware,
+    togglePeripheral,
+  } from "$lib/state.svelte";
+  import { isMonitorSoftwareType, isPeripheralType } from "$lib/types";
 
-function handlePeripheralChange(event: Event & { currentTarget: HTMLInputElement }) {
-  const { value } = event.currentTarget
-  if (isPeripheralType(value)) {
-    togglePeripheral(value)
+  function handlePeripheralChange(
+    event: Event & { currentTarget: HTMLInputElement },
+  ) {
+    const { value } = event.currentTarget;
+    if (isPeripheralType(value)) {
+      togglePeripheral(value);
+    }
   }
-}
 
-function handleMonitorChange(event: Event & { currentTarget: HTMLInputElement }) {
-  const { value } = event.currentTarget
-  if (isMonitorSoftwareType(value)) {
-    toggleMonitorSoftware(value)
+  function handleMonitorChange(
+    event: Event & { currentTarget: HTMLInputElement },
+  ) {
+    const { value } = event.currentTarget;
+    if (isMonitorSoftwareType(value)) {
+      toggleMonitorSoftware(value);
+    }
   }
-}
 </script>
 
 <section id="peripherals" class="step">
@@ -34,13 +42,16 @@ function handleMonitorChange(event: Event & { currentTarget: HTMLInputElement })
     <div class="step-banner__marker">2</div>
     <div class="step-banner__content">
       <h2 class="step-banner__title">Peripherals</h2>
-      <p class="step-banner__subtitle">Install companion software for your gaming gear</p>
+      <p class="step-banner__subtitle">
+        Install companion software for your gaming gear
+      </p>
     </div>
   </header>
 
   <div class="peripherals-grid">
-
-    <fieldset class="control-fieldset peripherals-fieldset peripherals-fieldset--gear">
+    <fieldset
+      class="control-fieldset peripherals-fieldset peripherals-fieldset--gear"
+    >
       <legend class="control-legend">
         <span class="legend-badge legend-badge--peripherals">Gear</span>
         <svg
@@ -73,13 +84,18 @@ function handleMonitorChange(event: Event & { currentTarget: HTMLInputElement })
                 aria-describedby="peripheral-hint-{option.value}"
               />
               <span class="label-text">{option.label}</span>
-              <span class="label-hint" id="peripheral-hint-{option.value}">{option.hint}</span>
+              <span class="label-hint" id="peripheral-hint-{option.value}"
+                >{option.hint}</span
+              >
             </label>
           {/each}
         </div>
         <div class="peripheral-column">
           <p class="peripheral-title">Manual Download</p>
-          <nav class="peripheral-links peripheral-links--expanded" aria-label="Peripheral driver downloads">
+          <nav
+            class="peripheral-links peripheral-links--expanded"
+            aria-label="Peripheral driver downloads"
+          >
             {#each PERIPHERAL_LINKS as link (link.url)}
               <a
                 class="peripheral-link"
@@ -96,8 +112,9 @@ function handleMonitorChange(event: Event & { currentTarget: HTMLInputElement })
       </div>
     </fieldset>
 
-
-    <fieldset class="control-fieldset peripherals-fieldset peripherals-fieldset--monitors">
+    <fieldset
+      class="control-fieldset peripherals-fieldset peripherals-fieldset--monitors"
+    >
       <legend class="control-legend">
         <span class="legend-badge legend-badge--peripherals">Monitors</span>
         <svg
@@ -128,7 +145,9 @@ function handleMonitorChange(event: Event & { currentTarget: HTMLInputElement })
                 aria-describedby="monitor-hint-{option.value}"
               />
               <span class="label-text">{option.label}</span>
-              <span class="label-hint" id="monitor-hint-{option.value}">{option.hint}</span>
+              <span class="label-hint" id="monitor-hint-{option.value}"
+                >{option.hint}</span
+              >
             </label>
           {/each}
         </div>
@@ -151,5 +170,4 @@ function handleMonitorChange(event: Event & { currentTarget: HTMLInputElement })
       </div>
     </fieldset>
   </div>
-
 </section>

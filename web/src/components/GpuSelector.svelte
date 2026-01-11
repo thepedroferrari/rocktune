@@ -1,18 +1,18 @@
 <script lang="ts">
-/**
- * GPU Selector - Radio group for GPU type selection
- */
+  /**
+   * GPU Selector - Radio group for GPU type selection
+   */
 
-import { GPU_OPTIONS } from '$lib/hardware'
-import { app, setGpu } from '$lib/state.svelte'
-import { isGpuType } from '$lib/types'
+  import { GPU_OPTIONS } from "$lib/hardware";
+  import { app, setGpu } from "$lib/state.svelte";
+  import { isGpuType } from "$lib/types";
 
-function handleChange(event: Event & { currentTarget: HTMLInputElement }) {
-  const { value } = event.currentTarget
-  if (isGpuType(value)) {
-    setGpu(value)
+  function handleChange(event: Event & { currentTarget: HTMLInputElement }) {
+    const { value } = event.currentTarget;
+    if (isGpuType(value)) {
+      setGpu(value);
+    }
   }
-}
 </script>
 
 <fieldset class="control-fieldset">

@@ -1,14 +1,16 @@
 <script lang="ts">
-/**
- * Driver Cards - Shows relevant driver download links based on hardware selection
- */
+  /**
+   * Driver Cards - Shows relevant driver download links based on hardware selection
+   */
 
-import { DRIVER_CARDS, isDriverCardVisible } from '$lib/hardware'
-import { app } from '$lib/state.svelte'
+  import { DRIVER_CARDS, isDriverCardVisible } from "$lib/hardware";
+  import { app } from "$lib/state.svelte";
 
-const visibleCards = $derived(
-  DRIVER_CARDS.filter((card) => isDriverCardVisible(card, app.hardware.cpu, app.hardware.gpu)),
-)
+  const visibleCards = $derived(
+    DRIVER_CARDS.filter((card) =>
+      isDriverCardVisible(card, app.hardware.cpu, app.hardware.gpu),
+    ),
+  );
 </script>
 
 <div class="driver-warning">
@@ -40,7 +42,7 @@ const visibleCards = $derived(
   {#each visibleCards as card (card.id)}
     <div
       class="card"
-      class:card--mobo={card.badge === 'mobo'}
+      class:card--mobo={card.badge === "mobo"}
       class:active={true}
       data-driver={card.id}
     >

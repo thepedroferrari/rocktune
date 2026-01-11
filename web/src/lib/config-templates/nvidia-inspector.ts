@@ -198,16 +198,14 @@ function getPersonaStrategy(persona: string): string {
 }
 
 function formatSettings(settings: ProfileSettings): string {
-  return `✓ Low Latency Mode: ${
-    settings.lowLatencyMode === '0x00000003'
+  return `✓ Low Latency Mode: ${settings.lowLatencyMode === '0x00000003'
       ? 'Ultra'
       : settings.lowLatencyMode === '0x00000001'
         ? 'On'
         : 'Off'
-  }
-✓ Power Management: ${
-    settings.powerManagement === '0x00000001' ? 'Maximum Performance' : 'Adaptive'
-  }
+    }
+✓ Power Management: ${settings.powerManagement === '0x00000001' ? 'Maximum Performance' : 'Adaptive'
+    }
 ✓ Texture Filtering: Quality
 ✓ Threaded Optimization: ${settings.threadedOptimization === '0x00000001' ? 'On' : 'Off'}
 ✓ V-Sync: Off (use G-SYNC instead)

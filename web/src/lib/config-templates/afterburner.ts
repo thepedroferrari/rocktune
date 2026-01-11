@@ -87,11 +87,10 @@ ${getPersonaStrategy(persona)}
 
 SAFETY NOTES:
 - Start conservative and increase if temps are high
-- ${
-    gpuVendor === 'amd'
+- ${gpuVendor === 'amd'
       ? 'AMD GPUs can safely run up to 110°C junction temp'
       : 'NVIDIA GPUs typically throttle at 83°C'
-  }
+    }
 - More aggressive cooling = more noise but better sustained performance
 - Monitor temps during gaming to ensure cooling is adequate`
 

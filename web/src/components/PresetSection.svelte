@@ -1,62 +1,59 @@
 <script lang="ts">
-import type { PresetConfig } from '$lib/presets'
-import {
-  app,
-  clearRecommendedPackages,
-  setActivePreset,
-  setFilter,
-  setOptimizations,
-  setRecommendedPackages,
-  setSelection,
-} from '$lib/state.svelte'
-import {
-  FILTER_ALL,
-  FILTER_RECOMMENDED,
-  isPackageKey,
-  type OptimizationKey,
-  type PackageKey,
-  type PresetType,
-} from '$lib/types'
-import PresetCards from './PresetCards.svelte'
+  import type { PresetConfig } from "$lib/presets";
+  import {
+    app,
+    clearRecommendedPackages,
+    setActivePreset,
+    setFilter,
+    setOptimizations,
+    setRecommendedPackages,
+    setSelection,
+  } from "$lib/state.svelte";
+  import {
+    FILTER_ALL,
+    FILTER_RECOMMENDED,
+    isPackageKey,
+    type OptimizationKey,
+    type PackageKey,
+    type PresetType,
+  } from "$lib/types";
+  import PresetCards from "./PresetCards.svelte";
 
-const activePreset = $derived(app.activePreset)
+  const activePreset = $derived(app.activePreset);
 
-function applyOptimizations(keys: readonly OptimizationKey[]) {
-  if (keys.length === 0) return
-  setOptimizations(keys)
-}
-
-function getDefaultSelection(): PackageKey[] {
-  return Object.entries(app.software)
-    .filter(([, pkg]) => pkg.selected)
-    .map(([key]) => key)
-    .filter((key): key is PackageKey => isPackageKey(app.software, key))
-}
-
-function handlePresetSelect(preset: PresetType, config: PresetConfig) {
-  if (app.activePreset === preset) {
-    setActivePreset(null)
-    clearRecommendedPackages()
-    setFilter(FILTER_ALL)
-    return
+  function applyOptimizations(keys: readonly OptimizationKey[]) {
+    if (keys.length === 0) return;
+    setOptimizations(keys);
   }
 
-  setActivePreset(preset)
-  setSelection(getDefaultSelection())
-  setRecommendedPackages(config.software)
-  setFilter(FILTER_RECOMMENDED)
-  applyOptimizations(config.opts)
-}
+  function getDefaultSelection(): PackageKey[] {
+    return Object.entries(app.software)
+      .filter(([, pkg]) => pkg.selected)
+      .map(([key]) => key)
+      .filter((key): key is PackageKey => isPackageKey(app.software, key));
+  }
+
+  function handlePresetSelect(preset: PresetType, config: PresetConfig) {
+    if (app.activePreset === preset) {
+      setActivePreset(null);
+      clearRecommendedPackages();
+      setFilter(FILTER_ALL);
+      return;
+    }
+
+    setActivePreset(preset);
+    setSelection(getDefaultSelection());
+    setRecommendedPackages(config.software);
+    setFilter(FILTER_RECOMMENDED);
+    applyOptimizations(config.opts);
+  }
 </script>
 
-<PresetCards activePreset={activePreset} onPresetSelect={handlePresetSelect} />
+<PresetCards {activePreset} onPresetSelect={handlePresetSelect} />
 
 {#if activePreset}
   <div id="preset-actions" class="preset-actions">
-    <a
-      href="#generate"
-      class="cyber-btn cyber-btn--primary"
-    >
+    <a href="#generate" class="cyber-btn cyber-btn--primary">
       <svg
         class="btn-icon"
         viewBox="0 0 24 24"
@@ -70,10 +67,7 @@ function handlePresetSelect(preset: PresetType, config: PresetConfig) {
       </svg>
       Forge Script
     </a>
-    <a
-      href="#hardware"
-      class="cyber-btn cyber-btn--secondary"
-    >
+    <a href="#hardware" class="cyber-btn cyber-btn--secondary">
       <svg
         class="btn-icon"
         viewBox="0 0 24 24"
@@ -82,12 +76,9 @@ function handlePresetSelect(preset: PresetType, config: PresetConfig) {
         stroke-width="2"
       >
         <path d="M12 20h9" />
-        <path
-          d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"
-        />
+        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
       </svg>
       Customize First
     </a>
   </div>
 {/if}
-

@@ -1,885 +1,926 @@
 <script lang="ts">
-/**
- * ManualStepsSection - Redesigned with sidebar TOC, compact cards, and metadata badges
- *
- * Displays settings that cannot be scripted but are essential
- * for optimal gaming performance. Filtered by:
- * - Selected persona (Gamer, Pro Gamer, Streamer, Benchmarker)
- * - Hardware (NVIDIA vs AMD GPU)
- */
+  /**
+   * ManualStepsSection - Redesigned with sidebar TOC, compact cards, and metadata badges
+   *
+   * Displays settings that cannot be scripted but are essential
+   * for optimal gaming performance. Filtered by:
+   * - Selected persona (Gamer, Pro Gamer, Streamer, Benchmarker)
+   * - Hardware (NVIDIA vs AMD GPU)
+   */
 
-import { generateToolConfig, getSectionConfigTool, isToolAvailable } from '$lib/config-generator'
-import { downloadConfigs } from '$lib/download-utils'
-import {
-  auditManualSteps,
-  type BrowserSettingItem,
-  countTotalItems,
-  type DiagnosticTool,
-  type DifficultyLevel,
-  type GameLaunchItem,
-  getFilteredSectionGroups,
-  MANUAL_GLOBAL_SAFETY_NOTES,
-  MANUAL_QUICK_TEST_PROTOCOL,
-  type ImpactLevel,
-  type ManualStepItem,
-  type ManualStepSection,
-  type VideoResource,
-  normalizeManualItem,
-  type PreflightCheck,
-  type RgbSettingItem,
-  type SafetyLevel,
-  type SettingItem,
-  type SoftwareSettingItem,
-  type StreamingTroubleshootItem,
-  type TroubleshootingItem,
-} from '$lib/manual-steps'
-import {
-  createItemId,
-  getProgressData,
-  isCompleted,
-  resetAll,
-  resetSection,
-  toggleItem,
-} from '$lib/progress.svelte'
-import { buildSectionId } from '$lib/section-ids'
-import { app } from '$lib/state.svelte'
-import { copyToClipboard } from '$lib/checksum'
-import { showToast } from '$lib/toast.svelte'
-import { type StructuredTooltip, tooltip } from '../utils/tooltips'
-import Icon from './ui/Icon.svelte'
-import GuideDetailPanel from './manual-steps/GuideDetailPanel.svelte'
+  import {
+    generateToolConfig,
+    getSectionConfigTool,
+    isToolAvailable,
+  } from "$lib/config-generator";
+  import { downloadConfigs } from "$lib/download-utils";
+  import {
+    auditManualSteps,
+    type BrowserSettingItem,
+    countTotalItems,
+    type DiagnosticTool,
+    type DifficultyLevel,
+    type GameLaunchItem,
+    getFilteredSectionGroups,
+    MANUAL_GLOBAL_SAFETY_NOTES,
+    MANUAL_QUICK_TEST_PROTOCOL,
+    type ImpactLevel,
+    type ManualStepItem,
+    type ManualStepSection,
+    type VideoResource,
+    normalizeManualItem,
+    type PreflightCheck,
+    type RgbSettingItem,
+    type SafetyLevel,
+    type SettingItem,
+    type SoftwareSettingItem,
+    type StreamingTroubleshootItem,
+    type TroubleshootingItem,
+  } from "$lib/manual-steps";
+  import {
+    createItemId,
+    getProgressData,
+    isCompleted,
+    resetAll,
+    resetSection,
+    toggleItem,
+  } from "$lib/progress.svelte";
+  import { buildSectionId } from "$lib/section-ids";
+  import { app } from "$lib/state.svelte";
+  import { copyToClipboard } from "$lib/checksum";
+  import { showToast } from "$lib/toast.svelte";
+  import { type StructuredTooltip, tooltip } from "../utils/tooltips";
+  import Icon from "./ui/Icon.svelte";
+  import GuideDetailPanel from "./manual-steps/GuideDetailPanel.svelte";
 
-function getYouTubeThumbnail(video: VideoResource): string {
-  if (video.videoId) {
-    return `https://img.youtube.com/vi/${video.videoId}/mqdefault.jpg`
+  function getYouTubeThumbnail(video: VideoResource): string {
+    if (video.videoId) {
+      return `https://img.youtube.com/vi/${video.videoId}/mqdefault.jpg`;
+    }
+    return "/icons/fallback.svg";
   }
-  return '/icons/fallback.svg'
-}
 
-function getYouTubeUrl(video: VideoResource): string {
-  if (video.videoId) {
-    return `https://www.youtube.com/watch?v=${video.videoId}`
+  function getYouTubeUrl(video: VideoResource): string {
+    if (video.videoId) {
+      return `https://www.youtube.com/watch?v=${video.videoId}`;
+    }
+    if (video.search) {
+      return `https://www.youtube.com/results?search_query=${encodeURIComponent(video.search)}`;
+    }
+    return "#";
   }
-  if (video.search) {
-    return `https://www.youtube.com/results?search_query=${encodeURIComponent(video.search)}`
+
+  type SortOption = "category" | "impact" | "difficulty";
+  type FilterOption = "all" | "incomplete" | "quick-wins" | "high-impact";
+
+  let activeGroupId = $state<string | null>(null);
+  let sortBy = $state<SortOption>("category");
+  let filterBy = $state<FilterOption>("all");
+  let searchQuery = $state("");
+  let downloadingSection = $state<string | null>(null);
+  let sortOpen = $state(false);
+  let filterOpen = $state(false);
+  let showInstructions = $state(false);
+  let instructionsText = $state("");
+  let manualOnly = $state(false);
+  let selectedItem = $state<{
+    item: AnyItem;
+    section: ManualStepSection;
+  } | null>(null);
+
+  // Impact badge tooltips
+  const IMPACT_TOOLTIPS: Record<ImpactLevel, StructuredTooltip> = {
+    high: {
+      title: "High Impact",
+      desc: "This setting significantly affects FPS, latency, or system stability.",
+      pros: ["Noticeable improvement", "Worth the effort"],
+      cons: ["May require more setup time"],
+    },
+    medium: {
+      title: "Medium Impact",
+      desc: "Moderate improvement to performance or quality.",
+      pros: ["Good balance of effort vs reward"],
+      cons: ["Effects vary by system"],
+    },
+    low: {
+      title: "Low Impact",
+      desc: "Minor optimization, nice to have but not critical.",
+      pros: ["Quick to apply", "Low risk"],
+      cons: ["Subtle improvements"],
+    },
+  };
+
+  const DIFFICULTY_TOOLTIPS: Record<DifficultyLevel, StructuredTooltip> = {
+    quick: {
+      title: "Quick Win",
+      desc: "Fast to complete, simple settings change.",
+      pros: ["Under 1 minute", "No expertise needed"],
+      cons: [],
+    },
+    moderate: {
+      title: "Moderate Effort",
+      desc: "Takes a few minutes, may require navigating menus.",
+      pros: ["Straightforward process"],
+      cons: ["Takes 2-5 minutes"],
+    },
+    advanced: {
+      title: "Advanced",
+      desc: "Requires technical knowledge or multiple steps.",
+      pros: ["Maximum control"],
+      cons: ["May need research", "10+ minutes"],
+    },
+  };
+
+  const SAFETY_TOOLTIPS: Record<SafetyLevel, StructuredTooltip> = {
+    safe: {
+      title: "Safe",
+      desc: "Fully reversible, no risk of system issues.",
+      pros: ["Can undo anytime", "No side effects"],
+      cons: [],
+    },
+    moderate: {
+      title: "Use Caution",
+      desc: "Generally safe but may affect other settings or features.",
+      pros: ["Reversible with effort"],
+      cons: ["May require reboot", "Could affect other apps"],
+    },
+    expert: {
+      title: "Expert Only",
+      desc: "Could cause instability if misconfigured. Create a restore point first.",
+      pros: ["Maximum performance gains"],
+      cons: ["Risk of issues", "Hard to troubleshoot"],
+    },
+  };
+
+  const filteredGroups = $derived.by(() => {
+    const persona = app.activePreset ?? "gamer";
+    const gpu = app.hardware.gpu;
+    return getFilteredSectionGroups(persona, gpu);
+  });
+
+  const sectionLookup = $derived.by(() => {
+    const map = new Map<string, ManualStepSection>();
+    for (const group of filteredGroups) {
+      for (const section of group.sections) {
+        map.set(section.id, section);
+      }
+    }
+    return map;
+  });
+
+  const groupBySectionId = $derived.by(() => {
+    const map = new Map<string, string>();
+    for (const group of filteredGroups) {
+      for (const section of group.sections) {
+        map.set(section.id, group.id);
+      }
+    }
+    return map;
+  });
+
+  const groupTitleById = $derived.by(() => {
+    const map = new Map<string, string>();
+    for (const group of filteredGroups) {
+      map.set(group.id, group.title);
+    }
+    return map;
+  });
+
+  const totalItems = $derived.by(() => {
+    const persona = app.activePreset ?? "gamer";
+    const gpu = app.hardware.gpu;
+    return countTotalItems(persona, gpu);
+  });
+
+  $effect(() => {
+    if (filteredGroups.length > 0 && !activeGroupId) {
+      activeGroupId = filteredGroups[0].id;
+    }
+  });
+
+  const progressData = $derived(getProgressData());
+
+  $effect(() => {
+    auditManualSteps(filteredGroups);
+  });
+
+  function isDone(sectionId: string, itemId: string): boolean {
+    const _ = progressData.lastUpdated;
+    return isCompleted(sectionId, itemId);
   }
-  return '#'
-}
 
-type SortOption = 'category' | 'impact' | 'difficulty'
-type FilterOption = 'all' | 'incomplete' | 'quick-wins' | 'high-impact'
+  function handleResetSection(sectionId: string) {
+    resetSection(sectionId);
+  }
 
-let activeGroupId = $state<string | null>(null)
-let sortBy = $state<SortOption>('category')
-let filterBy = $state<FilterOption>('all')
-let searchQuery = $state('')
-let downloadingSection = $state<string | null>(null)
-let sortOpen = $state(false)
-let filterOpen = $state(false)
-let showInstructions = $state(false)
-let instructionsText = $state('')
-let manualOnly = $state(false)
-let selectedItem = $state<{
-  item: AnyItem
-  section: ManualStepSection
-} | null>(null)
-
-// Impact badge tooltips
-const IMPACT_TOOLTIPS: Record<ImpactLevel, StructuredTooltip> = {
-  high: {
-    title: 'High Impact',
-    desc: 'This setting significantly affects FPS, latency, or system stability.',
-    pros: ['Noticeable improvement', 'Worth the effort'],
-    cons: ['May require more setup time'],
-  },
-  medium: {
-    title: 'Medium Impact',
-    desc: 'Moderate improvement to performance or quality.',
-    pros: ['Good balance of effort vs reward'],
-    cons: ['Effects vary by system'],
-  },
-  low: {
-    title: 'Low Impact',
-    desc: 'Minor optimization, nice to have but not critical.',
-    pros: ['Quick to apply', 'Low risk'],
-    cons: ['Subtle improvements'],
-  },
-}
-
-const DIFFICULTY_TOOLTIPS: Record<DifficultyLevel, StructuredTooltip> = {
-  quick: {
-    title: 'Quick Win',
-    desc: 'Fast to complete, simple settings change.',
-    pros: ['Under 1 minute', 'No expertise needed'],
-    cons: [],
-  },
-  moderate: {
-    title: 'Moderate Effort',
-    desc: 'Takes a few minutes, may require navigating menus.',
-    pros: ['Straightforward process'],
-    cons: ['Takes 2-5 minutes'],
-  },
-  advanced: {
-    title: 'Advanced',
-    desc: 'Requires technical knowledge or multiple steps.',
-    pros: ['Maximum control'],
-    cons: ['May need research', '10+ minutes'],
-  },
-}
-
-const SAFETY_TOOLTIPS: Record<SafetyLevel, StructuredTooltip> = {
-  safe: {
-    title: 'Safe',
-    desc: 'Fully reversible, no risk of system issues.',
-    pros: ['Can undo anytime', 'No side effects'],
-    cons: [],
-  },
-  moderate: {
-    title: 'Use Caution',
-    desc: 'Generally safe but may affect other settings or features.',
-    pros: ['Reversible with effort'],
-    cons: ['May require reboot', 'Could affect other apps'],
-  },
-  expert: {
-    title: 'Expert Only',
-    desc: 'Could cause instability if misconfigured. Create a restore point first.',
-    pros: ['Maximum performance gains'],
-    cons: ['Risk of issues', 'Hard to troubleshoot'],
-  },
-}
-
-const filteredGroups = $derived.by(() => {
-  const persona = app.activePreset ?? 'gamer'
-  const gpu = app.hardware.gpu
-  return getFilteredSectionGroups(persona, gpu)
-})
-
-const sectionLookup = $derived.by(() => {
-  const map = new Map<string, ManualStepSection>()
-  for (const group of filteredGroups) {
-    for (const section of group.sections) {
-      map.set(section.id, section)
+  function handleResetAll() {
+    if (confirm("Reset all progress? This cannot be undone.")) {
+      resetAll();
     }
   }
-  return map
-})
 
-const groupBySectionId = $derived.by(() => {
-  const map = new Map<string, string>()
-  for (const group of filteredGroups) {
-    for (const section of group.sections) {
-      map.set(section.id, group.id)
-    }
-  }
-  return map
-})
+  // Item type union for consistent handling
+  type AnyItem =
+    | ManualStepItem
+    | SettingItem
+    | TroubleshootingItem
+    | StreamingTroubleshootItem
+    | DiagnosticTool
+    | GameLaunchItem
+    | SoftwareSettingItem
+    | RgbSettingItem
+    | BrowserSettingItem
+    | PreflightCheck;
 
-const groupTitleById = $derived.by(() => {
-  const map = new Map<string, string>()
-  for (const group of filteredGroups) {
-    map.set(group.id, group.title)
-  }
-  return map
-})
-
-const totalItems = $derived.by(() => {
-  const persona = app.activePreset ?? 'gamer'
-  const gpu = app.hardware.gpu
-  return countTotalItems(persona, gpu)
-})
-
-$effect(() => {
-  if (filteredGroups.length > 0 && !activeGroupId) {
-    activeGroupId = filteredGroups[0].id
-  }
-})
-
-const progressData = $derived(getProgressData())
-
-$effect(() => {
-  auditManualSteps(filteredGroups)
-})
-
-function isDone(sectionId: string, itemId: string): boolean {
-  const _ = progressData.lastUpdated
-  return isCompleted(sectionId, itemId)
-}
-
-function handleResetSection(sectionId: string) {
-  resetSection(sectionId)
-}
-
-function handleResetAll() {
-  if (confirm('Reset all progress? This cannot be undone.')) {
-    resetAll()
-  }
-}
-
-// Item type union for consistent handling
-type AnyItem =
-  | ManualStepItem
-  | SettingItem
-  | TroubleshootingItem
-  | StreamingTroubleshootItem
-  | DiagnosticTool
-  | GameLaunchItem
-  | SoftwareSettingItem
-  | RgbSettingItem
-  | BrowserSettingItem
-  | PreflightCheck
-
-// Open side panel for item details
-function openItemPanel(item: AnyItem, section: ManualStepSection) {
-  selectedItem = { item, section }
-}
-
-function closeItemPanel() {
-  selectedItem = null
-}
-
-async function handleDownloadConfig(sectionId: string) {
-  const tool = getSectionConfigTool(buildSectionId(sectionId))
-  if (!tool) return
-
-  const persona = app.activePreset ?? 'gamer'
-  const hardware = app.hardware
-
-  // Check if tool is available for current persona/hardware
-  if (!isToolAvailable(tool, persona, hardware.gpu)) {
-    return
+  // Open side panel for item details
+  function openItemPanel(item: AnyItem, section: ManualStepSection) {
+    selectedItem = { item, section };
   }
 
-  downloadingSection = sectionId
+  function closeItemPanel() {
+    selectedItem = null;
+  }
 
-  try {
-    const context = {
-      persona,
-      hardware,
-      dnsProvider: app.dnsProvider,
-      timestamp: new Date().toISOString(),
+  async function handleDownloadConfig(sectionId: string) {
+    const tool = getSectionConfigTool(buildSectionId(sectionId));
+    if (!tool) return;
+
+    const persona = app.activePreset ?? "gamer";
+    const hardware = app.hardware;
+
+    // Check if tool is available for current persona/hardware
+    if (!isToolAvailable(tool, persona, hardware.gpu)) {
+      return;
     }
 
-    const configs = generateToolConfig(tool, context)
-    if (!configs || configs.length === 0) {
-      throw new Error('No configs generated')
+    downloadingSection = sectionId;
+
+    try {
+      const context = {
+        persona,
+        hardware,
+        dnsProvider: app.dnsProvider,
+        timestamp: new Date().toISOString(),
+      };
+
+      const configs = generateToolConfig(tool, context);
+      if (!configs || configs.length === 0) {
+        throw new Error("No configs generated");
+      }
+
+      // Download the config file(s)
+      await downloadConfigs(configs);
+
+      // Show instructions in a simple alert for now (modal coming next)
+      instructionsText = configs[0].instructions;
+      showInstructions = true;
+    } catch (error) {
+      console.error("Config download failed:", error);
+      alert("Failed to download config. Please try again.");
+    } finally {
+      downloadingSection = null;
+    }
+  }
+
+  function getItemId(item: AnyItem): string {
+    return item.id ?? createItemId(item as unknown as Record<string, unknown>);
+  }
+
+  function getProgressForItems(sectionId: string, items: readonly AnyItem[]) {
+    const total = items.length;
+    const completed = items.reduce((count, item) => {
+      return count + (isCompleted(sectionId, getItemId(item)) ? 1 : 0);
+    }, 0);
+
+    return {
+      completed,
+      total,
+      percent: total > 0 ? Math.round((completed / total) * 100) : 0,
+    };
+  }
+
+  function getProgress(sectionId: string, items: readonly AnyItem[]) {
+    const _ = progressData.lastUpdated;
+    return getProgressForItems(sectionId, items);
+  }
+
+  function getGroupProgress(sections: readonly ManualStepSection[]) {
+    const _ = progressData.lastUpdated;
+    const showManualOnly = manualOnly; // Read reactive state
+    let completed = 0;
+    let total = 0;
+
+    for (const section of sections) {
+      const filteredItems = showManualOnly
+        ? section.items.filter((item) => !item.automated)
+        : section.items;
+
+      const sectionProgress = getProgressForItems(
+        section.id,
+        filteredItems as readonly AnyItem[],
+      );
+      completed += sectionProgress.completed;
+      total += sectionProgress.total;
     }
 
-    // Download the config file(s)
-    await downloadConfigs(configs)
-
-    // Show instructions in a simple alert for now (modal coming next)
-    instructionsText = configs[0].instructions
-    showInstructions = true
-  } catch (error) {
-    console.error('Config download failed:', error)
-    alert('Failed to download config. Please try again.')
-  } finally {
-    downloadingSection = null
-  }
-}
-
-function getItemId(item: AnyItem): string {
-  return item.id ?? createItemId(item as unknown as Record<string, unknown>)
-}
-
-function getProgressForItems(sectionId: string, items: readonly AnyItem[]) {
-  const total = items.length
-  const completed = items.reduce((count, item) => {
-    return count + (isCompleted(sectionId, getItemId(item)) ? 1 : 0)
-  }, 0)
-
-  return {
-    completed,
-    total,
-    percent: total > 0 ? Math.round((completed / total) * 100) : 0,
-  }
-}
-
-function getProgress(sectionId: string, items: readonly AnyItem[]) {
-  const _ = progressData.lastUpdated
-  return getProgressForItems(sectionId, items)
-}
-
-function getGroupProgress(sections: readonly ManualStepSection[]) {
-  const _ = progressData.lastUpdated
-  const showManualOnly = manualOnly // Read reactive state
-  let completed = 0
-  let total = 0
-
-  for (const section of sections) {
-    const filteredItems = showManualOnly
-      ? section.items.filter((item) => !item.automated)
-      : section.items
-
-    const sectionProgress = getProgressForItems(section.id, filteredItems as readonly AnyItem[])
-    completed += sectionProgress.completed
-    total += sectionProgress.total
+    return {
+      completed,
+      total,
+      percent: total > 0 ? Math.round((completed / total) * 100) : 0,
+    };
   }
 
-  return {
-    completed,
-    total,
-    percent: total > 0 ? Math.round((completed / total) * 100) : 0,
+  function isManualStepItem(item: AnyItem): item is ManualStepItem {
+    return "step" in item && "check" in item && "why" in item;
   }
-}
 
-function isManualStepItem(item: AnyItem): item is ManualStepItem {
-  return 'step' in item && 'check' in item && 'why' in item
-}
-
-function isSettingItem(item: AnyItem): item is SettingItem {
-  return (
-    'setting' in item &&
-    'value' in item &&
-    !('path' in item) &&
-    !('browser' in item) &&
-    !('software' in item)
-  )
-}
-
-function isSoftwareSettingItem(item: AnyItem): item is SoftwareSettingItem {
-  return 'path' in item && 'value' in item && !('browser' in item)
-}
-
-function isBrowserSettingItem(item: AnyItem): item is BrowserSettingItem {
-  return 'browser' in item && 'setting' in item
-}
-
-function isRgbSettingItem(item: AnyItem): item is RgbSettingItem {
-  return 'software' in item && 'action' in item
-}
-
-function isPreflightCheck(item: AnyItem): item is PreflightCheck {
-  return 'check' in item && 'how' in item && 'fail' in item
-}
-
-function isTroubleshootingItem(item: AnyItem): item is TroubleshootingItem {
-  return 'problem' in item && 'causes' in item && 'quickFix' in item
-}
-
-function isGameLaunchItem(item: AnyItem): item is GameLaunchItem {
-  return 'game' in item && 'platform' in item && 'notes' in item
-}
-
-function isStreamingTroubleshootItem(item: AnyItem): item is StreamingTroubleshootItem {
-  return 'problem' in item && 'solution' in item && 'why' in item && !('causes' in item)
-}
-
-function isDiagnosticTool(item: AnyItem): item is DiagnosticTool {
-  return 'tool' in item && 'use' in item
-}
-
-function getItemTitle(item: AnyItem): string {
-  if (isManualStepItem(item)) return item.check
-  if (isSettingItem(item)) return item.setting
-  if (isSoftwareSettingItem(item)) return item.path.split('>').pop()?.trim() ?? item.path
-  if (isBrowserSettingItem(item)) return item.setting
-  if (isRgbSettingItem(item)) return item.software
-  if (isPreflightCheck(item)) return item.check
-  if (isTroubleshootingItem(item)) return item.problem
-  if (isGameLaunchItem(item)) return item.game
-  if (isStreamingTroubleshootItem(item)) return item.problem
-  if (isDiagnosticTool(item)) return item.tool
-  return (item as { id: string }).id
-}
-
-function getItemValue(item: AnyItem): string | undefined {
-  if (isManualStepItem(item)) return undefined
-  if (isSettingItem(item)) return item.value
-  if (isSoftwareSettingItem(item)) return item.value
-  if (isBrowserSettingItem(item)) return item.value
-  if (isRgbSettingItem(item)) return item.action
-  if (isPreflightCheck(item)) return undefined
-  if (isTroubleshootingItem(item)) return undefined
-  if (isGameLaunchItem(item)) return item.launchOptions
-  if (isStreamingTroubleshootItem(item)) return item.solution
-  if (isDiagnosticTool(item)) return undefined
-  return undefined
-}
-
-function getItemWhy(item: AnyItem): string {
-  if ('why' in item) return item.why
-  if (isPreflightCheck(item)) return `${item.how}\n\nIf not: ${item.fail}`
-  if (isTroubleshootingItem(item)) return item.quickFix
-  if (isGameLaunchItem(item)) return item.notes.join('\n')
-  if (isDiagnosticTool(item)) return item.use
-  return ''
-}
-
-function getImpact(item: AnyItem): ImpactLevel {
-  return (item as { impact?: ImpactLevel }).impact ?? 'medium'
-}
-
-function getDifficulty(item: AnyItem): DifficultyLevel {
-  return (item as { difficulty?: DifficultyLevel }).difficulty ?? 'moderate'
-}
-
-function getSafety(item: AnyItem): SafetyLevel {
-  return (item as { safety?: SafetyLevel }).safety ?? 'safe'
-}
-
-let copiedId = $state<string | null>(null)
-
-async function copyLaunchOptions(launchOptions: string, gameId: string) {
-  const success = await copyToClipboard(launchOptions)
-  if (!success) return
-  copiedId = gameId
-  showToast('Launch options copied!', 'success')
-  setTimeout(() => {
-    copiedId = null
-  }, 2000)
-}
-
-function scrollToGroup(groupId: string) {
-  activeGroupId = groupId
-  const element = document.getElementById(`guide-${groupId}`)
-  if (element) {
-    element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  function isSettingItem(item: AnyItem): item is SettingItem {
+    return (
+      "setting" in item &&
+      "value" in item &&
+      !("path" in item) &&
+      !("browser" in item) &&
+      !("software" in item)
+    );
   }
-}
 
-function handlePrint() {
-  window.print()
-}
+  function isSoftwareSettingItem(item: AnyItem): item is SoftwareSettingItem {
+    return "path" in item && "value" in item && !("browser" in item);
+  }
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Tooltip builder handles multiple item types with conditional sections
-function buildItemTooltip(item: AnyItem): StructuredTooltip {
-  const title = getItemTitle(item)
-  const why = getItemWhy(item)
-  const impact = getImpact(item)
-  const safety = getSafety(item)
+  function isBrowserSettingItem(item: AnyItem): item is BrowserSettingItem {
+    return "browser" in item && "setting" in item;
+  }
 
-  const pros: string[] = []
-  const cons: string[] = []
+  function isRgbSettingItem(item: AnyItem): item is RgbSettingItem {
+    return "software" in item && "action" in item;
+  }
 
-  let desc = why || 'Optimize your system with this setting.'
+  function isPreflightCheck(item: AnyItem): item is PreflightCheck {
+    return "check" in item && "how" in item && "fail" in item;
+  }
 
-  // For items without "why" text, build meaningful description
-  if (!why) {
+  function isTroubleshootingItem(item: AnyItem): item is TroubleshootingItem {
+    return "problem" in item && "causes" in item && "quickFix" in item;
+  }
+
+  function isGameLaunchItem(item: AnyItem): item is GameLaunchItem {
+    return "game" in item && "platform" in item && "notes" in item;
+  }
+
+  function isStreamingTroubleshootItem(
+    item: AnyItem,
+  ): item is StreamingTroubleshootItem {
+    return (
+      "problem" in item &&
+      "solution" in item &&
+      "why" in item &&
+      !("causes" in item)
+    );
+  }
+
+  function isDiagnosticTool(item: AnyItem): item is DiagnosticTool {
+    return "tool" in item && "use" in item;
+  }
+
+  function getItemTitle(item: AnyItem): string {
+    if (isManualStepItem(item)) return item.check;
+    if (isSettingItem(item)) return item.setting;
+    if (isSoftwareSettingItem(item))
+      return item.path.split(">").pop()?.trim() ?? item.path;
+    if (isBrowserSettingItem(item)) return item.setting;
+    if (isRgbSettingItem(item)) return item.software;
+    if (isPreflightCheck(item)) return item.check;
+    if (isTroubleshootingItem(item)) return item.problem;
+    if (isGameLaunchItem(item)) return item.game;
+    if (isStreamingTroubleshootItem(item)) return item.problem;
+    if (isDiagnosticTool(item)) return item.tool;
+    return (item as { id: string }).id;
+  }
+
+  function getItemValue(item: AnyItem): string | undefined {
+    if (isManualStepItem(item)) return undefined;
+    if (isSettingItem(item)) return item.value;
+    if (isSoftwareSettingItem(item)) return item.value;
+    if (isBrowserSettingItem(item)) return item.value;
+    if (isRgbSettingItem(item)) return item.action;
+    if (isPreflightCheck(item)) return undefined;
+    if (isTroubleshootingItem(item)) return undefined;
+    if (isGameLaunchItem(item)) return item.launchOptions;
+    if (isStreamingTroubleshootItem(item)) return item.solution;
+    if (isDiagnosticTool(item)) return undefined;
+    return undefined;
+  }
+
+  function getItemWhy(item: AnyItem): string {
+    if ("why" in item) return item.why;
+    if (isPreflightCheck(item)) return `${item.how}\n\nIf not: ${item.fail}`;
+    if (isTroubleshootingItem(item)) return item.quickFix;
+    if (isGameLaunchItem(item)) return item.notes.join("\n");
+    if (isDiagnosticTool(item)) return item.use;
+    return "";
+  }
+
+  function getImpact(item: AnyItem): ImpactLevel {
+    return (item as { impact?: ImpactLevel }).impact ?? "medium";
+  }
+
+  function getDifficulty(item: AnyItem): DifficultyLevel {
+    return (item as { difficulty?: DifficultyLevel }).difficulty ?? "moderate";
+  }
+
+  function getSafety(item: AnyItem): SafetyLevel {
+    return (item as { safety?: SafetyLevel }).safety ?? "safe";
+  }
+
+  let copiedId = $state<string | null>(null);
+
+  async function copyLaunchOptions(launchOptions: string, gameId: string) {
+    const success = await copyToClipboard(launchOptions);
+    if (!success) return;
+    copiedId = gameId;
+    showToast("Launch options copied!", "success");
+    setTimeout(() => {
+      copiedId = null;
+    }, 2000);
+  }
+
+  function scrollToGroup(groupId: string) {
+    activeGroupId = groupId;
+    const element = document.getElementById(`guide-${groupId}`);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }
+
+  function handlePrint() {
+    window.print();
+  }
+
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Tooltip builder handles multiple item types with conditional sections
+  function buildItemTooltip(item: AnyItem): StructuredTooltip {
+    const title = getItemTitle(item);
+    const why = getItemWhy(item);
+    const impact = getImpact(item);
+    const safety = getSafety(item);
+
+    const pros: string[] = [];
+    const cons: string[] = [];
+
+    let desc = why || "Optimize your system with this setting.";
+
+    // For items without "why" text, build meaningful description
+    if (!why) {
+      if (isTroubleshootingItem(item)) {
+        desc = `Common issue: ${item.problem}. Quick fix: ${item.quickFix}`;
+      } else if (isGameLaunchItem(item)) {
+        desc =
+          item.notes.length > 0
+            ? item.notes.join(" · ")
+            : `Launch options for ${item.game}`;
+      } else if (isDiagnosticTool(item)) {
+        desc = item.use || `Diagnostic tool: ${item.tool}`;
+      } else if (isStreamingTroubleshootItem(item)) {
+        desc = `Streaming issue: ${item.problem}. Solution: ${item.solution}`;
+      }
+    }
+
+    // Impact-based pros
+    if (impact === "high") pros.push("High performance impact");
+    else if (impact === "medium") pros.push("Moderate improvement");
+
+    // Troubleshooting items
     if (isTroubleshootingItem(item)) {
-      desc = `Common issue: ${item.problem}. Quick fix: ${item.quickFix}`
-    } else if (isGameLaunchItem(item)) {
-      desc = item.notes.length > 0 ? item.notes.join(' · ') : `Launch options for ${item.game}`
-    } else if (isDiagnosticTool(item)) {
-      desc = item.use || `Diagnostic tool: ${item.tool}`
-    } else if (isStreamingTroubleshootItem(item)) {
-      desc = `Streaming issue: ${item.problem}. Solution: ${item.solution}`
+      pros.push(`Quick fix: ${item.quickFix}`);
+      item.causes.forEach((c) => {
+        cons.push(c);
+      });
+    }
+
+    // Preflight checks
+    if (isPreflightCheck(item)) {
+      pros.push(item.how);
+      cons.push(`If not: ${item.fail}`);
+    }
+
+    // Safety-based cons
+    if (safety === "moderate") cons.push("Use caution when applying");
+    else if (safety === "expert")
+      cons.push("Expert setting - create restore point first");
+
+    return {
+      title,
+      desc,
+      pros: pros.length > 0 ? pros : ["Improves gaming experience"],
+      cons: cons.length > 0 ? cons : [],
+    };
+  }
+
+  const IMPACT_LABELS: Record<ImpactLevel, string> = {
+    high: "High Impact",
+    medium: "Medium Impact",
+    low: "Low Impact",
+  };
+
+  const DIFFICULTY_LABELS: Record<DifficultyLevel, string> = {
+    quick: "Quick Wins",
+    moderate: "Moderate Effort",
+    advanced: "Advanced",
+  };
+
+  const IMPACT_ICONS: Record<ImpactLevel, string> = {
+    high: "M13 10V3L4 14h7v7l9-11h-7z", // Lightning bolt
+    medium: "M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5",
+    low: "M5 12h14M12 5v14", // Plus
+  };
+
+  const DIFFICULTY_ICONS: Record<DifficultyLevel, string> = {
+    quick: "M13 10V3L4 14h7v7l9-11h-7z", // Lightning
+    moderate: "M12 2v20M2 12h20", // Clock-like
+    advanced:
+      "M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z", // Wrench
+  };
+
+  /** Item with its original section ID for tracking */
+  interface FlatItem {
+    item: AnyItem;
+    sectionId: string;
+  }
+
+  interface PanelItem {
+    item: AnyItem;
+    section: ManualStepSection;
+    key: string;
+  }
+
+  interface PanelNode extends PanelItem {
+    prevKey: string | null;
+    nextKey: string | null;
+  }
+
+  function matchesFilter(sectionId: string, item: AnyItem): boolean {
+    // Filter out automated items if "Manual only" is ON
+    if (manualOnly && item.automated) {
+      return false;
+    }
+
+    const itemId = getItemId(item);
+    const itemDone = isDone(sectionId, itemId);
+    const impact = getImpact(item);
+    const difficulty = getDifficulty(item);
+
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      const title = getItemTitle(item).toLowerCase();
+      const value = getItemValue(item)?.toLowerCase() ?? "";
+      const why = getItemWhy(item).toLowerCase();
+      if (
+        !title.includes(query) &&
+        !value.includes(query) &&
+        !why.includes(query)
+      ) {
+        return false;
+      }
+    }
+
+    switch (filterBy) {
+      case "incomplete":
+        return !itemDone;
+      case "quick-wins":
+        return difficulty === "quick" && !itemDone;
+      case "high-impact":
+        return impact === "high" && !itemDone;
+      default:
+        return true;
     }
   }
 
-  // Impact-based pros
-  if (impact === 'high') pros.push('High performance impact')
-  else if (impact === 'medium') pros.push('Moderate improvement')
-
-  // Troubleshooting items
-  if (isTroubleshootingItem(item)) {
-    pros.push(`Quick fix: ${item.quickFix}`)
-    item.causes.forEach((c) => {
-      cons.push(c)
-    })
-  }
-
-  // Preflight checks
-  if (isPreflightCheck(item)) {
-    pros.push(item.how)
-    cons.push(`If not: ${item.fail}`)
-  }
-
-  // Safety-based cons
-  if (safety === 'moderate') cons.push('Use caution when applying')
-  else if (safety === 'expert') cons.push('Expert setting - create restore point first')
-
-  return {
-    title,
-    desc,
-    pros: pros.length > 0 ? pros : ['Improves gaming experience'],
-    cons: cons.length > 0 ? cons : [],
-  }
-}
-
-const IMPACT_LABELS: Record<ImpactLevel, string> = {
-  high: 'High Impact',
-  medium: 'Medium Impact',
-  low: 'Low Impact',
-}
-
-const DIFFICULTY_LABELS: Record<DifficultyLevel, string> = {
-  quick: 'Quick Wins',
-  moderate: 'Moderate Effort',
-  advanced: 'Advanced',
-}
-
-const IMPACT_ICONS: Record<ImpactLevel, string> = {
-  high: 'M13 10V3L4 14h7v7l9-11h-7z', // Lightning bolt
-  medium: 'M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5',
-  low: 'M5 12h14M12 5v14', // Plus
-}
-
-const DIFFICULTY_ICONS: Record<DifficultyLevel, string> = {
-  quick: 'M13 10V3L4 14h7v7l9-11h-7z', // Lightning
-  moderate: 'M12 2v20M2 12h20', // Clock-like
-  advanced:
-    'M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z', // Wrench
-}
-
-/** Item with its original section ID for tracking */
-interface FlatItem {
-  item: AnyItem
-  sectionId: string
-}
-
-interface PanelItem {
-  item: AnyItem
-  section: ManualStepSection
-  key: string
-}
-
-interface PanelNode extends PanelItem {
-  prevKey: string | null
-  nextKey: string | null
-}
-
-function matchesFilter(sectionId: string, item: AnyItem): boolean {
-  // Filter out automated items if "Manual only" is ON
-  if (manualOnly && item.automated) {
-    return false
-  }
-
-  const itemId = getItemId(item)
-  const itemDone = isDone(sectionId, itemId)
-  const impact = getImpact(item)
-  const difficulty = getDifficulty(item)
-
-  if (searchQuery) {
-    const query = searchQuery.toLowerCase()
-    const title = getItemTitle(item).toLowerCase()
-    const value = getItemValue(item)?.toLowerCase() ?? ''
-    const why = getItemWhy(item).toLowerCase()
-    if (!title.includes(query) && !value.includes(query) && !why.includes(query)) {
-      return false
-    }
-  }
-
-  switch (filterBy) {
-    case 'incomplete':
-      return !itemDone
-    case 'quick-wins':
-      return difficulty === 'quick' && !itemDone
-    case 'high-impact':
-      return impact === 'high' && !itemDone
-    default:
-      return true
-  }
-}
-
-/** Flatten all items from all groups with their section IDs */
-function flattenAllItems(): FlatItem[] {
-  const result: FlatItem[] = []
-  for (const group of filteredGroups) {
-    for (const section of group.sections) {
-      for (const item of section.items) {
-        if (matchesFilter(section.id, item as AnyItem)) {
-          result.push({ item: item as AnyItem, sectionId: section.id })
+  /** Flatten all items from all groups with their section IDs */
+  function flattenAllItems(): FlatItem[] {
+    const result: FlatItem[] = [];
+    for (const group of filteredGroups) {
+      for (const section of group.sections) {
+        for (const item of section.items) {
+          if (matchesFilter(section.id, item as AnyItem)) {
+            result.push({ item: item as AnyItem, sectionId: section.id });
+          }
         }
       }
     }
+    return result;
   }
-  return result
-}
 
-/** Group items by impact level */
-function groupByImpact(items: FlatItem[]): Array<{
-  id: ImpactLevel
-  title: string
-  icon: string
-  items: FlatItem[]
-}> {
-  const groups: Record<ImpactLevel, FlatItem[]> = {
-    high: [],
-    medium: [],
-    low: [],
+  /** Group items by impact level */
+  function groupByImpact(items: FlatItem[]): Array<{
+    id: ImpactLevel;
+    title: string;
+    icon: string;
+    items: FlatItem[];
+  }> {
+    const groups: Record<ImpactLevel, FlatItem[]> = {
+      high: [],
+      medium: [],
+      low: [],
+    };
+    for (const flatItem of items) {
+      const impact = getImpact(flatItem.item);
+      groups[impact].push(flatItem);
+    }
+    return (["high", "medium", "low"] as ImpactLevel[])
+      .filter((level) => groups[level].length > 0)
+      .map((level) => ({
+        id: level,
+        title: IMPACT_LABELS[level],
+        icon: IMPACT_ICONS[level],
+        items: groups[level],
+      }));
   }
-  for (const flatItem of items) {
-    const impact = getImpact(flatItem.item)
-    groups[impact].push(flatItem)
+
+  /** Group items by difficulty level */
+  function groupByDifficulty(items: FlatItem[]): Array<{
+    id: DifficultyLevel;
+    title: string;
+    icon: string;
+    items: FlatItem[];
+  }> {
+    const groups: Record<DifficultyLevel, FlatItem[]> = {
+      quick: [],
+      moderate: [],
+      advanced: [],
+    };
+    for (const flatItem of items) {
+      const difficulty = getDifficulty(flatItem.item);
+      groups[difficulty].push(flatItem);
+    }
+    return (["quick", "moderate", "advanced"] as DifficultyLevel[])
+      .filter((level) => groups[level].length > 0)
+      .map((level) => ({
+        id: level,
+        title: DIFFICULTY_LABELS[level],
+        icon: DIFFICULTY_ICONS[level],
+        items: groups[level],
+      }));
   }
-  return (['high', 'medium', 'low'] as ImpactLevel[])
-    .filter((level) => groups[level].length > 0)
-    .map((level) => ({
-      id: level,
-      title: IMPACT_LABELS[level],
-      icon: IMPACT_ICONS[level],
-      items: groups[level],
-    }))
-}
 
-/** Group items by difficulty level */
-function groupByDifficulty(items: FlatItem[]): Array<{
-  id: DifficultyLevel
-  title: string
-  icon: string
-  items: FlatItem[]
-}> {
-  const groups: Record<DifficultyLevel, FlatItem[]> = {
-    quick: [],
-    moderate: [],
-    advanced: [],
+  /** Derived: groups organized by the current sort option */
+  const displayGroups = $derived.by(() => {
+    // Explicitly track filterBy and searchQuery to make this reactive
+    const filter = filterBy;
+    const search = searchQuery;
+
+    if (sortBy === "category") {
+      return null; // Use original filteredGroups
+    }
+    const allItems = flattenAllItems();
+    if (sortBy === "impact") {
+      return groupByImpact(allItems);
+    }
+    if (sortBy === "difficulty") {
+      return groupByDifficulty(allItems);
+    }
+    return null;
+  });
+
+  // Create a reactive key that changes whenever filter/search changes
+  // This will force re-evaluation of {@const} blocks in the template
+  const filterKey = $derived(`${filterBy}-${searchQuery}`);
+
+  function getFilteredItems(
+    sectionId: string,
+    items: readonly AnyItem[],
+  ): AnyItem[] {
+    return items.filter((item) => matchesFilter(sectionId, item));
   }
-  for (const flatItem of items) {
-    const difficulty = getDifficulty(flatItem.item)
-    groups[difficulty].push(flatItem)
+
+  function buildPanelKey(item: AnyItem, sectionId: string): string {
+    return `${sectionId}::${getItemId(item)}`;
   }
-  return (['quick', 'moderate', 'advanced'] as DifficultyLevel[])
-    .filter((level) => groups[level].length > 0)
-    .map((level) => ({
-      id: level,
-      title: DIFFICULTY_LABELS[level],
-      icon: DIFFICULTY_ICONS[level],
-      items: groups[level],
-    }))
-}
 
-/** Derived: groups organized by the current sort option */
-const displayGroups = $derived.by(() => {
-  // Explicitly track filterBy and searchQuery to make this reactive
-  const filter = filterBy
-  const search = searchQuery
-
-  if (sortBy === 'category') {
-    return null // Use original filteredGroups
+  function getPanelItemsFromGroups(): PanelItem[] {
+    const items: PanelItem[] = [];
+    for (const group of filteredGroups) {
+      for (const section of group.sections) {
+        const filtered = getFilteredItems(
+          section.id,
+          section.items as readonly AnyItem[],
+        );
+        for (const item of filtered) {
+          items.push({
+            item,
+            section,
+            key: buildPanelKey(item, section.id),
+          });
+        }
+      }
+    }
+    return items;
   }
-  const allItems = flattenAllItems()
-  if (sortBy === 'impact') {
-    return groupByImpact(allItems)
+
+  function getPanelItemsFromDisplayGroups(): PanelItem[] {
+    if (!displayGroups) return [];
+    const items: PanelItem[] = [];
+    for (const group of displayGroups) {
+      for (const flatItem of group.items) {
+        const section = sectionLookup.get(flatItem.sectionId);
+        if (!section) continue;
+        items.push({
+          item: flatItem.item,
+          section,
+          key: buildPanelKey(flatItem.item, section.id),
+        });
+      }
+    }
+    return items;
   }
-  if (sortBy === 'difficulty') {
-    return groupByDifficulty(allItems)
+
+  function getPanelItems(): PanelItem[] {
+    return sortBy === "category"
+      ? getPanelItemsFromGroups()
+      : getPanelItemsFromDisplayGroups();
   }
-  return null
-})
 
-// Create a reactive key that changes whenever filter/search changes
-// This will force re-evaluation of {@const} blocks in the template
-const filterKey = $derived(`${filterBy}-${searchQuery}`)
+  function* generatePanelNodes(items: PanelItem[]): Generator<PanelNode> {
+    for (let index = 0; index < items.length; index += 1) {
+      const current = items[index];
+      const prev = items[index - 1];
+      const next = items[index + 1];
+      yield {
+        ...current,
+        prevKey: prev ? prev.key : null,
+        nextKey: next ? next.key : null,
+      };
+    }
+  }
 
-function getFilteredItems(sectionId: string, items: readonly AnyItem[]): AnyItem[] {
-  return items.filter((item) => matchesFilter(sectionId, item))
-}
+  const panelState = $derived.by(() => {
+    const items = getPanelItems();
+    const nodes = new Map<string, PanelNode>();
+    for (const node of generatePanelNodes(items)) {
+      nodes.set(node.key, node);
+    }
+    return { items, nodes };
+  });
 
-function buildPanelKey(item: AnyItem, sectionId: string): string {
-  return `${sectionId}::${getItemId(item)}`
-}
+  const selectedNode = $derived.by(() => {
+    if (!selectedItem) return null;
+    const key = buildPanelKey(selectedItem.item, selectedItem.section.id);
+    return panelState.nodes.get(key) ?? null;
+  });
 
-function getPanelItemsFromGroups(): PanelItem[] {
-  const items: PanelItem[] = []
-  for (const group of filteredGroups) {
+  const selectedCategoryTitle = $derived.by(() => {
+    if (!selectedItem) return null;
+    const groupId = groupBySectionId.get(selectedItem.section.id);
+    if (!groupId) return selectedItem.section.title;
+    return groupTitleById.get(groupId) ?? selectedItem.section.title;
+  });
+
+  function selectPanelNode(key: string | null) {
+    if (!key) return;
+    const node = panelState.nodes.get(key);
+    if (!node) return;
+    selectedItem = { item: node.item, section: node.section };
+  }
+
+  $effect(() => {
+    if (!selectedItem) return;
+    const key = buildPanelKey(selectedItem.item, selectedItem.section.id);
+    if (!panelState.nodes.has(key)) {
+      selectedItem = null;
+    }
+  });
+
+  function getGroupIcon(groupId: string): string {
+    switch (groupId) {
+      case "windows":
+        return "M3 5a2 2 0 0 1 2-2h6v8H3V5zm8-2h6a2 2 0 0 1 2 2v6h-8V3zm8 10v6a2 2 0 0 1-2 2h-6v-8h8zm-10 8H5a2 2 0 0 1-2-2v-6h8v8z";
+      case "gpu":
+        return "M4 6h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2zm2 3v6h3v-6H6zm5 0v6h3v-6h-3zm5 0v6h3v-6h-3z";
+      case "bios":
+        return "M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2v-4M9 21H5a2 2 0 0 1-2-2v-4m0-6h18M3 9v6";
+      case "software":
+        return "M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5";
+      case "peripherals":
+        return "M12 2a4 4 0 0 0-4 4v6a4 4 0 0 0 8 0V6a4 4 0 0 0-4-4zm0 14a6 6 0 0 1-6-6V6a6 6 0 1 1 12 0v4a6 6 0 0 1-6 6zm0 2v4m-4 0h8";
+      case "network":
+        return "M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01";
+      case "preflight":
+        return "M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11";
+      case "troubleshooting":
+        return "M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z";
+      case "games":
+        return "M6 11h4v2H6v4H4v-4H0v-2h4V7h2v4zm10-2h4v8h-2v-6h-2v6h-2V9h2zm-6 3h2v6H8v-6zm6 0h2v6h-2v-6z";
+      case "streaming":
+        return "M4.75 8.75a7.25 7.25 0 0 1 14.5 0M2 11.5a10.5 10.5 0 0 1 20 0M8.25 15a3.75 3.75 0 0 1 7.5 0M12 15a1 1 0 0 1 1 1v3a1 1 0 0 1-2 0v-3a1 1 0 0 1 1-1z";
+      case "diagnostics":
+        return "M4.8 2.3A.3.3 0 1 0 5 2.9 2.3 2.3 0 1 1 7.3 5.2a.3.3 0 0 0-.3.3 4 4 0 0 1-4 4 .3.3 0 0 0 0 .6A4.6 4.6 0 0 0 7.6 5.5a.3.3 0 0 0-.3-.3 1.7 1.7 0 1 1-1.7-1.7.3.3 0 0 0 .3-.3 4 4 0 0 1 .6-.9zM12 8a4 4 0 0 0-4 4v7a4 4 0 0 0 8 0v-7a4 4 0 0 0-4-4zm-2 4a2 2 0 1 1 4 0v7a2 2 0 0 1-4 0z";
+      default:
+        return "M12 2L2 7l10 5 10-5-10-5z";
+    }
+  }
+
+  function getCategoryItems(
+    group: (typeof filteredGroups)[number],
+  ): PanelItem[] {
+    const items: PanelItem[] = [];
     for (const section of group.sections) {
-      const filtered = getFilteredItems(section.id, section.items as readonly AnyItem[])
+      const filtered = getFilteredItems(
+        section.id,
+        section.items as readonly AnyItem[],
+      );
       for (const item of filtered) {
         items.push({
           item,
           section,
           key: buildPanelKey(item, section.id),
-        })
+        });
       }
     }
+    return items;
   }
-  return items
-}
 
-function getPanelItemsFromDisplayGroups(): PanelItem[] {
-  if (!displayGroups) return []
-  const items: PanelItem[] = []
-  for (const group of displayGroups) {
-    for (const flatItem of group.items) {
-      const section = sectionLookup.get(flatItem.sectionId)
-      if (!section) continue
-      items.push({
-        item: flatItem.item,
-        section,
-        key: buildPanelKey(flatItem.item, section.id),
-      })
+  const categoryNav = $derived.by(() => {
+    return filteredGroups
+      .map((group) => ({
+        id: group.id,
+        items: getCategoryItems(group),
+      }))
+      .filter((group) => group.items.length > 0);
+  });
+
+  function findCategoryIndex(groupId: string | undefined | null): number {
+    if (!groupId) return -1;
+    return categoryNav.findIndex((group) => group.id === groupId);
+  }
+
+  function selectCategoryRelative(offset: -1 | 1) {
+    if (!selectedItem) return;
+    const currentGroupId = groupBySectionId.get(selectedItem.section.id);
+    const currentIndex = findCategoryIndex(currentGroupId);
+    if (currentIndex === -1) return;
+    const nextIndex = currentIndex + offset;
+    const target = categoryNav[nextIndex];
+    if (!target || target.items.length === 0) return;
+    selectPanelNode(target.items[0].key);
+  }
+
+  function isEditableTarget(target: EventTarget | null): boolean {
+    if (!(target instanceof HTMLElement)) return false;
+    const tag = target.tagName.toLowerCase();
+    return (
+      tag === "input" ||
+      tag === "textarea" ||
+      tag === "select" ||
+      target.isContentEditable
+    );
+  }
+
+  function handlePanelHotkeys(event: KeyboardEvent) {
+    if (!selectedItem) return;
+    if (isEditableTarget(event.target)) return;
+    const key = event.key.toLowerCase();
+    const isSpace = key === " " || event.code === "Space";
+
+    if (key === "w") {
+      event.preventDefault();
+      event.stopPropagation();
+      selectCategoryRelative(-1);
+      return;
+    }
+    if (key === "s") {
+      event.preventDefault();
+      event.stopPropagation();
+      selectCategoryRelative(1);
+      return;
+    }
+    if (key === "a") {
+      event.preventDefault();
+      event.stopPropagation();
+      selectPanelNode(selectedNode?.prevKey ?? null);
+      return;
+    }
+    if (key === "d") {
+      event.preventDefault();
+      event.stopPropagation();
+      selectPanelNode(selectedNode?.nextKey ?? null);
+      return;
+    }
+    if (isSpace) {
+      event.preventDefault();
+      event.stopPropagation();
+      const item = selectedItem.item;
+      const section = selectedItem.section;
+      toggleItem(section.id, getItemId(item));
     }
   }
-  return items
-}
 
-function getPanelItems(): PanelItem[] {
-  return sortBy === 'category' ? getPanelItemsFromGroups() : getPanelItemsFromDisplayGroups()
-}
-
-function* generatePanelNodes(items: PanelItem[]): Generator<PanelNode> {
-  for (let index = 0; index < items.length; index += 1) {
-    const current = items[index]
-    const prev = items[index - 1]
-    const next = items[index + 1]
-    yield {
-      ...current,
-      prevKey: prev ? prev.key : null,
-      nextKey: next ? next.key : null,
-    }
-  }
-}
-
-const panelState = $derived.by(() => {
-  const items = getPanelItems()
-  const nodes = new Map<string, PanelNode>()
-  for (const node of generatePanelNodes(items)) {
-    nodes.set(node.key, node)
-  }
-  return { items, nodes }
-})
-
-const selectedNode = $derived.by(() => {
-  if (!selectedItem) return null
-  const key = buildPanelKey(selectedItem.item, selectedItem.section.id)
-  return panelState.nodes.get(key) ?? null
-})
-
-const selectedCategoryTitle = $derived.by(() => {
-  if (!selectedItem) return null
-  const groupId = groupBySectionId.get(selectedItem.section.id)
-  if (!groupId) return selectedItem.section.title
-  return groupTitleById.get(groupId) ?? selectedItem.section.title
-})
-
-function selectPanelNode(key: string | null) {
-  if (!key) return
-  const node = panelState.nodes.get(key)
-  if (!node) return
-  selectedItem = { item: node.item, section: node.section }
-}
-
-$effect(() => {
-  if (!selectedItem) return
-  const key = buildPanelKey(selectedItem.item, selectedItem.section.id)
-  if (!panelState.nodes.has(key)) {
-    selectedItem = null
-  }
-})
-
-function getGroupIcon(groupId: string): string {
-  switch (groupId) {
-    case 'windows':
-      return 'M3 5a2 2 0 0 1 2-2h6v8H3V5zm8-2h6a2 2 0 0 1 2 2v6h-8V3zm8 10v6a2 2 0 0 1-2 2h-6v-8h8zm-10 8H5a2 2 0 0 1-2-2v-6h8v8z'
-    case 'gpu':
-      return 'M4 6h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2zm2 3v6h3v-6H6zm5 0v6h3v-6h-3zm5 0v6h3v-6h-3z'
-    case 'bios':
-      return 'M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2v-4M9 21H5a2 2 0 0 1-2-2v-4m0-6h18M3 9v6'
-    case 'software':
-      return 'M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5'
-    case 'peripherals':
-      return 'M12 2a4 4 0 0 0-4 4v6a4 4 0 0 0 8 0V6a4 4 0 0 0-4-4zm0 14a6 6 0 0 1-6-6V6a6 6 0 1 1 12 0v4a6 6 0 0 1-6 6zm0 2v4m-4 0h8'
-    case 'network':
-      return 'M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01'
-    case 'preflight':
-      return 'M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11'
-    case 'troubleshooting':
-      return 'M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z'
-    case 'games':
-      return 'M6 11h4v2H6v4H4v-4H0v-2h4V7h2v4zm10-2h4v8h-2v-6h-2v6h-2V9h2zm-6 3h2v6H8v-6zm6 0h2v6h-2v-6z'
-    case 'streaming':
-      return 'M4.75 8.75a7.25 7.25 0 0 1 14.5 0M2 11.5a10.5 10.5 0 0 1 20 0M8.25 15a3.75 3.75 0 0 1 7.5 0M12 15a1 1 0 0 1 1 1v3a1 1 0 0 1-2 0v-3a1 1 0 0 1 1-1z'
-    case 'diagnostics':
-      return 'M4.8 2.3A.3.3 0 1 0 5 2.9 2.3 2.3 0 1 1 7.3 5.2a.3.3 0 0 0-.3.3 4 4 0 0 1-4 4 .3.3 0 0 0 0 .6A4.6 4.6 0 0 0 7.6 5.5a.3.3 0 0 0-.3-.3 1.7 1.7 0 1 1-1.7-1.7.3.3 0 0 0 .3-.3 4 4 0 0 1 .6-.9zM12 8a4 4 0 0 0-4 4v7a4 4 0 0 0 8 0v-7a4 4 0 0 0-4-4zm-2 4a2 2 0 1 1 4 0v7a2 2 0 0 1-4 0z'
-    default:
-      return 'M12 2L2 7l10 5 10-5-10-5z'
-  }
-}
-
-function getCategoryItems(group: (typeof filteredGroups)[number]): PanelItem[] {
-  const items: PanelItem[] = []
-  for (const section of group.sections) {
-    const filtered = getFilteredItems(section.id, section.items as readonly AnyItem[])
-    for (const item of filtered) {
-      items.push({
-        item,
-        section,
-        key: buildPanelKey(item, section.id),
-      })
-    }
-  }
-  return items
-}
-
-const categoryNav = $derived.by(() => {
-  return filteredGroups
-    .map((group) => ({
-      id: group.id,
-      items: getCategoryItems(group),
-    }))
-    .filter((group) => group.items.length > 0)
-})
-
-function findCategoryIndex(groupId: string | undefined | null): number {
-  if (!groupId) return -1
-  return categoryNav.findIndex((group) => group.id === groupId)
-}
-
-function selectCategoryRelative(offset: -1 | 1) {
-  if (!selectedItem) return
-  const currentGroupId = groupBySectionId.get(selectedItem.section.id)
-  const currentIndex = findCategoryIndex(currentGroupId)
-  if (currentIndex === -1) return
-  const nextIndex = currentIndex + offset
-  const target = categoryNav[nextIndex]
-  if (!target || target.items.length === 0) return
-  selectPanelNode(target.items[0].key)
-}
-
-function isEditableTarget(target: EventTarget | null): boolean {
-  if (!(target instanceof HTMLElement)) return false
-  const tag = target.tagName.toLowerCase()
-  return tag === 'input' || tag === 'textarea' || tag === 'select' || target.isContentEditable
-}
-
-function handlePanelHotkeys(event: KeyboardEvent) {
-  if (!selectedItem) return
-  if (isEditableTarget(event.target)) return
-  const key = event.key.toLowerCase()
-  const isSpace = key === ' ' || event.code === 'Space'
-
-  if (key === 'w') {
-    event.preventDefault()
-    event.stopPropagation()
-    selectCategoryRelative(-1)
-    return
-  }
-  if (key === 's') {
-    event.preventDefault()
-    event.stopPropagation()
-    selectCategoryRelative(1)
-    return
-  }
-  if (key === 'a') {
-    event.preventDefault()
-    event.stopPropagation()
-    selectPanelNode(selectedNode?.prevKey ?? null)
-    return
-  }
-  if (key === 'd') {
-    event.preventDefault()
-    event.stopPropagation()
-    selectPanelNode(selectedNode?.nextKey ?? null)
-    return
-  }
-  if (isSpace) {
-    event.preventDefault()
-    event.stopPropagation()
-    const item = selectedItem.item
-    const section = selectedItem.section
-    toggleItem(section.id, getItemId(item))
-  }
-}
-
-$effect(() => {
-  if (!selectedItem) return
-  const handler = (event: KeyboardEvent) => handlePanelHotkeys(event)
-  window.addEventListener('keydown', handler)
-  return () => {
-    window.removeEventListener('keydown', handler)
-  }
-})
+  $effect(() => {
+    if (!selectedItem) return;
+    const handler = (event: KeyboardEvent) => handlePanelHotkeys(event);
+    window.addEventListener("keydown", handler);
+    return () => {
+      window.removeEventListener("keydown", handler);
+    };
+  });
 </script>
 
 <section id="guide" class="step step--guide guide">
@@ -1843,8 +1884,15 @@ $effect(() => {
   {@const itemTooltip = buildItemTooltip(item)}
   {@const normalizedItem = normalizeManualItem(item, section)}
   {@const automationInfo =
-    item.automated && typeof item.automated === "object" && item.automated.module && item.automated.function
-      ? { module: item.automated.module, function: item.automated.function, registryPath: item.automated.registryPath }
+    item.automated &&
+    typeof item.automated === "object" &&
+    item.automated.module &&
+    item.automated.function
+      ? {
+          module: item.automated.module,
+          function: item.automated.function,
+          registryPath: item.automated.registryPath,
+        }
       : null}
   <GuideDetailPanel
     isOpen={true}

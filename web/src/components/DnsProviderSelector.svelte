@@ -1,40 +1,59 @@
 <script lang="ts">
-/**
- * DNS Provider Selector - Radio group for choosing DNS provider
- *
- * Shown when the DNS optimization is enabled.
- */
+  /**
+   * DNS Provider Selector - Radio group for choosing DNS provider
+   *
+   * Shown when the DNS optimization is enabled.
+   */
 
-import { app, setDnsProvider } from '$lib/state.svelte'
-import { DNS_PROVIDERS, type DnsProviderType } from '$lib/types'
+  import { app, setDnsProvider } from "$lib/state.svelte";
+  import { DNS_PROVIDERS, type DnsProviderType } from "$lib/types";
 
-const DNS_OPTIONS: readonly { value: DnsProviderType; label: string; hint: string }[] = [
-  {
-    value: DNS_PROVIDERS.CLOUDFLARE,
-    label: 'Cloudflare',
-    hint: '1.1.1.1 — fastest, privacy-focused',
-  },
-  { value: DNS_PROVIDERS.GOOGLE, label: 'Google', hint: '8.8.8.8 — reliable, widely used' },
-  { value: DNS_PROVIDERS.QUAD9, label: 'Quad9', hint: '9.9.9.9 — blocks malware domains' },
-  { value: DNS_PROVIDERS.OPENDNS, label: 'OpenDNS', hint: '208.67.222.222 — Cisco, very stable' },
-  {
-    value: DNS_PROVIDERS.ADGUARD,
-    label: 'AdGuard',
-    hint: '94.140.14.14 — blocks ads at DNS level',
-  },
-] as const
+  const DNS_OPTIONS: readonly {
+    value: DnsProviderType;
+    label: string;
+    hint: string;
+  }[] = [
+    {
+      value: DNS_PROVIDERS.CLOUDFLARE,
+      label: "Cloudflare",
+      hint: "1.1.1.1 — fastest, privacy-focused",
+    },
+    {
+      value: DNS_PROVIDERS.GOOGLE,
+      label: "Google",
+      hint: "8.8.8.8 — reliable, widely used",
+    },
+    {
+      value: DNS_PROVIDERS.QUAD9,
+      label: "Quad9",
+      hint: "9.9.9.9 — blocks malware domains",
+    },
+    {
+      value: DNS_PROVIDERS.OPENDNS,
+      label: "OpenDNS",
+      hint: "208.67.222.222 — Cisco, very stable",
+    },
+    {
+      value: DNS_PROVIDERS.ADGUARD,
+      label: "AdGuard",
+      hint: "94.140.14.14 — blocks ads at DNS level",
+    },
+  ] as const;
 
-function handleChange(event: Event) {
-  const target = event.target as HTMLInputElement
-  setDnsProvider(target.value as DnsProviderType)
-}
+  function handleChange(event: Event) {
+    const target = event.target as HTMLInputElement;
+    setDnsProvider(target.value as DnsProviderType);
+  }
 </script>
 
 <fieldset class="dns-selector">
   <legend class="dns-label">DNS Provider:</legend>
   <div class="dns-options">
     {#each DNS_OPTIONS as option (option.value)}
-      <label class="dns-option" class:selected={app.dnsProvider === option.value}>
+      <label
+        class="dns-option"
+        class:selected={app.dnsProvider === option.value}
+      >
         <input
           type="radio"
           name="dns-provider"

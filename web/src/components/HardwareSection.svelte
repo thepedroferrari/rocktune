@@ -1,23 +1,23 @@
 <script lang="ts">
-/**
- * Hardware Section - CPU/GPU selection and driver recommendations
- *
- * Replaces the static HTML hardware section with reactive Svelte components.
- */
+  /**
+   * Hardware Section - CPU/GPU selection and driver recommendations
+   *
+   * Replaces the static HTML hardware section with reactive Svelte components.
+   */
 
-import CpuSelector from './CpuSelector.svelte'
-import DriverCards from './DriverCards.svelte'
-import GpuSelector from './GpuSelector.svelte'
+  import CpuSelector from "./CpuSelector.svelte";
+  import DriverCards from "./DriverCards.svelte";
+  import GpuSelector from "./GpuSelector.svelte";
 
-let helpOpen = $state(false)
+  let helpOpen = $state(false);
 
-function toggleHelp() {
-  helpOpen = !helpOpen
-}
+  function toggleHelp() {
+    helpOpen = !helpOpen;
+  }
 
-function closeHelp() {
-  helpOpen = false
-}
+  function closeHelp() {
+    helpOpen = false;
+  }
 </script>
 
 <section id="hardware" class="step">
@@ -25,7 +25,9 @@ function closeHelp() {
     <div class="step-banner__marker">1</div>
     <div class="step-banner__content">
       <h2 class="step-banner__title">Hardware</h2>
-      <p class="step-banner__subtitle">Select your CPU and GPU to enable the right optimizations</p>
+      <p class="step-banner__subtitle">
+        Select your CPU and GPU to enable the right optimizations
+      </p>
     </div>
     <div class="step-banner__actions">
       <button
@@ -60,7 +62,11 @@ function closeHelp() {
     aria-label="Hardware help"
     hidden={!helpOpen}
   >
-    <button type="button" class="hardware-help-panel__close" onclick={closeHelp}>
+    <button
+      type="button"
+      class="hardware-help-panel__close"
+      onclick={closeHelp}
+    >
       Close
     </button>
     <section class="help-section">
@@ -70,8 +76,8 @@ function closeHelp() {
         <strong>"System Information"</strong> in Start
       </p>
       <p>
-        Look for <strong>Processor</strong> — e.g., "AMD Ryzen 7 7800X3D" or
-        "Intel Core i7-13700K"
+        Look for <strong>Processor</strong> — e.g., "AMD Ryzen 7 7800X3D" or "Intel
+        Core i7-13700K"
       </p>
       <p class="tip">
         X3D chips have extra cache for gaming — if yours ends in "X3D", select
@@ -99,5 +105,4 @@ function closeHelp() {
   </div>
 
   <DriverCards />
-
 </section>

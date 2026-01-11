@@ -1,29 +1,76 @@
 .wizard-toggle {
+    --wizard-accent: var(--cyber-yellow);
+    --wizard-panel: color-mix(in oklch, var(--cyber-yellow) 88%, oklch(0.25 0.06 95));
+    --wizard-panel-dark: color-mix(in oklch, var(--cyber-yellow) 80%, oklch(0.25 0.06 95));
+    --wizard-glow: color-mix(in oklch, var(--wizard-accent) 18%, transparent);
+    position: relative;
     display: flex;
     align-items: center;
     gap: var(--space-sm);
-    padding: var(--space-sm) var(--space-md);
-    background: color-mix(in oklch, var(--bg-tertiary) 80%, transparent);
-    border: 1px solid var(--border);
+    padding: var(--space-xs) var(--space-sm);
+    background: linear-gradient(
+      135deg,
+      var(--wizard-panel) 0%,
+      var(--wizard-panel-dark) 70%
+    );
+    border: 1px solid oklch(0 0 0 / 0.18);
     border-radius: 0;
-    clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
-    text-align: right;
+    clip-path: polygon(8px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+    box-shadow:
+      0 6px 14px oklch(0 0 0 / 0.18),
+      inset 0 0 0 1px oklch(1 0 0 / 0.03);
+    overflow: hidden;
+  }
+
+  .wizard-toggle::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      repeating-linear-gradient(
+        0deg,
+        oklch(0 0 0 / 0.04) 0,
+        oklch(0 0 0 / 0.04) 1px,
+        transparent 1px,
+        transparent 3px
+      );
+    opacity: 0.2;
+    pointer-events: none;
+  }
+
+  .wizard-toggle.active {
+    box-shadow:
+      0 8px 18px oklch(0 0 0 / 0.22),
+      0 0 10px var(--wizard-glow),
+      inset 0 0 0 1px oklch(1 0 0 / 0.06);
   }
 
   .toggle-label {
     display: flex;
     flex-direction: column;
-    align-items: flex-end;
+    align-items: flex-start;
     gap: 2px;
+    text-align: left;
+    z-index: 1;
 
     & strong {
-      font-size: 0.8rem;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: oklch(0 0 0 / 0.82);
     }
   }
 
   .toggle-hint {
-    font-size: 0.75rem;
-    color: var(--text-primary);
+    font-size: 0.7rem;
+    color: oklch(0 0 0 / 0.6);
+  }
+
+  .wizard-toggle .cyber-toggle {
+    position: relative;
+    z-index: 1;
   }
 
   .wizard-modal {

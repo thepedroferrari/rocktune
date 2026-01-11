@@ -1,47 +1,47 @@
 <script lang="ts">
-/**
- * PreviewModal - Script preview dialog
- *
- * Modal dialog that displays the generated PowerShell script
- * with CodeViewer for viewing, comparing, and editing.
- */
+  /**
+   * PreviewModal - Script preview dialog
+   *
+   * Modal dialog that displays the generated PowerShell script
+   * with CodeViewer for viewing, comparing, and editing.
+   */
 
-import {
-  app,
-  closePreviewModal,
-  generateCurrentScript,
-  type ScriptMode,
-  setCreateBackup,
-  setEditedScript,
-  setIncludeManualSteps,
-  setIncludeTimer,
-  setScriptMode,
-} from '$lib/state.svelte'
-import CodeViewer from './CodeViewer.svelte'
-import Modal from './ui/Modal.svelte'
+  import {
+    app,
+    closePreviewModal,
+    generateCurrentScript,
+    type ScriptMode,
+    setCreateBackup,
+    setEditedScript,
+    setIncludeManualSteps,
+    setIncludeTimer,
+    setScriptMode,
+  } from "$lib/state.svelte";
+  import CodeViewer from "./CodeViewer.svelte";
+  import Modal from "./ui/Modal.svelte";
 
-function handleTimerToggle() {
-  setIncludeTimer(!app.buildOptions.includeTimer)
-}
+  function handleTimerToggle() {
+    setIncludeTimer(!app.buildOptions.includeTimer);
+  }
 
-function handleManualStepsToggle() {
-  setIncludeManualSteps(!app.buildOptions.includeManualSteps)
-}
+  function handleManualStepsToggle() {
+    setIncludeManualSteps(!app.buildOptions.includeManualSteps);
+  }
 
-function handleBackupToggle() {
-  setCreateBackup(!app.buildOptions.createBackup)
-}
+  function handleBackupToggle() {
+    setCreateBackup(!app.buildOptions.createBackup);
+  }
 
-function handleModeChange(mode: ScriptMode) {
-  setScriptMode(mode)
-}
+  function handleModeChange(mode: ScriptMode) {
+    setScriptMode(mode);
+  }
 
-function handleEdit(content: string) {
-  setEditedScript(content)
-}
+  function handleEdit(content: string) {
+    setEditedScript(content);
+  }
 
-const generatedScript = $derived(generateCurrentScript())
-const activeScript = $derived(app.script.edited ?? generatedScript)
+  const generatedScript = $derived(generateCurrentScript());
+  const activeScript = $derived(app.script.edited ?? generatedScript);
 </script>
 
 <Modal

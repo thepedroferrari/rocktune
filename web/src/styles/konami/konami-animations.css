@@ -5,71 +5,79 @@
 
 /* Year Countdown */
 .year-countdown {
-	position: absolute;
-	inset: 0;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	background: var(--bg-primary);
-	z-index: 1;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-primary);
+  z-index: 1;
 }
 
 .year-text {
-	font-family: var(--font-mono);
-	font-size: clamp(8rem, 20vw, 18rem);
-	font-weight: 900;
+  font-family: var(--font-mono);
+  font-size: clamp(8rem, 20vw, 18rem);
+  font-weight: 900;
 
-	/* Bright yellow with crisp cyan outline for maximum legibility */
-	color: oklch(0.95 0.40 100); /* Bright yellow - high contrast */
-	text-shadow:
-		2px 2px 0 oklch(0.92 0.40 195), /* Cyan outline */
-		-2px -2px 0 oklch(0.92 0.40 195),
-		2px -2px 0 oklch(0.92 0.40 195),
-		-2px 2px 0 oklch(0.92 0.40 195),
-		0 0 30px oklch(0.95 0.40 100 / 0.5); /* Subtle glow only */
+  /* Bright yellow with crisp cyan outline for maximum legibility */
+  color: oklch(0.95 0.40 100);
+  /* Bright yellow - high contrast */
+  text-shadow:
+    2px 2px 0 oklch(0.92 0.40 195),
+    /* Cyan outline */
+    -2px -2px 0 oklch(0.92 0.40 195),
+    2px -2px 0 oklch(0.92 0.40 195),
+    -2px 2px 0 oklch(0.92 0.40 195),
+    0 0 30px oklch(0.95 0.40 100 / 0.5);
+  /* Subtle glow only */
 
-	/* Keep 3D effect */
-	perspective: 800px;
-	transform-style: preserve-3d;
+  /* Keep 3D effect */
+  perspective: 800px;
+  transform-style: preserve-3d;
 }
 
 /* Screen Bloop - CRT turn-on animation */
 .screen-bloop {
-	position: absolute;
-	inset: 0;
-	background: #000;
-	z-index: 2;
-	animation: crt-bloop 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  position: absolute;
+  inset: 0;
+  background: #000;
+  z-index: 2;
+  animation: crt-bloop 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 
 @keyframes crt-bloop {
-	0% {
-		clip-path: ellipse(0% 0% at 50% 50%);
-		filter: brightness(3);
-	}
-	40% {
-		clip-path: ellipse(100% 1% at 50% 50%); /* Horizontal beam */
-		filter: brightness(2.5);
-	}
-	70% {
-		clip-path: ellipse(100% 50% at 50% 50%); /* Scanlines reveal */
-		filter: brightness(1.5);
-	}
-	100% {
-		clip-path: ellipse(100% 100% at 50% 50%);
-		filter: brightness(1);
-	}
+  0% {
+    clip-path: ellipse(0% 0% at 50% 50%);
+    filter: brightness(3);
+  }
+
+  40% {
+    clip-path: ellipse(100% 1% at 50% 50%);
+    /* Horizontal beam */
+    filter: brightness(2.5);
+  }
+
+  70% {
+    clip-path: ellipse(100% 50% at 50% 50%);
+    /* Scanlines reveal */
+    filter: brightness(1.5);
+  }
+
+  100% {
+    clip-path: ellipse(100% 100% at 50% 50%);
+    filter: brightness(1);
+  }
 }
 
 /* Respect reduced motion */
 @media (prefers-reduced-motion: reduce) {
-	.year-text {
-		/* Already legible, no changes needed */
-	}
+  .year-text {
+    /* Already legible, no changes needed */
+  }
 
-	.screen-bloop {
-		animation: none;
-		clip-path: ellipse(100% 100% at 50% 50%);
-		filter: brightness(1);
-	}
+  .screen-bloop {
+    animation: none;
+    clip-path: ellipse(100% 100% at 50% 50%);
+    filter: brightness(1);
+  }
 }

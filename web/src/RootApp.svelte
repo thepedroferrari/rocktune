@@ -1,354 +1,378 @@
 <script lang="ts">
-/**
- * RockTune Root App - Svelte 5
- *
- * Single root component managing the entire application.
- * All sections rendered from here - no HTML fallbacks.
- */
+  /**
+   * RockTune Root App - Svelte 5
+   *
+   * Single root component managing the entire application.
+   * All sections rendered from here - no HTML fallbacks.
+   */
 
-import { onMount } from 'svelte'
-import { getDefaultOptimizations } from '$lib/optimizations'
-import { getRecommendedPreset } from '$lib/presets'
-import { scrollToSection } from '$lib/scroll'
-import {
-  clearShareHash,
-  type DecodedBuild,
-  decodeShareURL,
-  getShareHash,
-  hasShareHash,
-  validatePackages,
-} from '$lib/share'
-import {
-  app,
-  getSelectedCount,
-  getTotalCount,
-  setActivePreset,
-  setCpu,
-  setDnsProvider,
-  setGpu,
-  setMonitorSoftware,
-  setOptimizations,
-  setPeripherals,
-  setSelection,
-  setSoftware,
-  setView,
-} from '$lib/state.svelte'
-import type { PackageKey, SoftwareCatalog } from '$lib/types'
-import { OPTIMIZATION_KEYS, VIEW_MODES } from '$lib/types'
-import SectionSkeleton from './components/SectionSkeleton.svelte'
-import { formatZodErrors, isParseSuccess, safeParseCatalog } from './schemas'
+  import { onMount } from "svelte";
+  import { getDefaultOptimizations } from "$lib/optimizations";
+  import { getRecommendedPreset } from "$lib/presets";
+  import { scrollToSection } from "$lib/scroll";
+  import {
+    clearShareHash,
+    type DecodedBuild,
+    decodeShareURL,
+    getShareHash,
+    hasShareHash,
+    validatePackages,
+  } from "$lib/share";
+  import {
+    app,
+    getSelectedCount,
+    getTotalCount,
+    setActivePreset,
+    setCpu,
+    setDnsProvider,
+    setGpu,
+    setMonitorSoftware,
+    setOptimizations,
+    setPeripherals,
+    setSelection,
+    setSoftware,
+    setView,
+  } from "$lib/state.svelte";
+  import type { PackageKey, SoftwareCatalog } from "$lib/types";
+  import { OPTIMIZATION_KEYS, VIEW_MODES } from "$lib/types";
+  import SectionSkeleton from "./components/SectionSkeleton.svelte";
+  import { formatZodErrors, isParseSuccess, safeParseCatalog } from "./schemas";
 
-/** LUDICROUS optimization keys for danger zone detection */
-const LUDICROUS_KEYS = [
-  OPTIMIZATION_KEYS.SPECTRE_MELTDOWN_OFF,
-  OPTIMIZATION_KEYS.CORE_ISOLATION_OFF,
-  OPTIMIZATION_KEYS.KERNEL_MITIGATIONS_OFF,
-  OPTIMIZATION_KEYS.DEP_OFF,
-] as const
+  /** LUDICROUS optimization keys for danger zone detection */
+  const LUDICROUS_KEYS = [
+    OPTIMIZATION_KEYS.SPECTRE_MELTDOWN_OFF,
+    OPTIMIZATION_KEYS.CORE_ISOLATION_OFF,
+    OPTIMIZATION_KEYS.KERNEL_MITIGATIONS_OFF,
+    OPTIMIZATION_KEYS.DEP_OFF,
+  ] as const;
 
-import { showToast } from '$lib/toast.svelte'
-import { KonamiDetector } from '$lib/konami/konami-detector'
-import { activateKonami, deactivateKonami, getKonamiState } from '$lib/konami/konami-state.svelte'
-import HeroSection from './components/HeroSection.svelte'
-import PresetSection from './components/PresetSection.svelte'
-import SRAnnounce from './components/SRAnnounce.svelte'
-import Toast from './components/Toast.svelte'
-import UnifiedNav from './components/UnifiedNav.svelte'
+  import { showToast } from "$lib/toast.svelte";
+  import { KonamiDetector } from "$lib/konami/konami-detector";
+  import {
+    activateKonami,
+    deactivateKonami,
+    getKonamiState,
+  } from "$lib/konami/konami-state.svelte";
+  import HeroSection from "./components/HeroSection.svelte";
+  import PresetSection from "./components/PresetSection.svelte";
+  import SRAnnounce from "./components/SRAnnounce.svelte";
+  import Toast from "./components/Toast.svelte";
+  import UnifiedNav from "./components/UnifiedNav.svelte";
 
-let loading = $state(true)
-let error = $state<string | null>(null)
+  let loading = $state(true);
+  let error = $state<string | null>(null);
 
-/** Pending packages from share URL (validated after catalog loads) */
-let pendingSharePackages = $state<PackageKey[] | null>(null)
+  /** Pending packages from share URL (validated after catalog loads) */
+  let pendingSharePackages = $state<PackageKey[] | null>(null);
 
-const selectedCount = $derived(getSelectedCount())
-const totalCount = $derived(getTotalCount())
-const recommendedPreset = $derived(getRecommendedPreset(app.activePreset))
-const activeView = $derived(app.view)
+  const selectedCount = $derived(getSelectedCount());
+  const totalCount = $derived(getTotalCount());
+  const recommendedPreset = $derived(getRecommendedPreset(app.activePreset));
+  const activeView = $derived(app.view);
 
-/** Track if we loaded from a shared URL */
-let loadedFromShare = $state(false)
+  /** Track if we loaded from a shared URL */
+  let loadedFromShare = $state(false);
 
-/** Check if any LUDICROUS optimizations are selected */
-const hasLudicrousSelected = $derived(LUDICROUS_KEYS.some((key) => app.optimizations.has(key)))
+  /** Check if any LUDICROUS optimizations are selected */
+  const hasLudicrousSelected = $derived(
+    LUDICROUS_KEYS.some((key) => app.optimizations.has(key)),
+  );
 
-/** Show danger banner when LUDICROUS acknowledged AND items selected */
-const showDangerBanner = $derived(app.ui.ludicrousAcknowledged && hasLudicrousSelected)
+  /** Show danger banner when LUDICROUS acknowledged AND items selected */
+  const showDangerBanner = $derived(
+    app.ui.ludicrousAcknowledged && hasLudicrousSelected,
+  );
 
-function handleViewToggle(view: typeof VIEW_MODES.GRID | typeof VIEW_MODES.LIST) {
-  setView(view)
-}
+  function handleViewToggle(
+    view: typeof VIEW_MODES.GRID | typeof VIEW_MODES.LIST,
+  ) {
+    setView(view);
+  }
 
-const CATALOG_CACHE_KEY = 'rocktune_catalog_cache'
-const CATALOG_CACHE_VERSION = '1.0'
-const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000
+  const CATALOG_CACHE_KEY = "rocktune_catalog_cache";
+  const CATALOG_CACHE_VERSION = "1.0";
+  const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
-interface CatalogCache {
-  version: string
-  timestamp: string
-  catalog: SoftwareCatalog
-}
+  interface CatalogCache {
+    version: string;
+    timestamp: string;
+    catalog: SoftwareCatalog;
+  }
 
-function getCachedCatalog(): SoftwareCatalog | null {
-  try {
-    const cached = localStorage.getItem(CATALOG_CACHE_KEY)
-    if (!cached) return null
+  function getCachedCatalog(): SoftwareCatalog | null {
+    try {
+      const cached = localStorage.getItem(CATALOG_CACHE_KEY);
+      if (!cached) return null;
 
-    const data: unknown = JSON.parse(cached)
-    if (
-      typeof data === 'object' &&
-      data !== null &&
-      'version' in data &&
-      'timestamp' in data &&
-      'catalog' in data
-    ) {
-      const cache = data as CatalogCache
-      const age = Date.now() - new Date(cache.timestamp).getTime()
+      const data: unknown = JSON.parse(cached);
+      if (
+        typeof data === "object" &&
+        data !== null &&
+        "version" in data &&
+        "timestamp" in data &&
+        "catalog" in data
+      ) {
+        const cache = data as CatalogCache;
+        const age = Date.now() - new Date(cache.timestamp).getTime();
 
-      if (age < SEVEN_DAYS_MS && cache.version === CATALOG_CACHE_VERSION) {
-        const result = safeParseCatalog(cache.catalog)
-        if (isParseSuccess(result)) {
-          return result.data
+        if (age < SEVEN_DAYS_MS && cache.version === CATALOG_CACHE_VERSION) {
+          const result = safeParseCatalog(cache.catalog);
+          if (isParseSuccess(result)) {
+            return result.data;
+          }
+          localStorage.removeItem(CATALOG_CACHE_KEY);
         }
-        localStorage.removeItem(CATALOG_CACHE_KEY)
       }
+      return null;
+    } catch {
+      return null;
     }
-    return null
-  } catch {
-    return null
   }
-}
 
-function saveCatalogCache(catalog: SoftwareCatalog): void {
-  try {
-    const cache: CatalogCache = {
-      version: CATALOG_CACHE_VERSION,
-      timestamp: new Date().toISOString(),
-      catalog,
+  function saveCatalogCache(catalog: SoftwareCatalog): void {
+    try {
+      const cache: CatalogCache = {
+        version: CATALOG_CACHE_VERSION,
+        timestamp: new Date().toISOString(),
+        catalog,
+      };
+      localStorage.setItem(CATALOG_CACHE_KEY, JSON.stringify(cache));
+    } catch {
+      // Fail silently (quota exceeded, private browsing)
     }
-    localStorage.setItem(CATALOG_CACHE_KEY, JSON.stringify(cache))
-  } catch {
-    // Fail silently (quota exceeded, private browsing)
   }
-}
 
-async function loadCatalog(): Promise<SoftwareCatalog> {
-  const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), 10000)
+  async function loadCatalog(): Promise<SoftwareCatalog> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-  try {
-    const baseURL =
-      typeof window !== 'undefined'
-        ? new URL(import.meta.env.BASE_URL, window.location.origin)
-        : new URL('https://rocktune.pedroferrari.com/')
-    const catalogURL = new URL('catalog.json', baseURL).toString()
+    try {
+      const baseURL =
+        typeof window !== "undefined"
+          ? new URL(import.meta.env.BASE_URL, window.location.origin)
+          : new URL("https://rocktune.pedroferrari.com/");
+      const catalogURL = new URL("catalog.json", baseURL).toString();
 
-    const response = await fetch(catalogURL, { signal: controller.signal })
-    clearTimeout(timeoutId)
+      const response = await fetch(catalogURL, { signal: controller.signal });
+      clearTimeout(timeoutId);
 
-    if (!response.ok) {
-      if (response.status === 404) throw new Error('CATALOG_NOT_FOUND')
-      if (response.status >= 500) throw new Error('SERVER_ERROR')
-      throw new Error('NETWORK_ERROR')
-    }
-
-    const rawData: unknown = await response.json()
-    const result = safeParseCatalog(rawData)
-
-    if (!isParseSuccess(result)) {
-      throw new Error('INVALID_FORMAT')
-    }
-
-    saveCatalogCache(result.data)
-    return result.data
-  } catch (err) {
-    clearTimeout(timeoutId)
-
-    if (err instanceof Error && err.name === 'AbortError') {
-      throw new Error('TIMEOUT')
-    }
-
-    if (!navigator.onLine) {
-      throw new Error('OFFLINE')
-    }
-
-    throw err
-  }
-}
-
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Catalog hydration requires complex state coordination and error handling
-async function hydrateCatalog() {
-  loading = true
-  error = null
-
-  try {
-    const catalog = await loadCatalog()
-    setSoftware(catalog)
-
-    if (!loadedFromShare) {
-      const defaults = getDefaultOptimizations()
-      setOptimizations(defaults)
-    }
-
-    applyPendingSharePackages(catalog)
-  } catch (e) {
-    const cached = getCachedCatalog()
-
-    if (e instanceof Error) {
-      switch (e.message) {
-        case 'OFFLINE':
-          error = cached
-            ? "📡 You're offline. Using cached catalog."
-            : '📡 No internet connection. Please connect and try again.'
-          break
-
-        case 'TIMEOUT':
-          error = cached
-            ? '⏱️ Catalog is taking too long. Using cached version.'
-            : '⏱️ Connection timeout. Check your internet and try again.'
-          break
-
-        case 'CATALOG_NOT_FOUND':
-          error = '🔍 Catalog not found. Try reloading the page.'
-          break
-
-        case 'SERVER_ERROR':
-          error = cached
-            ? '🚨 Server error. Using cached catalog.'
-            : '🚨 Server error. Please try again in a few minutes.'
-          break
-
-        case 'INVALID_FORMAT':
-          error = '⚠️ Catalog format error. Please reload the page.'
-          break
-
-        default:
-          error = cached
-            ? '⚡ Connection failed. Using cached catalog.'
-            : '⚡ Failed to load catalog. Please try again.'
+      if (!response.ok) {
+        if (response.status === 404) throw new Error("CATALOG_NOT_FOUND");
+        if (response.status >= 500) throw new Error("SERVER_ERROR");
+        throw new Error("NETWORK_ERROR");
       }
 
-      if (cached) {
-        setSoftware(cached)
-        if (!loadedFromShare) {
-          const defaults = getDefaultOptimizations()
-          setOptimizations(defaults)
+      const rawData: unknown = await response.json();
+      const result = safeParseCatalog(rawData);
+
+      if (!isParseSuccess(result)) {
+        throw new Error("INVALID_FORMAT");
+      }
+
+      saveCatalogCache(result.data);
+      return result.data;
+    } catch (err) {
+      clearTimeout(timeoutId);
+
+      if (err instanceof Error && err.name === "AbortError") {
+        throw new Error("TIMEOUT");
+      }
+
+      if (!navigator.onLine) {
+        throw new Error("OFFLINE");
+      }
+
+      throw err;
+    }
+  }
+
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Catalog hydration requires complex state coordination and error handling
+  async function hydrateCatalog() {
+    loading = true;
+    error = null;
+
+    try {
+      const catalog = await loadCatalog();
+      setSoftware(catalog);
+
+      if (!loadedFromShare) {
+        const defaults = getDefaultOptimizations();
+        setOptimizations(defaults);
+      }
+
+      applyPendingSharePackages(catalog);
+    } catch (e) {
+      const cached = getCachedCatalog();
+
+      if (e instanceof Error) {
+        switch (e.message) {
+          case "OFFLINE":
+            error = cached
+              ? "📡 You're offline. Using cached catalog."
+              : "📡 No internet connection. Please connect and try again.";
+            break;
+
+          case "TIMEOUT":
+            error = cached
+              ? "⏱️ Catalog is taking too long. Using cached version."
+              : "⏱️ Connection timeout. Check your internet and try again.";
+            break;
+
+          case "CATALOG_NOT_FOUND":
+            error = "🔍 Catalog not found. Try reloading the page.";
+            break;
+
+          case "SERVER_ERROR":
+            error = cached
+              ? "🚨 Server error. Using cached catalog."
+              : "🚨 Server error. Please try again in a few minutes.";
+            break;
+
+          case "INVALID_FORMAT":
+            error = "⚠️ Catalog format error. Please reload the page.";
+            break;
+
+          default:
+            error = cached
+              ? "⚡ Connection failed. Using cached catalog."
+              : "⚡ Failed to load catalog. Please try again.";
         }
-        applyPendingSharePackages(cached)
+
+        if (cached) {
+          setSoftware(cached);
+          if (!loadedFromShare) {
+            const defaults = getDefaultOptimizations();
+            setOptimizations(defaults);
+          }
+          applyPendingSharePackages(cached);
+        }
+      } else {
+        error = "Unknown error loading catalog.";
       }
-    } else {
-      error = 'Unknown error loading catalog.'
+
+      console.error("[RockTune] Catalog load error:", error, e);
+    } finally {
+      loading = false;
+    }
+  }
+
+  /**
+   * Apply a decoded shared build to app state
+   * Note: Packages are stored as pending and validated after catalog loads
+   */
+  function applySharedBuild(build: DecodedBuild): void {
+    if (build.cpu) setCpu(build.cpu);
+    if (build.gpu) setGpu(build.gpu);
+    if (build.dnsProvider) setDnsProvider(build.dnsProvider);
+    if (build.peripherals.length > 0) setPeripherals(build.peripherals);
+    if (build.monitorSoftware.length > 0)
+      setMonitorSoftware(build.monitorSoftware);
+    if (build.optimizations.length > 0) setOptimizations(build.optimizations);
+    if (build.preset) setActivePreset(build.preset);
+
+    if (build.packages.length > 0) {
+      pendingSharePackages = build.packages;
     }
 
-    console.error('[RockTune] Catalog load error:', error, e)
-  } finally {
-    loading = false
-  }
-}
-
-/**
- * Apply a decoded shared build to app state
- * Note: Packages are stored as pending and validated after catalog loads
- */
-function applySharedBuild(build: DecodedBuild): void {
-  if (build.cpu) setCpu(build.cpu)
-  if (build.gpu) setGpu(build.gpu)
-  if (build.dnsProvider) setDnsProvider(build.dnsProvider)
-  if (build.peripherals.length > 0) setPeripherals(build.peripherals)
-  if (build.monitorSoftware.length > 0) setMonitorSoftware(build.monitorSoftware)
-  if (build.optimizations.length > 0) setOptimizations(build.optimizations)
-  if (build.preset) setActivePreset(build.preset)
-
-  if (build.packages.length > 0) {
-    pendingSharePackages = build.packages
+    loadedFromShare = true;
   }
 
-  loadedFromShare = true
-}
+  /**
+   * Validate and apply pending share packages against loaded catalog
+   */
+  function applyPendingSharePackages(catalog: SoftwareCatalog): void {
+    if (!pendingSharePackages) return;
 
-/**
- * Validate and apply pending share packages against loaded catalog
- */
-function applyPendingSharePackages(catalog: SoftwareCatalog): void {
-  if (!pendingSharePackages) return
+    const catalogKeys = new Set(Object.keys(catalog));
+    const { valid, invalidCount } = validatePackages(
+      pendingSharePackages,
+      catalogKeys,
+    );
 
-  const catalogKeys = new Set(Object.keys(catalog))
-  const { valid, invalidCount } = validatePackages(pendingSharePackages, catalogKeys)
+    if (valid.length > 0) {
+      setSelection(valid);
+    }
 
-  if (valid.length > 0) {
-    setSelection(valid)
-  }
-
-  if (invalidCount > 0) {
-    showToast(`${invalidCount} package(s) from shared link no longer available.`, 'warning', 5000)
-  }
-
-  pendingSharePackages = null
-}
-
-/**
- * Try to load state from URL share hash
- */
-function tryLoadFromShareURL(): void {
-  if (!hasShareHash()) return
-
-  const hash = getShareHash()
-  if (!hash) return
-
-  const result = decodeShareURL(hash)
-
-  if (result.success) {
-    applySharedBuild(result.build)
-    clearShareHash()
-
-    if (result.build.skippedCount > 0) {
+    if (invalidCount > 0) {
       showToast(
-        `Build loaded! ${result.build.skippedCount} setting(s) no longer available.`,
-        'warning',
-        6000,
-      )
-    } else {
-      showToast('Build loaded from shared link!', 'success')
+        `${invalidCount} package(s) from shared link no longer available.`,
+        "warning",
+        5000,
+      );
     }
-  } else {
-    showToast(result.error, 'error', 6000)
-    clearShareHash()
+
+    pendingSharePackages = null;
   }
-}
 
-const konamiState = getKonamiState()
+  /**
+   * Try to load state from URL share hash
+   */
+  function tryLoadFromShareURL(): void {
+    if (!hasShareHash()) return;
 
-onMount(() => {
-  tryLoadFromShareURL()
-  void hydrateCatalog()
+    const hash = getShareHash();
+    if (!hash) return;
 
-  // Konami Code easter egg
-  const detector = new KonamiDetector()
-  detector.start()
+    const result = decodeShareURL(hash);
 
-  const unsubscribe = detector.onActivate(() => {
-    activateKonami()
-    showToast('🎮 Konami Code activated! Prepare for blast-off...', 'success', 2000)
-  })
+    if (result.success) {
+      applySharedBuild(result.build);
+      clearShareHash();
 
-  return () => {
-    detector.stop()
-    unsubscribe()
+      if (result.build.skippedCount > 0) {
+        showToast(
+          `Build loaded! ${result.build.skippedCount} setting(s) no longer available.`,
+          "warning",
+          6000,
+        );
+      } else {
+        showToast("Build loaded from shared link!", "success");
+      }
+    } else {
+      showToast(result.error, "error", 6000);
+      clearShareHash();
+    }
   }
-})
+
+  const konamiState = getKonamiState();
+
+  onMount(() => {
+    tryLoadFromShareURL();
+    void hydrateCatalog();
+
+    // Konami Code easter egg
+    const detector = new KonamiDetector();
+    detector.start();
+
+    const unsubscribe = detector.onActivate(() => {
+      activateKonami();
+      showToast(
+        "🎮 Konami Code activated! Prepare for blast-off...",
+        "success",
+        2000,
+      );
+    });
+
+    return () => {
+      detector.stop();
+      unsubscribe();
+    };
+  });
 </script>
-
 
 <SRAnnounce />
 
-
 <UnifiedNav />
-
 
 {#if showDangerBanner}
   <div class="danger-banner" role="alert">
-    <svg class="danger-banner__icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+    <svg
+      class="danger-banner__icon"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" />
     </svg>
     <span class="danger-banner__text">
       <strong>SECURITY OFF</strong> — Mitigations disabled. Offline use only.
@@ -356,21 +380,26 @@ onMount(() => {
   </div>
 {/if}
 
-
 <HeroSection />
 
-
 <main class="container" id="main-content">
-
   <div class="step-container">
     <section id="quick-start" class="step step--quickstart">
       <div class="quickstart-header">
-        <div class="quickstart-accent quickstart-accent--left" aria-hidden="true"></div>
+        <div
+          class="quickstart-accent quickstart-accent--left"
+          aria-hidden="true"
+        ></div>
         <div class="quickstart-title-wrap">
           <h2 class="quickstart-title">Quick Start</h2>
-          <p class="quickstart-subtitle">Choose a preset or build your own loadout below</p>
+          <p class="quickstart-subtitle">
+            Choose a preset or build your own loadout below
+          </p>
         </div>
-        <div class="quickstart-accent quickstart-accent--right" aria-hidden="true"></div>
+        <div
+          class="quickstart-accent quickstart-accent--right"
+          aria-hidden="true"
+        ></div>
       </div>
       <PresetSection />
     </section>
@@ -381,11 +410,17 @@ onMount(() => {
         class="wizard-next-btn"
         onclick={async (e) => {
           e.preventDefault();
-          await scrollToSection({ sectionId: 'hardware' });
+          await scrollToSection({ sectionId: "hardware" });
         }}
       >
         <span class="wizard-next-text">Next: Hardware</span>
-        <svg class="wizard-next-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg
+          class="wizard-next-icon"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
           <polyline points="6 9 12 15 18 9" />
         </svg>
       </a>
@@ -393,7 +428,7 @@ onMount(() => {
   </div>
 
   <div class="step-container">
-    {#await import('./components/HardwareSection.svelte')}
+    {#await import("./components/HardwareSection.svelte")}
       <SectionSkeleton height="400px" />
     {:then { default: HardwareSection }}
       <HardwareSection />
@@ -405,11 +440,17 @@ onMount(() => {
         class="wizard-next-btn"
         onclick={async (e) => {
           e.preventDefault();
-          await scrollToSection({ sectionId: 'peripherals' });
+          await scrollToSection({ sectionId: "peripherals" });
         }}
       >
         <span class="wizard-next-text">Next: Peripherals</span>
-        <svg class="wizard-next-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg
+          class="wizard-next-icon"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
           <polyline points="6 9 12 15 18 9" />
         </svg>
       </a>
@@ -417,7 +458,7 @@ onMount(() => {
   </div>
 
   <div class="step-container">
-    {#await import('./components/PeripheralsSection.svelte')}
+    {#await import("./components/PeripheralsSection.svelte")}
       <SectionSkeleton height="350px" />
     {:then { default: PeripheralsSection }}
       <PeripheralsSection />
@@ -429,11 +470,17 @@ onMount(() => {
         class="wizard-next-btn"
         onclick={async (e) => {
           e.preventDefault();
-          await scrollToSection({ sectionId: 'optimizations' });
+          await scrollToSection({ sectionId: "optimizations" });
         }}
       >
         <span class="wizard-next-text">Next: Tweaks</span>
-        <svg class="wizard-next-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg
+          class="wizard-next-icon"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
           <polyline points="6 9 12 15 18 9" />
         </svg>
       </a>
@@ -441,7 +488,7 @@ onMount(() => {
   </div>
 
   <div class="step-container">
-    {#await import('./components/OptimizationsSection.svelte')}
+    {#await import("./components/OptimizationsSection.svelte")}
       <SectionSkeleton height="800px" />
     {:then { default: OptimizationsSection }}
       <OptimizationsSection />
@@ -453,11 +500,17 @@ onMount(() => {
         class="wizard-next-btn"
         onclick={async (e) => {
           e.preventDefault();
-          await scrollToSection({ sectionId: 'software' });
+          await scrollToSection({ sectionId: "software" });
         }}
       >
         <span class="wizard-next-text">Next: Arsenal</span>
-        <svg class="wizard-next-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg
+          class="wizard-next-icon"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
           <polyline points="6 9 12 15 18 9" />
         </svg>
       </a>
@@ -466,67 +519,80 @@ onMount(() => {
 
   <div class="step-container step-container--flexible">
     <section id="software" class="step step--arsenal">
-    <header class="step-banner">
-      <div class="step-banner__marker">4</div>
-      <div class="step-banner__content">
-        <h2 class="step-banner__title">Arsenal</h2>
-        <p class="step-banner__subtitle">
-          Install via <abbr title="Windows Package Manager">winget</abbr> — Microsoft's official package manager
-        </p>
-      </div>
-      <div class="step-banner__actions">
-        <div class="view-toggle view-toggle--banner">
-          <button
-            type="button"
-            class="view-btn view-btn--banner"
-            class:active={activeView === VIEW_MODES.GRID}
-            onclick={() => handleViewToggle(VIEW_MODES.GRID)}
-            aria-label="Grid view"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="3" width="7" height="7" rx="1"/>
-              <rect x="14" y="3" width="7" height="7" rx="1"/>
-              <rect x="3" y="14" width="7" height="7" rx="1"/>
-              <rect x="14" y="14" width="7" height="7" rx="1"/>
-            </svg>
-          </button>
-          <button
-            type="button"
-            class="view-btn view-btn--banner"
-            class:active={activeView === VIEW_MODES.LIST}
-            onclick={() => handleViewToggle(VIEW_MODES.LIST)}
-            aria-label="List view"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="3" y1="6" x2="21" y2="6"/>
-              <line x1="3" y1="12" x2="21" y2="12"/>
-              <line x1="3" y1="18" x2="21" y2="18"/>
-            </svg>
-          </button>
+      <header class="step-banner">
+        <div class="step-banner__marker">4</div>
+        <div class="step-banner__content">
+          <h2 class="step-banner__title">Arsenal</h2>
+          <p class="step-banner__subtitle">
+            Install via <abbr title="Windows Package Manager">winget</abbr> — Microsoft's
+            official package manager
+          </p>
         </div>
-      </div>
-    </header>
+        <div class="step-banner__actions">
+          <div class="view-toggle view-toggle--banner">
+            <button
+              type="button"
+              class="view-btn view-btn--banner"
+              class:active={activeView === VIEW_MODES.GRID}
+              onclick={() => handleViewToggle(VIEW_MODES.GRID)}
+              aria-label="Grid view"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <rect x="3" y="3" width="7" height="7" rx="1" />
+                <rect x="14" y="3" width="7" height="7" rx="1" />
+                <rect x="3" y="14" width="7" height="7" rx="1" />
+                <rect x="14" y="14" width="7" height="7" rx="1" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              class="view-btn view-btn--banner"
+              class:active={activeView === VIEW_MODES.LIST}
+              onclick={() => handleViewToggle(VIEW_MODES.LIST)}
+              aria-label="List view"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="3" y1="18" x2="21" y2="18" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </header>
 
-    {#if loading}
-      <output class="loading-state" aria-busy="true">Loading software catalog...</output>
-    {:else if error}
-      <output class="error-state" role="alert">
-        <p>{error}</p>
-        <button type="button" onclick={hydrateCatalog}>Retry</button>
-      </output>
-    {:else}
-      {#await import('./components/Filters.svelte')}
-        <SectionSkeleton height="100px" />
-      {:then { default: Filters }}
-        <Filters {recommendedPreset} />
-      {/await}
-      {#await import('./components/SoftwareGrid.svelte')}
-        <SectionSkeleton height="600px" />
-      {:then { default: SoftwareGrid }}
-        <SoftwareGrid />
-      {/await}
-    {/if}
-  </section>
+      {#if loading}
+        <output class="loading-state" aria-busy="true"
+          >Loading software catalog...</output
+        >
+      {:else if error}
+        <output class="error-state" role="alert">
+          <p>{error}</p>
+          <button type="button" onclick={hydrateCatalog}>Retry</button>
+        </output>
+      {:else}
+        {#await import("./components/Filters.svelte")}
+          <SectionSkeleton height="100px" />
+        {:then { default: Filters }}
+          <Filters {recommendedPreset} />
+        {/await}
+        {#await import("./components/SoftwareGrid.svelte")}
+          <SectionSkeleton height="600px" />
+        {:then { default: SoftwareGrid }}
+          <SoftwareGrid />
+        {/await}
+      {/if}
+    </section>
 
     <nav class="wizard-nav" aria-label="Continue to Forge">
       <a
@@ -534,24 +600,30 @@ onMount(() => {
         class="wizard-next-btn"
         onclick={async (e) => {
           e.preventDefault();
-          await scrollToSection({ sectionId: 'generate' });
+          await scrollToSection({ sectionId: "generate" });
         }}
       >
         <span class="wizard-next-text">Next: Forge Script</span>
-        <svg class="wizard-next-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg
+          class="wizard-next-icon"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
           <polyline points="6 9 12 15 18 9" />
         </svg>
       </a>
     </nav>
   </div>
 
-  {#await import('./components/ForgeSection.svelte')}
+  {#await import("./components/ForgeSection.svelte")}
     <SectionSkeleton height="600px" />
   {:then { default: ForgeSection }}
     <ForgeSection />
   {/await}
 
-  {#await import('./components/ManualStepsSection.svelte')}
+  {#await import("./components/ManualStepsSection.svelte")}
     <SectionSkeleton height="500px" />
   {:then { default: ManualStepsSection }}
     <ManualStepsSection />
@@ -559,7 +631,7 @@ onMount(() => {
 </main>
 
 {#if app.ui.previewModalOpen}
-  {#await import('./components/PreviewModal.svelte') then { default: PreviewModal }}
+  {#await import("./components/PreviewModal.svelte") then { default: PreviewModal }}
     <PreviewModal />
   {/await}
 {/if}
@@ -567,8 +639,7 @@ onMount(() => {
 <Toast />
 
 {#if konamiState.active}
-	{#await import('./components/konami/KonamiEffect.svelte') then { default: KonamiEffect }}
-		<KonamiEffect onexit={deactivateKonami} />
-	{/await}
+  {#await import("./components/konami/KonamiEffect.svelte") then { default: KonamiEffect }}
+    <KonamiEffect onexit={deactivateKonami} />
+  {/await}
 {/if}
-

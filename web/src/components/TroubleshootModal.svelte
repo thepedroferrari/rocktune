@@ -1,68 +1,72 @@
 <script lang="ts">
-/**
- * TroubleshootModal - Help for users who can't run PowerShell scripts
- *
- * Design: Cyberpunk/ROG/CS2 aesthetic - dark, solid, angular
- * UX: "Copy this → Do that" - maximum simplicity
- */
+  /**
+   * TroubleshootModal - Help for users who can't run PowerShell scripts
+   *
+   * Design: Cyberpunk/ROG/CS2 aesthetic - dark, solid, angular
+   * UX: "Copy this → Do that" - maximum simplicity
+   */
 
-import { copyToClipboard } from '$lib/checksum'
-import { type BuildToEncode, getOneLinerWithMeta } from '$lib/share'
-import { app } from '$lib/state.svelte'
-import { showToast } from '$lib/toast.svelte'
-import { downloadText } from '../utils/download'
-import Modal from './ui/Modal.svelte'
+  import { copyToClipboard } from "$lib/checksum";
+  import { type BuildToEncode, getOneLinerWithMeta } from "$lib/share";
+  import { app } from "$lib/state.svelte";
+  import { showToast } from "$lib/toast.svelte";
+  import { downloadText } from "../utils/download";
+  import Modal from "./ui/Modal.svelte";
 
-interface Props {
-  open: boolean
-  onclose: () => void
-}
-
-const { open, onclose }: Props = $props()
-
-const copiedStates = $state({
-  quickest: false,
-  unblock: false,
-  policy: false,
-})
-
-const currentBuild = $derived<BuildToEncode>({
-  cpu: app.hardware.cpu,
-  gpu: app.hardware.gpu,
-  dnsProvider: app.dnsProvider,
-  peripherals: Array.from(app.peripherals),
-  monitorSoftware: Array.from(app.monitorSoftware),
-  optimizations: Array.from(app.optimizations),
-  packages: Array.from(app.selected),
-  preset: app.activePreset ?? undefined,
-})
-
-const oneLinerResult = $derived(getOneLinerWithMeta(currentBuild))
-const oneLinerCommand = $derived(oneLinerResult.command)
-
-const UNBLOCK_COMMANDS = `cd $HOME\\Downloads
-Unblock-File .\\rocktune-setup.ps1
-.\\rocktune-setup.ps1`
-
-const POLICY_COMMAND = `Set-ExecutionPolicy RemoteSigned -Scope CurrentUser`
-
-function resetCopied(key: keyof typeof copiedStates) {
-  copiedStates[key] = true
-  setTimeout(() => {
-    copiedStates[key] = false
-  }, 2000)
-}
-
-async function handleCopy(text: string, key: keyof typeof copiedStates, msg: string) {
-  const success = await copyToClipboard(text)
-  if (success) {
-    resetCopied(key)
-    showToast(msg, 'success')
+  interface Props {
+    open: boolean;
+    onclose: () => void;
   }
-}
 
-function handleDownloadBat() {
-  const batContent = `@echo off
+  const { open, onclose }: Props = $props();
+
+  const copiedStates = $state({
+    quickest: false,
+    unblock: false,
+    policy: false,
+  });
+
+  const currentBuild = $derived<BuildToEncode>({
+    cpu: app.hardware.cpu,
+    gpu: app.hardware.gpu,
+    dnsProvider: app.dnsProvider,
+    peripherals: Array.from(app.peripherals),
+    monitorSoftware: Array.from(app.monitorSoftware),
+    optimizations: Array.from(app.optimizations),
+    packages: Array.from(app.selected),
+    preset: app.activePreset ?? undefined,
+  });
+
+  const oneLinerResult = $derived(getOneLinerWithMeta(currentBuild));
+  const oneLinerCommand = $derived(oneLinerResult.command);
+
+  const UNBLOCK_COMMANDS = `cd $HOME\\Downloads
+Unblock-File .\\rocktune-setup.ps1
+.\\rocktune-setup.ps1`;
+
+  const POLICY_COMMAND = `Set-ExecutionPolicy RemoteSigned -Scope CurrentUser`;
+
+  function resetCopied(key: keyof typeof copiedStates) {
+    copiedStates[key] = true;
+    setTimeout(() => {
+      copiedStates[key] = false;
+    }, 2000);
+  }
+
+  async function handleCopy(
+    text: string,
+    key: keyof typeof copiedStates,
+    msg: string,
+  ) {
+    const success = await copyToClipboard(text);
+    if (success) {
+      resetCopied(key);
+      showToast(msg, "success");
+    }
+  }
+
+  function handleDownloadBat() {
+    const batContent = `@echo off
 :: RockTune Launcher
 :: Requests admin, bypasses execution policy, runs the script
 
@@ -77,10 +81,10 @@ if not exist "%SCRIPT%" (
 
 echo Launching RockTune with admin privileges...
 powershell -Command "Start-Process powershell -ArgumentList '-ExecutionPolicy Bypass -File \\"%SCRIPT%\\"' -Verb RunAs"
-`
-  downloadText(batContent, 'rocktune-launcher.bat')
-  showToast('Launcher downloaded!', 'success')
-}
+`;
+    downloadText(batContent, "rocktune-launcher.bat");
+    showToast("Launcher downloaded!", "success");
+  }
 </script>
 
 <Modal {open} {onclose} size="md" class="troubleshoot-modal">

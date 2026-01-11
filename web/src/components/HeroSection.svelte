@@ -1,75 +1,83 @@
 <script lang="ts">
-/**
- * HeroSection - Gaming Energy + Clarity
- *
- * ROG-style gaming energy with Node.js-level clarity.
- * Sharp angles, neon glows, one bold message, instant understanding.
- */
+  /**
+   * HeroSection - Gaming Energy + Clarity
+   *
+   * ROG-style gaming energy with Node.js-level clarity.
+   * Sharp angles, neon glows, one bold message, instant understanding.
+   */
 
-import { PRESET_META, PRESET_ORDER, PRESETS } from '$lib/presets'
-import {
-  app,
-  setActivePreset,
-  setFilter,
-  setOptimizations,
-  setRecommendedPackages,
-  setSelection,
-} from '$lib/state.svelte'
-import { FILTER_RECOMMENDED, isPackageKey, type PackageKey, type PresetType } from '$lib/types'
+  import { PRESET_META, PRESET_ORDER, PRESETS } from "$lib/presets";
+  import {
+    app,
+    setActivePreset,
+    setFilter,
+    setOptimizations,
+    setRecommendedPackages,
+    setSelection,
+  } from "$lib/state.svelte";
+  import {
+    FILTER_RECOMMENDED,
+    isPackageKey,
+    type PackageKey,
+    type PresetType,
+  } from "$lib/types";
 
-/** Profile badge data - GAMER is the default/highlighted choice */
-const PROFILE_BADGES = PRESET_ORDER.map((id) => {
-  const meta = PRESET_META[id]
-  return {
-    id,
-    label: meta.label.toUpperCase(),
-    rarity: meta.rarity,
-    isDefault: id === 'gamer',
+  /** Profile badge data - GAMER is the default/highlighted choice */
+  const PROFILE_BADGES = PRESET_ORDER.map((id) => {
+    const meta = PRESET_META[id];
+    return {
+      id,
+      label: meta.label.toUpperCase(),
+      rarity: meta.rarity,
+      isDefault: id === "gamer",
+    };
+  });
+
+  const activePreset = $derived(app.activePreset);
+
+  function getDefaultSelection(): PackageKey[] {
+    return Object.entries(app.software)
+      .filter(([, pkg]) => pkg.selected)
+      .map(([key]) => key)
+      .filter((key): key is PackageKey => isPackageKey(app.software, key));
   }
-})
 
-const activePreset = $derived(app.activePreset)
+  /** Select a profile and scroll to the quick-start section */
+  function selectAndScroll(presetId: PresetType) {
+    const config = PRESETS[presetId];
 
-function getDefaultSelection(): PackageKey[] {
-  return Object.entries(app.software)
-    .filter(([, pkg]) => pkg.selected)
-    .map(([key]) => key)
-    .filter((key): key is PackageKey => isPackageKey(app.software, key))
-}
+    setActivePreset(presetId);
+    setSelection(getDefaultSelection());
+    setRecommendedPackages(config.software);
+    setFilter(FILTER_RECOMMENDED);
+    setOptimizations(config.opts);
 
-/** Select a profile and scroll to the quick-start section */
-function selectAndScroll(presetId: PresetType) {
-  const config = PRESETS[presetId]
+    document
+      .getElementById("quick-start")
+      ?.scrollIntoView({ behavior: "smooth" });
+  }
 
-  setActivePreset(presetId)
-  setSelection(getDefaultSelection())
-  setRecommendedPackages(config.software)
-  setFilter(FILTER_RECOMMENDED)
-  setOptimizations(config.opts)
+  /** Check if user prefers reduced motion */
+  const prefersReducedMotion =
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  document.getElementById('quick-start')?.scrollIntoView({ behavior: 'smooth' })
-}
+  /** 3D tilt effect on mouse move (Codrops-style) */
+  function handleBadgeMouseMove(event: MouseEvent) {
+    if (prefersReducedMotion) return;
+    const el = event.currentTarget as HTMLElement;
+    const rect = el.getBoundingClientRect();
+    const x = (event.clientX - rect.left) / rect.width - 0.5;
+    const y = (event.clientY - rect.top) / rect.height - 0.5;
+    el.style.transform = `perspective(800px) rotateY(${x * 15}deg) rotateX(${-y * 15}deg) translateY(-3px)`;
+  }
 
-/** Check if user prefers reduced motion */
-const prefersReducedMotion =
-  typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
-
-/** 3D tilt effect on mouse move (Codrops-style) */
-function handleBadgeMouseMove(event: MouseEvent) {
-  if (prefersReducedMotion) return
-  const el = event.currentTarget as HTMLElement
-  const rect = el.getBoundingClientRect()
-  const x = (event.clientX - rect.left) / rect.width - 0.5
-  const y = (event.clientY - rect.top) / rect.height - 0.5
-  el.style.transform = `perspective(800px) rotateY(${x * 15}deg) rotateX(${-y * 15}deg) translateY(-3px)`
-}
-
-/** Reset tilt on mouse leave */
-function handleBadgeMouseLeave(event: MouseEvent) {
-  if (prefersReducedMotion) return
-  const el = event.currentTarget as HTMLElement
-  el.style.transform = ''
-}
+  /** Reset tilt on mouse leave */
+  function handleBadgeMouseLeave(event: MouseEvent) {
+    if (prefersReducedMotion) return;
+    const el = event.currentTarget as HTMLElement;
+    el.style.transform = "";
+  }
 </script>
 
 <header class="hero-fold">
@@ -180,15 +188,21 @@ function handleBadgeMouseLeave(event: MouseEvent) {
         <dl class="stats-list">
           <div class="stat-line">
             <dt class="stat-label">Network lag</dt>
-            <dd class="stat-value"><span class="stat-dots" aria-hidden="true"></span>OPTIMIZED</dd>
+            <dd class="stat-value">
+              <span class="stat-dots" aria-hidden="true"></span>OPTIMIZED
+            </dd>
           </div>
           <div class="stat-line">
             <dt class="stat-label">Background noise</dt>
-            <dd class="stat-value"><span class="stat-dots" aria-hidden="true"></span>REDUCED</dd>
+            <dd class="stat-value">
+              <span class="stat-dots" aria-hidden="true"></span>REDUCED
+            </dd>
           </div>
           <div class="stat-line">
             <dt class="stat-label">Windows tracking</dt>
-            <dd class="stat-value"><span class="stat-dots" aria-hidden="true"></span>BLOCKED</dd>
+            <dd class="stat-value">
+              <span class="stat-dots" aria-hidden="true"></span>BLOCKED
+            </dd>
           </div>
 
           <dt class="stat-divider" aria-hidden="true"></dt>
@@ -196,15 +210,21 @@ function handleBadgeMouseLeave(event: MouseEvent) {
 
           <div class="stat-line stat-line--highlight">
             <dt class="stat-label">Micro-stutters</dt>
-            <dd class="stat-value stat-value--accent"><span class="stat-dots" aria-hidden="true"></span>MINIMIZED</dd>
+            <dd class="stat-value stat-value--accent">
+              <span class="stat-dots" aria-hidden="true"></span>MINIMIZED
+            </dd>
           </div>
           <div class="stat-line stat-line--highlight">
             <dt class="stat-label">Frame times</dt>
-            <dd class="stat-value stat-value--accent"><span class="stat-dots" aria-hidden="true"></span>SMOOTHER</dd>
+            <dd class="stat-value stat-value--accent">
+              <span class="stat-dots" aria-hidden="true"></span>SMOOTHER
+            </dd>
           </div>
           <div class="stat-line stat-line--highlight">
             <dt class="stat-label">Input delay</dt>
-            <dd class="stat-value stat-value--accent"><span class="stat-dots" aria-hidden="true"></span>FASTER</dd>
+            <dd class="stat-value stat-value--accent">
+              <span class="stat-dots" aria-hidden="true"></span>FASTER
+            </dd>
           </div>
         </dl>
 

@@ -188,12 +188,12 @@ function generateUniFiJSON(persona: string): string {
         streaming:
           persona === 'streamer'
             ? {
-                name: 'Streaming Priority',
-                dscp_tag: 'AF41 (34)',
-                ports: {
-                  tcp: ['1935', '443'],
-                },
-              }
+              name: 'Streaming Priority',
+              dscp_tag: 'AF41 (34)',
+              ports: {
+                tcp: ['1935', '443'],
+              },
+            }
             : undefined,
       },
 

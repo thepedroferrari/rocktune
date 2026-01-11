@@ -1096,10 +1096,9 @@ function generateNextStepsBlock(
     'Write-Host "  ╔════════════════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan',
   );
   lines.push(
-    `Write-Host "  ║                           NEXT STEPS: ${
-      presetLabel.padEnd(
-        24,
-      )
+    `Write-Host "  ║                           NEXT STEPS: ${presetLabel.padEnd(
+      24,
+    )
     }          ║" -ForegroundColor Cyan`,
   );
   lines.push(
@@ -1641,8 +1640,7 @@ export function buildScript(
   if (softwareOpts.length > 0) categories.push("Software");
 
   lines.push(
-    `${indent}$optCategories = @(${
-      categories.map((c) => `'${c}'`).join(", ")
+    `${indent}$optCategories = @(${categories.map((c) => `'${c}'`).join(", ")
     })`,
   );
   lines.push(`${indent}$optCatIndex = 0`);
