@@ -2,6 +2,23 @@ import { defineConfig } from 'vite'
 import { svelte, vitePreprocess } from '@sveltejs/vite-plugin-svelte'
 import { visualizer } from 'rollup-plugin-visualizer'
 
+/**
+ * Converts render-blocking <link rel="stylesheet"> to non-blocking preload pattern.
+ * Critical CSS is already inlined in index.html, so this defers the full stylesheet.
+ */
+function deferCssPlugin() {
+  return {
+    name: 'defer-css',
+    enforce: 'post' as const,
+    transformIndexHtml(html: string) {
+      return html.replace(
+        /<link\s+rel="stylesheet"\s+(?:crossorigin\s+)?href="([^"]+)"[^>]*>/g,
+        (_, href) =>
+          `<link rel="preload" href="${href}" as="style" onload="this.onload=null;this.rel='stylesheet'">\n    <noscript><link rel="stylesheet" href="${href}"></noscript>`,
+      )
+    },
+  }
+}
 
 function getGitInfo() {
   try {
@@ -29,6 +46,7 @@ export default defineConfig({
         runes: true,
       },
     }),
+    deferCssPlugin(),
     visualizer({
       filename: 'dist/stats.html',
       gzipSize: true,
