@@ -40,12 +40,12 @@
       align-items: center;
       padding-block: 0.2rem;
       padding-inline: 0.5rem;
-      background: var(--bg-primary);
+      background: var(--text-primary);
       border: 1px solid var(--border);
       border-radius: var(--radius-xs);
       font-family: var(--font-mono);
       font-size: var(--text-sm);
-      color: var(--text-primary);
+      color: var(--bg-primary);
     }
   }
 

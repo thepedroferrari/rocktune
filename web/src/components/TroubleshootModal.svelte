@@ -339,7 +339,7 @@ powershell -Command "Start-Process powershell -ArgumentList '-ExecutionPolicy By
     font-size: 0.75rem;
     font-weight: 700;
     letter-spacing: 0.1em;
-    color: var(--surface-1);
+    color: var(--bg-primary);
     text-transform: uppercase;
     cursor: pointer;
     transition: all 0.15s ease;
