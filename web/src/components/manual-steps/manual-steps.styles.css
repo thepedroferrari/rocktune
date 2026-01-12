@@ -287,11 +287,9 @@
       font-weight: 600;
       letter-spacing: 0.02em;
       color: var(--text-primary);
-      background: linear-gradient(
-        135deg,
-        color-mix(in oklch, var(--cyber-cyan) 5%, var(--bg-card)),
-        color-mix(in oklch, var(--cyber-cyan) 3%, var(--bg-card))
-      );
+      background: linear-gradient(135deg,
+          color-mix(in oklch, var(--cyber-cyan) 5%, var(--bg-card)),
+          color-mix(in oklch, var(--cyber-cyan) 3%, var(--bg-card)));
       border: 1px solid color-mix(in oklch, var(--cyber-cyan) 30%, var(--border));
       border-radius: 6px;
       cursor: pointer;
@@ -370,6 +368,7 @@
         opacity: 0;
         transform: translateY(-8px) scale(0.96);
       }
+
       to {
         opacity: 1;
         transform: translateY(0) scale(1);
@@ -696,30 +695,24 @@
       gap: var(--space-lg);
       padding: var(--space-md) var(--space-lg);
       margin-block-end: var(--space-md);
-      background: linear-gradient(
-        135deg,
-        color-mix(in oklch, var(--cyber-cyan) 5%, transparent) 0%,
-        color-mix(in oklch, var(--cyber-cyan) 3%, transparent) 100%
-      );
+      background: linear-gradient(135deg,
+          color-mix(in oklch, var(--cyber-cyan) 5%, transparent) 0%,
+          color-mix(in oklch, var(--cyber-cyan) 3%, transparent) 100%);
       border-left: 3px solid var(--cyber-cyan);
-      clip-path: polygon(
-        0 0,
-        calc(100% - 12px) 0,
-        100% 12px,
-        100% 100%,
-        0 100%
-      );
+      clip-path: polygon(0 0,
+          calc(100% - 12px) 0,
+          100% 12px,
+          100% 100%,
+          0 100%);
     }
 
     .guide__section-header::before {
       content: '';
       position: absolute;
       inset: 0;
-      background: linear-gradient(
-        90deg,
-        color-mix(in oklch, var(--cyber-cyan) 20%, transparent) 0%,
-        transparent 50%
-      );
+      background: linear-gradient(90deg,
+          color-mix(in oklch, var(--cyber-cyan) 20%, transparent) 0%,
+          transparent 50%);
       opacity: 0;
       transition: opacity 300ms;
     }
@@ -751,22 +744,19 @@
       text-transform: uppercase;
       letter-spacing: 0.1em;
       color: oklch(0.1 0 0);
-      background: linear-gradient(
-        135deg,
-        var(--cyber-yellow) 0%,
-        color-mix(in oklch, var(--cyber-yellow) 85%, var(--cyber-cyan)) 100%
-      );
+      background: linear-gradient(135deg,
+          var(--cyber-yellow) 0%,
+          color-mix(in oklch, var(--cyber-yellow) 85%, var(--cyber-cyan)) 100%);
       border: none;
       cursor: pointer;
       overflow: hidden;
       border-radius: 4px;
-      clip-path: polygon(
-        0 0,
-        calc(100% - 10px) 0,
-        100% 10px,
-        100% 100%,
-        0 100%
-      );  /* Subtle angled corner (top-right only) - consistent with UI */
+      clip-path: polygon(0 0,
+          calc(100% - 10px) 0,
+          100% 10px,
+          100% 100%,
+          0 100%);
+      /* Subtle angled corner (top-right only) - consistent with UI */
       box-shadow:
         0 0 20px color-mix(in oklch, var(--cyber-yellow) 40%, transparent),
         inset 0 0 20px color-mix(in oklch, var(--cyber-yellow) 20%, transparent);
@@ -786,12 +776,10 @@
         content: '';
         position: absolute;
         inset: -100%;
-        background: linear-gradient(
-          90deg,
-          transparent 0%,
-          color-mix(in oklch, white 40%, transparent) 50%,
-          transparent 100%
-        );
+        background: linear-gradient(90deg,
+            transparent 0%,
+            color-mix(in oklch, white 40%, transparent) 50%,
+            transparent 100%);
         transform: translateX(-100%);
         transition: transform 600ms;
       }
@@ -801,11 +789,9 @@
         content: '';
         position: absolute;
         inset: 0;
-        background: radial-gradient(
-          circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
-          color-mix(in oklch, white 30%, transparent) 0%,
-          transparent 70%
-        );
+        background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+            color-mix(in oklch, white 30%, transparent) 0%,
+            transparent 70%);
         opacity: 0;
         transition: opacity 300ms;
       }
@@ -846,11 +832,14 @@
     }
 
     @keyframes config-pulse {
-      0%, 100% {
+
+      0%,
+      100% {
         box-shadow:
           0 0 20px color-mix(in oklch, var(--cyber-yellow) 40%, transparent),
           inset 0 0 20px color-mix(in oklch, var(--cyber-yellow) 20%, transparent);
       }
+
       50% {
         box-shadow:
           0 0 30px color-mix(in oklch, var(--cyber-yellow) 60%, transparent),
@@ -860,13 +849,25 @@
     }
 
     @keyframes config-loading {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.7; }
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.7;
+      }
     }
 
     @keyframes shimmer {
-      from { transform: translateX(-100%); }
-      to { transform: translateX(100%); }
+      from {
+        transform: translateX(-100%);
+      }
+
+      to {
+        transform: translateX(100%);
+      }
     }
 
     .guide__section-desc {
@@ -900,10 +901,9 @@
     }
 
     .guide__card {
-      display: flex;
-      align-items: flex-start;
-      gap: var(--space-sm);
-      padding: var(--space-sm);
+      display: grid;
+      grid-template-columns: 48px 1fr;
+      align-items: center;
       background: color-mix(in oklch, var(--cyber-cyan) 3%, var(--bg-card));
       border: 1px solid color-mix(in oklch, var(--cyber-cyan) 15%, var(--border));
       border-radius: 6px;
@@ -1609,6 +1609,7 @@
     from {
       opacity: 0;
     }
+
     to {
       opacity: 1;
     }
@@ -1619,6 +1620,7 @@
       opacity: 0;
       transform: translateY(20px);
     }
+
     to {
       opacity: 1;
       transform: translateY(0);
@@ -1633,8 +1635,6 @@
   .guide__card:not(.guide__card--complex) {
     display: grid;
     grid-template-columns: auto 1fr;
-    gap: var(--space-md);
-    padding: var(--space-md);
     min-height: 56px;
     background: color-mix(in oklch, var(--cyber-cyan) 3%, var(--bg-card));
     border: 1px solid color-mix(in oklch, var(--cyber-cyan) 15%, var(--border));
@@ -1659,23 +1659,22 @@
     /* Automated: subtle diagonal stripe pattern */
     &.automated {
       background:
-        repeating-linear-gradient(
-          135deg,
+        repeating-linear-gradient(135deg,
           color-mix(in oklch, var(--cyber-cyan) 5%, transparent),
           color-mix(in oklch, var(--cyber-cyan) 5%, transparent) 1px,
           transparent 1px,
-          transparent 8px
-        ),
+          transparent 8px),
         color-mix(in oklch, var(--cyber-cyan) 4%, var(--bg-card));
     }
   }
 
   .guide__card-checkbox {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
+    height: 100%;
+    min-block-size: 48px;
+    padding-inline: var(--space-md);
     cursor: pointer;
+    align-items: center;
 
     & input[type="checkbox"] {
       width: 18px;
@@ -1720,10 +1719,11 @@
   }
 
   .guide__card-content {
-    flex: 1;
     cursor: pointer;
-    padding: 0;
-    min-width: 0; /* Allow text truncation */
+    padding-block: var(--space-sm);
+    padding-inline-end: var(--space-sm);
+    min-width: 0;
+    /* Allow text truncation */
 
     &:focus-visible {
       outline: 2px solid var(--cyber-cyan);
@@ -1747,6 +1747,7 @@
 
   /* Hide all badges, values, and icons in simplified cards */
   .guide__card:not(.guide__card--complex) {
+
     & .guide__card-value,
     & .guide__card-badges,
     & .info-icon,
@@ -1767,7 +1768,8 @@
     border-block-start: 1px solid color-mix(in oklch, var(--border) 60%, transparent);
     display: grid;
     gap: var(--space-md);
-    grid-column: 1 / -1; /* Span full width of card */
+    grid-column: 1 / -1;
+    /* Span full width of card */
   }
 
   .expansion-section {
@@ -1859,7 +1861,8 @@
         /* Icon should not shrink */
         & :global(svg) {
           flex-shrink: 0;
-          margin-block-start: 0.125rem; /* Align with text baseline */
+          margin-block-start: 0.125rem;
+          /* Align with text baseline */
         }
       }
     }
@@ -1900,11 +1903,14 @@
 
   .primary-action {
     width: 100%;
-    padding: 0.875rem 1.5rem; /* 44px+ height for WCAG3 */
+    padding: 0.875rem 1.5rem;
+    /* 44px+ height for WCAG3 */
     font-family: var(--font-mono);
-    font-size: 1rem; /* WCAG3 minimum */
+    font-size: 1rem;
+    /* WCAG3 minimum */
     font-weight: 600;
-    color: oklch(0.1 0 0); /* Dark text on yellow */
+    color: oklch(0.1 0 0);
+    /* Dark text on yellow */
     background: var(--cyber-yellow);
     border: none;
     border-radius: var(--radius-sm);
@@ -1912,14 +1918,12 @@
     transition: all var(--duration-fast) ease;
 
     /* Cyber clip-path */
-    clip-path: polygon(
-      0 0,
-      calc(100% - 8px) 0,
-      100% 8px,
-      100% 100%,
-      8px 100%,
-      0 calc(100% - 8px)
-    );
+    clip-path: polygon(0 0,
+        calc(100% - 8px) 0,
+        100% 8px,
+        100% 100%,
+        8px 100%,
+        0 calc(100% - 8px));
 
     &:hover {
       transform: translateY(-1px);

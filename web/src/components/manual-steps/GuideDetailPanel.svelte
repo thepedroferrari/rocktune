@@ -297,7 +297,6 @@ $effect(() => {
 </script>
 
 {#if isOpen}
-  <!-- Backdrop -->
   <!-- svelte-ignore a11y_click_events_have_key_events -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
@@ -306,7 +305,6 @@ $effect(() => {
     transition:fade={{ duration: 200 }}
   ></div>
 
-  <!-- Panel -->
   <div
     bind:this={panelRef}
     class="guide-panel"
@@ -341,7 +339,6 @@ $effect(() => {
         <div class="panel-intro">{item.guide.intro}</div>
       {/if}
 
-      <!-- How to Configure -->
       <h4 class="panel-heading">How to Configure</h4>
       {#if item.guide.steps.length > 0}
         <ol class="panel-steps">
@@ -354,7 +351,6 @@ $effect(() => {
         </ol>
       {/if}
 
-      <!-- Benefits -->
       {#if item.guide.benefits.length > 0}
         <h4 class="panel-heading">Benefits</h4>
         <ul class="panel-list panel-list--benefits">
@@ -364,7 +360,6 @@ $effect(() => {
         </ul>
       {/if}
 
-      <!-- Risks -->
       {#if item.guide.risks.length > 0}
         <h4 class="panel-heading">Risks</h4>
         <ul class="panel-list panel-list--considerations">
@@ -376,7 +371,6 @@ $effect(() => {
         </ul>
       {/if}
 
-      <!-- Skip If -->
       {#if item.guide.skipIf.length > 0}
         <h4 class="panel-heading">Skip If</h4>
         <ul class="panel-list panel-list--skip">
@@ -388,7 +382,6 @@ $effect(() => {
         </ul>
       {/if}
 
-      <!-- Verify -->
       {#if item.guide.verify.length > 0}
         <h4 class="panel-heading">Verify</h4>
         <ul class="panel-list panel-list--verify">
@@ -400,7 +393,6 @@ $effect(() => {
         </ul>
       {/if}
 
-      <!-- Rollback -->
       {#if item.guide.rollback.length > 0}
         <h4 class="panel-heading">Rollback</h4>
         <ul class="panel-list panel-list--rollback">
@@ -456,7 +448,6 @@ $effect(() => {
         </ul>
       {/if}
 
-      <!-- Assessment -->
       <h4 class="panel-heading">Assessment</h4>
       <dl class="panel-assessment">
         <div class="assessment-row">
@@ -557,7 +548,6 @@ $effect(() => {
         </ul>
       {/if}
 
-      <!-- Automation Details -->
       {#if automationInfo}
         <h4 class="panel-heading">What the Script Does</h4>
         <dl class="panel-automation">

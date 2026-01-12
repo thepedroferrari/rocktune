@@ -181,7 +181,6 @@ async function handleWebShare() {
     </h2>
   {/snippet}
 
-  <!-- Build Preview Card -->
   <div class="build-preview">
     <div class="build-preview__hardware">
       <div class="build-preview__chip">

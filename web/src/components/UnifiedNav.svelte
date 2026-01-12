@@ -12,9 +12,8 @@
 import { slide } from 'svelte/transition'
 import { preloadSection, type SectionId } from '../lib/preload'
 import { scrollToSection, scrollToTop } from '../lib/scroll'
-import ShareModal from './ShareModal.svelte'
+import { openShareModal } from '../lib/state.svelte'
 
-let shareModalOpen = $state(false)
 let menuOpen = $state(false)
 
 interface NavLink {
@@ -108,7 +107,7 @@ async function handleClick(event: MouseEvent, link: NavLink) {
 }
 
 function handleMobileShare() {
-  shareModalOpen = true
+  openShareModal()
   closeMenu()
 }
 </script>
@@ -118,7 +117,6 @@ function handleMobileShare() {
   class:menu-open={menuOpen}
   aria-label="Main navigation"
 >
-  <!-- RockTune logo/wordmark -->
   <button
     type="button"
     class="nav-brand"
@@ -131,7 +129,6 @@ function handleMobileShare() {
     <span class="brand-text">RockTune</span>
   </button>
 
-  <!-- Desktop: inline links -->
   <ul class="links links--desktop" role="list">
     {#each NAV_LINKS as link (link.step)}
       <li>
@@ -150,12 +147,11 @@ function handleMobileShare() {
     {/each}
   </ul>
 
-  <!-- Desktop: Share button -->
   <button
     type="button"
     class="btn-share btn-share--desktop"
     title="Share your build configuration"
-    onclick={() => (shareModalOpen = true)}
+    onclick={openShareModal}
   >
     <svg
       class="icon"
@@ -173,7 +169,6 @@ function handleMobileShare() {
     Share
   </button>
 
-  <!-- Mobile: Hamburger toggle -->
   <button
     type="button"
     class="nav-toggle"
@@ -187,7 +182,6 @@ function handleMobileShare() {
     <span class="sr-only">{menuOpen ? "Close" : "Open"} menu</span>
   </button>
 
-  <!-- Mobile: Dropdown menu -->
   {#if menuOpen}
     <div
       class="mobile-menu"
@@ -244,5 +238,3 @@ function handleMobileShare() {
     </div>
   {/if}
 </nav>
-
-<ShareModal open={shareModalOpen} onclose={() => (shareModalOpen = false)} />

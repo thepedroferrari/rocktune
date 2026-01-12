@@ -89,7 +89,6 @@ function handleImageError() {
   data-category={pkg.category}
   data-overlay-position={overlayPosition === "left" ? "left" : undefined}
 >
-  <!-- Hidden checkbox for semantic toggle -->
   <input
     type="checkbox"
     id={inputId}
@@ -99,7 +98,6 @@ function handleImageError() {
     aria-describedby="{inputId}-desc"
   />
 
-  <!-- Label wraps entire card for click-to-toggle -->
   <label for={inputId} class="card-label">
     <figure class="logo">
       {@render renderIcon(false)}
@@ -108,7 +106,6 @@ function handleImageError() {
     <span class="name">{pkg.name}</span>
     <span id="{inputId}-desc" class="sr-only">{pkg.desc ?? pkg.category}</span>
 
-    <!-- Overlay inside label - clicking it toggles the checkbox -->
     <div class="card-overlay">
       <div class="overlay-card">
         <figure class="overlay-logo">

@@ -14,6 +14,7 @@ import {
   app,
   generateCurrentScript,
   openPreviewModal,
+  openShareModal,
   setIncludeManualSteps,
   setIncludeTimer,
   setScriptDownloaded,
@@ -21,23 +22,13 @@ import {
 import { showToast } from '$lib/toast.svelte'
 import { SCRIPT_FILENAME } from '$lib/types'
 import { downloadText } from '../utils/download'
-import ShareModal from './ShareModal.svelte'
 import Summary from './Summary.svelte'
 import TroubleshootModal from './TroubleshootModal.svelte'
 
 let checksum = $state('')
 let copied = $state(false)
-let shareModalOpen = $state(false)
 let troubleshootModalOpen = $state(false)
 let checksumRequestId = 0
-
-function openShareModal() {
-  shareModalOpen = true
-}
-
-function closeShareModal() {
-  shareModalOpen = false
-}
 
 $effect(() => {
   const script = app.script.edited ?? generateCurrentScript()
@@ -137,12 +128,10 @@ async function handleCopyHash() {
     <span class="corner corner--bl"></span>
     <span class="corner corner--br"></span>
 
-    <!-- Section headline -->
     <h3 class="zone-headline">
       Unlike typical optimizers, this is a PowerShell script you can read.
     </h3>
 
-    <!-- HERO CTA: Download button -->
     <button
       type="button"
       class="btn-forge"
@@ -165,10 +154,8 @@ async function handleCopyHash() {
       </span>
     </button>
 
-    <!-- Tagline beneath download -->
     <p class="zone-tagline">Readable PowerShell. No installer. No tracking.</p>
 
-    <!-- Troubleshoot link -->
     <button
       type="button"
       class="troubleshoot-link"
@@ -187,7 +174,6 @@ async function handleCopyHash() {
       </svg>
     </button>
 
-    <!-- Secondary actions -->
     <div class="actions">
       <button
         type="button"
@@ -231,7 +217,6 @@ async function handleCopyHash() {
       </button>
     </div>
 
-    <!-- Trust indicators with provenance -->
     <div class="trust-strip">
       <span class="trust-item">
         <svg
@@ -308,7 +293,6 @@ async function handleCopyHash() {
       </a>
     </div>
 
-    <!-- Benchmarking Tips -->
     <details class="benchmark-tips">
       <summary class="benchmark-tips__summary">
         <svg
@@ -503,7 +487,6 @@ async function handleCopyHash() {
   {/if}
 </section>
 
-<ShareModal open={shareModalOpen} onclose={closeShareModal} />
 <TroubleshootModal
   open={troubleshootModalOpen}
   onclose={() => (troubleshootModalOpen = false)}

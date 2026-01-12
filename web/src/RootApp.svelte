@@ -49,9 +49,11 @@ const LUDICROUS_KEYS = [
 import { showToast } from '$lib/toast.svelte'
 import { KonamiDetector } from '$lib/konami/konami-detector'
 import { activateKonami, deactivateKonami, getKonamiState } from '$lib/konami/konami-state.svelte'
+import { closeShareModal } from '$lib/state.svelte'
 import HeroSection from './components/HeroSection.svelte'
 import PresetSection from './components/PresetSection.svelte'
 import SRAnnounce from './components/SRAnnounce.svelte'
+import ShareModal from './components/ShareModal.svelte'
 import Toast from './components/Toast.svelte'
 import UnifiedNav from './components/UnifiedNav.svelte'
 
@@ -613,6 +615,8 @@ onMount(() => {
     <PreviewModal />
   {/await}
 {/if}
+
+<ShareModal open={app.ui.shareModalOpen} onclose={closeShareModal} />
 
 <Toast />
 

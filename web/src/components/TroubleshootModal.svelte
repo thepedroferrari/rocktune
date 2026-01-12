@@ -94,7 +94,6 @@ powershell -Command "Start-Process powershell -ArgumentList '-ExecutionPolicy By
   {/snippet}
 
   <div class="options">
-    <!-- QUICKEST FIX - Primary/highlighted -->
     <article class="card card--primary">
       <div class="card__header">
         <h3 class="card__title">QUICKEST FIX</h3>
@@ -119,7 +118,6 @@ powershell -Command "Start-Process powershell -ArgumentList '-ExecutionPolicy By
       <p class="card__hint">Runs your loadout directly — no download needed.</p>
     </article>
 
-    <!-- UNBLOCK DOWNLOADED FILE -->
     <article class="card">
       <div class="card__header">
         <h3 class="card__title">UNBLOCK DOWNLOADED FILE</h3>
@@ -135,7 +133,6 @@ powershell -Command "Start-Process powershell -ArgumentList '-ExecutionPolicy By
       <pre class="code">{UNBLOCK_COMMANDS}</pre>
     </article>
 
-    <!-- ENABLE SCRIPTS PERMANENTLY -->
     <article class="card">
       <div class="card__header">
         <h3 class="card__title">ENABLE SCRIPTS PERMANENTLY</h3>
@@ -152,7 +149,6 @@ powershell -Command "Start-Process powershell -ArgumentList '-ExecutionPolicy By
       <p class="card__hint">Then run the unblock commands above.</p>
     </article>
 
-    <!-- DOWNLOAD BAT LAUNCHER -->
     <article class="card card--action">
       <button type="button" class="bat-btn" onclick={handleDownloadBat}>
         <svg

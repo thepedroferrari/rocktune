@@ -41,6 +41,7 @@ export interface ScriptState {
 
 export interface UIState {
   previewModalOpen: boolean
+  shareModalOpen: boolean
   wizardMode: boolean
   ludicrousAcknowledged: boolean
   restorePointAcknowledged: boolean
@@ -89,6 +90,7 @@ const DEFAULT_SCRIPT: ScriptState = {
 
 const DEFAULT_UI: UIState = {
   previewModalOpen: false,
+  shareModalOpen: false,
   wizardMode: false,
   ludicrousAcknowledged: false,
   restorePointAcknowledged: false,
@@ -324,6 +326,14 @@ export function openPreviewModal(): void {
 
 export function closePreviewModal(): void {
   app.ui = { ...app.ui, previewModalOpen: false }
+}
+
+export function openShareModal(): void {
+  app.ui = { ...app.ui, shareModalOpen: true }
+}
+
+export function closeShareModal(): void {
+  app.ui = { ...app.ui, shareModalOpen: false }
 }
 
 export function toggleWizardMode(): void {
