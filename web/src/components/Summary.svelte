@@ -1,45 +1,41 @@
 <script lang="ts">
-  /**
-   * Summary - Displays current loadout summary
-   *
-   * Reads hardware and optimization state from centralized app state.
-   * Uses Svelte 5 $derived for all computed values.
-   */
-  import { app, getSelectedCount } from "$lib/state.svelte";
-  import type { CpuType, GpuType } from "$lib/types";
+/**
+ * Summary - Displays current loadout summary
+ *
+ * Reads hardware and optimization state from centralized app state.
+ * Uses Svelte 5 $derived for all computed values.
+ */
+import { app, getSelectedCount } from '$lib/state.svelte'
+import type { CpuType, GpuType } from '$lib/types'
 
-  const softwareCount = $derived(getSelectedCount());
-  const optimizationCount = $derived(app.optimizations.size);
-  const peripheralCount = $derived(
-    app.peripherals.size + app.monitorSoftware.size,
-  );
+const softwareCount = $derived(getSelectedCount())
+const optimizationCount = $derived(app.optimizations.size)
+const peripheralCount = $derived(app.peripherals.size + app.monitorSoftware.size)
 
-  const cpuLabels: Record<CpuType, string> = {
-    amd_x3d: "AMD Ryzen X3D",
-    amd: "AMD Ryzen",
-    intel: "Intel Core",
-  };
+const cpuLabels: Record<CpuType, string> = {
+  amd_x3d: 'AMD Ryzen X3D',
+  amd: 'AMD Ryzen',
+  intel: 'Intel Core',
+}
 
-  const gpuLabels: Record<GpuType, string> = {
-    nvidia: "NVIDIA GeForce",
-    amd: "AMD Radeon",
-    intel: "Intel Arc",
-  };
+const gpuLabels: Record<GpuType, string> = {
+  nvidia: 'NVIDIA GeForce',
+  amd: 'AMD Radeon',
+  intel: 'Intel Arc',
+}
 
-  const presetLabels = {
-    competitive: "Competitive",
-    streaming: "Streaming",
-    balanced: "Balanced",
-    minimal: "Minimal",
-  } as const;
+const presetLabels = {
+  competitive: 'Competitive',
+  streaming: 'Streaming',
+  balanced: 'Balanced',
+  minimal: 'Minimal',
+} as const
 
-  const cpuLabel = $derived(cpuLabels[app.hardware.cpu] || app.hardware.cpu);
-  const gpuLabel = $derived(gpuLabels[app.hardware.gpu] || app.hardware.gpu);
-  const presetLabel = $derived(
-    app.activePreset
-      ? presetLabels[app.activePreset as keyof typeof presetLabels]
-      : null,
-  );
+const cpuLabel = $derived(cpuLabels[app.hardware.cpu] || app.hardware.cpu)
+const gpuLabel = $derived(gpuLabels[app.hardware.gpu] || app.hardware.gpu)
+const presetLabel = $derived(
+  app.activePreset ? presetLabels[app.activePreset as keyof typeof presetLabels] : null,
+)
 </script>
 
 <div class="summary-shell">

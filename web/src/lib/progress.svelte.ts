@@ -48,7 +48,7 @@ function saveToStorage(data: ProgressData): void {
   try {
     data.lastUpdated = new Date().toISOString()
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
-  } catch { }
+  } catch {}
 }
 
 let progressData = $state<ProgressData>(getDefaultData())

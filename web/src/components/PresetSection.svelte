@@ -1,52 +1,52 @@
 <script lang="ts">
-  import type { PresetConfig } from "$lib/presets";
-  import {
-    app,
-    clearRecommendedPackages,
-    setActivePreset,
-    setFilter,
-    setOptimizations,
-    setRecommendedPackages,
-    setSelection,
-  } from "$lib/state.svelte";
-  import {
-    FILTER_ALL,
-    FILTER_RECOMMENDED,
-    isPackageKey,
-    type OptimizationKey,
-    type PackageKey,
-    type PresetType,
-  } from "$lib/types";
-  import PresetCards from "./PresetCards.svelte";
+import type { PresetConfig } from '$lib/presets'
+import {
+  app,
+  clearRecommendedPackages,
+  setActivePreset,
+  setFilter,
+  setOptimizations,
+  setRecommendedPackages,
+  setSelection,
+} from '$lib/state.svelte'
+import {
+  FILTER_ALL,
+  FILTER_RECOMMENDED,
+  isPackageKey,
+  type OptimizationKey,
+  type PackageKey,
+  type PresetType,
+} from '$lib/types'
+import PresetCards from './PresetCards.svelte'
 
-  const activePreset = $derived(app.activePreset);
+const activePreset = $derived(app.activePreset)
 
-  function applyOptimizations(keys: readonly OptimizationKey[]) {
-    if (keys.length === 0) return;
-    setOptimizations(keys);
+function applyOptimizations(keys: readonly OptimizationKey[]) {
+  if (keys.length === 0) return
+  setOptimizations(keys)
+}
+
+function getDefaultSelection(): PackageKey[] {
+  return Object.entries(app.software)
+    .filter(([, pkg]) => pkg.selected)
+    .map(([key]) => key)
+    .filter((key): key is PackageKey => isPackageKey(app.software, key))
+}
+
+function handlePresetSelect(preset: PresetType, config: PresetConfig) {
+  if (app.activePreset === preset) {
+    setActivePreset(null)
+    clearRecommendedPackages()
+    setFilter(FILTER_ALL)
+    return
   }
 
-  function getDefaultSelection(): PackageKey[] {
-    return Object.entries(app.software)
-      .filter(([, pkg]) => pkg.selected)
-      .map(([key]) => key)
-      .filter((key): key is PackageKey => isPackageKey(app.software, key));
-  }
-
-  function handlePresetSelect(preset: PresetType, config: PresetConfig) {
-    if (app.activePreset === preset) {
-      setActivePreset(null);
-      clearRecommendedPackages();
-      setFilter(FILTER_ALL);
-      return;
-    }
-
-    setActivePreset(preset);
-    setSelection(getDefaultSelection());
-    setRecommendedPackages(config.software);
-    setFilter(FILTER_RECOMMENDED);
-    applyOptimizations(config.opts);
-  }
+  setActivePreset(preset)
+  setSelection(getDefaultSelection())
+  setRecommendedPackages(config.software)
+  setFilter(FILTER_RECOMMENDED)
+  applyOptimizations(config.opts)
+}
 </script>
 
 <PresetCards {activePreset} onPresetSelect={handlePresetSelect} />

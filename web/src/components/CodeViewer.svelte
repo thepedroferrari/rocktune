@@ -1,214 +1,210 @@
 <script lang="ts">
-  /**
-   * CodeViewer - Script viewer with Current/Diff/Edit tabs
-   *
-   * Displays generated PowerShell scripts with:
-   * - Current: Plain text view
-   * - Diff: Line-by-line comparison with previous version
-   * - Edit: Editable textarea for modifications
-   */
+/**
+ * CodeViewer - Script viewer with Current/Diff/Edit tabs
+ *
+ * Displays generated PowerShell scripts with:
+ * - Current: Plain text view
+ * - Diff: Line-by-line comparison with previous version
+ * - Edit: Editable textarea for modifications
+ */
 
-  import { diffLines } from "diff";
-  import type { ScriptMode } from "$lib/state.svelte";
-  import { SCRIPT_FILENAME } from "$lib/types";
-  import { copyToClipboard } from "../utils/clipboard";
-  import { downloadText } from "../utils/download";
+import { diffLines } from 'diff'
+import type { ScriptMode } from '$lib/state.svelte'
+import { SCRIPT_FILENAME } from '$lib/types'
+import { copyToClipboard } from '../utils/clipboard'
+import { downloadText } from '../utils/download'
 
-  interface Props {
-    /** Current script content */
-    script: string;
-    /** Previous script content (for diff) */
-    previousScript: string;
-    /** Current view mode */
-    mode?: ScriptMode;
-    /** Label for the pill badge */
-    pillLabel?: string;
-    /** Whether to show footer actions (copy, download) */
-    showActions?: boolean;
-    /** Callback when mode changes */
-    onModeChange?: (mode: ScriptMode) => void;
-    /** Callback when script is edited */
-    onEdit?: (content: string) => void;
+interface Props {
+  /** Current script content */
+  script: string
+  /** Previous script content (for diff) */
+  previousScript: string
+  /** Current view mode */
+  mode?: ScriptMode
+  /** Label for the pill badge */
+  pillLabel?: string
+  /** Whether to show footer actions (copy, download) */
+  showActions?: boolean
+  /** Callback when mode changes */
+  onModeChange?: (mode: ScriptMode) => void
+  /** Callback when script is edited */
+  onEdit?: (content: string) => void
+}
+
+const {
+  script,
+  previousScript,
+  mode = 'current',
+  pillLabel = 'Preview',
+  showActions = true,
+  onModeChange,
+  onEdit,
+}: Props = $props()
+
+let localModeOverride = $state<ScriptMode | null>(null)
+const activeMode = $derived(localModeOverride ?? mode)
+let diffIndex = $state(0)
+let isEditing = $state(false)
+let editContent = $state('')
+let copyText = $state('Copy')
+let copyTimeout: ReturnType<typeof setTimeout> | null = null
+let diffPaneEl: HTMLDivElement | null = $state(null)
+
+$effect(() => {
+  void mode
+  localModeOverride = null
+})
+
+$effect(() => {
+  if (!isEditing) {
+    editContent = script
   }
+})
 
-  const {
-    script,
-    previousScript,
-    mode = "current",
-    pillLabel = "Preview",
-    showActions = true,
-    onModeChange,
-    onEdit,
-  }: Props = $props();
+const lines = $derived(script ? script.split('\n').length : 0)
+const sizeKb = $derived(script ? (new Blob([script]).size / 1024).toFixed(1) : '0.0')
 
-  let localModeOverride = $state<ScriptMode | null>(null);
-  const activeMode = $derived(localModeOverride ?? mode);
-  let diffIndex = $state(0);
-  let isEditing = $state(false);
-  let editContent = $state("");
-  let copyText = $state("Copy");
-  let copyTimeout: ReturnType<typeof setTimeout> | null = null;
-  let diffPaneEl: HTMLDivElement | null = $state(null);
+interface DiffLine {
+  type: 'added' | 'removed' | 'unchanged'
+  oldLineNum: number | null
+  newLineNum: number | null
+  content: string
+}
 
-  $effect(() => {
-    void mode;
-    localModeOverride = null;
-  });
+const diffLines$ = $derived.by(() => {
+  const result: DiffLine[] = []
+  let oldLine = 1
+  let newLine = 1
 
-  $effect(() => {
-    if (!isEditing) {
-      editContent = script;
+  const changes = diffLines(previousScript || '', script || '')
+
+  for (const part of changes) {
+    const lines = part.value.split('\n')
+
+    if (lines.length > 0 && lines[lines.length - 1] === '') {
+      lines.pop()
     }
-  });
 
-  const lines = $derived(script ? script.split("\n").length : 0);
-  const sizeKb = $derived(
-    script ? (new Blob([script]).size / 1024).toFixed(1) : "0.0",
-  );
-
-  interface DiffLine {
-    type: "added" | "removed" | "unchanged";
-    oldLineNum: number | null;
-    newLineNum: number | null;
-    content: string;
-  }
-
-  const diffLines$ = $derived.by(() => {
-    const result: DiffLine[] = [];
-    let oldLine = 1;
-    let newLine = 1;
-
-    const changes = diffLines(previousScript || "", script || "");
-
-    for (const part of changes) {
-      const lines = part.value.split("\n");
-
-      if (lines.length > 0 && lines[lines.length - 1] === "") {
-        lines.pop();
-      }
-
-      for (const line of lines) {
-        if (part.added) {
-          result.push({
-            type: "added",
-            oldLineNum: null,
-            newLineNum: newLine,
-            content: line,
-          });
-          newLine += 1;
-        } else if (part.removed) {
-          result.push({
-            type: "removed",
-            oldLineNum: oldLine,
-            newLineNum: null,
-            content: line,
-          });
-          oldLine += 1;
-        } else {
-          result.push({
-            type: "unchanged",
-            oldLineNum: oldLine,
-            newLineNum: newLine,
-            content: line,
-          });
-          oldLine += 1;
-          newLine += 1;
-        }
+    for (const line of lines) {
+      if (part.added) {
+        result.push({
+          type: 'added',
+          oldLineNum: null,
+          newLineNum: newLine,
+          content: line,
+        })
+        newLine += 1
+      } else if (part.removed) {
+        result.push({
+          type: 'removed',
+          oldLineNum: oldLine,
+          newLineNum: null,
+          content: line,
+        })
+        oldLine += 1
+      } else {
+        result.push({
+          type: 'unchanged',
+          oldLineNum: oldLine,
+          newLineNum: newLine,
+          content: line,
+        })
+        oldLine += 1
+        newLine += 1
       }
     }
-
-    return result;
-  });
-
-  const diffTargets = $derived(
-    diffLines$
-      .map((line, index) => ({ line, index }))
-      .filter(({ line }) => line.type !== "unchanged"),
-  );
-
-  const showNav = $derived(activeMode === "diff" && diffTargets.length > 0);
-
-  $effect(() => {
-    const count = diffTargets.length;
-    if (count === 0) {
-      diffIndex = 0;
-      return;
-    }
-    if (diffIndex < 0 || diffIndex >= count) {
-      diffIndex = 0;
-    }
-  });
-
-  function setMode(newMode: ScriptMode) {
-    localModeOverride = newMode;
-    onModeChange?.(newMode);
   }
 
-  function handleTabClick(tabMode: ScriptMode) {
-    setMode(tabMode);
+  return result
+})
+
+const diffTargets = $derived(
+  diffLines$
+    .map((line, index) => ({ line, index }))
+    .filter(({ line }) => line.type !== 'unchanged'),
+)
+
+const showNav = $derived(activeMode === 'diff' && diffTargets.length > 0)
+
+$effect(() => {
+  const count = diffTargets.length
+  if (count === 0) {
+    diffIndex = 0
+    return
+  }
+  if (diffIndex < 0 || diffIndex >= count) {
+    diffIndex = 0
+  }
+})
+
+function setMode(newMode: ScriptMode) {
+  localModeOverride = newMode
+  onModeChange?.(newMode)
+}
+
+function handleTabClick(tabMode: ScriptMode) {
+  setMode(tabMode)
+}
+
+function handleEditFocus() {
+  isEditing = true
+}
+
+function handleEditBlur() {
+  isEditing = false
+}
+
+function handleEditInput(event: Event & { currentTarget: HTMLTextAreaElement }) {
+  const { value } = event.currentTarget
+  editContent = value
+  onEdit?.(value)
+}
+
+function navigateDiff(direction: 'prev' | 'next') {
+  if (diffTargets.length === 0) return
+
+  if (direction === 'prev') {
+    diffIndex = (diffIndex - 1 + diffTargets.length) % diffTargets.length
+  } else {
+    diffIndex = (diffIndex + 1) % diffTargets.length
   }
 
-  function handleEditFocus() {
-    isEditing = true;
+  scrollToCurrentDiff()
+}
+
+function scrollToCurrentDiff() {
+  if (!diffPaneEl) return
+  const target = diffTargets[diffIndex]
+  if (!target) return
+
+  const lineEls = diffPaneEl.querySelectorAll('.line')
+  const targetEl = lineEls[target.index]
+  targetEl?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+}
+
+async function handleCopy() {
+  if (!script) return
+
+  const success = await copyToClipboard(script)
+  if (success) {
+    copyText = 'Copied!'
+    if (copyTimeout) clearTimeout(copyTimeout)
+    copyTimeout = setTimeout(() => {
+      copyText = 'Copy'
+    }, 1800)
   }
+}
 
-  function handleEditBlur() {
-    isEditing = false;
+function handleDownload() {
+  if (!script.trim()) return
+  downloadText(script, SCRIPT_FILENAME)
+}
+
+$effect(() => {
+  return () => {
+    if (copyTimeout) clearTimeout(copyTimeout)
   }
-
-  function handleEditInput(
-    event: Event & { currentTarget: HTMLTextAreaElement },
-  ) {
-    const { value } = event.currentTarget;
-    editContent = value;
-    onEdit?.(value);
-  }
-
-  function navigateDiff(direction: "prev" | "next") {
-    if (diffTargets.length === 0) return;
-
-    if (direction === "prev") {
-      diffIndex = (diffIndex - 1 + diffTargets.length) % diffTargets.length;
-    } else {
-      diffIndex = (diffIndex + 1) % diffTargets.length;
-    }
-
-    scrollToCurrentDiff();
-  }
-
-  function scrollToCurrentDiff() {
-    if (!diffPaneEl) return;
-    const target = diffTargets[diffIndex];
-    if (!target) return;
-
-    const lineEls = diffPaneEl.querySelectorAll(".line");
-    const targetEl = lineEls[target.index];
-    targetEl?.scrollIntoView({ block: "center", behavior: "smooth" });
-  }
-
-  async function handleCopy() {
-    if (!script) return;
-
-    const success = await copyToClipboard(script);
-    if (success) {
-      copyText = "Copied!";
-      if (copyTimeout) clearTimeout(copyTimeout);
-      copyTimeout = setTimeout(() => {
-        copyText = "Copy";
-      }, 1800);
-    }
-  }
-
-  function handleDownload() {
-    if (!script.trim()) return;
-    downloadText(script, SCRIPT_FILENAME);
-  }
-
-  $effect(() => {
-    return () => {
-      if (copyTimeout) clearTimeout(copyTimeout);
-    };
-  });
+})
 </script>
 
 <div class="code-viewer">

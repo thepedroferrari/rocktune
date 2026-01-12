@@ -1,23 +1,23 @@
 <script lang="ts">
-  /**
-   * TierLegendDialog - Simple modal explaining S-F tier ranking system
-   * Uses Modal wrapper for consistent dialog behavior
-   */
+/**
+ * TierLegendDialog - Simple modal explaining S-F tier ranking system
+ * Uses Modal wrapper for consistent dialog behavior
+ */
 
-  import { EFFECTIVENESS_RANKS, RANK_LABELS } from "$lib/types";
-  import Modal from "./ui/Modal.svelte";
+import { EFFECTIVENESS_RANKS, RANK_LABELS } from '$lib/types'
+import Modal from './ui/Modal.svelte'
 
-  interface Props {
-    open: boolean;
-    onclose: () => void;
-  }
+interface Props {
+  open: boolean
+  onclose: () => void
+}
 
-  const { open, onclose }: Props = $props();
+const { open, onclose }: Props = $props()
 
-  const tiers = Object.values(EFFECTIVENESS_RANKS).map((rank) => ({
-    rank,
-    label: RANK_LABELS[rank],
-  }));
+const tiers = Object.values(EFFECTIVENESS_RANKS).map((rank) => ({
+  rank,
+  label: RANK_LABELS[rank],
+}))
 </script>
 
 <Modal {open} {onclose} size="sm" class="tier-dialog">

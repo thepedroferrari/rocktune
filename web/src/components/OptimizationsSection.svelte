@@ -1,162 +1,159 @@
 <script lang="ts">
-  /**
-   * Optimizations Section - Upgrades/tweaks selection
-   *
-   * Renders all optimization checkboxes grouped by tier and category.
-   * Features tier ranking system (S-F) with clickable badges.
-   */
+/**
+ * Optimizations Section - Upgrades/tweaks selection
+ *
+ * Renders all optimization checkboxes grouped by tier and category.
+ * Features tier ranking system (S-F) with clickable badges.
+ */
 
-  import {
-    getCategoriesForTier,
-    getOptimizationsByTierAndCategory,
-    OPTIMIZATIONS,
-    type OptimizationCategory,
-    type OptimizationDef,
-  } from "$lib/optimizations";
-  import {
-    acknowledgeLudicrous,
-    acknowledgeRestorePointDisable,
-    app,
-    toggleOptimization,
-    toggleWizardMode,
-  } from "$lib/state.svelte";
-  import {
-    type BreakingChange,
-    OPTIMIZATION_KEYS,
-    OPTIMIZATION_TIERS,
-    type OptimizationKey,
-    type OptimizationTier,
-  } from "$lib/types";
-  import DnsProviderSelector from "./DnsProviderSelector.svelte";
-  import OptimizationCheckbox from "./OptimizationCheckbox.svelte";
-  import TierLegendDialog from "./TierLegendDialog.svelte";
+import {
+  getCategoriesForTier,
+  getOptimizationsByTierAndCategory,
+  OPTIMIZATIONS,
+  type OptimizationCategory,
+  type OptimizationDef,
+} from '$lib/optimizations'
+import {
+  acknowledgeLudicrous,
+  acknowledgeRestorePointDisable,
+  app,
+  toggleOptimization,
+  toggleWizardMode,
+} from '$lib/state.svelte'
+import {
+  type BreakingChange,
+  OPTIMIZATION_KEYS,
+  OPTIMIZATION_TIERS,
+  type OptimizationKey,
+  type OptimizationTier,
+} from '$lib/types'
+import DnsProviderSelector from './DnsProviderSelector.svelte'
+import OptimizationCheckbox from './OptimizationCheckbox.svelte'
+import TierLegendDialog from './TierLegendDialog.svelte'
 
-  /** Category display names */
-  const CATEGORY_LABELS: Record<OptimizationCategory, string> = {
-    system: "System",
-    power: "Power",
-    network: "Network",
-    input: "Input",
-    display: "Display",
-    privacy: "Privacy",
-    audio: "Audio",
-  };
+/** Category display names */
+const CATEGORY_LABELS: Record<OptimizationCategory, string> = {
+  system: 'System',
+  power: 'Power',
+  network: 'Network',
+  input: 'Input',
+  display: 'Display',
+  privacy: 'Privacy',
+  audio: 'Audio',
+}
 
-  /** Tier order for rendering - LUDICROUS excluded from normal flow */
-  const NORMAL_TIERS: readonly OptimizationTier[] = [
-    OPTIMIZATION_TIERS.SAFE,
-    OPTIMIZATION_TIERS.CAUTION,
-    OPTIMIZATION_TIERS.RISKY,
-  ] as const;
+/** Tier order for rendering - LUDICROUS excluded from normal flow */
+const NORMAL_TIERS: readonly OptimizationTier[] = [
+  OPTIMIZATION_TIERS.SAFE,
+  OPTIMIZATION_TIERS.CAUTION,
+  OPTIMIZATION_TIERS.RISKY,
+] as const
 
-  /** Tier display names */
-  const TIER_LABELS: Record<OptimizationTier, string> = {
-    [OPTIMIZATION_TIERS.SAFE]: "Safe",
-    [OPTIMIZATION_TIERS.CAUTION]: "Caution",
-    [OPTIMIZATION_TIERS.RISKY]: "Risky",
-    [OPTIMIZATION_TIERS.LUDICROUS]: "Ludicrous",
-  };
+/** Tier display names */
+const TIER_LABELS: Record<OptimizationTier, string> = {
+  [OPTIMIZATION_TIERS.SAFE]: 'Safe',
+  [OPTIMIZATION_TIERS.CAUTION]: 'Caution',
+  [OPTIMIZATION_TIERS.RISKY]: 'Risky',
+  [OPTIMIZATION_TIERS.LUDICROUS]: 'Ludicrous',
+}
 
-  /** Reference to LUDICROUS dialog element */
-  let ludicrousDialog: HTMLDialogElement | null = $state(null);
-  /** Reference to restore point dialog element */
-  let restorePointDialog: HTMLDialogElement | null = $state(null);
-  /** Reference to breaking changes dialog element */
-  let breakingChangesDialog: HTMLDialogElement | null = $state(null);
-  /** Pending optimization with breaking changes */
-  let pendingBreakingOpt: OptimizationDef | null = $state(null);
-  /** Tier legend dialog open state */
-  let tierLegendOpen = $state(false);
+/** Reference to LUDICROUS dialog element */
+let ludicrousDialog: HTMLDialogElement | null = $state(null)
+/** Reference to restore point dialog element */
+let restorePointDialog: HTMLDialogElement | null = $state(null)
+/** Reference to breaking changes dialog element */
+let breakingChangesDialog: HTMLDialogElement | null = $state(null)
+/** Pending optimization with breaking changes */
+let pendingBreakingOpt: OptimizationDef | null = $state(null)
+/** Tier legend dialog open state */
+let tierLegendOpen = $state(false)
 
-  function openTierLegend() {
-    tierLegendOpen = true;
+function openTierLegend() {
+  tierLegendOpen = true
+}
+
+function closeTierLegend() {
+  tierLegendOpen = false
+}
+
+function handleWizardToggle() {
+  toggleWizardMode()
+}
+
+function openLudicrousModal() {
+  const scrollY = window.scrollY
+  ludicrousDialog?.showModal()
+  window.scrollTo({ top: scrollY, behavior: 'instant' })
+}
+
+function closeLudicrousModal() {
+  ludicrousDialog?.close()
+}
+
+function confirmLudicrous() {
+  acknowledgeLudicrous()
+  ludicrousDialog?.close()
+}
+
+function openRestorePointModal() {
+  const scrollY = window.scrollY
+  restorePointDialog?.showModal()
+  window.scrollTo({ top: scrollY, behavior: 'instant' })
+}
+
+function closeRestorePointModal() {
+  restorePointDialog?.close()
+}
+
+function confirmRestorePointDisable() {
+  acknowledgeRestorePointDisable()
+  toggleOptimization(OPTIMIZATION_KEYS.RESTORE_POINT)
+  restorePointDialog?.close()
+}
+
+function openBreakingChangesModal(opt: OptimizationDef) {
+  const scrollY = window.scrollY
+  pendingBreakingOpt = opt
+  breakingChangesDialog?.showModal()
+  window.scrollTo({ top: scrollY, behavior: 'instant' })
+}
+
+function closeBreakingChangesModal() {
+  pendingBreakingOpt = null
+  breakingChangesDialog?.close()
+}
+
+function confirmBreakingChanges() {
+  if (pendingBreakingOpt) {
+    toggleOptimization(pendingBreakingOpt.key)
   }
+  pendingBreakingOpt = null
+  breakingChangesDialog?.close()
+}
 
-  function closeTierLegend() {
-    tierLegendOpen = false;
-  }
-
-  function handleWizardToggle() {
-    toggleWizardMode();
-  }
-
-  function openLudicrousModal() {
-    const scrollY = window.scrollY;
-    ludicrousDialog?.showModal();
-    window.scrollTo({ top: scrollY, behavior: "instant" });
-  }
-
-  function closeLudicrousModal() {
-    ludicrousDialog?.close();
-  }
-
-  function confirmLudicrous() {
-    acknowledgeLudicrous();
-    ludicrousDialog?.close();
-  }
-
-  function openRestorePointModal() {
-    const scrollY = window.scrollY;
-    restorePointDialog?.showModal();
-    window.scrollTo({ top: scrollY, behavior: "instant" });
-  }
-
-  function closeRestorePointModal() {
-    restorePointDialog?.close();
-  }
-
-  function confirmRestorePointDisable() {
-    acknowledgeRestorePointDisable();
-    toggleOptimization(OPTIMIZATION_KEYS.RESTORE_POINT);
-    restorePointDialog?.close();
-  }
-
-  function openBreakingChangesModal(opt: OptimizationDef) {
-    const scrollY = window.scrollY;
-    pendingBreakingOpt = opt;
-    breakingChangesDialog?.showModal();
-    window.scrollTo({ top: scrollY, behavior: "instant" });
-  }
-
-  function closeBreakingChangesModal() {
-    pendingBreakingOpt = null;
-    breakingChangesDialog?.close();
-  }
-
-  function confirmBreakingChanges() {
-    if (pendingBreakingOpt) {
-      toggleOptimization(pendingBreakingOpt.key);
+/**
+ * Intercept toggle for restore_point and items with breaking changes
+ */
+function handleBeforeToggle(key: OptimizationKey, isCurrentlyChecked: boolean): boolean {
+  // Restore point special handling
+  if (key === OPTIMIZATION_KEYS.RESTORE_POINT && isCurrentlyChecked) {
+    if (!app.ui.restorePointAcknowledged) {
+      openRestorePointModal()
+      return false
     }
-    pendingBreakingOpt = null;
-    breakingChangesDialog?.close();
   }
 
-  /**
-   * Intercept toggle for restore_point and items with breaking changes
-   */
-  function handleBeforeToggle(
-    key: OptimizationKey,
-    isCurrentlyChecked: boolean,
-  ): boolean {
-    // Restore point special handling
-    if (key === OPTIMIZATION_KEYS.RESTORE_POINT && isCurrentlyChecked) {
-      if (!app.ui.restorePointAcknowledged) {
-        openRestorePointModal();
-        return false;
-      }
+  // Breaking changes warning - only when enabling (not currently checked)
+  if (!isCurrentlyChecked) {
+    const opt = OPTIMIZATIONS.find((o) => o.key === key)
+    if (opt?.breakingChanges && opt.breakingChanges.length > 0) {
+      openBreakingChangesModal(opt)
+      return false
     }
-
-    // Breaking changes warning - only when enabling (not currently checked)
-    if (!isCurrentlyChecked) {
-      const opt = OPTIMIZATIONS.find((o) => o.key === key);
-      if (opt?.breakingChanges && opt.breakingChanges.length > 0) {
-        openBreakingChangesModal(opt);
-        return false;
-      }
-    }
-
-    return true;
   }
+
+  return true
+}
 </script>
 
 <section id="optimizations" class="step">

@@ -1,53 +1,53 @@
 <script lang="ts">
-  /**
-   * SRAnnounce - Screen Reader Announcements
-   *
-   * Provides a live region for announcing dynamic content changes
-   * to screen reader users.
-   */
+/**
+ * SRAnnounce - Screen Reader Announcements
+ *
+ * Provides a live region for announcing dynamic content changes
+ * to screen reader users.
+ */
 
-  import { app } from "$lib/state.svelte";
+import { app } from '$lib/state.svelte'
 
-  let prevSelectedCount = $state(0);
-  let prevOptCount = $state(0);
+let prevSelectedCount = $state(0)
+let prevOptCount = $state(0)
 
-  let message = $state("");
+let message = $state('')
 
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Screen reader announcements require detailed state change detection
-  $effect(() => {
-    const currentSelected = app.selected.size;
-    const currentOpts = app.optimizations.size;
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Screen reader announcements require detailed state change detection
+$effect(() => {
+  const currentSelected = app.selected.size
+  const currentOpts = app.optimizations.size
 
-    if (currentSelected !== prevSelectedCount) {
-      const diff = currentSelected - prevSelectedCount;
-      if (diff > 0) {
-        message = `Added ${diff} software package${diff > 1 ? "s" : ""} to selection. Total: ${currentSelected}`;
-      } else if (diff < 0) {
-        message = `Removed ${Math.abs(diff)} software package${Math.abs(diff) > 1 ? "s" : ""} from selection. Total: ${currentSelected}`;
-      }
-      prevSelectedCount = currentSelected;
+  if (currentSelected !== prevSelectedCount) {
+    const diff = currentSelected - prevSelectedCount
+    if (diff > 0) {
+      message = `Added ${diff} software package${diff > 1 ? 's' : ''} to selection. Total: ${currentSelected}`
+    } else if (diff < 0) {
+      message = `Removed ${Math.abs(diff)} software package${Math.abs(diff) > 1 ? 's' : ''} from selection. Total: ${currentSelected}`
     }
+    prevSelectedCount = currentSelected
+  }
 
-    if (currentOpts !== prevOptCount && prevOptCount > 0) {
-      const diff = currentOpts - prevOptCount;
-      if (diff > 0) {
-        message = `Enabled ${diff} optimization${diff > 1 ? "s" : ""}. Total: ${currentOpts}`;
-      } else if (diff < 0) {
-        message = `Disabled ${Math.abs(diff)} optimization${Math.abs(diff) > 1 ? "s" : ""}. Total: ${currentOpts}`;
-      }
-      prevOptCount = currentOpts;
-    } else if (prevOptCount === 0) {
-      prevOptCount = currentOpts;
+  if (currentOpts !== prevOptCount && prevOptCount > 0) {
+    const diff = currentOpts - prevOptCount
+    if (diff > 0) {
+      message = `Enabled ${diff} optimization${diff > 1 ? 's' : ''}. Total: ${currentOpts}`
+    } else if (diff < 0) {
+      message = `Disabled ${Math.abs(diff)} optimization${Math.abs(diff) > 1 ? 's' : ''}. Total: ${currentOpts}`
     }
-  });
+    prevOptCount = currentOpts
+  } else if (prevOptCount === 0) {
+    prevOptCount = currentOpts
+  }
+})
 
-  $effect(() => {
-    if (!message) return;
-    const timeout = setTimeout(() => {
-      message = "";
-    }, 1000);
-    return () => clearTimeout(timeout);
-  });
+$effect(() => {
+  if (!message) return
+  const timeout = setTimeout(() => {
+    message = ''
+  }, 1000)
+  return () => clearTimeout(timeout)
+})
 </script>
 
 <div id="sr-announce" aria-live="polite" aria-atomic="true" class="sr-only">

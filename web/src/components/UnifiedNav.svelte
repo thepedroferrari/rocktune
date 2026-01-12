@@ -1,118 +1,116 @@
 <script lang="ts">
-  /**
-   * UnifiedNav - Top navigation bar
-   *
-   * Fixed navigation with:
-   * - RockTune branding (logo/wordmark)
-   * - Section links with active state via intersection observer
-   * - Share button (global action)
-   * - Hamburger menu for mobile
-   */
+/**
+ * UnifiedNav - Top navigation bar
+ *
+ * Fixed navigation with:
+ * - RockTune branding (logo/wordmark)
+ * - Section links with active state via intersection observer
+ * - Share button (global action)
+ * - Hamburger menu for mobile
+ */
 
-  import { slide } from "svelte/transition";
-  import { preloadSection, type SectionId } from "../lib/preload";
-  import { scrollToSection, scrollToTop } from "../lib/scroll";
-  import ShareModal from "./ShareModal.svelte";
+import { slide } from 'svelte/transition'
+import { preloadSection, type SectionId } from '../lib/preload'
+import { scrollToSection, scrollToTop } from '../lib/scroll'
+import ShareModal from './ShareModal.svelte'
 
-  let shareModalOpen = $state(false);
-  let menuOpen = $state(false);
+let shareModalOpen = $state(false)
+let menuOpen = $state(false)
 
-  interface NavLink {
-    href: string;
-    label: string;
-    step: number;
-  }
+interface NavLink {
+  href: string
+  label: string
+  step: number
+}
 
-  const NAV_LINKS: NavLink[] = [
-    { href: "#quick-start", label: "Presets", step: 0 },
-    { href: "#hardware", label: "Hardware", step: 1 },
-    { href: "#peripherals", label: "Peripherals", step: 2 },
-    { href: "#optimizations", label: "Tweaks", step: 3 },
-    { href: "#software", label: "Software", step: 4 },
-    { href: "#generate", label: "Forge", step: 5 },
-    { href: "#guide", label: "Guide", step: 6 },
-  ];
+const NAV_LINKS: NavLink[] = [
+  { href: '#quick-start', label: 'Presets', step: 0 },
+  { href: '#hardware', label: 'Hardware', step: 1 },
+  { href: '#peripherals', label: 'Peripherals', step: 2 },
+  { href: '#optimizations', label: 'Tweaks', step: 3 },
+  { href: '#software', label: 'Software', step: 4 },
+  { href: '#generate', label: 'Forge', step: 5 },
+  { href: '#guide', label: 'Guide', step: 6 },
+]
 
-  let activeStep = $state(0);
+let activeStep = $state(0)
 
-  function toggleMenu() {
-    menuOpen = !menuOpen;
-  }
+function toggleMenu() {
+  menuOpen = !menuOpen
+}
 
-  function closeMenu() {
-    menuOpen = false;
-  }
+function closeMenu() {
+  menuOpen = false
+}
 
-  $effect(() => {
-    const sections = NAV_LINKS.map((link) => {
-      const id = link.href.replace("#", "");
-      return document.getElementById(id);
-    }).filter(
-      (section): section is HTMLElement => section instanceof HTMLElement,
-    );
+$effect(() => {
+  const sections = NAV_LINKS.map((link) => {
+    const id = link.href.replace('#', '')
+    return document.getElementById(id)
+  }).filter((section): section is HTMLElement => section instanceof HTMLElement)
 
-    if (sections.length === 0) return;
+  if (sections.length === 0) return
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        let topSection: { index: number; top: number } | null = null;
+  const observer = new IntersectionObserver(
+    (entries) => {
+      let topSection: { index: number; top: number } | null = null
 
-        for (const entry of entries) {
-          if (entry.isIntersecting && entry.target instanceof HTMLElement) {
-            const index = sections.indexOf(entry.target);
-            const top = entry.boundingClientRect.top;
+      for (const entry of entries) {
+        if (entry.isIntersecting && entry.target instanceof HTMLElement) {
+          const index = sections.indexOf(entry.target)
+          const top = entry.boundingClientRect.top
 
-            if (index !== -1 && (topSection === null || top < topSection.top)) {
-              topSection = { index, top };
-            }
+          if (index !== -1 && (topSection === null || top < topSection.top)) {
+            topSection = { index, top }
           }
         }
+      }
 
-        if (topSection !== null) {
-          activeStep = topSection.index;
-        }
-      },
-      {
-        threshold: 0.1,
-        rootMargin: "-80px 0px -20% 0px",
-      },
-    );
+      if (topSection !== null) {
+        activeStep = topSection.index
+      }
+    },
+    {
+      threshold: 0.1,
+      rootMargin: '-80px 0px -20% 0px',
+    },
+  )
 
+  sections.forEach((section) => {
+    observer.observe(section)
+  })
+
+  return () => {
     sections.forEach((section) => {
-      observer.observe(section);
-    });
-
-    return () => {
-      sections.forEach((section) => {
-        observer.unobserve(section);
-      });
-    };
-  });
-
-  function handlePreload(link: NavLink) {
-    const sectionId = link.href.replace("#", "") as SectionId;
-    preloadSection(sectionId);
+      observer.unobserve(section)
+    })
   }
+})
 
-  async function handleClick(event: MouseEvent, link: NavLink) {
-    event.preventDefault();
-    const sectionId = link.href.replace("#", "") as SectionId;
+function handlePreload(link: NavLink) {
+  const sectionId = link.href.replace('#', '') as SectionId
+  preloadSection(sectionId)
+}
 
-    // Trigger preload if not already done
-    preloadSection(sectionId);
+async function handleClick(event: MouseEvent, link: NavLink) {
+  event.preventDefault()
+  const sectionId = link.href.replace('#', '') as SectionId
 
-    // Update active state optimistically
-    activeStep = link.step;
-    closeMenu();
+  // Trigger preload if not already done
+  preloadSection(sectionId)
 
-    // Scroll with wait-for-render
-    await scrollToSection({ sectionId });
-  }
+  // Update active state optimistically
+  activeStep = link.step
+  closeMenu()
 
-  function handleMobileShare() {
-    shareModalOpen = true;
-    closeMenu();
-  }
+  // Scroll with wait-for-render
+  await scrollToSection({ sectionId })
+}
+
+function handleMobileShare() {
+  shareModalOpen = true
+  closeMenu()
+}
 </script>
 
 <nav

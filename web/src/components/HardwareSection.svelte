@@ -1,23 +1,23 @@
 <script lang="ts">
-  /**
-   * Hardware Section - CPU/GPU selection and driver recommendations
-   *
-   * Replaces the static HTML hardware section with reactive Svelte components.
-   */
+/**
+ * Hardware Section - CPU/GPU selection and driver recommendations
+ *
+ * Replaces the static HTML hardware section with reactive Svelte components.
+ */
 
-  import CpuSelector from "./CpuSelector.svelte";
-  import DriverCards from "./DriverCards.svelte";
-  import GpuSelector from "./GpuSelector.svelte";
+import CpuSelector from './CpuSelector.svelte'
+import DriverCards from './DriverCards.svelte'
+import GpuSelector from './GpuSelector.svelte'
 
-  let helpOpen = $state(false);
+let helpOpen = $state(false)
 
-  function toggleHelp() {
-    helpOpen = !helpOpen;
-  }
+function toggleHelp() {
+  helpOpen = !helpOpen
+}
 
-  function closeHelp() {
-    helpOpen = false;
-  }
+function closeHelp() {
+  helpOpen = false
+}
 </script>
 
 <section id="hardware" class="step">

@@ -531,8 +531,8 @@ export const SIMPLE_ICONS_CDN = 'https://cdn.simpleicons.org' as const
 export type DeepReadonly<T> = T extends (infer U)[]
   ? readonly DeepReadonly<U>[]
   : T extends object
-  ? { readonly [K in keyof T]: DeepReadonly<T[K]> }
-  : T
+    ? { readonly [K in keyof T]: DeepReadonly<T[K]> }
+    : T
 
 export type Prettify<T> = { [K in keyof T]: T[K] } & {}
 

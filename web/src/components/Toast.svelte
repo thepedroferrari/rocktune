@@ -1,28 +1,24 @@
 <script lang="ts">
-  /**
-   * Toast Notification Component
-   *
-   * Displays toast notifications from the toast store.
-   * Auto-dismisses after a configurable duration.
-   */
+/**
+ * Toast Notification Component
+ *
+ * Displays toast notifications from the toast store.
+ * Auto-dismisses after a configurable duration.
+ */
 
-  import type { IconName } from "$lib/icons";
-  import {
-    dismissToast,
-    getToasts,
-    type ToastMessage,
-  } from "$lib/toast.svelte";
-  import Icon from "./ui/Icon.svelte";
+import type { IconName } from '$lib/icons'
+import { dismissToast, getToasts, type ToastMessage } from '$lib/toast.svelte'
+import Icon from './ui/Icon.svelte'
 
-  const toasts = $derived(getToasts());
+const toasts = $derived(getToasts())
 
-  /** Map toast types to icon names */
-  const TOAST_ICONS: Record<ToastMessage["type"], IconName> = {
-    success: "success",
-    warning: "warning",
-    error: "error",
-    info: "info",
-  };
+/** Map toast types to icon names */
+const TOAST_ICONS: Record<ToastMessage['type'], IconName> = {
+  success: 'success',
+  warning: 'warning',
+  error: 'error',
+  info: 'info',
+}
 </script>
 
 {#if toasts.length > 0}

@@ -1,54 +1,49 @@
 <script lang="ts">
+/**
+ * Optimization Checkbox - Card-style toggle with tooltip
+ * Checkbox is visually hidden but retained for accessibility
+ * Shows tier rank as text prefix [S], [A], etc.
+ */
+
+import type { OptimizationDef } from '$lib/optimizations'
+import { app, toggleOptimization } from '$lib/state.svelte'
+import type { OptimizationKey } from '$lib/types'
+import { type StructuredTooltip, tooltip } from '../utils/tooltips'
+
+interface Props {
+  opt: OptimizationDef
   /**
-   * Optimization Checkbox - Card-style toggle with tooltip
-   * Checkbox is visually hidden but retained for accessibility
-   * Shows tier rank as text prefix [S], [A], etc.
+   * Optional callback before toggle. Return false to prevent the toggle.
+   * Called with (key, isCurrentlyChecked) - so if isCurrentlyChecked is true,
+   * the user is trying to UNCHECK it.
    */
+  onBeforeToggle?: (key: OptimizationKey, isCurrentlyChecked: boolean) => boolean
+}
 
-  import type { OptimizationDef } from "$lib/optimizations";
-  import { app, toggleOptimization } from "$lib/state.svelte";
-  import type { OptimizationKey } from "$lib/types";
-  import { type StructuredTooltip, tooltip } from "../utils/tooltips";
+const { opt, onBeforeToggle }: Props = $props()
 
-  interface Props {
-    opt: OptimizationDef;
-    /**
-     * Optional callback before toggle. Return false to prevent the toggle.
-     * Called with (key, isCurrentlyChecked) - so if isCurrentlyChecked is true,
-     * the user is trying to UNCHECK it.
-     */
-    onBeforeToggle?: (
-      key: OptimizationKey,
-      isCurrentlyChecked: boolean,
-    ) => boolean;
+const isChecked = $derived(app.optimizations.has(opt.key))
+
+/** Build tooltip with rank in title */
+function buildTooltipWithRank(baseTooltip: StructuredTooltip): StructuredTooltip {
+  return {
+    ...baseTooltip,
+    title: `[${opt.rank}] ${baseTooltip.title}`,
   }
+}
 
-  const { opt, onBeforeToggle }: Props = $props();
+const enhancedTooltip = $derived(buildTooltipWithRank(opt.tooltip))
 
-  const isChecked = $derived(app.optimizations.has(opt.key));
-
-  /** Build tooltip with rank in title */
-  function buildTooltipWithRank(
-    baseTooltip: StructuredTooltip,
-  ): StructuredTooltip {
-    return {
-      ...baseTooltip,
-      title: `[${opt.rank}] ${baseTooltip.title}`,
-    };
-  }
-
-  const enhancedTooltip = $derived(buildTooltipWithRank(opt.tooltip));
-
-  function handleClick(event: MouseEvent) {
-    if (onBeforeToggle) {
-      const shouldProceed = onBeforeToggle(opt.key, isChecked);
-      if (!shouldProceed) {
-        event.preventDefault();
-        return;
-      }
+function handleClick(event: MouseEvent) {
+  if (onBeforeToggle) {
+    const shouldProceed = onBeforeToggle(opt.key, isChecked)
+    if (!shouldProceed) {
+      event.preventDefault()
+      return
     }
-    toggleOptimization(opt.key);
   }
+  toggleOptimization(opt.key)
+}
 </script>
 
 <label

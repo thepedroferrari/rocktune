@@ -1,18 +1,18 @@
 <script lang="ts">
-  /**
-   * CPU Selector - Radio group for CPU type selection
-   */
+/**
+ * CPU Selector - Radio group for CPU type selection
+ */
 
-  import { CPU_OPTIONS } from "$lib/hardware";
-  import { app, setCpu } from "$lib/state.svelte";
-  import { isCpuType } from "$lib/types";
+import { CPU_OPTIONS } from '$lib/hardware'
+import { app, setCpu } from '$lib/state.svelte'
+import { isCpuType } from '$lib/types'
 
-  function handleChange(event: Event & { currentTarget: HTMLInputElement }) {
-    const { value } = event.currentTarget;
-    if (isCpuType(value)) {
-      setCpu(value);
-    }
+function handleChange(event: Event & { currentTarget: HTMLInputElement }) {
+  const { value } = event.currentTarget
+  if (isCpuType(value)) {
+    setCpu(value)
   }
+}
 </script>
 
 <fieldset class="control-fieldset">

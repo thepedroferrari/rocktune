@@ -1,54 +1,44 @@
 <script lang="ts">
-  import type { Category, PackageKey, SoftwarePackage } from "$lib/types";
-  import { CATEGORY_SVG_ICONS, SIMPLE_ICONS_CDN } from "$lib/types";
+import type { Category, PackageKey, SoftwarePackage } from '$lib/types'
+import { CATEGORY_SVG_ICONS, SIMPLE_ICONS_CDN } from '$lib/types'
 
-  interface Props {
-    key: PackageKey;
-    pkg: SoftwarePackage;
-    selected: boolean;
-    onToggle: (key: PackageKey) => void;
-    overlayPosition?: "right" | "left";
+interface Props {
+  key: PackageKey
+  pkg: SoftwarePackage
+  selected: boolean
+  onToggle: (key: PackageKey) => void
+  overlayPosition?: 'right' | 'left'
+}
+
+const { key, pkg, selected, onToggle, overlayPosition = 'right' }: Props = $props()
+
+// Unique ID for checkbox-label association
+const inputId = $derived(`pkg-${key}`)
+
+type LogoType = 'sprite' | 'cdn' | 'emoji' | 'fallback'
+const logoType: LogoType = $derived.by(() => {
+  if (pkg.icon) {
+    return pkg.icon.endsWith('.svg') || pkg.icon.startsWith('icons/') ? 'sprite' : 'cdn'
   }
+  return pkg.emoji ? 'emoji' : 'fallback'
+})
 
-  const {
-    key,
-    pkg,
-    selected,
-    onToggle,
-    overlayPosition = "right",
-  }: Props = $props();
+const spriteId = $derived(pkg.icon?.replace('icons/', '').replace('.svg', '') ?? '')
+const cdnUrl = $derived(`${SIMPLE_ICONS_CDN}/${pkg.icon}/white`)
 
-  // Unique ID for checkbox-label association
-  const inputId = $derived(`pkg-${key}`);
+function getCategoryIcon(category: Category): string {
+  return CATEGORY_SVG_ICONS[category] ?? CATEGORY_SVG_ICONS.default
+}
 
-  type LogoType = "sprite" | "cdn" | "emoji" | "fallback";
-  const logoType: LogoType = $derived.by(() => {
-    if (pkg.icon) {
-      return pkg.icon.endsWith(".svg") || pkg.icon.startsWith("icons/")
-        ? "sprite"
-        : "cdn";
-    }
-    return pkg.emoji ? "emoji" : "fallback";
-  });
+let iconFailed = $state(false)
 
-  const spriteId = $derived(
-    pkg.icon?.replace("icons/", "").replace(".svg", "") ?? "",
-  );
-  const cdnUrl = $derived(`${SIMPLE_ICONS_CDN}/${pkg.icon}/white`);
+function handleChange() {
+  onToggle(key)
+}
 
-  function getCategoryIcon(category: Category): string {
-    return CATEGORY_SVG_ICONS[category] ?? CATEGORY_SVG_ICONS.default;
-  }
-
-  let iconFailed = $state(false);
-
-  function handleChange() {
-    onToggle(key);
-  }
-
-  function handleImageError() {
-    iconFailed = true;
-  }
+function handleImageError() {
+  iconFailed = true
+}
 </script>
 
 {#snippet renderIcon(isOverlay: boolean)}

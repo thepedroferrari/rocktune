@@ -1,9 +1,9 @@
 <script lang="ts">
-  interface Props {
-    height?: string;
-  }
+interface Props {
+  height?: string
+}
 
-  const { height = "400px" }: Props = $props();
+const { height = '400px' }: Props = $props()
 </script>
 
 <div class="section-skeleton" style="--skeleton-height: {height}">

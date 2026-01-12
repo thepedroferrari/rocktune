@@ -1,40 +1,32 @@
 <script lang="ts">
-  /**
-   * Peripherals Section - Companion software for gaming gear and monitors
-   *
-   * Replaces the static HTML peripherals section with reactive Svelte components.
-   */
+/**
+ * Peripherals Section - Companion software for gaming gear and monitors
+ *
+ * Replaces the static HTML peripherals section with reactive Svelte components.
+ */
 
-  import {
-    MONITOR_LINKS,
-    MONITOR_OPTIONS,
-    PERIPHERAL_LINKS,
-    PERIPHERAL_OPTIONS,
-  } from "$lib/peripherals";
-  import {
-    app,
-    toggleMonitorSoftware,
-    togglePeripheral,
-  } from "$lib/state.svelte";
-  import { isMonitorSoftwareType, isPeripheralType } from "$lib/types";
+import {
+  MONITOR_LINKS,
+  MONITOR_OPTIONS,
+  PERIPHERAL_LINKS,
+  PERIPHERAL_OPTIONS,
+} from '$lib/peripherals'
+import { app, toggleMonitorSoftware, togglePeripheral } from '$lib/state.svelte'
+import { isMonitorSoftwareType, isPeripheralType } from '$lib/types'
 
-  function handlePeripheralChange(
-    event: Event & { currentTarget: HTMLInputElement },
-  ) {
-    const { value } = event.currentTarget;
-    if (isPeripheralType(value)) {
-      togglePeripheral(value);
-    }
+function handlePeripheralChange(event: Event & { currentTarget: HTMLInputElement }) {
+  const { value } = event.currentTarget
+  if (isPeripheralType(value)) {
+    togglePeripheral(value)
   }
+}
 
-  function handleMonitorChange(
-    event: Event & { currentTarget: HTMLInputElement },
-  ) {
-    const { value } = event.currentTarget;
-    if (isMonitorSoftwareType(value)) {
-      toggleMonitorSoftware(value);
-    }
+function handleMonitorChange(event: Event & { currentTarget: HTMLInputElement }) {
+  const { value } = event.currentTarget
+  if (isMonitorSoftwareType(value)) {
+    toggleMonitorSoftware(value)
   }
+}
 </script>
 
 <section id="peripherals" class="step">
