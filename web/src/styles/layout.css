@@ -48,6 +48,23 @@
     border-bottom: none;
   }
 
+  .step.section-arrive {
+    outline: 1px solid color-mix(in oklch, var(--accent) 35%, transparent);
+    box-shadow: 0 0 0 0 color-mix(in oklch, var(--accent) 35%, transparent);
+    animation: step-arrive var(--duration-slower) var(--ease-out-expo);
+  }
+
+  @keyframes step-arrive {
+    0% {
+      outline-color: color-mix(in oklch, var(--accent) 45%, transparent);
+      box-shadow: 0 0 0 0 color-mix(in oklch, var(--accent) 35%, transparent);
+    }
+    100% {
+      outline-color: transparent;
+      box-shadow: 0 0 0 18px transparent;
+    }
+  }
+
   .step h2 {
     margin: 0 0 0.25rem 0;
     font-size: 1.5rem;

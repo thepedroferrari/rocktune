@@ -20,21 +20,27 @@ interface ScrollToSectionOptions {
 const prefersReducedMotion =
   typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-function resolveBehavior(target: HTMLElement, behavior: ScrollBehavior): ScrollBehavior {
+const ARRIVAL_CLASS = 'section-arrive'
+const ARRIVAL_DURATION_MS = 600
+
+function resolveBehavior(behavior: ScrollBehavior): ScrollBehavior {
   if (behavior !== 'smooth') return behavior
-  if (prefersReducedMotion) return 'auto'
-  const distance = Math.abs(target.getBoundingClientRect().top)
-  return distance > 1200 ? 'auto' : 'smooth'
+  return prefersReducedMotion ? 'auto' : 'smooth'
+}
+
+function triggerArrivalPulse(target: HTMLElement): void {
+  if (prefersReducedMotion) return
+  target.classList.remove(ARRIVAL_CLASS)
+  void target.offsetWidth
+  target.classList.add(ARRIVAL_CLASS)
+  window.setTimeout(() => {
+    target.classList.remove(ARRIVAL_CLASS)
+  }, ARRIVAL_DURATION_MS)
 }
 
 export function scrollToTop(behavior: ScrollBehavior = 'smooth'): void {
   if (typeof window === 'undefined') return
-  if (behavior !== 'smooth') {
-    window.scrollTo({ top: 0, behavior })
-    return
-  }
-  const distance = Math.abs(window.scrollY)
-  const resolvedBehavior = prefersReducedMotion || distance > 1200 ? 'auto' : 'smooth'
+  const resolvedBehavior = resolveBehavior(behavior)
   window.scrollTo({ top: 0, behavior: resolvedBehavior })
 }
 
@@ -70,8 +76,9 @@ export async function scrollToSection({
 
   // If element exists and has content, scroll immediately
   if (target && target.offsetHeight > 0) {
-    const resolvedBehavior = resolveBehavior(target, behavior)
+    const resolvedBehavior = resolveBehavior(behavior)
     target.scrollIntoView({ behavior: resolvedBehavior, block })
+    triggerArrivalPulse(target)
     return true
   }
 
@@ -82,7 +89,9 @@ export async function scrollToSection({
       // Still try to scroll even if we timed out
       const el = document.getElementById(sectionId)
       if (el) {
-        el.scrollIntoView({ behavior, block })
+        const resolvedBehavior = resolveBehavior(behavior)
+        el.scrollIntoView({ behavior: resolvedBehavior, block })
+        triggerArrivalPulse(el)
       }
       resolve(false)
     }, timeout)
@@ -95,8 +104,9 @@ export async function scrollToSection({
 
         // Use requestAnimationFrame to ensure layout is complete
         requestAnimationFrame(() => {
-          const resolvedBehavior = resolveBehavior(el, behavior)
+          const resolvedBehavior = resolveBehavior(behavior)
           el.scrollIntoView({ behavior: resolvedBehavior, block })
+          triggerArrivalPulse(el)
           resolve(true)
         })
       }
