@@ -113,6 +113,56 @@ function buildSearchUrl(term: string): string {
   return `https://www.youtube.com/results?search_query=${encodeURIComponent(term)}`
 }
 
+function getEvidenceBadge(evidence: string): { icon: string; label: string; className: string } {
+  switch (evidence) {
+    case 'official':
+      return { icon: '✓', label: 'Official', className: 'evidence-badge--official' }
+    case 'measured':
+      return { icon: '◆', label: 'Tested', className: 'evidence-badge--measured' }
+    case 'reputable':
+      return { icon: '★', label: 'Reputable', className: 'evidence-badge--reputable' }
+    case 'community':
+      return { icon: '○', label: 'Community', className: 'evidence-badge--community' }
+    case 'speculative':
+      return { icon: '?', label: 'Speculative', className: 'evidence-badge--speculative' }
+    default:
+      return { icon: '', label: evidence, className: '' }
+  }
+}
+
+function getDomainLabel(url: string): string | null {
+  try {
+    const domain = new URL(url).hostname
+    if (domain.includes('nvidia.com')) return 'NVIDIA'
+    if (domain.includes('microsoft.com')) return 'Microsoft'
+    if (domain.includes('amd.com')) return 'AMD'
+    if (domain.includes('intel.com')) return 'Intel'
+    if (domain.includes('github.com')) return 'GitHub'
+    if (domain.includes('blurbusters.com')) return 'Blur Busters'
+    if (domain.includes('prosettings.net')) return 'ProSettings'
+    if (domain.includes('discord.com')) return 'Discord'
+    if (domain.includes('steampowered.com')) return 'Steam'
+    if (domain.includes('obsproject.com')) return 'OBS'
+    if (domain.includes('techspot.com')) return 'TechSpot'
+    if (domain.includes('pcworld.com')) return 'PCWorld'
+    return null
+  } catch {
+    return null
+  }
+}
+
+function getTitleFromUrl(url: string): string {
+  try {
+    const urlObj = new URL(url)
+    const path = urlObj.pathname
+    const parts = path.split('/').filter(Boolean)
+    const lastPart = parts[parts.length - 1] || urlObj.hostname
+    return lastPart.replace(/-/g, ' ').replace(/\.(html?|php)$/i, '')
+  } catch {
+    return url
+  }
+}
+
 const KEY_ALIASES: Record<string, { label: string; key: string }> = {
   ctrl: { label: 'Ctrl', key: 'ctrl' },
   control: { label: 'Ctrl', key: 'ctrl' },
@@ -452,7 +502,12 @@ $effect(() => {
       <dl class="panel-assessment">
         <div class="assessment-row">
           <dt>Evidence</dt>
-          <dd>{item.guide.assessment.evidence}</dd>
+          <dd>
+            <span class="evidence-badge {getEvidenceBadge(item.guide.assessment.evidence).className}">
+              <span class="evidence-icon">{getEvidenceBadge(item.guide.assessment.evidence).icon}</span>
+              {getEvidenceBadge(item.guide.assessment.evidence).label}
+            </span>
+          </dd>
         </div>
         <div class="assessment-row">
           <dt>Confidence</dt>
@@ -497,22 +552,33 @@ $effect(() => {
       </dl>
 
       {#if item.guide.assessment.sources && item.guide.assessment.sources.length > 0}
-        <h4 class="panel-heading">Sources</h4>
-        <ul class="panel-list panel-list--sources">
-          {#each item.guide.assessment.sources as source}
-            <li>
-              {#if source.startsWith('search:')}
-                <a href={buildSearchUrl(source.replace('search:', '').trim())} target="_blank" rel="noopener noreferrer">
-                  {source}
-                </a>
-              {:else}
-                <a href={source} target="_blank" rel="noopener noreferrer">
-                  {source}
-                </a>
-              {/if}
-            </li>
-          {/each}
-        </ul>
+        <div class="sources-section">
+          <h4 class="sources-heading">
+            Sources ({item.guide.assessment.sources.length})
+          </h4>
+          <ul class="sources-list">
+            {#each item.guide.assessment.sources as source}
+              <li class="source-item">
+                {#if source.startsWith('search:')}
+                  <a href={buildSearchUrl(source.replace('search:', '').trim())} target="_blank" rel="noopener noreferrer" class="source-link">
+                    {source}
+                    <span class="external-icon">↗</span>
+                  </a>
+                {:else}
+                  {@const domain = getDomainLabel(source)}
+                  {@const title = getTitleFromUrl(source)}
+                  {#if domain}
+                    <span class="source-domain">[{domain}]</span>
+                  {/if}
+                  <a href={source} target="_blank" rel="noopener noreferrer" class="source-link">
+                    {title}
+                    <span class="external-icon">↗</span>
+                  </a>
+                {/if}
+              </li>
+            {/each}
+          </ul>
+        </div>
       {/if}
 
       {#if item.guide.failureModes.length > 0}
@@ -842,9 +908,130 @@ $effect(() => {
     color: var(--text-primary);
   }
 
-  .panel-list--sources li,
   .panel-list--videos li {
     font-size: var(--text-sm);
+  }
+
+  .evidence-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    letter-spacing: 0.025em;
+  }
+
+  .evidence-badge--official {
+    background: color-mix(in oklch, var(--cyber-cyan) 10%, transparent);
+    border: 1px solid color-mix(in oklch, var(--cyber-cyan) 40%, transparent);
+    color: var(--cyber-cyan);
+  }
+
+  .evidence-badge--measured {
+    background: color-mix(in oklch, oklch(0.7 0.18 240) 10%, transparent);
+    border: 1px solid color-mix(in oklch, oklch(0.7 0.18 240) 40%, transparent);
+    color: oklch(0.7 0.18 240);
+  }
+
+  .evidence-badge--reputable {
+    background: color-mix(in oklch, var(--cyber-yellow) 10%, transparent);
+    border: 1px solid color-mix(in oklch, var(--cyber-yellow) 40%, transparent);
+    color: var(--cyber-yellow);
+  }
+
+  .evidence-badge--community {
+    background: color-mix(in oklch, oklch(0.72 0.18 10) 10%, transparent);
+    border: 1px solid color-mix(in oklch, oklch(0.72 0.18 10) 40%, transparent);
+    color: oklch(0.72 0.18 10);
+  }
+
+  .evidence-badge--speculative {
+    background: color-mix(in oklch, var(--text-dim) 10%, transparent);
+    border: 1px solid color-mix(in oklch, var(--text-dim) 40%, transparent);
+    color: var(--text-dim);
+  }
+
+  .evidence-icon {
+    font-size: var(--text-xs);
+  }
+
+  .sources-section {
+    margin-block: var(--space-lg);
+    padding: var(--space-md);
+    background: color-mix(in oklch, var(--cyber-cyan) 3%, var(--bg-elevated));
+    border: 1px solid color-mix(in oklch, var(--cyber-cyan) 15%, transparent);
+    border-radius: 8px;
+  }
+
+  .sources-heading {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    margin: 0 0 var(--space-sm);
+    font-size: var(--text-base);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--cyber-cyan);
+  }
+
+  .sources-list {
+    display: grid;
+    gap: var(--space-xs);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .source-item {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-xs);
+    font-size: var(--text-sm);
+  }
+
+  .source-domain {
+    display: inline-flex;
+    padding: 2px 6px;
+    border-radius: 3px;
+    background: color-mix(in oklch, var(--text-primary) 10%, transparent);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .source-link {
+    color: var(--text-primary);
+    text-decoration: none;
+    border-bottom: 1px dotted var(--text-dim);
+    transition: all var(--duration-fast) ease;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    flex: 1;
+    min-inline-size: 0;
+  }
+
+  .source-link:hover {
+    color: var(--cyber-cyan);
+    border-bottom-color: var(--cyber-cyan);
+  }
+
+  .external-icon {
+    display: inline-block;
+    margin-inline-start: 0.15rem;
+    font-size: 0.75em;
+    opacity: 0.5;
+    transition: opacity var(--duration-fast) ease;
+  }
+
+  .source-link:hover .external-icon {
+    opacity: 1;
   }
 
   .panel-automation {
