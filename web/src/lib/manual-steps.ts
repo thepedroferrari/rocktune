@@ -305,11 +305,19 @@ const REFERENCE_SOURCES_BY_ID: Record<string, readonly string[]> = {
     'https://support.xbox.com/en-US/help/games-apps/game-setup-and-play/use-game-mode-gaming-on-pc',
     'https://www.microsoft.com/en-us/windows/learning-center/optimize-pc-for-gaming-performance',
   ],
-  'mpo-disable': ['search: NVIDIA MPO disable restore registry files flicker'],
-  'nv-low-latency': ['https://www.nvidia.com/en-us/geforce/guides/system-latency-optimization-guide/'],
-  'nv-pro-low-latency': ['https://www.nvidia.com/en-us/geforce/guides/system-latency-optimization-guide/'],
-  'nv-stream-low-latency': ['https://www.nvidia.com/en-us/geforce/guides/system-latency-optimization-guide/'],
-  'nv-bench-low-latency': ['https://www.nvidia.com/en-us/geforce/guides/system-latency-optimization-guide/'],
+  'mpo-disable': [],
+  'nv-low-latency': [
+    'https://www.nvidia.com/en-us/geforce/guides/system-latency-optimization-guide/',
+  ],
+  'nv-pro-low-latency': [
+    'https://www.nvidia.com/en-us/geforce/guides/system-latency-optimization-guide/',
+  ],
+  'nv-stream-low-latency': [
+    'https://www.nvidia.com/en-us/geforce/guides/system-latency-optimization-guide/',
+  ],
+  'nv-bench-low-latency': [
+    'https://www.nvidia.com/en-us/geforce/guides/system-latency-optimization-guide/',
+  ],
   'nv-gsync': ['https://www.nvidia.com/en-us/geforce/products/g-sync-monitors/'],
   'nv-pro-gsync': ['https://www.nvidia.com/en-us/geforce/products/g-sync-monitors/'],
   'nv-stream-gsync': ['https://www.nvidia.com/en-us/geforce/products/g-sync-monitors/'],
@@ -326,8 +334,12 @@ const REFERENCE_SOURCES_BY_ID: Record<string, readonly string[]> = {
     'https://www.pcworld.com/article/394720/faster-gaming-frame-rates-for-free-resizable-bar-explained.html',
   ],
   'discord-overlay': ['https://support.discord.com/hc/en-us/articles/217659737-Game-Overlay-101'],
-  'discord-pro-overlay': ['https://support.discord.com/hc/en-us/articles/217659737-Game-Overlay-101'],
-  'discord-stream-overlay': ['https://support.discord.com/hc/en-us/articles/217659737-Game-Overlay-101'],
+  'discord-pro-overlay': [
+    'https://support.discord.com/hc/en-us/articles/217659737-Game-Overlay-101',
+  ],
+  'discord-stream-overlay': [
+    'https://support.discord.com/hc/en-us/articles/217659737-Game-Overlay-101',
+  ],
   'obs-encoder': [
     'https://obsproject.com/kb/advanced-nvenc-options',
     'https://www.nvidia.com/en-us/geforce/guides/broadcasting-guide/',
@@ -343,7 +355,9 @@ const REFERENCE_SOURCES_BY_ID: Record<string, readonly string[]> = {
   'gamedvr-disable': [
     'https://learn.microsoft.com/en-us/answers/questions/3738984/how-to-disable-xbox-game-bar',
   ],
-  'amd-anti-lag': ['https://www.amd.com/en/products/software/adrenalin/radeon-software-anti-lag.html'],
+  'amd-anti-lag': [
+    'https://www.amd.com/en/products/software/adrenalin/radeon-software-anti-lag.html',
+  ],
   'amd-pro-anti-lag': [
     'https://www.amd.com/en/products/software/adrenalin/radeon-software-anti-lag.html',
   ],
@@ -359,7 +373,9 @@ const REFERENCE_SOURCES_BY_ID: Record<string, readonly string[]> = {
     'https://www.intel.com/content/www/us/en/gaming/extreme-memory-profile-xmp.html',
     'https://www.intel.com/content/www/us/en/content-details/852792/intel-xmp-3-0-memory-for-intel-core-processors-datasheet.html',
   ],
-  'bios-cppc': ['https://www.pcworld.com/article/1524857/how-to-use-amds-ryzen-7000-v-cache-on-windows.html'],
+  'bios-cppc': [
+    'https://www.pcworld.com/article/1524857/how-to-use-amds-ryzen-7000-v-cache-on-windows.html',
+  ],
   'bios-cppc-preferred': [
     'https://www.pcworld.com/article/1524857/how-to-use-amds-ryzen-7000-v-cache-on-windows.html',
   ],
@@ -377,7 +393,7 @@ const REFERENCE_SOURCES_BY_ID: Record<string, readonly string[]> = {
 const ASSESSMENT_OVERRIDES: Record<string, Partial<GuideAssessment>> = {
   // ===== WINDOWS DISPLAY =====
   'refresh-rate': { evidence: 'official', confidence: 5, risk: 0 },
-  'gpu-scheduling': { evidence: 'official', confidence: 4, risk: 2 },
+  'gpu-scheduling': { evidence: 'official', confidence: 3, risk: 2 },
   'vrr-enable': { evidence: 'official', confidence: 4, risk: 0 },
   'hdr-setting': { evidence: 'official', confidence: 3, risk: 0 },
   'display-scale': { evidence: 'official', confidence: 3, risk: 0 },
@@ -476,7 +492,7 @@ const ASSESSMENT_OVERRIDES: Record<string, Partial<GuideAssessment>> = {
 
   // ===== BIOS SETTINGS =====
   'bios-xmp': { evidence: 'official', confidence: 5, risk: 3 },
-  'bios-rebar': { evidence: 'official', confidence: 4, risk: 1 },
+  'bios-rebar': { evidence: 'official', confidence: 4, risk: 0 },
   'bios-csm': { evidence: 'official', confidence: 3, risk: 3 },
   'bios-above4g': { evidence: 'official', confidence: 4, risk: 1 },
   'bios-cppc': {
@@ -1438,7 +1454,7 @@ const WINDOWS_DISPLAY_ALL: ManualStepSection = {
       id: 'gpu-scheduling',
       step: 'Settings > Display > Graphics > Default graphics settings',
       check: 'Hardware-accelerated GPU scheduling: ON',
-      why: 'Modern GPUs benefit; can reduce latency 1-2ms (varies by GPU generation and game engine).',
+      why: 'Modern GPUs benefit; may reduce latency ~1ms (varies by GPU and game engine).',
       impact: 'medium',
       difficulty: 'quick',
       safety: 'safe',
@@ -1513,7 +1529,7 @@ const WINDOWS_DISPLAY_ALL: ManualStepSection = {
       step: 'Registry: HKCU:\\System\\GameConfigStore',
       check:
         'Set "GameDVR_DXGIHonorFSEWindowsCompatible" = 1 (or right-click game .exe → Properties → Compatibility → Disable fullscreen optimizations)',
-      why: 'Borderless fullscreen adds latency. True exclusive fullscreen is faster for competitive gaming.',
+      why: 'FSO can cause frame pacing issues in some games. Exclusive fullscreen may feel more consistent.',
       impact: 'medium',
       difficulty: 'advanced',
       safety: 'moderate',
@@ -2173,7 +2189,7 @@ const BIOS_ALL: ManualStepSection = {
       id: 'bios-xmp',
       setting: 'XMP / EXPO / DOCP',
       value: 'Enabled',
-      why: 'RAM runs at advertised speed instead of JEDEC (2133MHz). Free performance.',
+      why: 'RAM runs at advertised speed instead of JEDEC defaults. Free performance.',
       impact: 'high',
       difficulty: 'moderate',
       safety: 'safe',
@@ -2182,7 +2198,7 @@ const BIOS_ALL: ManualStepSection = {
       id: 'bios-rebar',
       setting: 'Resizable BAR / Smart Access Memory',
       value: 'Enabled',
-      why: 'GPU can access full VRAM. 5-10% in some games (heavily game-dependent; negligible in others).',
+      why: 'GPU can access full VRAM. Up to 5-10% in optimized titles; 0-3% typical; can regress in rare cases.',
       impact: 'high',
       difficulty: 'moderate',
       safety: 'safe',
@@ -2270,7 +2286,7 @@ const BIOS_INTEL: ManualStepSection = {
       id: 'bios-cstates',
       setting: 'C-States',
       value: 'Enabled for daily use, Disabled for benchmarking',
-      why: 'C-States save power but add wake latency.',
+      why: 'C-States save power but add wake latency. Disabling is mostly placebo; only noticeable in synthetic tests.',
       impact: 'medium',
       difficulty: 'moderate',
       safety: 'safe',
@@ -2343,7 +2359,7 @@ const DISCORD_PRO_GAMER: ManualStepSection = {
       id: 'discord-pro-hw-accel',
       path: 'App Settings > Advanced > Hardware Acceleration',
       value: 'Off',
-      why: 'Can cause micro-stutters in competitive games. CPU handles it fine.',
+      why: 'Some users report micro-stutters with overlays; CPU rendering is fine for comms-only use.',
       impact: 'medium',
       difficulty: 'quick',
       safety: 'safe',
