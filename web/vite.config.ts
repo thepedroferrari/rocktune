@@ -2,23 +2,6 @@ import { defineConfig } from 'vite'
 import { svelte, vitePreprocess } from '@sveltejs/vite-plugin-svelte'
 import { visualizer } from 'rollup-plugin-visualizer'
 
-/**
- * Converts render-blocking CSS to non-blocking preload.
- */
-function deferCssPlugin() {
-  return {
-    name: 'defer-css',
-    enforce: 'post' as const,
-    transformIndexHtml(html: string) {
-      return html.replace(
-        /<link\s+rel="stylesheet"\s+(?:crossorigin\s+)?href="([^"]+)"[^>]*>/g,
-        (_, href) =>
-          `<link rel="preload" href="${href}" as="style" data-defer-css>\n    <noscript><link rel="stylesheet" href="${href}"></noscript>`,
-      )
-    },
-  }
-}
-
 function getGitInfo() {
   try {
     const commitCmd = new Deno.Command('git', { args: ['rev-parse', '--short', 'HEAD'] })
@@ -45,7 +28,6 @@ export default defineConfig({
         runes: true,
       },
     }),
-    deferCssPlugin(),
     visualizer({
       filename: 'dist/stats.html',
       gzipSize: true,
