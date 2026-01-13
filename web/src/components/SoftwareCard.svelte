@@ -31,14 +31,6 @@ function getCategoryIcon(category: Category): string {
 }
 
 let iconFailed = $state(false)
-
-function handleChange() {
-  onToggle(key)
-}
-
-function handleImageError() {
-  iconFailed = true
-}
 </script>
 
 {#snippet renderIcon(isOverlay: boolean)}
@@ -67,7 +59,7 @@ function handleImageError() {
         src={cdnUrl}
         alt={isOverlay ? "" : `${pkg.name} logo`}
         loading="lazy"
-        onerror={isOverlay ? undefined : handleImageError}
+        onerror={isOverlay ? undefined : () => { iconFailed = true }}
       />
     {/if}
   {:else if logoType === "emoji"}
@@ -93,7 +85,7 @@ function handleImageError() {
     type="checkbox"
     id={inputId}
     checked={selected}
-    onchange={handleChange}
+    onchange={() => onToggle(key)}
     class="sr-only"
     aria-describedby="{inputId}-desc"
   />
@@ -140,7 +132,7 @@ function handleImageError() {
           onclick={(e) => {
             e.stopPropagation();
             e.preventDefault();
-            handleChange();
+            onToggle(key);
           }}
           type="button"
         >

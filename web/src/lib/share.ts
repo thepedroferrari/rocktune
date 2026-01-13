@@ -84,25 +84,9 @@ const BLOCKED_SHARE_KEYS: Set<string> = new Set([
   OPTIMIZATION_KEYS.DEP_OFF,
 ])
 
-/**
- * Filter out LUDICROUS optimizations that would bypass consent flow
- * @param optimizations - Array of optimization keys to filter
- * @returns Object with safe optimizations and count of blocked ones
- */
-function filterBlockedOptimizations(optimizations: readonly OptimizationKey[]): {
-  safe: OptimizationKey[]
-  blockedCount: number
-} {
-  const safe: OptimizationKey[] = []
-  let blockedCount = 0
-  for (const opt of optimizations) {
-    if (BLOCKED_SHARE_KEYS.has(opt)) {
-      blockedCount++
-    } else {
-      safe.push(opt)
-    }
-  }
-  return { safe, blockedCount }
+function filterBlockedOptimizations(optimizations: readonly OptimizationKey[]) {
+  const safe = optimizations.filter((opt) => !BLOCKED_SHARE_KEYS.has(opt))
+  return { safe, blockedCount: optimizations.length - safe.length }
 }
 
 /**
