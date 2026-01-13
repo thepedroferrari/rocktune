@@ -9,7 +9,6 @@ import {
   setFilter,
   setRecommendedPackages,
 } from '$lib/state.svelte'
-import type { FilterValue } from '$lib/types'
 import { CATEGORIES, FILTER_ALL, FILTER_RECOMMENDED, FILTER_SELECTED } from '$lib/types'
 
 interface Props {
