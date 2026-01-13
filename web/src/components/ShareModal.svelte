@@ -1,15 +1,4 @@
 <script lang="ts">
-/**
- * ShareModal - Modal for sharing build configurations
- *
- * Provides:
- * - Build preview card
- * - Social share buttons (Twitter, Reddit, LinkedIn, Web Share)
- * - Shareable URL with one-click copy
- * - Platform-specific text (Twitter, Reddit, Discord)
- * - PowerShell one-liner for direct execution
- */
-
 import { copyToClipboard } from '$lib/checksum'
 import {
   type BuildToEncode,
@@ -34,10 +23,8 @@ interface Props {
 
 const { open, onclose }: Props = $props()
 
-let urlCopied = $state(false)
-let oneLinerCopied = $state(false)
-let benchmarkCopied = $state(false)
-let platformCopied = $state(false)
+type CopyField = 'url' | 'oneliner' | 'benchmark' | 'platform'
+let copiedField = $state<CopyField | null>(null)
 let activeTab = $state<'url' | 'oneliner' | 'social'>('url')
 let activePlatform = $state<'twitter' | 'reddit' | 'discord'>('discord')
 
@@ -62,88 +49,41 @@ const socialURLs = $derived(getSocialShareURLs(currentBuild))
 const oneLinerResult = $derived<OneLinerResult>(getOneLinerWithMeta(currentBuild))
 const oneLinerCommand = $derived(oneLinerResult.command)
 
-// Platform-specific text
-const twitterText = $derived(generateTwitterText(currentBuild))
-const redditText = $derived(generateRedditText(currentBuild))
-const discordText = $derived(generateDiscordText(currentBuild))
+const platformTexts = $derived({
+  twitter: generateTwitterText(currentBuild),
+  reddit: generateRedditText(currentBuild),
+  discord: generateDiscordText(currentBuild),
+})
+const currentPlatformText = $derived(platformTexts[activePlatform])
 
-const currentPlatformText = $derived(
-  activePlatform === 'twitter'
-    ? twitterText
-    : activePlatform === 'reddit'
-      ? redditText
-      : discordText,
-)
-
-// Check if Web Share API is available
 let canWebShare = $state(false)
 $effect(() => {
   canWebShare = typeof navigator !== 'undefined' && !!navigator.share
 })
 
 $effect(() => {
-  if (!urlCopied) return
+  if (!copiedField) return
   const timer = setTimeout(() => {
-    urlCopied = false
+    copiedField = null
   }, 2000)
   return () => clearTimeout(timer)
 })
 
-$effect(() => {
-  if (!oneLinerCopied) return
-  const timer = setTimeout(() => {
-    oneLinerCopied = false
-  }, 2000)
-  return () => clearTimeout(timer)
-})
-
-$effect(() => {
-  if (!benchmarkCopied) return
-  const timer = setTimeout(() => {
-    benchmarkCopied = false
-  }, 2000)
-  return () => clearTimeout(timer)
-})
-
-$effect(() => {
-  if (!platformCopied) return
-  const timer = setTimeout(() => {
-    platformCopied = false
-  }, 2000)
-  return () => clearTimeout(timer)
-})
-
-async function handleCopyBenchmark() {
-  const success = await copyToClipboard(BENCHMARK_COMMAND)
-  if (success) {
-    benchmarkCopied = true
-    showToast('Benchmark command copied!', 'success')
+async function handleCopy(field: CopyField, text: string, toast: string) {
+  if (await copyToClipboard(text)) {
+    copiedField = field
+    showToast(toast, 'success')
   }
 }
 
-async function handleCopyURL() {
-  const success = await copyToClipboard(shareURL)
-  if (success) {
-    urlCopied = true
-    showToast('Link copied to clipboard!', 'success')
-  }
-}
-
-async function handleCopyOneLiner() {
-  const success = await copyToClipboard(oneLinerCommand)
-  if (success) {
-    oneLinerCopied = true
-    showToast('One-liner command copied!', 'success')
-  }
-}
-
-async function handleCopyPlatformText() {
-  const success = await copyToClipboard(currentPlatformText)
-  if (success) {
-    platformCopied = true
-    const platformName = activePlatform.charAt(0).toUpperCase() + activePlatform.slice(1)
-    showToast(`${platformName} text copied!`, 'success')
-  }
+const handleCopyBenchmark = () =>
+  handleCopy('benchmark', BENCHMARK_COMMAND, 'Benchmark command copied!')
+const handleCopyURL = () => handleCopy('url', shareURL, 'Link copied to clipboard!')
+const handleCopyOneLiner = () =>
+  handleCopy('oneliner', oneLinerCommand, 'One-liner command copied!')
+const handleCopyPlatformText = () => {
+  const name = activePlatform.charAt(0).toUpperCase() + activePlatform.slice(1)
+  handleCopy('platform', currentPlatformText, `${name} text copied!`)
 }
 
 async function handleWebShare() {
@@ -352,10 +292,10 @@ async function handleWebShare() {
               <button
                 type="button"
                 class="share-url-copy"
-                class:copied={urlCopied}
+                class:copied={copiedField === 'url'}
                 onclick={handleCopyURL}
               >
-                {#if urlCopied}
+                {#if copiedField === 'url'}
                   <svg
                     class="icon"
                     viewBox="0 0 24 24"
@@ -519,10 +459,10 @@ async function handleWebShare() {
               <button
                 type="button"
                 class="benchmark-copy"
-                class:copied={benchmarkCopied}
+                class:copied={copiedField === 'benchmark'}
                 onclick={handleCopyBenchmark}
               >
-                {#if benchmarkCopied}
+                {#if copiedField === 'benchmark'}
                   <svg
                     class="icon"
                     viewBox="0 0 24 24"
@@ -592,10 +532,10 @@ async function handleWebShare() {
               <button
                 type="button"
                 class="share-oneliner-copy"
-                class:copied={oneLinerCopied}
+                class:copied={copiedField === 'oneliner'}
                 onclick={handleCopyOneLiner}
               >
-                {#if oneLinerCopied}
+                {#if copiedField === 'oneliner'}
                   <svg
                     class="icon"
                     viewBox="0 0 24 24"
@@ -736,10 +676,10 @@ async function handleWebShare() {
               <button
                 type="button"
                 class="platform-text-copy"
-                class:copied={platformCopied}
+                class:copied={copiedField === 'platform'}
                 onclick={handleCopyPlatformText}
               >
-                {#if platformCopied}
+                {#if copiedField === 'platform'}
                   <svg
                     class="icon"
                     viewBox="0 0 24 24"

@@ -4,90 +4,15 @@ import { isPersonaId } from './persona-registry'
 declare const __brand: unique symbol
 type Brand<T, B> = T & { readonly [__brand]: B }
 
-/** Unique identifier for a software package in the catalog */
 export type PackageKey = Brand<string, 'PackageKey'>
-/** Winget package identifier (e.g., "Valve.Steam") */
 export type WingetId = Brand<string, 'WingetId'>
-/** Branded ID for requestAnimationFrame handles - prevents mixing with timeouts */
-export type AnimationFrameId = Brand<number, 'AnimationFrameId'>
-/** Branded ID for setTimeout/setInterval handles */
-export type TimeoutId = Brand<number, 'TimeoutId'>
-/** Branded ID for event listener cleanup tracking */
-export type ListenerId = Brand<symbol, 'ListenerId'>
-/** Branded type for HTML element IDs */
-export type HtmlId = Brand<string, 'HtmlId'>
-/** Branded type for CSS class names */
-export type CssClassName = Brand<string, 'CssClassName'>
-/** Branded type for preset identifiers */
-export type PresetId = Brand<string, 'PresetId'>
-/** Positive integer type (for counts, indices, etc.) */
-export type PositiveInt = Brand<number, 'PositiveInt'>
-/** Non-empty string type */
-export type NonEmptyString = Brand<string, 'NonEmptyString'>
 
-/** CSS variable name type: --variable-name */
-export type CssVarName = `--${string}`
-
-/** CSS variable reference: var(--variable-name) */
-export type CssVarRef<T extends CssVarName = CssVarName> = `var(${T})`
-
-/** Data attribute selector: [data-*] */
-export type DataSelector = `[data-${string}]`
-
-/** ID selector: #id */
-export type IdSelector = `#${string}`
-
-/** Class selector: .class */
-export type ClassSelector = `.${string}`
-
-/** Any valid CSS selector */
-export type CssSelector = IdSelector | ClassSelector | DataSelector | keyof HTMLElementTagNameMap
-
-/** Custom event names for RockTune app */
 export type AppEventName =
   | 'script-change-request'
   | 'software-selection-changed'
   | 'preset-applied'
   | 'filter-changed'
   | 'search-changed'
-
-/** ISO date string type */
-export type ISODateString = `${number}-${number}-${number}T${number}:${number}:${number}${string}`
-
-/** Make specific keys required */
-export type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] }
-
-/** Make specific keys optional */
-export type WithOptional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>
-
-/** Extract keys of T that are of type U */
-export type KeysOfType<T, U> = {
-  [K in keyof T]: T[K] extends U ? K : never
-}[keyof T]
-
-/** Strict extract - only exact matches */
-export type StrictExtract<T, U extends T> = Extract<T, U>
-
-/** Non-nullable version of a type */
-export type Defined<T> = Exclude<T, null | undefined>
-
-/** Make all properties mutable (remove readonly) */
-export type Mutable<T> = { -readonly [K in keyof T]: T[K] }
-
-/** Flatten intersection types for better IDE display */
-export type Flatten<T> = { [K in keyof T]: T[K] } & {}
-
-/** Get the value type of a Record/Map */
-export type ValueOf<T> = T[keyof T]
-
-/** Ensure exactly one property is set */
-export type ExactlyOne<T, K extends keyof T = keyof T> = K extends keyof T
-  ? { [P in K]: T[P] } & Partial<Record<Exclude<keyof T, K>, never>>
-  : never
-
-/** At least one property must be set */
-export type AtLeastOne<T, K extends keyof T = keyof T> = Partial<T> &
-  { [P in K]: Required<Pick<T, P>> }[K]
 
 export const CATEGORIES = [
   'launcher',

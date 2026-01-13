@@ -1,14 +1,4 @@
 <script lang="ts">
-/**
- * PresetCard - Holographic battle profile card
- *
- * Features:
- * - Spring physics for smooth 3D tilt effect
- * - Holographic shine/glare layers
- * - Rarity-based color schemes
- * - Intensity bar for risk visualization
- */
-
 import type { TierBreakdown } from '$lib/presets'
 import type { PresetType } from '$lib/types'
 import { adjust, clamp, round, SPRING_PRESETS, Spring } from '../utils/spring'

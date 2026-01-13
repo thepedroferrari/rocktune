@@ -55,14 +55,6 @@ $effect(() => {
     clearRecommendedPackages()
   }
 })
-
-function handleFilterClick(filter: FilterValue) {
-  setFilter(filter)
-}
-
-function handleClearAll() {
-  clearSelection()
-}
 </script>
 
 <div class="arsenal-toolbar">
@@ -76,7 +68,7 @@ function handleClearAll() {
             class:active={activeFilter === FILTER_RECOMMENDED}
             aria-pressed={activeFilter === FILTER_RECOMMENDED}
             style:animation-delay="0ms"
-            onclick={() => handleFilterClick(FILTER_RECOMMENDED)}
+            onclick={() => setFilter(FILTER_RECOMMENDED)}
           >
             {recommendedPreset.displayName}
           </button>
@@ -89,7 +81,7 @@ function handleClearAll() {
           aria-pressed={activeFilter === FILTER_ALL}
           style:animation-delay="{presetOffset * FILTER_ANIMATION_DELAY_MS}ms"
           data-filter="*"
-          onclick={() => handleFilterClick(FILTER_ALL)}
+          onclick={() => setFilter(FILTER_ALL)}
         >
           All
         </button>
@@ -103,7 +95,7 @@ function handleClearAll() {
             style:animation-delay="{(presetOffset + 1 + i) *
               FILTER_ANIMATION_DELAY_MS}ms"
             data-filter={category}
-            onclick={() => handleFilterClick(category)}
+            onclick={() => setFilter(category)}
           >
             {category}
           </button>
@@ -119,7 +111,7 @@ function handleClearAll() {
         data-count={selectedCount}
         aria-label="Show {selectedCount} selected items"
         aria-pressed={activeFilter === FILTER_SELECTED}
-        onclick={() => handleFilterClick(FILTER_SELECTED)}
+        onclick={() => setFilter(FILTER_SELECTED)}
       >
         <svg
           class="badge-icon"
@@ -139,7 +131,7 @@ function handleClearAll() {
           id="clear-all-software"
           class="purge-btn"
           aria-label="Clear all selections"
-          onclick={handleClearAll}
+          onclick={clearSelection}
         >
           <svg
             class="btn-icon"

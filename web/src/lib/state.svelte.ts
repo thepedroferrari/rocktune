@@ -265,17 +265,16 @@ export function setDnsProvider(provider: DnsProviderType): void {
   app.dnsProvider = provider
 }
 
+function toggleInSet<T>(set: Set<T>, item: T): boolean {
+  const had = set.has(item)
+  had ? set.delete(item) : set.add(item)
+  return !had
+}
+
 export function toggleOptimization(key: OptimizationKey): boolean {
-  const wasEnabled = app.optimizations.has(key)
-
-  if (wasEnabled) {
-    app.optimizations.delete(key)
-  } else {
-    app.optimizations.add(key)
-  }
-
+  const result = toggleInSet(app.optimizations, key)
   app.optimizations = new Set(app.optimizations)
-  return !wasEnabled
+  return result
 }
 
 export function setOptimizations(keys: readonly OptimizationKey[]): void {
@@ -283,16 +282,9 @@ export function setOptimizations(keys: readonly OptimizationKey[]): void {
 }
 
 export function togglePeripheral(type: PeripheralType): boolean {
-  const wasSelected = app.peripherals.has(type)
-
-  if (wasSelected) {
-    app.peripherals.delete(type)
-  } else {
-    app.peripherals.add(type)
-  }
-
+  const result = toggleInSet(app.peripherals, type)
   app.peripherals = new Set(app.peripherals)
-  return !wasSelected
+  return result
 }
 
 export function setPeripherals(types: readonly PeripheralType[]): void {
@@ -300,16 +292,9 @@ export function setPeripherals(types: readonly PeripheralType[]): void {
 }
 
 export function toggleMonitorSoftware(type: MonitorSoftwareType): boolean {
-  const wasSelected = app.monitorSoftware.has(type)
-
-  if (wasSelected) {
-    app.monitorSoftware.delete(type)
-  } else {
-    app.monitorSoftware.add(type)
-  }
-
+  const result = toggleInSet(app.monitorSoftware, type)
   app.monitorSoftware = new Set(app.monitorSoftware)
-  return !wasSelected
+  return result
 }
 
 export function setMonitorSoftware(types: readonly MonitorSoftwareType[]): void {
