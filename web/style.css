@@ -1909,7 +1909,7 @@
 
      #rich-tooltip {
        position: absolute;
-       z-index: 9999;
+       z-index: var(--z-tooltip);
        max-width: 320px;
        padding: var(--space-sm) var(--space-md);
        background: color-mix(in oklch, oklch(0.1 0.02 285) 97%, transparent);

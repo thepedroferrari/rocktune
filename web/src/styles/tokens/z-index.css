@@ -1,0 +1,47 @@
+/**
+ * Z-Index Tokens
+ *
+ * Centralized stacking context hierarchy.
+ * Use these tokens instead of arbitrary z-index values.
+ *
+ * Hierarchy (low to high):
+ * - Background: Behind main content
+ * - Base: Normal document flow
+ * - Dropdown: Dropdowns, popovers, filters
+ * - Sticky: Sticky elements, elevated cards
+ * - Fixed: Fixed positioning (nav, headers)
+ * - Overlay: Modals, dialogs, panels
+ * - Popover: Tooltips, context menus
+ * - Priority: Critical system UI
+ */
+
+:root {
+  /* Background layers (behind content) */
+  --z-background-deep: -2;
+  --z-background: -1;
+
+  /* Base layers (normal stacking) */
+  --z-base: 1;
+  --z-raised: 2;
+  --z-elevated: 3;
+
+  /* Interactive layers */
+  --z-dropdown: 10;
+  --z-sticky: 50;
+
+  /* Fixed positioning */
+  --z-fixed: 100;
+  --z-navigation: 1000;
+
+  /* Overlay layers */
+  --z-overlay: 1000;
+  --z-modal: 1100;
+  --z-drawer: 1200;
+
+  /* Popover layers (above overlays) */
+  --z-popover: 2000;
+  --z-tooltip: 2100;
+
+  /* Priority layers (critical UI) */
+  --z-priority: 9000;
+}
