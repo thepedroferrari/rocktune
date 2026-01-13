@@ -4,7 +4,7 @@
  *
  * Fixed navigation with:
  * - RockTune branding (logo/wordmark)
- * - Section links with active state via intersection observer
+ * - Section links with active state via scroll position detection
  * - Share button (global action)
  * - Hamburger menu for mobile
  */
@@ -15,6 +15,9 @@ import { scrollToSection, scrollToTop } from '../lib/scroll'
 import { openShareModal } from '../lib/state.svelte'
 
 let menuOpen = $state(false)
+let activeStep = $state(0)
+let scrollY = $state(0)
+let isClickNavigating = $state(false)
 
 interface NavLink {
   href: string
@@ -32,7 +35,7 @@ const NAV_LINKS: NavLink[] = [
   { href: '#guide', label: 'Guide', step: 6 },
 ]
 
-let activeStep = $state(0)
+const TRIGGER_LINE = 100
 
 function toggleMenu() {
   menuOpen = !menuOpen
@@ -43,47 +46,47 @@ function closeMenu() {
 }
 
 $effect(() => {
+  let rafId: number | null = null
+
+  const handleScroll = () => {
+    if (rafId !== null) return
+    rafId = requestAnimationFrame(() => {
+      rafId = null
+      scrollY = window.scrollY
+    })
+  }
+
+  scrollY = window.scrollY
+  window.addEventListener('scroll', handleScroll, { passive: true })
+
+  return () => {
+    window.removeEventListener('scroll', handleScroll)
+    if (rafId !== null) cancelAnimationFrame(rafId)
+  }
+})
+
+$effect(() => {
+  void scrollY // Establish reactive dependency
+  if (isClickNavigating) return
+
   const sections = NAV_LINKS.map((link) => {
     const id = link.href.replace('#', '')
     return document.getElementById(id)
-  }).filter((section): section is HTMLElement => section instanceof HTMLElement)
+  }).filter((section): section is HTMLElement => section !== null)
 
   if (sections.length === 0) return
 
-  const observer = new IntersectionObserver(
-    (entries) => {
-      let topSection: { index: number; top: number } | null = null
-
-      for (const entry of entries) {
-        if (entry.isIntersecting && entry.target instanceof HTMLElement) {
-          const index = sections.indexOf(entry.target)
-          const top = entry.boundingClientRect.top
-
-          if (index !== -1 && (topSection === null || top < topSection.top)) {
-            topSection = { index, top }
-          }
-        }
-      }
-
-      if (topSection !== null) {
-        activeStep = topSection.index
-      }
-    },
-    {
-      threshold: 0.1,
-      rootMargin: '-80px 0px -20% 0px',
-    },
-  )
-
-  sections.forEach((section) => {
-    observer.observe(section)
-  })
-
-  return () => {
-    sections.forEach((section) => {
-      observer.unobserve(section)
-    })
+  let activeIndex = 0
+  for (let i = 0; i < sections.length; i++) {
+    const rect = sections[i].getBoundingClientRect()
+    if (rect.top <= TRIGGER_LINE) {
+      activeIndex = i
+    } else {
+      break
+    }
   }
+
+  activeStep = activeIndex
 })
 
 function handlePreload(link: NavLink) {
@@ -95,15 +98,17 @@ async function handleClick(event: MouseEvent, link: NavLink) {
   event.preventDefault()
   const sectionId = link.href.replace('#', '') as SectionId
 
-  // Trigger preload if not already done
   preloadSection(sectionId)
 
-  // Update active state optimistically
+  isClickNavigating = true
   activeStep = link.step
   closeMenu()
 
-  // Scroll with wait-for-render
   await scrollToSection({ sectionId })
+
+  setTimeout(() => {
+    isClickNavigating = false
+  }, 100)
 }
 
 function handleMobileShare() {
