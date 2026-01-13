@@ -3,8 +3,7 @@ import { svelte, vitePreprocess } from '@sveltejs/vite-plugin-svelte'
 import { visualizer } from 'rollup-plugin-visualizer'
 
 /**
- * Converts render-blocking <link rel="stylesheet"> to non-blocking preload pattern.
- * Critical CSS is already inlined in index.html, so this defers the full stylesheet.
+ * Converts render-blocking CSS to non-blocking preload.
  */
 function deferCssPlugin() {
   return {
@@ -14,7 +13,7 @@ function deferCssPlugin() {
       return html.replace(
         /<link\s+rel="stylesheet"\s+(?:crossorigin\s+)?href="([^"]+)"[^>]*>/g,
         (_, href) =>
-          `<link rel="preload" href="${href}" as="style" onload="this.onload=null;this.rel='stylesheet'">\n    <noscript><link rel="stylesheet" href="${href}"></noscript>`,
+          `<link rel="preload" href="${href}" as="style" data-defer-css>\n    <noscript><link rel="stylesheet" href="${href}"></noscript>`,
       )
     },
   }

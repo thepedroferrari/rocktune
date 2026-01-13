@@ -8,6 +8,11 @@
 import { mount, unmount } from 'svelte'
 import RootApp from './RootApp.svelte'
 
+document.querySelectorAll<HTMLLinkElement>('link[data-defer-css]').forEach((link) => {
+  link.rel = 'stylesheet'
+  link.removeAttribute('data-defer-css')
+})
+
 const root = document.getElementById('svelte-app-root')
 if (!root) {
   throw new Error('#svelte-app-root not found in index.html')
