@@ -26,13 +26,13 @@ interface NavLink {
 }
 
 const NAV_LINKS: NavLink[] = [
-  { href: '#quick-start', label: 'Presets', step: 0 },
-  { href: '#hardware', label: 'Hardware', step: 1 },
-  { href: '#peripherals', label: 'Peripherals', step: 2 },
-  { href: '#optimizations', label: 'Tweaks', step: 3 },
-  { href: '#software', label: 'Software', step: 4 },
+  { href: '#quick-start', label: 'Loadouts', step: 0 },
+  { href: '#hardware', label: 'Rig', step: 1 },
+  { href: '#peripherals', label: 'Gear', step: 2 },
+  { href: '#optimizations', label: 'Tuning', step: 3 },
+  { href: '#software', label: 'Arsenal', step: 4 },
   { href: '#generate', label: 'Forge', step: 5 },
-  { href: '#guide', label: 'Guide', step: 6 },
+  { href: '#guide', label: 'Manual', step: 6 },
 ]
 
 const TRIGGER_LINE = 100

@@ -364,20 +364,20 @@ onMount(() => {
 
 <main class="container" id="main-content">
   <div class="step-container">
-    <section id="quick-start" class="step step--quickstart">
-      <div class="quickstart-header">
+    <section id="quick-start" class="step step--loadouts">
+      <div class="loadouts-header">
         <div
-          class="quickstart-accent quickstart-accent--left"
+          class="loadouts-accent loadouts-accent--left"
           aria-hidden="true"
         ></div>
-        <div class="quickstart-title-wrap">
-          <h2 class="quickstart-title">Quick Start</h2>
-          <p class="quickstart-subtitle">
+        <div class="loadouts-title-wrap">
+          <h2 class="loadouts-title">Loadouts</h2>
+          <p class="loadouts-subtitle">
             Choose a preset or build your own loadout below
           </p>
         </div>
         <div
-          class="quickstart-accent quickstart-accent--right"
+          class="loadouts-accent loadouts-accent--right"
           aria-hidden="true"
         ></div>
       </div>

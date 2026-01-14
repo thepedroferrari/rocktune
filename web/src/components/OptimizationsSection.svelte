@@ -161,7 +161,7 @@ function handleBeforeToggle(key: OptimizationKey, isCurrentlyChecked: boolean): 
     <div class="step-banner__marker">3</div>
     <div class="step-banner__content">
       <h2 class="step-banner__title">
-        Upgrades
+        Tuning Optimizations
         <button
           type="button"
           onclick={openTierLegend}

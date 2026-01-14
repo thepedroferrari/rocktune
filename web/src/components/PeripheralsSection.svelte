@@ -33,7 +33,7 @@ function handleMonitorChange(event: Event & { currentTarget: HTMLInputElement })
   <header class="step-banner">
     <div class="step-banner__marker">2</div>
     <div class="step-banner__content">
-      <h2 class="step-banner__title">Peripherals</h2>
+      <h2 class="step-banner__title">Gear</h2>
       <p class="step-banner__subtitle">
         Install companion software for your gaming gear
       </p>

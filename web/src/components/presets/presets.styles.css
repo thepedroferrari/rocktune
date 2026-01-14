@@ -1,10 +1,10 @@
 @layer components {
-  @scope (.step--quickstart) {
+  @scope (.step--loadouts) {
     :scope {
       padding-block-start: var(--space-2xl);
     }
 
-    .quickstart-header {
+    .loadouts-header {
       display: flex;
       align-items: center;
       justify-content: center;
@@ -13,13 +13,13 @@
       position: relative;
     }
 
-    .quickstart-title-wrap {
+    .loadouts-title-wrap {
       text-align: center;
       position: relative;
       z-index: 1;
     }
 
-    .quickstart-title {
+    .loadouts-title {
       margin: 0;
       font-family: var(--font-display);
       font-size: clamp(2rem, 5vw, 3.5rem);
@@ -40,7 +40,7 @@
       filter: drop-shadow(0 0 20px color-mix(in oklch, var(--cyber-yellow) 30%, transparent));
     }
 
-    .quickstart-subtitle {
+    .loadouts-subtitle {
       margin: var(--space-sm) 0 0 0;
       font-family: var(--font-mono);
       font-size: var(--text-sm);
@@ -50,7 +50,7 @@
       color: var(--text-secondary);
     }
 
-    .quickstart-accent {
+    .loadouts-accent {
       position: relative;
       flex: 1;
       max-inline-size: 200px;
@@ -86,13 +86,13 @@
         box-shadow: 0 0 12px var(--cyber-yellow);
       }
 
-      &.quickstart-accent--left {
+      &.loadouts-accent--left {
         transform: scaleX(-1);
       }
     }
   }
 
-  @keyframes quickstartGradientShift {
+  @keyframes loadoutsGradientShift {
 
     0%,
     100% {

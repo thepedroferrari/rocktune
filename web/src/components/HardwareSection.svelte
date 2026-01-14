@@ -24,7 +24,7 @@ function closeHelp() {
   <header class="step-banner">
     <div class="step-banner__marker">1</div>
     <div class="step-banner__content">
-      <h2 class="step-banner__title">Hardware</h2>
+      <h2 class="step-banner__title">Rig</h2>
       <p class="step-banner__subtitle">
         Select your CPU and GPU to enable the right optimizations
       </p>
