@@ -4,6 +4,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self';
+    script-src 'self' 'unsafe-inline';
+    style-src 'self' 'unsafe-inline';
+    img-src 'self' data: https://cdn.simpleicons.org https://i.ytimg.com;
+    font-src 'self';
+    connect-src 'self' https://raw.githubusercontent.com;
+    frame-src https://www.youtube-nocookie.com;
+    base-uri 'self';
+    form-action 'self';
+  " />
   <title>RockTune — Download More FPS</title>
   <meta name="description"
     content="Build your Windows gaming loadout. Kill bloat, crush latency, install essentials—one click export." />

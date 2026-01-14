@@ -15,7 +15,7 @@ globalThis.__BUILD_DATE__ = '2026-01-07'
 import { assertEquals, assertStringIncludes } from 'jsr:@std/assert'
 import { PERSONA_META, type PersonaId } from './persona-registry.ts'
 import { buildScript, buildVerificationScript, type SelectionState } from './script-generator.ts'
-import type { SoftwareCatalog } from './types.ts'
+import type { PackageKey, SoftwareCatalog } from './types.ts'
 
 // Minimal test catalog with proper IDs
 const TEST_CATALOG: SoftwareCatalog = {
@@ -45,7 +45,7 @@ function createTestSelection(persona: PersonaId): SelectionState {
       monitorSoftware: [],
     },
     optimizations: ['pagefile', 'fastboot'],
-    packages: ['Steam.Steam'],
+    packages: ['Steam.Steam'] as PackageKey[],
     missingPackages: [],
     preset: persona,
     includeTimer: true,
@@ -134,7 +134,7 @@ Deno.test('Script generation - Software packages are included', () => {
   const selection: SelectionState = {
     hardware: { cpu: 'amd_x3d', gpu: 'nvidia', peripherals: [], monitorSoftware: [] },
     optimizations: [],
-    packages: ['Steam.Steam', 'Discord.Discord'],
+    packages: ['Steam.Steam', 'Discord.Discord'] as PackageKey[],
     missingPackages: [],
     preset: 'gamer',
     includeTimer: true,

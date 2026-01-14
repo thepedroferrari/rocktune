@@ -84,7 +84,7 @@
 
       display: flex;
       align-items: center;
-      gap: 2px;
+      gap: 8px;
       background: var(--black-20);
       clip-path: var(--nav-clip);
 

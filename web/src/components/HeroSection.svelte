@@ -61,14 +61,18 @@ function handleBadgeMouseMove(event: MouseEvent) {
   const rect = el.getBoundingClientRect()
   const x = (event.clientX - rect.left) / rect.width - 0.5
   const y = (event.clientY - rect.top) / rect.height - 0.5
-  el.style.transform = `perspective(800px) rotateY(${x * 15}deg) rotateX(${-y * 15}deg) translateY(-3px)`
+  el.style.setProperty('--tilt-rotate-y', `${x * 15}deg`)
+  el.style.setProperty('--tilt-rotate-x', `${-y * 15}deg`)
+  el.style.setProperty('--tilt-translate-y', '-3px')
 }
 
 /** Reset tilt on mouse leave */
 function handleBadgeMouseLeave(event: MouseEvent) {
   if (prefersReducedMotion) return
   const el = event.currentTarget as HTMLElement
-  el.style.transform = ''
+  el.style.removeProperty('--tilt-rotate-y')
+  el.style.removeProperty('--tilt-rotate-x')
+  el.style.removeProperty('--tilt-translate-y')
 }
 </script>
 
@@ -537,6 +541,12 @@ function handleBadgeMouseLeave(event: MouseEvent) {
     --rarity-color: oklch(0.55 0.03 102);
     --rarity-glow: oklch(0.55 0.03 102 / 0.4);
 
+    /* Tilt variables set by JS on hover - allows CSS :active to override */
+    --tilt-rotate-y: 0deg;
+    --tilt-rotate-x: 0deg;
+    --tilt-translate-y: 0;
+    --tilt-scale: 1;
+
     display: inline-flex;
     align-items: center;
     gap: var(--space-sm);
@@ -552,6 +562,12 @@ function handleBadgeMouseLeave(event: MouseEvent) {
     cursor: pointer;
     transform-style: preserve-3d;
     will-change: transform;
+    transform:
+      perspective(800px)
+      rotateY(var(--tilt-rotate-y))
+      rotateX(var(--tilt-rotate-x))
+      translateY(var(--tilt-translate-y))
+      scale(var(--tilt-scale));
     transition:
       color 0.15s ease,
       text-shadow 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
@@ -620,7 +636,10 @@ function handleBadgeMouseLeave(event: MouseEvent) {
   }
 
   .profile-badge:active {
-    transform: perspective(800px) translateY(0) scale(0.98) !important;
+    --tilt-rotate-y: 0deg;
+    --tilt-rotate-x: 0deg;
+    --tilt-translate-y: 0;
+    --tilt-scale: 0.98;
   }
 
   .trust-line {

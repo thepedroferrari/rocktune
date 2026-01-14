@@ -9,6 +9,7 @@
 declare const __BUILD_COMMIT__: string;
 declare const __BUILD_DATE__: string;
 
+import { isDev } from "./env";
 import { OPTIMIZATIONS } from "./optimizations";
 import { PERSONA_NEXT_STEPS } from "./persona-config";
 import type {
@@ -1742,7 +1743,9 @@ export function buildScript(
 
     for (const entry of sorted) {
       if (!isValidPackageId(entry.pkg.id)) {
-        console.warn(`Skipping package with invalid ID: ${entry.pkg.id}`);
+        if (isDev()) {
+          console.warn(`Skipping package with invalid ID: ${entry.pkg.id}`);
+        }
         continue;
       }
       const packageName = escapePsDoubleQuoted(entry.pkg.name);

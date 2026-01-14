@@ -19,7 +19,10 @@
     "share:audit": "deno run --allow-read --unstable-sloppy-imports ./scripts/audit-share-registry.ts",
     "build:sprite": "deno run --allow-read --allow-write ./scripts/build-sprite.ts",
     "test": "deno test --allow-read --allow-env --unstable-sloppy-imports ./src",
-    "test:watch": "deno test --watch --allow-read --allow-env --unstable-sloppy-imports ./src"
+    "test:watch": "deno test --watch --allow-read --allow-env --unstable-sloppy-imports ./src",
+    "test:e2e": "deno run -A npm:@playwright/test@1.49",
+    "test:e2e:headed": "deno run -A npm:@playwright/test@1.49 --headed",
+    "test:e2e:chromium": "deno run -A npm:@playwright/test@1.49 --project=chromium"
   },
   "compilerOptions": {
     "lib": [

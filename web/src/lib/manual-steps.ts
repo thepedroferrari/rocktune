@@ -5,6 +5,7 @@
  * are essential for optimal gaming performance.
  */
 
+import { isDev } from './env'
 import { buildPersonaSectionId, buildSectionId, SECTION_PREFIXES } from './section-ids'
 import type { AutomatedBy, GpuType, PresetType } from './types'
 import { GPU_TYPES } from './types'
@@ -913,7 +914,7 @@ function warnManual(message: string, warn?: (message: string) => void) {
     warn(message)
     return
   }
-  if (!import.meta.env?.DEV) return
+  if (!isDev()) return
   if (WARNED_MESSAGES.has(message)) return
   WARNED_MESSAGES.add(message)
   console.warn(`[ManualSteps] ${message}`)
@@ -4386,7 +4387,7 @@ export function auditManualSteps(
   groups: readonly SectionGroup[],
   options?: NormalizeOptions,
 ): void {
-  if (!options?.warn && !import.meta.env?.DEV) return
+  if (!options?.warn && !isDev()) return
   for (const group of groups) {
     for (const section of group.sections) {
       for (const item of section.items as readonly ManualItem[]) {

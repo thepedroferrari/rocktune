@@ -6,7 +6,6 @@
  * All sections rendered from here - no HTML fallbacks.
  */
 
-import { onMount } from 'svelte'
 import { getDefaultOptimizations } from '$lib/optimizations'
 import { getRecommendedPreset } from '$lib/presets'
 import { scrollToSection } from '$lib/scroll'
@@ -35,8 +34,10 @@ import {
 } from '$lib/state.svelte'
 import type { PackageKey, SoftwareCatalog } from '$lib/types'
 import { OPTIMIZATION_KEYS, VIEW_MODES } from '$lib/types'
+import { onMount } from 'svelte'
 import SectionSkeleton from './components/SectionSkeleton.svelte'
-import { formatZodErrors, isParseSuccess, safeParseCatalog } from './schemas'
+import ErrorState from './components/ui/ErrorState.svelte'
+import { isParseSuccess, safeParseCatalog } from './schemas'
 
 /** LUDICROUS optimization keys for danger zone detection */
 const LUDICROUS_KEYS = [
@@ -46,10 +47,10 @@ const LUDICROUS_KEYS = [
   OPTIMIZATION_KEYS.DEP_OFF,
 ] as const
 
-import { showToast } from '$lib/toast.svelte'
 import { KonamiDetector } from '$lib/konami/konami-detector'
 import { activateKonami, deactivateKonami, getKonamiState } from '$lib/konami/konami-state.svelte'
 import { closeShareModal } from '$lib/state.svelte'
+import { showToast } from '$lib/toast.svelte'
 import HeroSection from './components/HeroSection.svelte'
 import PresetSection from './components/PresetSection.svelte'
 import SRAnnounce from './components/SRAnnounce.svelte'
@@ -242,7 +243,9 @@ async function hydrateCatalog() {
       error = 'Unknown error loading catalog.'
     }
 
-    console.error('[RockTune] Catalog load error:', error, e)
+    if (import.meta.env.DEV) {
+      console.error('[RockTune] Catalog load error:', error, e)
+    }
   } finally {
     loading = false
   }
@@ -408,27 +411,42 @@ onMount(() => {
   </div>
 
   <div class="step-container step-container--flexible">
-    {#await import("./components/HardwareSection.svelte")}
-      <SectionSkeleton height="400px" />
-    {:then { default: HardwareSection }}
-      <HardwareSection />
-    {/await}
+    <svelte:boundary>
+      {#await import("./components/HardwareSection.svelte")}
+        <SectionSkeleton height="400px" />
+      {:then { default: HardwareSection }}
+        <HardwareSection />
+      {/await}
+      {#snippet failed(error, reset)}
+        <ErrorState {error} {reset} title="Hardware Section Error" />
+      {/snippet}
+    </svelte:boundary>
   </div>
 
   <div class="step-container step-container--flexible">
-    {#await import("./components/PeripheralsSection.svelte")}
-      <SectionSkeleton height="350px" />
-    {:then { default: PeripheralsSection }}
-      <PeripheralsSection />
-    {/await}
+    <svelte:boundary>
+      {#await import("./components/PeripheralsSection.svelte")}
+        <SectionSkeleton height="350px" />
+      {:then { default: PeripheralsSection }}
+        <PeripheralsSection />
+      {/await}
+      {#snippet failed(error, reset)}
+        <ErrorState {error} {reset} title="Peripherals Section Error" />
+      {/snippet}
+    </svelte:boundary>
   </div>
 
   <div class="step-container step-container--flexible">
-    {#await import("./components/OptimizationsSection.svelte")}
-      <SectionSkeleton height="800px" />
-    {:then { default: OptimizationsSection }}
-      <OptimizationsSection />
-    {/await}
+    <svelte:boundary>
+      {#await import("./components/OptimizationsSection.svelte")}
+        <SectionSkeleton height="800px" />
+      {:then { default: OptimizationsSection }}
+        <OptimizationsSection />
+      {/await}
+      {#snippet failed(error, reset)}
+        <ErrorState {error} {reset} title="Optimizations Section Error" />
+      {/snippet}
+    </svelte:boundary>
   </div>
 
   <div class="step-container step-container--flexible">
@@ -509,17 +527,27 @@ onMount(() => {
     </section>
   </div>
 
-  {#await import("./components/ForgeSection.svelte")}
-    <SectionSkeleton height="600px" />
-  {:then { default: ForgeSection }}
-    <ForgeSection />
-  {/await}
+  <svelte:boundary>
+    {#await import("./components/ForgeSection.svelte")}
+      <SectionSkeleton height="600px" />
+    {:then { default: ForgeSection }}
+      <ForgeSection />
+    {/await}
+    {#snippet failed(error, reset)}
+      <ErrorState {error} {reset} title="Forge Section Error" />
+    {/snippet}
+  </svelte:boundary>
 
-  {#await import("./components/ManualStepsSection.svelte")}
-    <SectionSkeleton height="500px" />
-  {:then { default: ManualStepsSection }}
-    <ManualStepsSection />
-  {/await}
+  <svelte:boundary>
+    {#await import("./components/ManualStepsSection.svelte")}
+      <SectionSkeleton height="500px" />
+    {:then { default: ManualStepsSection }}
+      <ManualStepsSection />
+    {/await}
+    {#snippet failed(error, reset)}
+      <ErrorState {error} {reset} title="Manual Steps Error" />
+    {/snippet}
+  </svelte:boundary>
 </main>
 
 {#if app.ui.previewModalOpen}
