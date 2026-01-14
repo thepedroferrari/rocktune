@@ -384,7 +384,7 @@ onMount(() => {
       <PresetSection />
     </section>
 
-    <nav class="wizard-nav" aria-label="Continue to Hardware">
+    <nav class="wizard-nav" aria-label="Continue to Rig">
       <a
         href="#hardware"
         class="wizard-next-btn"
@@ -393,7 +393,7 @@ onMount(() => {
           await scrollToSection({ sectionId: "hardware" });
         }}
       >
-        <span class="wizard-next-text">Next: Hardware</span>
+        <span class="wizard-next-text">Next: Your Rig</span>
         <svg
           class="wizard-next-icon"
           viewBox="0 0 24 24"
@@ -407,94 +407,28 @@ onMount(() => {
     </nav>
   </div>
 
-  <div class="step-container">
+  <div class="step-container step-container--flexible">
     {#await import("./components/HardwareSection.svelte")}
       <SectionSkeleton height="400px" />
     {:then { default: HardwareSection }}
       <HardwareSection />
     {/await}
-
-    <nav class="wizard-nav" aria-label="Continue to Peripherals">
-      <a
-        href="#peripherals"
-        class="wizard-next-btn"
-        onclick={async (e) => {
-          e.preventDefault();
-          await scrollToSection({ sectionId: "peripherals" });
-        }}
-      >
-        <span class="wizard-next-text">Next: Peripherals</span>
-        <svg
-          class="wizard-next-icon"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-        >
-          <polyline points="6 9 12 15 18 9" />
-        </svg>
-      </a>
-    </nav>
   </div>
 
-  <div class="step-container">
+  <div class="step-container step-container--flexible">
     {#await import("./components/PeripheralsSection.svelte")}
       <SectionSkeleton height="350px" />
     {:then { default: PeripheralsSection }}
       <PeripheralsSection />
     {/await}
-
-    <nav class="wizard-nav" aria-label="Continue to Tweaks">
-      <a
-        href="#optimizations"
-        class="wizard-next-btn"
-        onclick={async (e) => {
-          e.preventDefault();
-          await scrollToSection({ sectionId: "optimizations" });
-        }}
-      >
-        <span class="wizard-next-text">Next: Tweaks</span>
-        <svg
-          class="wizard-next-icon"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-        >
-          <polyline points="6 9 12 15 18 9" />
-        </svg>
-      </a>
-    </nav>
   </div>
 
-  <div class="step-container">
+  <div class="step-container step-container--flexible">
     {#await import("./components/OptimizationsSection.svelte")}
       <SectionSkeleton height="800px" />
     {:then { default: OptimizationsSection }}
       <OptimizationsSection />
     {/await}
-
-    <nav class="wizard-nav" aria-label="Continue to Arsenal">
-      <a
-        href="#software"
-        class="wizard-next-btn"
-        onclick={async (e) => {
-          e.preventDefault();
-          await scrollToSection({ sectionId: "software" });
-        }}
-      >
-        <span class="wizard-next-text">Next: Arsenal</span>
-        <svg
-          class="wizard-next-icon"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-        >
-          <polyline points="6 9 12 15 18 9" />
-        </svg>
-      </a>
-    </nav>
   </div>
 
   <div class="step-container step-container--flexible">
@@ -573,28 +507,6 @@ onMount(() => {
         {/await}
       {/if}
     </section>
-
-    <nav class="wizard-nav" aria-label="Continue to Forge">
-      <a
-        href="#generate"
-        class="wizard-next-btn"
-        onclick={async (e) => {
-          e.preventDefault();
-          await scrollToSection({ sectionId: "generate" });
-        }}
-      >
-        <span class="wizard-next-text">Next: Forge Script</span>
-        <svg
-          class="wizard-next-icon"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-        >
-          <polyline points="6 9 12 15 18 9" />
-        </svg>
-      </a>
-    </nav>
   </div>
 
   {#await import("./components/ForgeSection.svelte")}
