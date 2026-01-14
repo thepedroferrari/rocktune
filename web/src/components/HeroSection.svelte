@@ -515,11 +515,12 @@ function handleBadgeMouseLeave(event: MouseEvent) {
     display: flex;
     flex-direction: column;
     align-self: center;
+    position: relative;
   }
 
   .hero-logo {
     font-family: var(--font-logo);
-    font-size: clamp(3rem, 8vw, 6.3rem);
+    font-size: clamp(3.62rem, 8vw, 6.3rem);
     font-weight: 800;
     letter-spacing: 0.06em;
     line-height: 1;
@@ -542,6 +543,10 @@ function handleBadgeMouseLeave(event: MouseEvent) {
     color: var(--fold-ink);
     line-height: 1.1;
     letter-spacing: 0.02em;
+    text-shadow:
+      0 1px 0 oklch(0.2 0.02 285),
+      0 -1px 0 oklch(0.35 0.02 285),
+      0 0 20px oklch(0.5 0.05 285 / 0.15);
     animation: fadeSlideUp 0.6s var(--ease-out-expo) 0.3s both;
   }
 
@@ -552,10 +557,25 @@ function handleBadgeMouseLeave(event: MouseEvent) {
   .tagline-primary {
     font-family: var(--font-mono);
     font-size: clamp(1.1rem, 2vw, 1.4rem);
-    color: var(--fold-cyan);
     margin: 0;
-    text-shadow: 0 0 15px var(--fold-cyan-glow);
-    animation: fadeSlideUp 0.5s var(--ease-out-expo) 0.45s both;
+    color: oklch(0.9 0.2 195);
+    text-shadow:
+      0 0 5px oklch(0.85 0.18 195),
+      0 0 10px oklch(0.85 0.18 195),
+      0 0 20px oklch(0.7 0.2 195 / 0.8),
+      0 0 40px oklch(0.7 0.2 195 / 0.5);
+    animation:
+      fadeSlideUp 0.5s var(--ease-out-expo) 0.45s both,
+      neonFlicker 4s ease-in-out infinite 1.5s;
+  }
+
+  @keyframes neonFlicker {
+    0%, 100% { opacity: 1; }
+    92% { opacity: 1; }
+    93% { opacity: 0.85; }
+    94% { opacity: 1; }
+    96% { opacity: 0.9; }
+    97% { opacity: 1; }
   }
 
   .tagline-secondary {
