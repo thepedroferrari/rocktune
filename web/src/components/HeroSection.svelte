@@ -77,6 +77,25 @@ function handleBadgeMouseLeave(event: MouseEvent) {
 </script>
 
 <header class="hero-fold">
+  <!-- Ambient glow spots for depth -->
+  <div class="ambient-glow" aria-hidden="true">
+    <div class="glow-spot glow-spot--cyan"></div>
+    <div class="glow-spot glow-spot--magenta"></div>
+    <div class="glow-spot glow-spot--accent"></div>
+  </div>
+
+  <!-- Floating particles -->
+  <div class="particles" aria-hidden="true">
+    <span class="particle"></span>
+    <span class="particle"></span>
+    <span class="particle"></span>
+    <span class="particle"></span>
+    <span class="particle"></span>
+    <span class="particle"></span>
+    <span class="particle"></span>
+    <span class="particle"></span>
+  </div>
+
   <div class="hero-content">
     <div class="hero-title">
       <h1 class="hero-logo">ROCKTUNE</h1>
@@ -191,13 +210,13 @@ function handleBadgeMouseLeave(event: MouseEvent) {
           <div class="stat-line">
             <dt class="stat-label">Background noise</dt>
             <dd class="stat-value">
-              <span class="stat-dots" aria-hidden="true"></span>REDUCED
+              <span class="stat-dots" aria-hidden="true"></span>GONE
             </dd>
           </div>
           <div class="stat-line">
             <dt class="stat-label">Windows tracking</dt>
             <dd class="stat-value">
-              <span class="stat-dots" aria-hidden="true"></span>BLOCKED
+              <span class="stat-dots" aria-hidden="true"></span>NUKED
             </dd>
           </div>
 
@@ -207,19 +226,19 @@ function handleBadgeMouseLeave(event: MouseEvent) {
           <div class="stat-line stat-line--highlight">
             <dt class="stat-label">Micro-stutters</dt>
             <dd class="stat-value stat-value--accent">
-              <span class="stat-dots" aria-hidden="true"></span>MINIMIZED
+              <span class="stat-dots" aria-hidden="true"></span>OBLITERATED
             </dd>
           </div>
           <div class="stat-line stat-line--highlight">
             <dt class="stat-label">Frame times</dt>
             <dd class="stat-value stat-value--accent">
-              <span class="stat-dots" aria-hidden="true"></span>SMOOTHER
+              <span class="stat-dots" aria-hidden="true"></span>SILKY SMOOTH
             </dd>
           </div>
           <div class="stat-line stat-line--highlight">
             <dt class="stat-label">Input delay</dt>
             <dd class="stat-value stat-value--accent">
-              <span class="stat-dots" aria-hidden="true"></span>FASTER
+              <span class="stat-dots" aria-hidden="true"></span>2x FASTER
             </dd>
           </div>
         </dl>
@@ -344,6 +363,128 @@ function handleBadgeMouseLeave(event: MouseEvent) {
     }
   }
 
+  /* ═══════════════════════════════════════════════════════════════
+     AMBIENT GLOW SPOTS - Background depth
+     ═══════════════════════════════════════════════════════════════ */
+  .ambient-glow {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .glow-spot {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(120px);
+    animation: glowPulse 10s ease-in-out infinite backwards;
+  }
+
+  .glow-spot--cyan {
+    --glow-base-opacity: 0.5;
+    width: 600px;
+    height: 600px;
+    top: 5%;
+    right: 10%;
+    background: radial-gradient(circle, var(--fold-cyan) 0%, transparent 60%);
+    animation-delay: 0s;
+  }
+
+  .glow-spot--magenta {
+    --glow-base-opacity: 0.45;
+    width: 500px;
+    height: 500px;
+    bottom: 10%;
+    left: 0%;
+    background: radial-gradient(circle, var(--fold-magenta) 0%, transparent 60%);
+    animation-delay: 3s;
+  }
+
+  .glow-spot--accent {
+    --glow-base-opacity: 0.35;
+    width: 450px;
+    height: 450px;
+    top: 40%;
+    left: 30%;
+    background: radial-gradient(circle, var(--fold-accent) 0%, transparent 60%);
+    animation-delay: 6s;
+  }
+
+  @keyframes glowPulse {
+    0%,
+    100% {
+      opacity: var(--glow-base-opacity, 0.4);
+      transform: scale(1);
+    }
+    50% {
+      opacity: calc(var(--glow-base-opacity, 0.4) * 1.4);
+      transform: scale(1.15);
+    }
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
+     FLOATING PARTICLES - Ambient motion
+     ═══════════════════════════════════════════════════════════════ */
+  .particles {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .particle {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    background: var(--fold-cyan);
+    border-radius: 50%;
+    opacity: 0;
+    box-shadow: 0 0 6px var(--fold-cyan-glow);
+    animation: particleFloat 12s ease-in-out infinite;
+  }
+
+  .particle:nth-child(1) { left: 10%; animation-delay: 0s; }
+  .particle:nth-child(2) { left: 25%; animation-delay: 1.5s; }
+  .particle:nth-child(3) { left: 40%; animation-delay: 3s; }
+  .particle:nth-child(4) { left: 55%; animation-delay: 4.5s; }
+  .particle:nth-child(5) { left: 70%; animation-delay: 6s; }
+  .particle:nth-child(6) { left: 85%; animation-delay: 7.5s; }
+  .particle:nth-child(7) { left: 15%; animation-delay: 9s; }
+  .particle:nth-child(8) { left: 60%; animation-delay: 10.5s; }
+
+  .particle:nth-child(2),
+  .particle:nth-child(6) {
+    background: var(--fold-magenta);
+    box-shadow: 0 0 6px var(--fold-magenta-glow);
+  }
+
+  .particle:nth-child(4),
+  .particle:nth-child(8) {
+    background: var(--fold-accent);
+    box-shadow: 0 0 6px var(--fold-accent-glow);
+  }
+
+  @keyframes particleFloat {
+    0% {
+      bottom: -10px;
+      opacity: 0;
+      transform: translateX(0);
+    }
+    10% {
+      opacity: 0.7;
+    }
+    90% {
+      opacity: 0.7;
+    }
+    100% {
+      bottom: 110%;
+      opacity: 0;
+      transform: translateX(20px);
+    }
+  }
+
   .hero-content {
     display: grid;
     grid-template-columns: 1fr;
@@ -378,7 +519,7 @@ function handleBadgeMouseLeave(event: MouseEvent) {
 
   .hero-logo {
     font-family: var(--font-logo);
-    font-size: clamp(3rem, 8vw, 5rem);
+    font-size: clamp(3rem, 8vw, 6.3rem);
     font-weight: 800;
     letter-spacing: 0.06em;
     line-height: 1;
@@ -387,7 +528,7 @@ function handleBadgeMouseLeave(event: MouseEvent) {
     text-shadow:
       0 0 30px var(--fold-accent-glow),
       0 0 60px oklch(0.85 0.2 102 / 30%);
-    animation: logoEntrance 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+    animation: logoEntrance 0.7s var(--ease-out-expo) 0.1s both;
   }
 
   .hero-headline {
@@ -401,7 +542,7 @@ function handleBadgeMouseLeave(event: MouseEvent) {
     color: var(--fold-ink);
     line-height: 1.1;
     letter-spacing: 0.02em;
-    animation: fadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
+    animation: fadeSlideUp 0.6s var(--ease-out-expo) 0.3s both;
   }
 
   .hero-tagline {
@@ -414,7 +555,7 @@ function handleBadgeMouseLeave(event: MouseEvent) {
     color: var(--fold-cyan);
     margin: 0;
     text-shadow: 0 0 15px var(--fold-cyan-glow);
-    animation: fadeSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.45s both;
+    animation: fadeSlideUp 0.5s var(--ease-out-expo) 0.45s both;
   }
 
   .tagline-secondary {
@@ -422,7 +563,7 @@ function handleBadgeMouseLeave(event: MouseEvent) {
     font-size: clamp(0.9rem, 1.5vw, 1.1rem);
     color: var(--fold-ink-muted);
     margin: var(--space-2xs) 0 0;
-    animation: fadeSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.55s both;
+    animation: fadeSlideUp 0.5s var(--ease-out-expo) 0.55s both;
   }
 
   .provenance-bar {
@@ -431,7 +572,7 @@ function handleBadgeMouseLeave(event: MouseEvent) {
     margin-top: var(--space-md);
     flex-wrap: wrap;
     justify-content: center;
-    animation: fadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.65s both;
+    animation: fadeSlideUp 0.6s var(--ease-out-expo) 0.65s both;
   }
 
   .proof-chip {
@@ -515,7 +656,7 @@ function handleBadgeMouseLeave(event: MouseEvent) {
     padding-top: var(--space-2xl);
     margin-top: var(--space-lg);
     border-top: 1px solid var(--fold-border);
-    animation: fadeSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.65s both;
+    animation: fadeSlideUp 0.5s var(--ease-out-expo) 0.65s both;
   }
 
   .profile-prompt {
@@ -562,11 +703,8 @@ function handleBadgeMouseLeave(event: MouseEvent) {
     cursor: pointer;
     transform-style: preserve-3d;
     will-change: transform;
-    transform:
-      perspective(800px)
-      rotateY(var(--tilt-rotate-y))
-      rotateX(var(--tilt-rotate-x))
-      translateY(var(--tilt-translate-y))
+    transform: perspective(800px) rotateY(var(--tilt-rotate-y))
+      rotateX(var(--tilt-rotate-x)) translateY(var(--tilt-translate-y))
       scale(var(--tilt-scale));
     transition:
       color 0.15s ease,
@@ -647,15 +785,18 @@ function handleBadgeMouseLeave(event: MouseEvent) {
     font-size: 0.8rem;
     color: var(--fold-ink-muted);
     margin: var(--space-sm) 0 0;
-    animation: fadeSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.8s both;
+    animation: fadeSlideUp 0.4s var(--ease-out-expo) 0.8s both;
   }
 
   .hero-card {
     grid-area: card;
-    animation: panelSlideIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.4s both;
+    animation: panelSlideIn 0.7s var(--ease-out-expo) 0.4s both;
   }
 
   .stats-panel {
+    --panel-glow-color: var(--fold-cyan);
+    --panel-glow-intensity: 0.3;
+
     position: relative;
     background: linear-gradient(
       135deg,
@@ -666,12 +807,29 @@ function handleBadgeMouseLeave(event: MouseEvent) {
     background-size: 200% 200%;
     animation: holoShimmer 12s ease-in-out infinite;
     backdrop-filter: blur(12px);
-    border: none;
+    border: 1px solid oklch(0.85 0.18 195 / var(--panel-glow-intensity));
     clip-path: var(--clip-rog);
     box-shadow:
       0 4px 30px oklch(0 0 0 / 0.4),
       0 0 60px oklch(0 0 0 / 0.2),
-      inset 0 1px 0 oklch(0.85 0.18 195 / 0.1);
+      inset 0 1px 0 oklch(0.85 0.18 195 / 0.15),
+      0 0 20px oklch(0.85 0.18 195 / calc(var(--panel-glow-intensity) * 0.5)),
+      0 0 40px oklch(0.85 0.18 195 / calc(var(--panel-glow-intensity) * 0.3));
+    transition:
+      --panel-glow-intensity 0.3s ease,
+      box-shadow 0.3s ease,
+      border-color 0.3s ease;
+  }
+
+  .stats-panel:hover {
+    --panel-glow-intensity: 0.6;
+    border-color: oklch(0.85 0.18 195 / 0.5);
+    box-shadow:
+      0 4px 30px oklch(0 0 0 / 0.4),
+      0 0 60px oklch(0 0 0 / 0.2),
+      inset 0 1px 0 oklch(0.85 0.18 195 / 0.2),
+      0 0 30px oklch(0.85 0.18 195 / 0.4),
+      0 0 60px oklch(0.85 0.18 195 / 0.2);
   }
 
   @keyframes holoShimmer {
@@ -804,25 +962,25 @@ function handleBadgeMouseLeave(event: MouseEvent) {
   }
 
   .stat-line:nth-child(1) {
-    animation: fadeSlideLeft 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.6s both;
+    animation: fadeSlideLeft 0.4s var(--ease-out-expo) 0.6s both;
   }
   .stat-line:nth-child(2) {
-    animation: fadeSlideLeft 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.65s both;
+    animation: fadeSlideLeft 0.4s var(--ease-out-expo) 0.65s both;
   }
   .stat-line:nth-child(3) {
-    animation: fadeSlideLeft 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.7s both;
+    animation: fadeSlideLeft 0.4s var(--ease-out-expo) 0.7s both;
   }
   .stat-divider {
-    animation: fadeSlideLeft 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.75s both;
+    animation: fadeSlideLeft 0.4s var(--ease-out-expo) 0.75s both;
   }
   .stat-line:nth-child(5) {
-    animation: fadeSlideLeft 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.8s both;
+    animation: fadeSlideLeft 0.4s var(--ease-out-expo) 0.8s both;
   }
   .stat-line:nth-child(6) {
-    animation: fadeSlideLeft 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.85s both;
+    animation: fadeSlideLeft 0.4s var(--ease-out-expo) 0.85s both;
   }
   .stat-line:nth-child(7) {
-    animation: fadeSlideLeft 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.9s both;
+    animation: fadeSlideLeft 0.4s var(--ease-out-expo) 0.9s both;
   }
 
   .scroll-indicator {
@@ -837,7 +995,7 @@ function handleBadgeMouseLeave(event: MouseEvent) {
     color: var(--fold-ink-muted);
     text-decoration: none;
     cursor: pointer;
-    animation: fadeSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 1.2s both;
+    animation: fadeSlideUp 0.5s var(--ease-out-expo) 1.2s both;
     transition: color 0.15s ease;
   }
 
@@ -912,40 +1070,6 @@ function handleBadgeMouseLeave(event: MouseEvent) {
     to {
       opacity: 1;
       transform: translateX(0);
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .hero-fold::after,
-    .scroll-chevron {
-      animation: none;
-    }
-
-    .hero-logo,
-    .headline-main,
-    .tagline-primary,
-    .tagline-secondary,
-    .hero-cta,
-    .trust-line,
-    .hero-card,
-    .stats-panel,
-    .stat-line,
-    .stat-divider,
-    .scroll-indicator {
-      animation: none;
-    }
-
-    .profile-badge:hover {
-      transform: none;
-    }
-
-    .hero-logo,
-    .tagline-primary,
-    .profile-prompt,
-    .panel-title,
-    .stat-value,
-    .stat-value--accent {
-      text-shadow: none;
     }
   }
 
