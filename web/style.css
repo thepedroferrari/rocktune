@@ -1,4 +1,4 @@
-   @layer reset, tokens, patterns, base, layout, components, animations, utilities, overrides;
+   @layer critical, reset, tokens, patterns, base, layout, components, animations, utilities, overrides;
    @import './src/styles/reset.css' layer(reset);
    @import './src/styles/tokens/_index.css' layer(tokens);
    @import './src/styles/patterns/_index.css' layer(patterns);

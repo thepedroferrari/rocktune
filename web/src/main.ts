@@ -1,10 +1,7 @@
 /**
  * RockTune - Svelte 5 Entry Point
- *
- * Single mount point for the entire application.
- * RootApp renders all sections - no HTML fallbacks needed.
  */
-
+import '../style.css'
 import { mount, unmount } from 'svelte'
 import RootApp from './RootApp.svelte'
 

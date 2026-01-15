@@ -1,0 +1,16 @@
+@layer critical {
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:#1a1625;color:#f0eef5;font-family:system-ui,-apple-system,sans-serif;line-height:1.5;min-height:100vh}
+  body{padding-top:44px}
+  #svelte-app-root{opacity:0;animation:contentReveal 250ms ease-out 50ms forwards}
+  @keyframes contentReveal{0%{opacity:0}50%{opacity:.5}100%{opacity:1}}
+  .unified-nav{position:fixed;top:0;left:0;right:0;height:44px;background:rgba(15,12,25,.97);z-index:1000;display:flex;align-items:center;padding:0 1rem}
+  .nav-brand{color:#e8d44d;font-weight:900;font-size:.9rem;letter-spacing:.04em}
+  .hero-fold{min-height:calc(100vh - 44px);padding:3rem 1.5rem}
+  .hero-content{max-width:1200px;margin:0 auto}
+  .hero-logo{font-size:clamp(2.5rem,8vw,4.5rem);font-weight:900;color:#facc15;letter-spacing:.05em}
+  .headline-main{font-size:clamp(1.2rem,4vw,2rem);font-weight:700;letter-spacing:.12em;opacity:.85;margin-top:.5rem}
+  .tagline-primary{color:#c084fc;font-weight:600;margin-top:1rem}
+  .tagline-secondary{opacity:.55}
+  .ambient-glow,.particles{display:none}
+}
