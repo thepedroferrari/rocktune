@@ -306,14 +306,23 @@ function tryLoadFromShareURL(): void {
     applySharedBuild(result.build)
     clearShareHash()
 
+    const { optimizations, packages } = result.build
+    const counts = [
+      optimizations.length && `${optimizations.length} optimizations`,
+      packages.length && `${packages.length} packages`,
+    ]
+      .filter(Boolean)
+      .join(', ')
+    const summary = counts || 'Settings'
+
     if (result.build.skippedCount > 0) {
       showToast(
-        `Build loaded! ${result.build.skippedCount} setting(s) no longer available.`,
+        `Build loaded! ${summary} applied. ${result.build.skippedCount} setting(s) no longer available.`,
         'warning',
         6000,
       )
     } else {
-      showToast('Build loaded from shared link!', 'success')
+      showToast(`Build loaded! ${summary} applied.`, 'success')
     }
   } else {
     showToast(result.error, 'error', 6000)

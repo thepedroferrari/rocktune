@@ -164,6 +164,7 @@ function handleBeforeToggle(key: OptimizationKey, isCurrentlyChecked: boolean): 
         Tuning Optimizations
         <button
           type="button"
+          class="tier-guide-btn"
           onclick={openTierLegend}
           title="What do the tier letters mean?"
         >
@@ -174,12 +175,14 @@ function handleBeforeToggle(key: OptimizationKey, isCurrentlyChecked: boolean): 
             stroke-width="2"
             stroke-linecap="round"
             stroke-linejoin="round"
-            width="18"
-            height="18"
+            width="16"
+            height="16"
+            aria-hidden="true"
             ><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path
               d="M12 8h.01"
             /></svg
           >
+          <span>Tier Guide</span>
         </button>
       </h2>
       <p class="step-banner__subtitle">
@@ -648,13 +651,32 @@ function handleBeforeToggle(key: OptimizationKey, isCurrentlyChecked: boolean): 
 </section>
 
 <style>
-  .step-banner__title button {
+  .tier-guide-btn {
     all: unset;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding-block: var(--space-xs);
+    margin-inline-start: var(--space-md);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: oklch(0.2 0.01 85);
+    text-decoration: underline;
+    text-decoration-color: oklch(0.2 0.01 85 / 0.4);
+    text-underline-offset: 3px;
     cursor: pointer;
-    opacity: 0.6;
+    transition: var(--transition-fast);
+    transition-property: color, text-decoration-color;
+    vertical-align: middle;
   }
 
-  .step-banner__title button:hover {
-    opacity: 1;
+  .tier-guide-btn:hover {
+    color: oklch(0.1 0.01 85);
+    text-decoration-color: oklch(0.1 0.01 85 / 0.8);
+  }
+
+  .tier-guide-btn svg {
+    flex-shrink: 0;
   }
 </style>
