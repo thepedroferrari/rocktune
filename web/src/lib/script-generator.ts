@@ -1735,7 +1735,7 @@ export function buildScript(
     const sorted = allPackagesArray
       .map((key) => ({ key, pkg: catalog[key] }))
       .filter((entry) => entry.pkg)
-      .sort((a, b) => a.pkg.name.localeCompare(b.pkg.name));
+      .toSorted((a, b) => a.pkg.name.localeCompare(b.pkg.name));
 
     const total = sorted.length;
     lines.push(`${indent}    $totalPkgs = ${total}`);

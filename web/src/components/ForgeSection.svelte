@@ -8,6 +8,7 @@
  * - SHA256 checksum for verification
  */
 
+import { soundSettings } from '$lib/audio/sound-settings.svelte'
 import { copyToClipboard, generateSHA256 } from '$lib/checksum'
 import { buildVerificationScript, type SelectionState } from '$lib/script-generator'
 import {
@@ -52,6 +53,7 @@ function handleDownload() {
   if (!script.trim()) return
   downloadText(script, SCRIPT_FILENAME)
   setScriptDownloaded(true)
+  soundSettings.onDownload()
 }
 
 function handleDownloadVerify() {

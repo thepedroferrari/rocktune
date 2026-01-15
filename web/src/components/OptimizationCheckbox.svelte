@@ -48,6 +48,7 @@ function handleClick(event: MouseEvent) {
 
 <label
   class:selected={isChecked}
+  class:has-breaking-changes={opt.breakingChanges?.length}
   data-opt={opt.key}
   use:tooltip={enhancedTooltip}
 >
@@ -62,9 +63,13 @@ function handleClick(event: MouseEvent) {
     aria-describedby="opt-hint-{opt.key}"
     class="sr-only"
   />
-  <span class="label-text"
-    ><span class="tier-rank">[{opt.rank}]</span> {opt.label}</span
-  >
+  <span class="label-text">
+    <span class="tier-rank">[{opt.rank}]</span>
+    {#if opt.breakingChanges?.length}
+      <span class="breaking-warn" title="Has caveats - click for details" aria-label="Warning: has breaking changes">⚠</span>
+    {/if}
+    {opt.label}
+  </span>
   <span class="preset-badge" hidden></span>
   <span class="label-hint" id="opt-hint-{opt.key}">{opt.hint}</span>
   <span class="corner-indicator" aria-hidden="true"></span>
@@ -75,5 +80,12 @@ function handleClick(event: MouseEvent) {
     font-family: var(--font-mono);
     font-weight: 700;
     opacity: 0.6;
+  }
+
+  .breaking-warn {
+    color: var(--caution, oklch(0.82 0.15 85));
+    font-size: 0.85em;
+    margin-inline-end: 0.15em;
+    filter: drop-shadow(0 0 3px oklch(0.82 0.15 85 / 0.5));
   }
 </style>

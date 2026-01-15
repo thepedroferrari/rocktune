@@ -17,7 +17,7 @@ Deno.test('Persona registry - IDs match expected', () => {
   const expected = ['gamer', 'pro_gamer', 'streamer', 'benchmarker']
   const actual = Object.keys(PERSONA_META) as PersonaId[]
 
-  assertEquals(actual.sort(), expected.sort(), 'Persona IDs should match expected')
+  assertEquals(actual.toSorted(), expected.toSorted(), 'Persona IDs should match expected')
 })
 
 // ====================================================================

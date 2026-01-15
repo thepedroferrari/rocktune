@@ -11,6 +11,7 @@
 
 import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from 'lz-string'
 import { PERSONA_META } from './persona-registry'
+import { capitalize } from './utils/string'
 import {
   CPU_ID_TO_VALUE,
   CPU_VALUE_TO_ID,
@@ -689,9 +690,7 @@ export function generateRedditText(build: BuildToEncode): string {
     lines.push(`| GPU | ${GPU_LABELS[build.gpu] || build.gpu} |`)
   }
   if (build.dnsProvider) {
-    lines.push(
-      `| DNS | ${build.dnsProvider.charAt(0).toUpperCase() + build.dnsProvider.slice(1)} |`,
-    )
+    lines.push(`| DNS | ${capitalize(build.dnsProvider)} |`)
   }
   if (build.optimizations.length > 0) {
     lines.push(`| Optimizations | ${build.optimizations.length} enabled |`)
@@ -700,11 +699,7 @@ export function generateRedditText(build: BuildToEncode): string {
     lines.push(`| Software | ${build.packages.length} packages |`)
   }
   if (build.peripherals.length > 0) {
-    lines.push(
-      `| Peripherals | ${build.peripherals
-        .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
-        .join(', ')} |`,
-    )
+    lines.push(`| Peripherals | ${build.peripherals.map(capitalize).join(', ')} |`)
   }
 
   lines.push('')

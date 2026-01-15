@@ -1,4 +1,5 @@
 <script lang="ts">
+import { soundSettings } from '$lib/audio/sound-settings.svelte'
 import type { PresetConfig } from '$lib/presets'
 import {
   app,
@@ -34,6 +35,8 @@ function getDefaultSelection(): PackageKey[] {
 }
 
 function handlePresetSelect(preset: PresetType, config: PresetConfig) {
+  soundSettings.onPreset()
+
   if (app.activePreset === preset) {
     setActivePreset(null)
     clearRecommendedPackages()

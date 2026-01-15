@@ -17,7 +17,9 @@ export async function downloadConfigs(files: readonly ConfigFile[]): Promise<voi
 
     // Wait 300ms between downloads to prevent browser blocking multiple downloads
     if (i < files.length - 1) {
-      await new Promise((resolve) => setTimeout(resolve, 300))
+      const { promise, resolve } = Promise.withResolvers<void>()
+      setTimeout(resolve, 300)
+      await promise
     }
   }
 }

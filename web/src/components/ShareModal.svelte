@@ -1,4 +1,5 @@
 <script lang="ts">
+import { soundSettings } from '$lib/audio/sound-settings.svelte'
 import { copyToClipboard } from '$lib/checksum'
 import {
   type BuildToEncode,
@@ -73,6 +74,7 @@ async function handleCopy(field: CopyField, text: string, toast: string) {
   if (await copyToClipboard(text)) {
     copiedField = field
     showToast(toast, 'success')
+    soundSettings.onCopy()
   }
 }
 

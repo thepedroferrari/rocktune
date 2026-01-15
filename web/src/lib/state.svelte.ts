@@ -1,3 +1,4 @@
+import { soundSettings } from './audio/sound-settings.svelte'
 import { buildScript, type SelectionState } from './script-generator'
 import type {
   AppEventName,
@@ -192,6 +193,7 @@ export function toggleSoftware(key: PackageKey): boolean {
   emitAppEvent('software-selection-changed', {
     selected: Array.from(app.selected),
   })
+  soundSettings.onToggle(!wasSelected)
   return !wasSelected
 }
 
@@ -210,23 +212,15 @@ export function setSelection(keys: readonly PackageKey[]): void {
 export function setSoftware(catalog: SoftwareCatalog): void {
   app.software = catalog
 
-  const preSelected = new Set<PackageKey>()
-  for (const [key, pkg] of Object.entries(catalog)) {
-    if (!isPackageKey(catalog, key)) continue
-    if (pkg.selected) preSelected.add(key)
-  }
+  const preSelected = new Set(
+    Object.entries(catalog)
+      .filter(([key, pkg]) => isPackageKey(catalog, key) && pkg.selected)
+      .map(([key]) => key as PackageKey),
+  )
 
-  const mergedSelection = new Set<PackageKey>()
-  for (const key of app.selected) {
-    if (key in catalog) {
-      mergedSelection.add(key)
-    }
-  }
-  for (const key of preSelected) {
-    mergedSelection.add(key)
-  }
+  const validSelected = new Set([...app.selected].filter((key) => key in catalog))
 
-  app.selected = mergedSelection
+  app.selected = validSelected.union(preSelected)
   emitAppEvent('software-selection-changed', {
     selected: Array.from(app.selected),
   })
@@ -274,6 +268,7 @@ function toggleInSet<T>(set: Set<T>, item: T): boolean {
 export function toggleOptimization(key: OptimizationKey): boolean {
   const result = toggleInSet(app.optimizations, key)
   app.optimizations = new Set(app.optimizations)
+  soundSettings.onToggle(result)
   return result
 }
 

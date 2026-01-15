@@ -251,7 +251,15 @@ $effect(() => {
       </div>
 
       <div class="preset-card__bar">
-        <div class="bar-fill" style:--fill={`${intensity}%`}></div>
+        <div
+          class="bar-fill"
+          style:--fill={`${intensity}%`}
+          role="progressbar"
+          aria-valuenow={intensity}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label="Build intensity"
+        ></div>
       </div>
 
       <dl class="preset-card__stats">

@@ -6,6 +6,7 @@
  * All sections rendered from here - no HTML fallbacks.
  */
 
+import { soundSettings } from '$lib/audio/sound-settings.svelte'
 import { getDefaultOptimizations } from '$lib/optimizations'
 import { getRecommendedPreset } from '$lib/presets'
 import { scrollToSection } from '$lib/scroll'
@@ -324,6 +325,7 @@ function tryLoadFromShareURL(): void {
     } else {
       showToast(`Build loaded! ${summary} applied.`, 'success')
     }
+    soundSettings.onSuccess()
   } else {
     showToast(result.error, 'error', 6000)
     clearShareHash()
@@ -351,6 +353,8 @@ onMount(() => {
   }
 })
 </script>
+
+<a href="#main-content" class="skip-link">Skip to main content</a>
 
 <SRAnnounce />
 
@@ -574,3 +578,22 @@ onMount(() => {
     <KonamiEffect onexit={deactivateKonami} />
   {/await}
 {/if}
+
+<style>
+  .skip-link {
+    position: absolute;
+    inset-block-start: -100%;
+    inset-inline-start: 0;
+    padding: var(--space-sm) var(--space-md);
+    background: var(--accent);
+    color: var(--bg);
+    font-weight: 600;
+    text-decoration: none;
+    z-index: 9999;
+    transition: inset-block-start 0.2s ease;
+  }
+
+  .skip-link:focus {
+    inset-block-start: 0;
+  }
+</style>
