@@ -16,6 +16,7 @@
   --font-display: var(--font-mono);
   --font-hero: var(--font-mono);
   --font-logo: var(--font-mono);
+  --text-2xs: 0.625rem;
   --text-xs: 0.75rem;
   --text-sm: 0.8125rem;
   --text-base: 0.875rem;
