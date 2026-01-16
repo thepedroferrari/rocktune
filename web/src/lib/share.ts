@@ -9,7 +9,9 @@
  * Legacy format: site.com/#b=... (still supported for backward compatibility)
  */
 
-import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from 'lz-string'
+import LZString from 'lz-string'
+const { compressToEncodedURIComponent, decompressFromEncodedURIComponent } = LZString
+import { getBaseUrl } from './env'
 import { PERSONA_META } from './persona-registry'
 import { capitalize } from './utils/string'
 import {
@@ -468,7 +470,7 @@ export function getFullShareURLWithMeta(build: BuildToEncode): EncodeResult {
   const hash = encodeShareURL(build)
   const baseURL =
     typeof window !== 'undefined'
-      ? new URL(import.meta.env.BASE_URL, window.location.origin)
+      ? new URL(getBaseUrl(), window.location.origin)
       : new URL('https://rocktune.pedroferrari.com/')
   // Use query param instead of hash for OG image support
   const url = new URL(`?${hash}`, baseURL).toString()

@@ -9,6 +9,7 @@ interface ViteEnv {
   DEV?: boolean
   PROD?: boolean
   MODE?: string
+  BASE_URL?: string
 }
 
 /** Type-safe access to import.meta.env (Vite-specific) */
@@ -33,4 +34,13 @@ export function isDev(): boolean {
   }
   // In Deno test context, treat as non-DEV (suppress warnings)
   return false
+}
+
+/**
+ * Get the base URL for the application.
+ * Works in both Vite and Deno contexts.
+ */
+export function getBaseUrl(): string {
+  const viteEnv = getViteEnv()
+  return viteEnv?.BASE_URL ?? '/'
 }

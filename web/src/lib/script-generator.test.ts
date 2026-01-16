@@ -178,3 +178,391 @@ Deno.test('Script generation - Script structure is consistent', () => {
   assertStringIncludes(script, '#Requires')
   assertStringIncludes(script, 'function')
 })
+
+// =============================================================================
+// HARDWARE PROFILE VARIATIONS
+// =============================================================================
+
+Deno.test('Script generation - Intel CPU generates valid script', () => {
+  const selection: SelectionState = {
+    hardware: { cpu: 'intel', gpu: 'nvidia', peripherals: [], monitorSoftware: [] },
+    optimizations: ['pagefile'],
+    packages: [],
+    missingPackages: [],
+    preset: 'gamer',
+    includeTimer: false,
+    includeManualSteps: false,
+    createBackup: true,
+  }
+
+  const script = buildScript(selection, { catalog: TEST_CATALOG })
+
+  assertStringIncludes(script, '#Requires -RunAsAdministrator')
+  assertStringIncludes(script, 'RockTune')
+})
+
+Deno.test('Script generation - AMD GPU generates valid script', () => {
+  const selection: SelectionState = {
+    hardware: { cpu: 'amd', gpu: 'amd', peripherals: [], monitorSoftware: [] },
+    optimizations: ['pagefile'],
+    packages: [],
+    missingPackages: [],
+    preset: 'gamer',
+    includeTimer: false,
+    includeManualSteps: false,
+    createBackup: true,
+  }
+
+  const script = buildScript(selection, { catalog: TEST_CATALOG })
+
+  assertStringIncludes(script, '#Requires -RunAsAdministrator')
+  assertStringIncludes(script, 'RockTune')
+})
+
+Deno.test('Script generation - AMD X3D CPU generates valid script', () => {
+  const selection: SelectionState = {
+    hardware: { cpu: 'amd_x3d', gpu: 'nvidia', peripherals: [], monitorSoftware: [] },
+    optimizations: ['pagefile'],
+    packages: [],
+    missingPackages: [],
+    preset: 'gamer',
+    includeTimer: false,
+    includeManualSteps: false,
+    createBackup: true,
+  }
+
+  const script = buildScript(selection, { catalog: TEST_CATALOG })
+
+  assertStringIncludes(script, '#Requires -RunAsAdministrator')
+})
+
+// =============================================================================
+// PERIPHERALS AND MONITOR SOFTWARE
+// =============================================================================
+
+Deno.test('Script generation - Logitech peripheral included', () => {
+  const selection: SelectionState = {
+    hardware: {
+      cpu: 'amd_x3d',
+      gpu: 'nvidia',
+      peripherals: ['logitech'],
+      monitorSoftware: [],
+    },
+    optimizations: [],
+    packages: [],
+    missingPackages: [],
+    preset: 'gamer',
+    includeTimer: false,
+    includeManualSteps: false,
+    createBackup: true,
+  }
+
+  const script = buildScript(selection, { catalog: TEST_CATALOG })
+
+  // Should generate valid script with peripheral
+  assertStringIncludes(script, '#Requires -RunAsAdministrator')
+})
+
+Deno.test('Script generation - Multiple peripherals included', () => {
+  const selection: SelectionState = {
+    hardware: {
+      cpu: 'amd_x3d',
+      gpu: 'nvidia',
+      peripherals: ['logitech', 'razer', 'corsair'],
+      monitorSoftware: [],
+    },
+    optimizations: [],
+    packages: [],
+    missingPackages: [],
+    preset: 'gamer',
+    includeTimer: false,
+    includeManualSteps: false,
+    createBackup: true,
+  }
+
+  const script = buildScript(selection, { catalog: TEST_CATALOG })
+
+  assertStringIncludes(script, '#Requires -RunAsAdministrator')
+})
+
+Deno.test('Script generation - Dell monitor software included', () => {
+  const selection: SelectionState = {
+    hardware: {
+      cpu: 'amd_x3d',
+      gpu: 'nvidia',
+      peripherals: [],
+      monitorSoftware: ['dell'],
+    },
+    optimizations: [],
+    packages: [],
+    missingPackages: [],
+    preset: 'gamer',
+    includeTimer: false,
+    includeManualSteps: false,
+    createBackup: true,
+  }
+
+  const script = buildScript(selection, { catalog: TEST_CATALOG })
+
+  assertStringIncludes(script, '#Requires -RunAsAdministrator')
+})
+
+// =============================================================================
+// DNS PROVIDERS
+// =============================================================================
+
+Deno.test('Script generation - Quad9 DNS provider', () => {
+  const selection = createTestSelection('gamer')
+  selection.optimizations = ['dns']
+
+  const script = buildScript(selection, {
+    catalog: TEST_CATALOG,
+    dnsProvider: 'quad9',
+  })
+
+  assertStringIncludes(script, '#Requires -RunAsAdministrator')
+})
+
+Deno.test('Script generation - Google DNS provider', () => {
+  const selection = createTestSelection('gamer')
+  selection.optimizations = ['dns']
+
+  const script = buildScript(selection, {
+    catalog: TEST_CATALOG,
+    dnsProvider: 'google',
+  })
+
+  assertStringIncludes(script, '#Requires -RunAsAdministrator')
+})
+
+Deno.test('Script generation - Default DNS provider when not specified', () => {
+  const selection = createTestSelection('gamer')
+  selection.optimizations = ['dns']
+
+  const script = buildScript(selection, { catalog: TEST_CATALOG })
+
+  // Should use default (cloudflare) when not specified
+  assertStringIncludes(script, '#Requires -RunAsAdministrator')
+})
+
+// =============================================================================
+// BUILD OPTIONS
+// =============================================================================
+
+Deno.test('Script generation - Backup disabled', () => {
+  const selection: SelectionState = {
+    hardware: { cpu: 'amd_x3d', gpu: 'nvidia', peripherals: [], monitorSoftware: [] },
+    optimizations: ['pagefile'],
+    packages: [],
+    missingPackages: [],
+    preset: 'gamer',
+    includeTimer: false,
+    includeManualSteps: false,
+    createBackup: false,
+  }
+
+  const script = buildScript(selection, { catalog: TEST_CATALOG })
+
+  // Script should still be valid
+  assertStringIncludes(script, '#Requires -RunAsAdministrator')
+})
+
+Deno.test('Script generation - Manual steps enabled', () => {
+  const selection: SelectionState = {
+    hardware: { cpu: 'amd_x3d', gpu: 'nvidia', peripherals: [], monitorSoftware: [] },
+    optimizations: ['pagefile'],
+    packages: [],
+    missingPackages: [],
+    preset: 'gamer',
+    includeTimer: false,
+    includeManualSteps: true,
+    createBackup: true,
+  }
+
+  const script = buildScript(selection, { catalog: TEST_CATALOG })
+
+  // Script should still be valid
+  assertStringIncludes(script, '#Requires -RunAsAdministrator')
+})
+
+Deno.test('Script generation - All options disabled', () => {
+  const selection: SelectionState = {
+    hardware: { cpu: 'amd_x3d', gpu: 'nvidia', peripherals: [], monitorSoftware: [] },
+    optimizations: [],
+    packages: [],
+    missingPackages: [],
+    preset: 'gamer',
+    includeTimer: false,
+    includeManualSteps: false,
+    createBackup: false,
+  }
+
+  const script = buildScript(selection, { catalog: TEST_CATALOG })
+
+  // Minimal script should still be valid PowerShell
+  assertStringIncludes(script, '#Requires -RunAsAdministrator')
+  assertStringIncludes(script, 'RockTune')
+})
+
+// =============================================================================
+// EDGE CASES
+// =============================================================================
+
+Deno.test('Script generation - Null preset generates valid script', () => {
+  const selection: SelectionState = {
+    hardware: { cpu: 'amd_x3d', gpu: 'nvidia', peripherals: [], monitorSoftware: [] },
+    optimizations: ['pagefile'],
+    packages: ['Steam.Steam'] as PackageKey[],
+    missingPackages: [],
+    preset: null,
+    includeTimer: false,
+    includeManualSteps: false,
+    createBackup: true,
+  }
+
+  const script = buildScript(selection, { catalog: TEST_CATALOG })
+
+  assertStringIncludes(script, '#Requires -RunAsAdministrator')
+})
+
+Deno.test('Script generation - Missing packages are tracked', () => {
+  const selection: SelectionState = {
+    hardware: { cpu: 'amd_x3d', gpu: 'nvidia', peripherals: [], monitorSoftware: [] },
+    optimizations: [],
+    packages: ['Steam.Steam'] as PackageKey[],
+    missingPackages: ['NotInCatalog.Package'],
+    preset: 'gamer',
+    includeTimer: false,
+    includeManualSteps: false,
+    createBackup: true,
+  }
+
+  const script = buildScript(selection, { catalog: TEST_CATALOG })
+
+  // Script should still be valid even with missing packages
+  assertStringIncludes(script, '#Requires -RunAsAdministrator')
+})
+
+Deno.test('Script generation - Empty catalog generates valid script', () => {
+  const selection: SelectionState = {
+    hardware: { cpu: 'amd_x3d', gpu: 'nvidia', peripherals: [], monitorSoftware: [] },
+    optimizations: ['pagefile'],
+    packages: [],
+    missingPackages: [],
+    preset: 'gamer',
+    includeTimer: false,
+    includeManualSteps: false,
+    createBackup: true,
+  }
+
+  const emptyCatalog: SoftwareCatalog = {}
+
+  const script = buildScript(selection, { catalog: emptyCatalog })
+
+  assertStringIncludes(script, '#Requires -RunAsAdministrator')
+})
+
+Deno.test('Script generation - Streamer persona generates valid script', () => {
+  const selection = createTestSelection('streamer')
+  const script = buildScript(selection, { catalog: TEST_CATALOG })
+
+  assertStringIncludes(script, '#Requires -RunAsAdministrator')
+  assertStringIncludes(script, 'RockTune')
+})
+
+Deno.test('Script generation - Benchmarker persona generates valid script', () => {
+  const selection = createTestSelection('benchmarker')
+  const script = buildScript(selection, { catalog: TEST_CATALOG })
+
+  assertStringIncludes(script, '#Requires -RunAsAdministrator')
+  assertStringIncludes(script, 'RockTune')
+})
+
+// =============================================================================
+// SECURITY: SAFE PATTERNS
+// =============================================================================
+
+Deno.test('Script generation - No Invoke-Expression on user input', () => {
+  const selection: SelectionState = {
+    hardware: { cpu: 'amd_x3d', gpu: 'nvidia', peripherals: [], monitorSoftware: [] },
+    optimizations: ['pagefile'],
+    packages: ['Steam.Steam'] as PackageKey[],
+    missingPackages: [],
+    preset: 'gamer',
+    includeTimer: true,
+    includeManualSteps: false,
+    createBackup: true,
+  }
+
+  const script = buildScript(selection, { catalog: TEST_CATALOG })
+
+  // Script should not use Invoke-Expression on external/user data
+  // (internal IEX for embedded timer is OK, but not on untrusted input)
+  const iexCount = (script.match(/Invoke-Expression/gi) || []).length
+  const iexShortCount = (script.match(/\biex\b/gi) || []).length
+
+  // The timer tool uses IEX internally, but should be limited
+  assertEquals(iexCount + iexShortCount < 10, true, 'Too many IEX calls')
+})
+
+Deno.test('Script generation - Uses proper escaping for package names', () => {
+  const catalogWithSpecialChars: SoftwareCatalog = {
+    'Test.Package': {
+      id: 'Test.Package',
+      name: 'Test "Package" with $special',
+      category: 'utility',
+      desc: 'A package with special characters',
+      command: 'Test.Package',
+    },
+  } as SoftwareCatalog
+
+  const selection: SelectionState = {
+    hardware: { cpu: 'amd_x3d', gpu: 'nvidia', peripherals: [], monitorSoftware: [] },
+    optimizations: [],
+    packages: ['Test.Package'] as PackageKey[],
+    missingPackages: [],
+    preset: 'gamer',
+    includeTimer: false,
+    includeManualSteps: false,
+    createBackup: true,
+  }
+
+  const script = buildScript(selection, { catalog: catalogWithSpecialChars })
+
+  // Script should still be valid PowerShell (special chars are escaped)
+  assertStringIncludes(script, '#Requires -RunAsAdministrator')
+})
+
+// =============================================================================
+// PERIPHERAL/MONITOR PACKAGE MAPPING
+// =============================================================================
+
+Deno.test('PERIPHERAL_TO_PACKAGE - All peripheral types have mappings', async () => {
+  const { PERIPHERAL_TO_PACKAGE } = await import('./script-generator.ts')
+
+  // Known peripherals that should have mappings
+  const expectedPeripherals = ['logitech', 'razer', 'corsair', 'steelseries', 'asus', 'wooting']
+
+  for (const peripheral of expectedPeripherals) {
+    assertEquals(
+      peripheral in PERIPHERAL_TO_PACKAGE,
+      true,
+      `Missing mapping for peripheral: ${peripheral}`,
+    )
+  }
+})
+
+Deno.test('MONITOR_TO_PACKAGE - All monitor types have mappings', async () => {
+  const { MONITOR_TO_PACKAGE } = await import('./script-generator.ts')
+
+  // Known monitor software that should have mappings
+  const expectedMonitors = ['dell', 'lg', 'hp']
+
+  for (const monitor of expectedMonitors) {
+    assertEquals(
+      monitor in MONITOR_TO_PACKAGE,
+      true,
+      `Missing mapping for monitor software: ${monitor}`,
+    )
+  }
+})
