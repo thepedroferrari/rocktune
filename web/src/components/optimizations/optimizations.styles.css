@@ -50,7 +50,7 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 2px;
-    text-align: left;
+    text-align: start;
     z-index: 1;
 
     & strong {
@@ -96,12 +96,12 @@
   }
 
   .wizard-modal__risk {
-    margin-bottom: var(--space-lg);
+    margin-block-end: var(--space-lg);
   }
 
   .wizard-modal__desc {
     color: var(--text-secondary);
-    margin-bottom: var(--space-lg);
+    margin-block-end: var(--space-lg);
     line-height: 1.6;
   }
 
@@ -113,12 +113,12 @@
     & h4 {
       font-size: 0.85rem;
       color: var(--text-hint);
-      margin-bottom: var(--space-sm);
+      margin-block-end: var(--space-sm);
     }
 
     & ul {
       margin: 0;
-      padding-left: var(--space-lg);
+      padding-inline-start: var(--space-lg);
       font-size: 0.85rem;
       color: var(--text-secondary);
     }
@@ -162,9 +162,9 @@
   }
 
   .ludicrous-section {
-    margin-top: var(--space-xl);
-    padding-top: var(--space-lg);
-    border-top: 1px dashed var(--border);
+    margin-block-start: var(--space-xl);
+    padding-block-start: var(--space-lg);
+    border-block-start: 1px dashed var(--border);
   }
 
   .ludicrous-locked {
@@ -351,15 +351,15 @@
     text-transform: none;
     position: relative;
     z-index: 3;
-    margin-top: var(--space-xs);
-    padding-top: var(--space-sm);
-    border-top: 1px solid color-mix(in oklch, var(--placard-red) 20%, transparent);
+    margin-block-start: var(--space-xs);
+    padding-block-start: var(--space-sm);
+    border-block-start: 1px solid color-mix(in oklch, var(--placard-red) 20%, transparent);
     transition: all 0.25s var(--ease-out-expo);
   }
 
   .ludicrous-unlock-btn:hover .unlock-hint {
     color: color-mix(in oklch, var(--placard-red) 80%, oklch(0.6 0 0));
-    border-top-color: color-mix(in oklch, var(--placard-red) 35%, transparent);
+    border-block-start-color: color-mix(in oklch, var(--placard-red) 35%, transparent);
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -407,7 +407,7 @@
     --placard-ink: oklch(0.12 0.04 25);
     --placard-border: oklch(0.4 0.15 25);
     --placard-glow: color-mix(in oklch, var(--placard-red) 25%, transparent);
-    margin-top: var(--space-xl);
+    margin-block-start: var(--space-xl);
     display: flex;
     flex-direction: column;
     background: var(--placard-ink);
@@ -442,7 +442,7 @@
     grid-template-columns: 140px 1fr;
     background: var(--placard-red);
     color: white;
-    border-bottom: 1px solid var(--placard-border);
+    border-block-end: 1px solid var(--placard-border);
     position: relative;
     overflow: hidden;
   }
@@ -474,7 +474,7 @@
 
   .placard-header-left {
     padding: var(--space-lg);
-    border-right: 1px solid var(--placard-border);
+    border-inline-end: 1px solid var(--placard-border);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -537,7 +537,7 @@
     grid-template-columns: repeat(3, 1fr);
     gap: 1px;
     background: var(--placard-border);
-    border-bottom: 1px solid var(--placard-border);
+    border-block-end: 1px solid var(--placard-border);
   }
 
   .placard-opts-grid {
@@ -675,7 +675,7 @@
   .placard-footer-v2 {
     padding: var(--space-lg) var(--space-xl);
     background: var(--placard-ink);
-    border-top: 2px solid var(--placard-border);
+    border-block-start: 2px solid var(--placard-border);
     display: flex;
     justify-content: center;
     gap: var(--space-xl);
@@ -790,7 +790,7 @@
     font-weight: 900;
     text-transform: uppercase;
     letter-spacing: 0.15em;
-    margin-bottom: var(--space-md);
+    margin-block-end: var(--space-md);
     color: oklch(1 0 0 / 0.4);
     display: flex;
     align-items: center;
@@ -848,7 +848,7 @@
   .attack-vectors li,
   .only-for li {
     position: relative;
-    padding-left: 1.5rem;
+    padding-inline-start: 1.5rem;
     font-size: 0.9rem;
     color: oklch(1 0 0 / 0.85);
   }
@@ -941,7 +941,7 @@
 
   .breaking-changes-list li {
     background: color-mix(in oklch, var(--caution) 8%, transparent);
-    border-left: 3px solid var(--caution);
+    border-inline-start: 3px solid var(--caution);
     padding: var(--space-md) var(--space-lg);
     display: flex;
     flex-direction: column;

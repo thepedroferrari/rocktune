@@ -14,7 +14,7 @@
   #quick-start.step {
     position: relative;
     padding: var(--space-2xl) 0;
-    margin-top: var(--space-sm);
+    margin-block-start: var(--space-sm);
     border-radius: 0;
     clip-path: none;
     overflow: visible;
@@ -32,7 +32,7 @@
 
   #quick-start.step .step-desc {
     position: relative;
-    padding-left: 0;
+    padding-inline-start: 0;
     font-size: 0.9rem;
     line-height: 1.6;
     letter-spacing: 0.1em;
@@ -40,9 +40,9 @@
     color: rgba(255, 255, 255, 0.68);
     max-width: 560px;
     text-align: center;
-    margin-left: auto;
-    margin-right: auto;
-    margin-bottom: var(--space-md);
+    margin-inline-start: auto;
+    margin-inline-end: auto;
+    margin-block-end: var(--space-md);
   }
 
   #quick-start.step .step-desc::before {
@@ -69,8 +69,8 @@
     text-transform: uppercase;
     color: rgba(245, 247, 255, 0.92);
     width: fit-content;
-    margin-left: auto;
-    margin-right: auto;
+    margin-inline-start: auto;
+    margin-inline-end: auto;
     text-shadow:
       0 0 10px color-mix(in oklch, var(--neon-cyan) 35%, transparent),
       0 0 24px color-mix(in oklch, var(--accent) 20%, transparent);

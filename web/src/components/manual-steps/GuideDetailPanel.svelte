@@ -697,7 +697,7 @@ $effect(() => {
     display: flex;
     flex-direction: column;
     background: var(--bg-elevated);
-    border-left: 1px solid var(--border);
+    border-inline-start: 1px solid var(--border);
     box-shadow: -4px 0 24px rgba(0, 0, 0, 0.4);
   }
 
@@ -707,7 +707,7 @@ $effect(() => {
     justify-content: space-between;
     gap: var(--space-md);
     padding: var(--space-lg);
-    border-bottom: 1px solid var(--border);
+    border-block-end: 1px solid var(--border);
     background: color-mix(in oklch, var(--cyber-cyan) 3%, var(--bg-elevated));
   }
 
@@ -1009,7 +1009,7 @@ $effect(() => {
   .source-link {
     color: var(--text-primary);
     text-decoration: none;
-    border-bottom: 1px dotted var(--text-dim);
+    border-block-end: 1px dotted var(--text-dim);
     transition: all var(--duration-fast) ease;
     overflow-wrap: anywhere;
     word-break: break-word;
@@ -1082,7 +1082,7 @@ $effect(() => {
     align-items: center;
     gap: var(--space-sm);
     padding: var(--space-md) var(--space-lg);
-    border-top: 1px solid var(--border);
+    border-block-start: 1px solid var(--border);
     background: var(--bg-elevated);
   }
 

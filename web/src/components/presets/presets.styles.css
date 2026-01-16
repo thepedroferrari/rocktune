@@ -153,14 +153,14 @@
       --background-x: 50%;
       --background-y: 50%;
       --card-scale: 1;
-      --card-glow: hsl(175, 100%, 90%);
-      --card-edge: hsl(47, 100%, 78%);
-      --sunpillar-1: hsl(2, 100%, 73%);
-      --sunpillar-2: hsl(53, 100%, 69%);
-      --sunpillar-3: hsl(93, 100%, 69%);
-      --sunpillar-4: hsl(176, 100%, 76%);
-      --sunpillar-5: hsl(228, 100%, 74%);
-      --sunpillar-6: hsl(283, 100%, 73%);
+      --card-glow: oklch(0.94 0.08 185);
+      --card-edge: oklch(0.87 0.15 85);
+      --sunpillar-1: oklch(0.70 0.22 25);
+      --sunpillar-2: oklch(0.82 0.18 90);
+      --sunpillar-3: oklch(0.82 0.20 130);
+      --sunpillar-4: oklch(0.88 0.10 185);
+      --sunpillar-5: oklch(0.72 0.18 265);
+      --sunpillar-6: oklch(0.72 0.20 310);
       --card-aspect: 2.5 / 3.5;
       --card-radius: 5% / 3.5%;
       --card-corner-shape: squircle;
@@ -373,9 +373,9 @@
     corner-shape: inherit;
     overflow: hidden;
     background-image: radial-gradient(farthest-corner circle at var(--pointer-x) var(--pointer-y),
-        hsla(0, 0%, 100%, 0.8) 10%,
-        hsla(0, 0%, 100%, 0.65) 20%,
-        hsla(0, 0%, 0%, 0.5) 90%);
+        oklch(1 0 0 / 0.8) 10%,
+        oklch(1 0 0 / 0.65) 20%,
+        oklch(0 0 0 / 0.5) 90%);
     mix-blend-mode: overlay;
     opacity: var(--card-opacity);
     will-change: transform, opacity, background-image, background-position;
@@ -486,8 +486,8 @@
     line-height: 1.45;
     color: rgba(255, 255, 255, 0.75);
     margin: 0;
-    padding-top: 0.4rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding-block-start: 0.4rem;
+    border-block-start: 1px solid rgba(255, 255, 255, 0.08);
   }
 
   .stat-value--breakdown {
@@ -583,7 +583,7 @@
     color: var(--card-glow);
     font-family: var(--font-mono);
     text-shadow: 0 0 8px color-mix(in oklch, var(--card-glow) 40%, transparent);
-    text-align: right;
+    text-align: end;
     margin: 0;
   }
 
@@ -610,18 +610,18 @@
   }
 
   .preset-card[data-rarity="legendary"] {
-    --card-glow: hsl(40, 100%, 65%);
-    --card-edge: hsl(45, 100%, 70%);
-    --sunpillar-1: hsl(25, 100%, 65%);
-    --sunpillar-2: hsl(35, 100%, 65%);
-    --sunpillar-3: hsl(45, 100%, 60%);
-    --sunpillar-4: hsl(40, 100%, 65%);
-    --sunpillar-5: hsl(30, 100%, 70%);
-    --sunpillar-6: hsl(20, 100%, 65%);
+    --card-glow: oklch(0.78 0.17 70);
+    --card-edge: oklch(0.82 0.16 80);
+    --sunpillar-1: oklch(0.75 0.18 50);
+    --sunpillar-2: oklch(0.77 0.17 65);
+    --sunpillar-3: oklch(0.76 0.16 80);
+    --sunpillar-4: oklch(0.78 0.17 70);
+    --sunpillar-5: oklch(0.80 0.17 55);
+    --sunpillar-6: oklch(0.74 0.18 45);
 
     & .preset-card__front {
       background-color: #0d0604;
-      border-color: hsl(40, 80%, 50%);
+      border-color: oklch(0.62 0.15 70);
       background-image:
         radial-gradient(ellipse 80% 60% at 50% -10%, rgba(255, 180, 100, 0.12), transparent 50%),
         linear-gradient(180deg, rgba(255, 150, 50, 0.06) 0%, rgba(0, 0, 0, 0.5) 100%);
@@ -637,18 +637,18 @@
   }
 
   .preset-card[data-rarity="epic"] {
-    --card-glow: hsl(280, 80%, 70%);
-    --card-edge: hsl(270, 80%, 75%);
-    --sunpillar-1: hsl(260, 90%, 70%);
-    --sunpillar-2: hsl(280, 90%, 70%);
-    --sunpillar-3: hsl(300, 90%, 70%);
-    --sunpillar-4: hsl(290, 90%, 70%);
-    --sunpillar-5: hsl(270, 90%, 75%);
-    --sunpillar-6: hsl(250, 90%, 70%);
+    --card-glow: oklch(0.72 0.18 305);
+    --card-edge: oklch(0.75 0.16 295);
+    --sunpillar-1: oklch(0.70 0.18 285);
+    --sunpillar-2: oklch(0.70 0.20 305);
+    --sunpillar-3: oklch(0.72 0.20 325);
+    --sunpillar-4: oklch(0.71 0.20 315);
+    --sunpillar-5: oklch(0.74 0.17 295);
+    --sunpillar-6: oklch(0.68 0.17 275);
 
     & .preset-card__front {
       background-color: #08040d;
-      border-color: hsl(280, 60%, 45%);
+      border-color: oklch(0.48 0.14 305);
     }
 
     & .preset-card__shine {
@@ -661,18 +661,18 @@
   }
 
   .preset-card[data-rarity="rare"] {
-    --card-glow: hsl(210, 90%, 70%);
-    --card-edge: hsl(200, 90%, 70%);
-    --sunpillar-1: hsl(180, 100%, 70%);
-    --sunpillar-2: hsl(195, 100%, 70%);
-    --sunpillar-3: hsl(210, 100%, 75%);
-    --sunpillar-4: hsl(225, 100%, 75%);
-    --sunpillar-5: hsl(240, 100%, 75%);
-    --sunpillar-6: hsl(260, 100%, 70%);
+    --card-glow: oklch(0.72 0.14 245);
+    --card-edge: oklch(0.74 0.13 225);
+    --sunpillar-1: oklch(0.80 0.11 195);
+    --sunpillar-2: oklch(0.77 0.12 210);
+    --sunpillar-3: oklch(0.76 0.13 245);
+    --sunpillar-4: oklch(0.74 0.14 260);
+    --sunpillar-5: oklch(0.72 0.15 275);
+    --sunpillar-6: oklch(0.68 0.17 285);
 
     & .preset-card__front {
       background-color: #040610;
-      border-color: hsl(210, 60%, 40%);
+      border-color: oklch(0.46 0.09 245);
     }
 
     & .preset-card__shine {
@@ -685,18 +685,18 @@
   }
 
   .preset-card[data-rarity="uncommon"] {
-    --card-glow: hsl(150, 70%, 60%);
-    --card-edge: hsl(140, 60%, 55%);
-    --sunpillar-1: hsl(100, 80%, 60%);
-    --sunpillar-2: hsl(120, 80%, 60%);
-    --sunpillar-3: hsl(140, 80%, 60%);
-    --sunpillar-4: hsl(160, 80%, 60%);
-    --sunpillar-5: hsl(180, 80%, 60%);
-    --sunpillar-6: hsl(200, 80%, 60%);
+    --card-glow: oklch(0.72 0.13 165);
+    --card-edge: oklch(0.68 0.11 155);
+    --sunpillar-1: oklch(0.74 0.15 130);
+    --sunpillar-2: oklch(0.73 0.15 145);
+    --sunpillar-3: oklch(0.72 0.14 160);
+    --sunpillar-4: oklch(0.73 0.13 175);
+    --sunpillar-5: oklch(0.74 0.11 195);
+    --sunpillar-6: oklch(0.70 0.12 220);
 
     & .preset-card__front {
       background-color: #040906;
-      border-color: hsl(150, 50%, 30%);
+      border-color: oklch(0.38 0.07 165);
     }
 
     & .preset-card__shine {
@@ -709,8 +709,8 @@
   }
 
   .preset-card[data-rarity="common"] {
-    --card-glow: hsl(0, 0%, 60%);
-    --card-edge: hsl(0, 0%, 50%);
+    --card-glow: oklch(0.65 0 0);
+    --card-edge: oklch(0.55 0 0);
 
     & .preset-card__front {
       background-color: #0a0a0a;
@@ -738,8 +738,8 @@
   @container presets (width <=1100px) {
     .presets {
       gap: var(--space-lg);
-      padding-left: var(--space-md);
-      padding-right: var(--space-md);
+      padding-inline-start: var(--space-md);
+      padding-inline-end: var(--space-md);
     }
 
     .preset-card__title {
@@ -755,8 +755,8 @@
   @container presets (width <=640px) {
     .presets {
       gap: var(--space-sm);
-      padding-left: var(--space-xs);
-      padding-right: var(--space-xs);
+      padding-inline-start: var(--space-xs);
+      padding-inline-end: var(--space-xs);
     }
 
     .preset-card__front {
@@ -784,7 +784,7 @@
 
     .info-desc {
       font-size: 0.88rem;
-      padding-top: 0.3rem;
+      padding-block-start: 0.3rem;
     }
 
     .preset-card__stats {
@@ -881,7 +881,7 @@
     justify-content: center;
     gap: var(--space-md);
     padding: var(--space-lg) 0;
-    margin-top: var(--space-md);
+    margin-block-start: var(--space-md);
     animation: fadeSlideUp 0.3s ease-out;
 
     &[hidden] {

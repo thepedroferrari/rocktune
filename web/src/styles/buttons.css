@@ -74,9 +74,9 @@
       position: sticky;
       bottom: var(--space-md);
       z-index: 10;
-      margin-top: var(--space-md);
+      margin-block-start: var(--space-md);
       padding: 0 var(--space-sm);
-      border-top: none;
+      border-block-start: none;
     }
 
     .step-container .wizard-nav {

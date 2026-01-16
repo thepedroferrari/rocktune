@@ -108,17 +108,17 @@
 
       &[data-overlay-position="left"] .overlay-card {
         grid-column: 2;
-        border-right: none;
-        border-left: 1px solid oklch(0.3 0.04 292 / 0.5);
+        border-inline-end: none;
+        border-inline-start: 1px solid oklch(0.3 0.04 292 / 0.5);
       }
 
       &[data-overlay-position="left"] .overlay-info {
         grid-column: 1;
-        text-align: right;
+        text-align: end;
       }
 
       &[data-overlay-position="left"] .overlay-desc {
-        text-align: right;
+        text-align: end;
       }
 
       &[data-overlay-position="left"] .overlay-header {
@@ -247,7 +247,7 @@
 
     :scope.selected .card-overlay .overlay-footer {
       background: oklch(0.10 0.05 292);
-      border-top-color: oklch(0.35 0.1 292);
+      border-block-start-color: oklch(0.35 0.1 292);
     }
 
     :scope.selected .card-overlay::after {
@@ -294,7 +294,7 @@
       gap: var(--space-xs);
       text-align: center;
       min-width: 100px;
-      border-right: 1px solid oklch(0.3 0.04 292 / 0.5);
+      border-inline-end: 1px solid oklch(0.3 0.04 292 / 0.5);
 
       & .overlay-logo {
         width: 44px;
@@ -339,7 +339,7 @@
       flex-direction: column;
       gap: var(--space-sm);
       padding: var(--space-md);
-      text-align: left;
+      text-align: start;
     }
 
     .overlay-header {
@@ -387,7 +387,7 @@
       justify-content: space-between;
       gap: var(--space-md);
       padding: var(--space-sm) var(--space-md);
-      border-top: 1px solid oklch(0.35 0.06 292);
+      border-block-start: 1px solid oklch(0.35 0.06 292);
       background: oklch(0.07 0.01 250);
       border-radius: 0 0 var(--radius-md) var(--radius-md);
       corner-shape: squircle;

@@ -225,7 +225,7 @@ powershell -Command "Start-Process powershell -ArgumentList '-ExecutionPolicy By
   .card {
     background: var(--surface-2);
     border: 1px solid var(--border);
-    border-left: 3px solid var(--border);
+    border-inline-start: 3px solid var(--border);
     padding: var(--space-lg);
   }
 
@@ -243,7 +243,7 @@ powershell -Command "Start-Process powershell -ArgumentList '-ExecutionPolicy By
   .card--action {
     background: transparent;
     border: none;
-    border-left: none;
+    border-inline-start: none;
     padding: var(--space-md) 0;
   }
 
@@ -252,7 +252,7 @@ powershell -Command "Start-Process powershell -ArgumentList '-ExecutionPolicy By
     align-items: center;
     justify-content: space-between;
     gap: var(--space-md);
-    margin-bottom: var(--space-sm);
+    margin-block-end: var(--space-sm);
   }
 
   .card__title {

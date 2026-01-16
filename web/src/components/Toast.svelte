@@ -93,7 +93,7 @@ const TOAST_ICONS: Record<ToastMessage['type'], IconName> = {
 
   .toast__icon {
     flex-shrink: 0;
-    margin-top: 2px;
+    margin-block-start: 2px;
   }
 
   .toast__message {

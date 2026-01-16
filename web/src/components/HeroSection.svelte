@@ -525,7 +525,7 @@ function handleBadgeMouseLeave(event: MouseEvent) {
     letter-spacing: 0.06em;
     line-height: 1;
     color: var(--fold-accent);
-    margin-left: -2px;
+    margin-inline-start: -2px;
     text-shadow:
       0 0 30px var(--fold-accent-glow),
       0 0 60px oklch(0.85 0.2 102 / 30%);
@@ -533,7 +533,7 @@ function handleBadgeMouseLeave(event: MouseEvent) {
   }
 
   .hero-headline {
-    margin-top: -0.75em;
+    margin-block-start: -0.75em;
   }
 
   .headline-main {
@@ -551,7 +551,7 @@ function handleBadgeMouseLeave(event: MouseEvent) {
   }
 
   .hero-tagline {
-    margin-top: var(--space-lg);
+    margin-block-start: var(--space-lg);
   }
 
   .tagline-primary {
@@ -589,7 +589,7 @@ function handleBadgeMouseLeave(event: MouseEvent) {
   .provenance-bar {
     display: flex;
     gap: var(--space-xs);
-    margin-top: var(--space-md);
+    margin-block-start: var(--space-md);
     flex-wrap: wrap;
     justify-content: center;
     animation: fadeSlideUp 0.6s var(--ease-out-expo) 0.65s both;
@@ -673,9 +673,9 @@ function handleBadgeMouseLeave(event: MouseEvent) {
   .hero-cta {
     grid-area: cta;
     text-align: center;
-    padding-top: var(--space-2xl);
-    margin-top: var(--space-lg);
-    border-top: 1px solid var(--fold-border);
+    padding-block-start: var(--space-2xl);
+    margin-block-start: var(--space-lg);
+    border-block-start: 1px solid var(--fold-border);
     animation: fadeSlideUp 0.5s var(--ease-out-expo) 0.65s both;
   }
 
@@ -757,7 +757,7 @@ function handleBadgeMouseLeave(event: MouseEvent) {
     content: "";
     width: 1px;
     height: 1em;
-    margin-right: var(--space-xs);
+    margin-inline-end: var(--space-xs);
     background: linear-gradient(
       180deg,
       transparent 0%,
@@ -873,22 +873,22 @@ function handleBadgeMouseLeave(event: MouseEvent) {
   .panel-corner--tl {
     top: 8px;
     left: 8px;
-    border-top: 2px solid var(--fold-accent);
-    border-left: 2px solid var(--fold-accent);
+    border-block-start: 2px solid var(--fold-accent);
+    border-inline-start: 2px solid var(--fold-accent);
     opacity: 0.6;
   }
 
   .panel-corner--br {
     bottom: 8px;
     right: 8px;
-    border-bottom: 2px solid var(--fold-accent);
-    border-right: 2px solid var(--fold-accent);
+    border-block-end: 2px solid var(--fold-accent);
+    border-inline-end: 2px solid var(--fold-accent);
     opacity: 0.6;
   }
 
   .panel-header {
     padding: var(--space-md) var(--space-lg);
-    border-bottom: 1px solid var(--fold-border);
+    border-block-end: 1px solid var(--fold-border);
     background: oklch(0.1 0.02 285 / 0.5);
   }
 
@@ -904,7 +904,7 @@ function handleBadgeMouseLeave(event: MouseEvent) {
 
   .panel-footer {
     padding: var(--space-md) var(--space-lg);
-    border-top: 1px solid var(--fold-border);
+    border-block-start: 1px solid var(--fold-border);
     background: oklch(0.1 0.02 285 / 0.3);
   }
 
@@ -1008,7 +1008,7 @@ function handleBadgeMouseLeave(event: MouseEvent) {
     flex-direction: column;
     align-items: center;
     gap: var(--space-xs);
-    margin-top: auto;
+    margin-block-start: auto;
     padding: var(--space-md);
     background: transparent;
     border: none;
@@ -1105,7 +1105,7 @@ function handleBadgeMouseLeave(event: MouseEvent) {
 
     /* Loosen lockup on mobile to prevent overlap */
     .hero-headline {
-      margin-top: -0.35em;
+      margin-block-start: -0.35em;
     }
 
     .profile-badges {
@@ -1123,7 +1123,7 @@ function handleBadgeMouseLeave(event: MouseEvent) {
 
     .provenance-bar {
       gap: var(--space-2xs);
-      margin-top: var(--space-sm);
+      margin-block-start: var(--space-sm);
     }
 
     .proof-chip {

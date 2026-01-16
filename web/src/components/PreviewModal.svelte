@@ -111,7 +111,7 @@ const activeScript = $derived(app.script.edited ?? generatedScript)
     gap: var(--space-md);
     padding: var(--space-sm) var(--space-md);
     background: var(--bg-tertiary);
-    border-top: 1px solid var(--border);
+    border-block-start: 1px solid var(--border);
     flex-shrink: 0;
   }
 

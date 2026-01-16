@@ -771,7 +771,7 @@ async function handleWebShare() {
   }
 
   .share-modal__panel {
-    margin-top: var(--space-md);
+    margin-block-start: var(--space-md);
     border: 1px solid var(--share-border);
     border-radius: var(--radius-md);
     background: var(--share-surface);
@@ -782,7 +782,7 @@ async function handleWebShare() {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     background: var(--share-surface-raised);
-    border-bottom: 1px solid var(--share-border);
+    border-block-end: 1px solid var(--share-border);
   }
 
   .share-tab {
@@ -805,7 +805,7 @@ async function handleWebShare() {
   }
 
   .share-tab + .share-tab {
-    border-left: 1px solid var(--share-border);
+    border-inline-start: 1px solid var(--share-border);
   }
 
   .share-tab::after {
@@ -1003,7 +1003,7 @@ async function handleWebShare() {
     flex-shrink: 0;
     width: 16px;
     height: 16px;
-    margin-top: 1px;
+    margin-block-start: 1px;
   }
 
   .benchmark-code {
@@ -1103,8 +1103,8 @@ async function handleWebShare() {
   }
 
   .instruction-note {
-    margin-top: var(--space-xs);
-    padding-left: calc(20px + var(--space-sm));
+    margin-block-start: var(--space-xs);
+    padding-inline-start: calc(20px + var(--space-sm));
     font-size: var(--text-xs);
     color: var(--text-muted);
     font-style: italic;
@@ -1169,7 +1169,7 @@ async function handleWebShare() {
     gap: var(--space-sm);
     padding: var(--space-md) var(--space-lg);
     background: var(--share-surface-subtle);
-    border-bottom: 1px solid var(--share-border);
+    border-block-end: 1px solid var(--share-border);
   }
 
   .build-preview__hardware {

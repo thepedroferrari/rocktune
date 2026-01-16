@@ -600,12 +600,12 @@
        align-items: flex-start;
        gap: var(--space-md);
        padding: var(--space-md) var(--space-lg);
-       margin-top: var(--space-lg);
+       margin-block-start: var(--space-lg);
        background: linear-gradient(135deg,
            color-mix(in oklch, var(--caution) 8%, var(--bg-tertiary)) 0%,
            color-mix(in oklch, var(--caution) 4%, var(--bg-tertiary)) 100%);
        border: 1px solid color-mix(in oklch, var(--caution) 40%, var(--border));
-       border-left: 3px solid var(--caution);
+       border-inline-start: 3px solid var(--caution);
        clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
      }
 
@@ -645,7 +645,7 @@
        display: grid;
        grid-template-columns: repeat(3, 1fr);
        gap: var(--space-md);
-       margin-top: var(--space-lg);
+       margin-block-start: var(--space-lg);
      }
 
      .peripherals-fieldset {
@@ -658,7 +658,7 @@
            color-mix(in oklch, var(--pf-accent) 3%, transparent) 40%,
            var(--bg-tertiary) 100%);
        border: 1px solid color-mix(in oklch, var(--pf-accent) 30%, var(--border));
-       border-left: 3px solid var(--pf-accent);
+       border-inline-start: 3px solid var(--pf-accent);
        border-radius: 0;
        clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
        padding: var(--space-lg);
@@ -670,8 +670,8 @@
        &::before {
          content: '';
          position: absolute;
-         top: -1px;
-         right: -1px;
+         inset-block-start: -1px;
+         inset-inline-end: -1px;
          width: 18px;
          height: 18px;
          background: linear-gradient(135deg, transparent 50%, var(--pf-accent) 50%);
@@ -715,8 +715,8 @@
        &::before {
          content: '';
          position: absolute;
-         top: 0;
-         left: 0;
+         inset-block-start: 0;
+         inset-inline-start: 0;
          width: 3px;
          height: 100%;
          background: var(--pf-accent);
@@ -800,7 +800,7 @@
        overflow-y: auto;
        scrollbar-width: thin;
        scrollbar-color: color-mix(in oklch, var(--accent) 40%, transparent) transparent;
-       padding-right: var(--space-xs);
+       padding-inline-end: var(--space-xs);
 
        &::-webkit-scrollbar {
          width: 4px;
@@ -874,14 +874,14 @@
 
      .peripheral-column:first-child {
        position: relative;
-       padding-right: var(--space-md);
+       padding-inline-end: var(--space-md);
 
        &::after {
          content: '';
          position: absolute;
-         top: var(--space-lg);
-         bottom: var(--space-lg);
-         right: 0;
+         inset-block-start: var(--space-lg);
+         inset-block-end: var(--space-lg);
+         inset-inline-end: 0;
          width: 1px;
          background: linear-gradient(180deg,
              transparent,
@@ -894,7 +894,7 @@
      .step {
        --stagger: 0;
        --step-accent: var(--cyber-yellow);
-       margin-bottom: var(--space-2xl);
+       margin-block-end: var(--space-2xl);
        padding: 0 var(--space-xl) var(--space-xl) calc(var(--space-xl) + 4px);
        position: relative;
        border-radius: 0;
@@ -916,7 +916,7 @@
          backdrop-filter: blur(var(--glass-depth-2)) saturate(1.5);
          -webkit-backdrop-filter: blur(var(--glass-depth-2)) saturate(1.5);
          border: 1px solid color-mix(in oklch, oklch(1 0 0) 10%, transparent);
-         border-left: 3px solid var(--step-accent);
+         border-inline-start: 3px solid var(--step-accent);
          clip-path: inherit;
          box-shadow:
            inset 0 1px 1px color-mix(in oklch, oklch(1 0 0) 8%, transparent),
@@ -947,7 +947,7 @@
 
        &:hover::before {
          border-color: color-mix(in oklch, var(--step-accent) 35%, transparent);
-         border-left-color: var(--step-accent);
+         border-inline-start-color: var(--step-accent);
          box-shadow:
            inset 0 1px 2px color-mix(in oklch, oklch(1 0 0) 12%, transparent),
            inset 0 -1px 2px color-mix(in oklch, oklch(0 0 0) 15%, transparent),
@@ -964,7 +964,7 @@
          font-family: var(--font-display);
          font-size: 1.375rem;
          font-weight: 700;
-         margin-bottom: var(--space-xs);
+         margin-block-end: var(--space-xs);
          display: flex;
          align-items: center;
          gap: var(--space-md);
@@ -991,7 +991,7 @@
        }
 
        &.step--arsenal {
-         padding-bottom: 0;
+         padding-block-end: 0;
        }
      }
 
@@ -1066,8 +1066,8 @@
        color: var(--text-secondary);
        font-size: 0.95rem;
        font-weight: 500;
-       margin-bottom: var(--space-lg);
-       padding-left: calc(2rem + var(--space-md));
+       margin-block-end: var(--space-lg);
+       padding-inline-start: calc(2rem + var(--space-md));
      }
 
      .step-header {
@@ -1075,7 +1075,7 @@
        justify-content: space-between;
        align-items: flex-start;
        gap: var(--space-xl);
-       margin-bottom: var(--space-lg);
+       margin-block-end: var(--space-lg);
      }
 
      .step-header__left {
@@ -1083,12 +1083,12 @@
        min-width: 0;
 
        & h2 {
-         margin-bottom: var(--space-xs);
+         margin-block-end: var(--space-xs);
        }
 
        & .step-desc {
-         margin-bottom: 0;
-         padding-left: calc(2.6rem + var(--space-md));
+         margin-block-end: 0;
+         padding-inline-start: calc(2.6rem + var(--space-md));
        }
      }
 
@@ -1156,8 +1156,8 @@
 
        & .hardware-help-panel__close {
          position: absolute;
-         top: var(--space-sm);
-         right: var(--space-sm);
+         inset-block-start: var(--space-sm);
+         inset-inline-end: var(--space-sm);
          padding: var(--space-2xs) var(--space-sm);
          font-family: var(--font-mono);
          font-size: var(--text-xs);
@@ -1200,14 +1200,14 @@
        }
 
        & .help-section {
-         margin-bottom: var(--space-lg);
-         padding-bottom: var(--space-md);
-         border-bottom: 1px solid var(--border);
+         margin-block-end: var(--space-lg);
+         padding-block-end: var(--space-md);
+         border-block-end: 1px solid var(--border);
 
          &:last-child {
-           margin-bottom: 0;
-           padding-bottom: 0;
-           border-bottom: none;
+           margin-block-end: 0;
+           padding-block-end: 0;
+           border-block-end: none;
          }
        }
 
@@ -1234,7 +1234,7 @@
        & .tip {
          color: var(--accent);
          font-size: 0.8rem;
-         margin-top: var(--space-sm);
+         margin-block-start: var(--space-sm);
        }
      }
 
@@ -1244,11 +1244,11 @@
        --control-glow-soft: color-mix(in oklch, var(--accent) 20%, transparent);
        --control-glow-pulse: color-mix(in oklch, var(--accent) 30%, transparent);
        border: 1px solid var(--border);
-       border-left: 2px solid var(--control-accent);
+       border-inline-start: 2px solid var(--control-accent);
        border-radius: 0;
        clip-path: var(--clip-cyber-sm);
        padding: var(--space-md) var(--space-lg);
-       margin-bottom: 0;
+       margin-block-end: 0;
        background: var(--bg-tertiary);
        transition: border-color 0.2s, box-shadow 0.2s;
        overflow: visible;
@@ -1260,8 +1260,8 @@
        &::before {
          content: '';
          position: absolute;
-         top: -11px;
-         right: -1px;
+         inset-block-start: -11px;
+         inset-inline-end: -1px;
          width: 25px;
          height: 25px;
          background: linear-gradient(135deg, transparent 48%, var(--control-accent) 50%);
@@ -1393,8 +1393,8 @@
          &[data-tooltip]::after {
            content: attr(data-tooltip);
            position: absolute;
-           left: 0;
-           top: calc(100% + 4px);
+           inset-inline-start: 0;
+           inset-block-start: calc(100% + 4px);
            transform: translateY(-4px);
            width: 100%;
            min-width: 280px;
@@ -1657,7 +1657,7 @@
        align-items: center;
        gap: 4px;
        line-height: 1.3;
-       margin-top: -1px;
+       margin-block-start: -1px;
      }
 
      .peripheral-title {
@@ -1689,7 +1689,7 @@
        padding: 0;
        background: var(--bg-secondary);
        border: 1px solid color-mix(in oklch, var(--cyber-yellow) 30%, var(--border-light));
-       border-top: 3px solid var(--cyber-yellow);
+       border-block-start: 3px solid var(--cyber-yellow);
        border-radius: 0;
        clip-path: var(--clip-cyber-lg);
        box-shadow:
@@ -1727,7 +1727,7 @@
        --step-accent: var(--cyber-yellow);
 
        &::before {
-         border-left-color: var(--cyber-yellow);
+         border-inline-start-color: var(--cyber-yellow);
          background:
            linear-gradient(180deg,
              color-mix(in oklch, var(--cyber-yellow) 3%, transparent) 0%,
@@ -1748,7 +1748,7 @@
            color-mix(in oklch, var(--cyber-yellow) 2%, transparent) 50%,
            transparent 100%);
        border: 1px solid color-mix(in oklch, var(--cyber-yellow) 25%, var(--border));
-       border-left: 3px solid var(--cyber-yellow);
+       border-inline-start: 3px solid var(--cyber-yellow);
        border-radius: 0;
        clip-path: var(--clip-cyber-md);
        position: relative;
@@ -1756,8 +1756,8 @@
        &::before {
          content: '';
          position: absolute;
-         top: -1px;
-         right: -1px;
+         inset-block-start: -1px;
+         inset-inline-end: -1px;
          width: 14px;
          height: 14px;
          background: linear-gradient(135deg, transparent 50%, var(--cyber-yellow) 50%);
@@ -1826,12 +1826,12 @@
        }
 
        .step {
-         margin-bottom: var(--space-xl);
+         margin-block-end: var(--space-xl);
          padding: 0 var(--space-lg) var(--space-lg) var(--space-lg);
        }
 
        .step-desc {
-         padding-left: 0;
+         padding-inline-start: 0;
        }
 
        .summary {
@@ -1969,13 +1969,13 @@
            margin: 0 0 0.5em;
 
            &:last-child {
-             margin-bottom: 0;
+             margin-block-end: 0;
            }
          }
 
          ul {
            margin: 0.5em 0;
-           padding-left: 1.2em;
+           padding-inline-start: 1.2em;
            list-style: none;
 
            li {
@@ -1985,8 +1985,8 @@
              &::before {
                content: "";
                position: absolute;
-               left: -1em;
-               top: 0.25em;
+               inset-inline-start: -1em;
+               inset-block-start: 0.25em;
                inline-size: 0.6em;
                block-size: 0.6em;
                background-color: var(--control-accent);
@@ -2003,14 +2003,14 @@
 
          .tt-warn {
            color: var(--caution);
-           padding-left: 1.3em;
+           padding-inline-start: 1.3em;
            position: relative;
 
            &::before {
              content: '';
              position: absolute;
-             left: 0;
-             top: 0.15em;
+             inset-inline-start: 0;
+             inset-block-start: 0.15em;
              width: 14px;
              height: 14px;
              background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23f0a500'%3E%3Cpath d='M12 2L1 21h22L12 2zm0 15a1.5 1.5 0 110 3 1.5 1.5 0 010-3zm-1-2V9h2v6h-2z'/%3E%3C/svg%3E");
@@ -2021,14 +2021,14 @@
 
          .tt-ok {
            color: var(--safe);
-           padding-left: 1.3em;
+           padding-inline-start: 1.3em;
            position: relative;
 
            &::before {
              content: '';
              position: absolute;
-             left: 0;
-             top: 0.2em;
+             inset-inline-start: 0;
+             inset-block-start: 0.2em;
              width: 12px;
              height: 12px;
              background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2340c463' stroke-width='3'%3E%3Cpath d='M20 6L9 17l-5-5'/%3E%3C/svg%3E");
@@ -2053,7 +2053,7 @@
            grid-area: header;
            padding: var(--space-md) var(--space-lg);
            background: color-mix(in oklch, oklch(1 0 0) 3%, transparent);
-           border-bottom: 1px solid color-mix(in oklch, oklch(1 0 0) 8%, transparent);
+           border-block-end: 1px solid color-mix(in oklch, oklch(1 0 0) 8%, transparent);
          }
 
          .tt-title {
@@ -2062,7 +2062,7 @@
            font-size: 0.9rem;
            font-weight: 700;
            color: var(--text-primary);
-           margin-bottom: 2px;
+           margin-block-end: 2px;
            text-transform: uppercase;
            letter-spacing: 0.02em;
          }
@@ -2081,7 +2081,7 @@
 
          .tt-pros {
            grid-area: pros;
-           border-right: 1px solid color-mix(in oklch, oklch(1 0 0) 6%, transparent);
+           border-inline-end: 1px solid color-mix(in oklch, oklch(1 0 0) 6%, transparent);
          }
 
          .tt-cons {
@@ -2095,7 +2095,7 @@
            font-weight: 700;
            text-transform: uppercase;
            letter-spacing: 0.1em;
-           margin-bottom: var(--space-xs);
+           margin-block-end: var(--space-xs);
          }
 
          .tt-pros .tt-column-label {
@@ -2114,7 +2114,7 @@
 
          li {
            position: relative;
-           padding-left: 1em;
+           padding-inline-start: 1em;
            margin: 0.25em 0;
            font-size: 0.82rem;
            line-height: 1.4;
@@ -2123,8 +2123,8 @@
            &::before {
              content: "";
              position: absolute;
-             left: 0;
-             top: 0.2em;
+             inset-inline-start: 0;
+             inset-block-start: 0.2em;
              inline-size: 0.6em;
              block-size: 0.6em;
              background-color: currentColor;
