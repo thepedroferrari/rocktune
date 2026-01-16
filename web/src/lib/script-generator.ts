@@ -237,6 +237,19 @@ function isValidPackageId(id: string): boolean {
   return validPattern.test(id) && id.length > 0 && id.length <= 256;
 }
 
+/**
+ * Encode UTF-8 string to Base64 (modern replacement for btoa(unescape(encodeURIComponent())))
+ * Uses TextEncoder for proper Unicode handling without deprecated functions
+ */
+function utf8ToBase64(str: string): string {
+  const bytes = new TextEncoder().encode(str);
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
 /** ASCII banner for script header */
 const ASCII_BANNER = `
 @'
@@ -1446,7 +1459,7 @@ export function buildScript(
   };
   // Base64 encode config to prevent injection from apostrophes in CPU/GPU names
   const configJson = JSON.stringify(config);
-  const base64Config = btoa(unescape(encodeURIComponent(configJson)));
+  const base64Config = utf8ToBase64(configJson);
   lines.push(
     `$Config = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String("${base64Config}")) | ConvertFrom-Json`,
   );

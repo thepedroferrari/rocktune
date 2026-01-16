@@ -72,6 +72,17 @@ type ShareData = ShareDataV1
 const MAX_ARRAY_LENGTH = 100
 const URL_LENGTH_WARNING_THRESHOLD = 2000
 const MAX_COMPRESSED_LENGTH = 5000
+/** Max decompressed JSON size (prevents compression bombs) */
+const MAX_DECOMPRESSED_LENGTH = 100_000
+
+/**
+ * Validate package key format (alphanumeric with dots, dashes, underscores)
+ * Mirrors the pattern used in script-generator.ts for consistency
+ */
+const VALID_PACKAGE_KEY_PATTERN = /^[a-zA-Z0-9._-]+$/
+function isValidPackageKeyFormat(key: string): boolean {
+  return VALID_PACKAGE_KEY_PATTERN.test(key) && key.length > 0 && key.length <= 256
+}
 
 /**
  * LUDICROUS optimization keys - blocked from sharing
@@ -228,6 +239,11 @@ export function decodeShareURL(hash: string): DecodeResult {
       return { success: false, error: 'Could not decompress URL data' }
     }
 
+    // Prevent compression bomb attacks (small input → massive output)
+    if (json.length > MAX_DECOMPRESSED_LENGTH) {
+      return { success: false, error: 'Share data exceeds maximum allowed size' }
+    }
+
     let data: ShareData
     try {
       data = JSON.parse(json) as ShareData
@@ -365,7 +381,19 @@ function decodeV1(data: ShareDataV1): DecodeResult {
   }
 
   if (data.s) {
-    build.packages = safeSlice(data.s, MAX_ARRAY_LENGTH) as PackageKey[]
+    const limitedPackages = safeSlice(data.s, MAX_ARRAY_LENGTH)
+    let packageSkips = 0
+    for (const pkg of limitedPackages) {
+      if (typeof pkg === 'string' && isValidPackageKeyFormat(pkg)) {
+        build.packages.push(pkg as PackageKey)
+      } else {
+        packageSkips++
+        skippedCount++
+      }
+    }
+    if (packageSkips > 0) {
+      warnings.push(`${packageSkips} invalid package key(s) filtered`)
+    }
   }
 
   if (data.r !== undefined) {
