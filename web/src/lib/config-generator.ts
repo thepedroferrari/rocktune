@@ -134,7 +134,6 @@ export function generateToolConfig(tool: ConfigTool, context: ConfigContext): Co
     case CONFIG_TOOLS.NVIDIA_INSPECTOR:
       return generateNvidiaInspectorConfigs(context)
     default: {
-      // Exhaustive check - TypeScript will error if we miss a tool
       const Exhaustive: never = tool
       return Exhaustive
     }

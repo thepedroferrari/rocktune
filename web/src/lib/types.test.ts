@@ -337,7 +337,6 @@ Deno.test('EVIDENCE_LEVELS - Contains expected levels', () => {
 // =============================================================================
 
 Deno.test('Type guards handle various falsy values', () => {
-  // Test with various falsy/unusual values
   const falsyValues = [null, undefined, '', 0, false, Number.NaN, [], {}]
 
   for (const value of falsyValues) {

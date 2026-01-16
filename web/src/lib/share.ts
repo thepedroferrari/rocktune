@@ -241,7 +241,6 @@ export function decodeShareURL(hash: string): DecodeResult {
       return { success: false, error: 'Could not decompress URL data' }
     }
 
-    // Prevent compression bomb attacks (small input → massive output)
     if (json.length > MAX_DECOMPRESSED_LENGTH) {
       return { success: false, error: 'Share data exceeds maximum allowed size' }
     }
@@ -267,17 +266,11 @@ export function decodeShareURL(hash: string): DecodeResult {
   }
 }
 
-/**
- * Safely slice an array to max length (DoS prevention)
- */
 function safeSlice<T>(arr: T[] | undefined, max: number): T[] {
   if (!arr) return []
   return arr.slice(0, max)
 }
 
-/**
- * Decode version 1 share data
- */
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Share data decoding requires validation of multiple optional fields
 function decodeV1(data: ShareDataV1): DecodeResult {
   const warnings: string[] = []

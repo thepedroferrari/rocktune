@@ -41,7 +41,6 @@ Deno.test('SHA256 - Different content produces different hashes', async () => {
 
 Deno.test('SHA256 - Matches known hash values', async () => {
   // Known SHA-256 hashes (verified with external tools)
-  // Empty string
   const emptyHash = await generateSHA256('')
   assertEquals(emptyHash, 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855')
 
@@ -60,7 +59,6 @@ Deno.test('SHA256 - BOM option adds UTF-8 BOM when missing', async () => {
   const withoutBom = await generateSHA256(content, { includeBom: false })
   const withBom = await generateSHA256(content, { includeBom: true })
 
-  // Hashes should differ because BOM changes the content
   assertEquals(withoutBom !== withBom, true)
 })
 
@@ -70,7 +68,6 @@ Deno.test('SHA256 - BOM option does not double-add if already present', async ()
   const hash1 = await generateSHA256(contentWithBom, { includeBom: true })
   const hash2 = await generateSHA256(contentWithBom, { includeBom: true })
 
-  // Should be identical - no double BOM
   assertEquals(hash1, hash2)
 })
 

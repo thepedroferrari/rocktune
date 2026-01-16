@@ -1519,7 +1519,6 @@ export function buildScript(
   // Indentation prefix for function body
   const indent = includeTimer ? "    " : "";
 
-  // Helper to add indented lines
   const addIndented = (optLines: string[]) => {
     for (const line of optLines) {
       lines.push(line ? `${indent}${line}` : "");
@@ -1817,7 +1816,6 @@ export function buildScript(
   lines.push(`${indent}Write-AppliedManifest`);
   lines.push("");
 
-  // Save backup manifest and generate restore script (if backup was created)
   if (createBackup) {
     lines.push(`${indent}# Save backup manifest and generate restore script`);
     lines.push(`${indent}if (-not $SkipBackup) { Save-BackupManifest }`);
@@ -1848,7 +1846,6 @@ export function buildScript(
     `${indent}Write-Host "  Elapsed:  $elapsedStr" -ForegroundColor Cyan`,
   );
 
-  // Show rollback instructions if backup was created
   if (createBackup) {
     lines.push(`${indent}if ($script:BackupDir) {`);
     lines.push(`${indent}    Write-Host ""`);

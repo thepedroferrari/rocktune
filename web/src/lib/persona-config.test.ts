@@ -3,7 +3,6 @@ import { OPTIMIZATIONS } from './optimizations.ts'
 import { getPersonaOptimizations, PERSONA_NEXT_STEPS, TOOL_PERSONA_MAP } from './persona-config.ts'
 import { PERSONA_META, type PersonaId } from './persona-registry.ts'
 
-// Helper: Get all persona IDs for testing
 const PERSONA_IDS = Object.keys(PERSONA_META) as PersonaId[]
 
 // ====================================================================
@@ -20,12 +19,10 @@ Deno.test('Persona config - getPersonaOptimizations returns non-empty for all pe
 Deno.test('Persona config - gamer has base + additions', () => {
   const gamerOpts = getPersonaOptimizations('gamer')
 
-  // Should have base optimizations
   assert(gamerOpts.includes('pagefile'), 'Should include base: pagefile')
   assert(gamerOpts.includes('fastboot'), 'Should include base: fastboot')
   assert(gamerOpts.includes('power_plan'), 'Should include base: power_plan')
 
-  // Should have gamer-specific additions
   assert(gamerOpts.includes('dns'), 'Should include addition: dns')
   assert(gamerOpts.includes('nagle'), 'Should include addition: nagle')
   assert(gamerOpts.includes('gamedvr'), 'Should include addition: gamedvr')
@@ -67,15 +64,12 @@ Deno.test('Persona config - streamer excludes gamedvr', () => {
 Deno.test('Persona config - streamer has base + additions - exclusions', () => {
   const streamerOpts = getPersonaOptimizations('streamer')
 
-  // Should have base
   assert(streamerOpts.includes('pagefile'), 'Should include base: pagefile')
   assert(streamerOpts.includes('power_plan'), 'Should include base: power_plan')
 
-  // Should have streamer-specific additions
   assert(streamerOpts.includes('dns'), 'Should include addition: dns')
   assert(streamerOpts.includes('nagle'), 'Should include addition: nagle')
 
-  // Should NOT have gamedvr (explicitly excluded)
   assertEquals(streamerOpts.includes('gamedvr'), false, 'Should NOT include excluded: gamedvr')
 })
 
@@ -183,7 +177,6 @@ Deno.test('Persona config - UniFi only for pro_gamer', () => {
 Deno.test('Persona config - NVIDIA Inspector available for all except no-GPU personas', () => {
   const nvidiaPersonas = TOOL_PERSONA_MAP.nvidia_inspector
 
-  // Should include all 4 personas (gamer, pro_gamer, streamer, benchmarker)
   assert(nvidiaPersonas.length >= 4, 'NVIDIA Inspector should be available for most personas')
 })
 
@@ -254,7 +247,6 @@ Deno.test('Persona config - Merge logic uses efficient Set-based filtering', () 
   const end = performance.now()
   const duration = end - start
 
-  // Should complete in < 100ms for 1000 iterations (Set-based)
   // O(n²) implementation would take significantly longer
   assert(duration < 100, `Merge should be fast (Set-based O(n)), took ${duration}ms`)
 })

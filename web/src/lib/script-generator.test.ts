@@ -35,7 +35,6 @@ const TEST_CATALOG: SoftwareCatalog = {
   },
 } as SoftwareCatalog
 
-// Helper to create minimal selection state
 function createTestSelection(persona: PersonaId): SelectionState {
   return {
     hardware: {
@@ -74,7 +73,6 @@ Deno.test('Script generation - Gamer persona includes expected optimizations', (
   const selection = createTestSelection('gamer')
   const script = buildScript(selection, { catalog: TEST_CATALOG })
 
-  // Should include pagefile or fastboot
   const hasOptimizations =
     script.includes('Pagefile') || script.includes('Fast Boot') || script.includes('fastboot')
   assertEquals(hasOptimizations, true)
@@ -144,7 +142,6 @@ Deno.test('Script generation - Software packages are included', () => {
 
   const script = buildScript(selection, { catalog: TEST_CATALOG })
 
-  // Should include winget commands
   assertStringIncludes(script, 'winget')
 })
 
@@ -164,7 +161,6 @@ Deno.test('Verification script - All personas supported', () => {
     const selection = createTestSelection(persona)
     const script = buildVerificationScript(selection)
 
-    // Should generate non-empty script
     assertEquals(script.length > 0, true)
   }
 })
@@ -173,7 +169,6 @@ Deno.test('Script generation - Script structure is consistent', () => {
   const selection = createTestSelection('gamer')
   const script = buildScript(selection, { catalog: TEST_CATALOG })
 
-  // Should have clear sections
   assertStringIncludes(script, 'RockTune')
   assertStringIncludes(script, '#Requires')
   assertStringIncludes(script, 'function')
@@ -259,7 +254,6 @@ Deno.test('Script generation - Logitech peripheral included', () => {
 
   const script = buildScript(selection, { catalog: TEST_CATALOG })
 
-  // Should generate valid script with peripheral
   assertStringIncludes(script, '#Requires -RunAsAdministrator')
 })
 
@@ -341,7 +335,6 @@ Deno.test('Script generation - Default DNS provider when not specified', () => {
 
   const script = buildScript(selection, { catalog: TEST_CATALOG })
 
-  // Should use default (cloudflare) when not specified
   assertStringIncludes(script, '#Requires -RunAsAdministrator')
 })
 
@@ -501,7 +494,6 @@ Deno.test('Script generation - No Invoke-Expression on user input', () => {
   const iexCount = (script.match(/Invoke-Expression/gi) || []).length
   const iexShortCount = (script.match(/\biex\b/gi) || []).length
 
-  // The timer tool uses IEX internally, but should be limited
   assertEquals(iexCount + iexShortCount < 10, true, 'Too many IEX calls')
 })
 

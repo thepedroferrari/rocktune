@@ -216,7 +216,6 @@ function formatSettings(settings: ProfileSettings): string {
 
 function generateNvidiaInspectorXML(settings: ProfileSettings, persona: string): string {
   // NVIDIA Profile Inspector uses XML format (.nip)
-  // This creates a base profile that can be applied to any game
   return `<?xml version="1.0" encoding="utf-16"?>
 <ArrayOfProfile>
   <Profile>

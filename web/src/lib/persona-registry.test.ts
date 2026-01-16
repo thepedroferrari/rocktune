@@ -73,14 +73,11 @@ Deno.test('Persona registry - isPersonaId returns false for invalid IDs', () => 
 
 Deno.test('Persona registry - Type safety is enforced at runtime', () => {
   // This test verifies that invalid persona IDs are caught
-  // TypeScript should prevent invalid IDs at compile time in strict mode
   // But we verify runtime guards also work
 
-  // Runtime check via isPersonaId should catch invalid values
   assertEquals(isPersonaId('invalid'), false)
   assertEquals(isPersonaId('definitely_not_valid'), false)
 
-  // Valid personas should pass
   assertEquals(isPersonaId('gamer'), true)
   assertEquals(isPersonaId('pro_gamer'), true)
 })
