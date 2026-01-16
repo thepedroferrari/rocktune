@@ -188,8 +188,6 @@ export function toggleSoftware(key: PackageKey): boolean {
     app.selected.add(key)
   }
 
-  app.selected = new Set(app.selected)
-
   emitAppEvent('software-selection-changed', {
     selected: Array.from(app.selected),
   })
@@ -267,7 +265,6 @@ function toggleInSet<T>(set: Set<T>, item: T): boolean {
 
 export function toggleOptimization(key: OptimizationKey): boolean {
   const result = toggleInSet(app.optimizations, key)
-  app.optimizations = new Set(app.optimizations)
   soundSettings.onToggle(result)
   return result
 }
@@ -278,7 +275,6 @@ export function setOptimizations(keys: readonly OptimizationKey[]): void {
 
 export function togglePeripheral(type: PeripheralType): boolean {
   const result = toggleInSet(app.peripherals, type)
-  app.peripherals = new Set(app.peripherals)
   return result
 }
 
@@ -288,7 +284,6 @@ export function setPeripherals(types: readonly PeripheralType[]): void {
 
 export function toggleMonitorSoftware(type: MonitorSoftwareType): boolean {
   const result = toggleInSet(app.monitorSoftware, type)
-  app.monitorSoftware = new Set(app.monitorSoftware)
   return result
 }
 
