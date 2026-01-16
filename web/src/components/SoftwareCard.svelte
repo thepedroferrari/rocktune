@@ -58,6 +58,8 @@ let iconFailed = $state(false)
       <img
         src={cdnUrl}
         alt={isOverlay ? "" : `${pkg.name} logo`}
+        width="44"
+        height="44"
         loading="lazy"
         onerror={isOverlay ? undefined : () => { iconFailed = true }}
       />
