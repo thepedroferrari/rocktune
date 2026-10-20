@@ -4,6 +4,7 @@
     "dev": "deno run -A npm:vite",
     "sync:benchmark": "deno run --allow-read --allow-write ./scripts/sync-benchmark.ts",
     "build": "deno task sync:benchmark && deno task build:sprite && deno run -A npm:vite build",
+    "analyze": "ANALYZE=1 deno task build",
     "preview": "deno run -A npm:vite preview",
     "lint": "deno run -A npm:@biomejs/biome lint ./src ./scripts",
     "lint:fix": "deno run -A npm:@biomejs/biome lint --write ./src ./scripts",

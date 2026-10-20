@@ -146,8 +146,15 @@ function handleChange(event: Event) {
   }
 
   @media (max-width: 480px) {
+    /* One card level on phones: the parent fieldset already draws the frame */
+    .dns-selector {
+      padding: 0;
+      background: none;
+      border: 0;
+    }
+
     .dns-options {
-      grid-template-columns: 1fr;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 </style>

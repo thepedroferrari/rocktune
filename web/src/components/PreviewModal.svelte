@@ -6,10 +6,10 @@
  * with CodeViewer for viewing, comparing, and editing.
  */
 
+import { generateCurrentScript } from '$lib/current-script'
 import {
   app,
   closePreviewModal,
-  generateCurrentScript,
   type ScriptMode,
   setCreateBackup,
   setEditedScript,

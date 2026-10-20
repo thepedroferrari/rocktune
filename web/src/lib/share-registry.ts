@@ -299,6 +299,14 @@ export const OPT_ID_TO_VALUE: Record<number, OptimizationKey | null> = {
   110: 'nic_energy_efficient',
   111: 'browser_background',
   112: 'scheduled_tasks_gaming',
+  113: 'ai_off',
+  114: 'widgets_off',
+  115: 'start_recommended_off',
+  116: 'bing_search_off',
+  117: 'windows_ads_off',
+  118: 'gamebar_popup_fix',
+  119: 'update_no_reboot',
+  120: 'onedrive_remove',
 }
 
 export const OPT_VALUE_TO_ID: Record<OptimizationKey, number> = Object.fromEntries(

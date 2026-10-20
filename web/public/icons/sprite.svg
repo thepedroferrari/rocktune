@@ -427,6 +427,11 @@
 
   <path d="M19 14 L19 22 L25 18 Z" fill="white" opacity="1"/>
   </symbol>
+  <symbol id="powershell" viewBox="0 0 48 48">
+    <path d="M10 8h32l-6 32H4z" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" fill="none"/>
+  <path d="M15 17l9 7-12 8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M24 32h9" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+  </symbol>
   <symbol id="powertoys" viewBox="0 0 20 20">
     <path d="M10 19H20V10H10V19ZM0 19H9V10H0V19ZM10 9H20V0H10V9ZM0 9H9V0H0V9Z"/>
   </symbol>

@@ -20,6 +20,9 @@ interface ScrollToSectionOptions {
 const prefersReducedMotion =
   typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
+/** Fired when a scroll target is not in the DOM yet; RootApp loads deferred sections on it. */
+export const LOAD_DEFERRED_EVENT = 'rocktune:load-deferred'
+
 const ARRIVAL_CLASS = 'section-arrive'
 const ARRIVAL_DURATION_MS = 600
 
@@ -82,7 +85,9 @@ export async function scrollToSection({
     return true
   }
 
-  // Wait for element to appear and have content
+  // Ask deferred sections (Forge, Guide) to load now, then wait for the target
+  window.dispatchEvent(new Event(LOAD_DEFERRED_EVENT))
+
   return new Promise((resolve) => {
     const timeoutId = setTimeout(() => {
       observer.disconnect()

@@ -141,13 +141,13 @@ function Test-BrowserBackgroundApps {
         if (Test-Path $chromePolicyPath) {
             $chromeBgMode = Get-RegistryValue -Path $chromePolicyPath -Name "BackgroundModeEnabled"
             if ($chromeBgMode -eq 0) {
-                Write-Log "✓ Chrome background apps disabled" "SUCCESS"
+                Write-Log "[OK] Chrome background apps disabled" "SUCCESS"
             } else {
-                Write-Log "✗ Chrome background apps not disabled" "ERROR"
+                Write-Log "[FAIL] Chrome background apps not disabled" "ERROR"
                 $allPassed = $false
             }
         } else {
-            Write-Log "○ Chrome policy path not found (Chrome may not be installed)" "INFO"
+            Write-Log "[--] Chrome policy path not found (Chrome may not be installed)" "INFO"
         }
 
         # Edge
@@ -158,27 +158,27 @@ function Test-BrowserBackgroundApps {
             $edgeBgExt = Get-RegistryValue -Path $edgePolicyPath -Name "BackgroundExtensionsEnabled"
 
             if ($edgeStartupBoost -eq 0) {
-                Write-Log "✓ Edge startup boost disabled" "SUCCESS"
+                Write-Log "[OK] Edge startup boost disabled" "SUCCESS"
             } else {
-                Write-Log "✗ Edge startup boost not disabled" "ERROR"
+                Write-Log "[FAIL] Edge startup boost not disabled" "ERROR"
                 $allPassed = $false
             }
 
             if ($edgeBgMode -eq 0) {
-                Write-Log "✓ Edge background apps disabled" "SUCCESS"
+                Write-Log "[OK] Edge background apps disabled" "SUCCESS"
             } else {
-                Write-Log "✗ Edge background apps not disabled" "ERROR"
+                Write-Log "[FAIL] Edge background apps not disabled" "ERROR"
                 $allPassed = $false
             }
 
             if ($edgeBgExt -eq 0) {
-                Write-Log "✓ Edge background extensions disabled" "SUCCESS"
+                Write-Log "[OK] Edge background extensions disabled" "SUCCESS"
             } else {
-                Write-Log "✗ Edge background extensions not disabled" "ERROR"
+                Write-Log "[FAIL] Edge background extensions not disabled" "ERROR"
                 $allPassed = $false
             }
         } else {
-            Write-Log "○ Edge policy path not found (Edge may not be installed)" "INFO"
+            Write-Log "[--] Edge policy path not found (Edge may not be installed)" "INFO"
         }
 
     } catch {

@@ -132,16 +132,16 @@ function Test-MouseAcceleration {
         $threshold2 = Get-RegistryValue -Path $mousePath -Name "MouseThreshold2"
 
         if ($mouseSpeed -eq "0") {
-            Write-Log "✓ Mouse acceleration disabled (MouseSpeed = 0)" "SUCCESS"
+            Write-Log "[OK] Mouse acceleration disabled (MouseSpeed = 0)" "SUCCESS"
         } else {
-            Write-Log "✗ Mouse acceleration enabled (MouseSpeed = $mouseSpeed)" "ERROR"
+            Write-Log "[FAIL] Mouse acceleration enabled (MouseSpeed = $mouseSpeed)" "ERROR"
             $allPassed = $false
         }
 
         if ($threshold1 -eq "0" -and $threshold2 -eq "0") {
-            Write-Log "✓ Mouse thresholds disabled" "SUCCESS"
+            Write-Log "[OK] Mouse thresholds disabled" "SUCCESS"
         } else {
-            Write-Log "✗ Mouse thresholds not disabled (T1=$threshold1, T2=$threshold2)" "ERROR"
+            Write-Log "[FAIL] Mouse thresholds not disabled (T1=$threshold1, T2=$threshold2)" "ERROR"
             $allPassed = $false
         }
 

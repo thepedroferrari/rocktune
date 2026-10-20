@@ -180,6 +180,15 @@ cd rocktune
 ```powershell
 # Preview changes without applying
 .\gaming-pc-setup.ps1 -DryRun
+.\extreme-privacy.ps1 -DryRun
+.\rocktune.ps1 -DryRun
+
+# Undo: every script creates a System Restore point first and records each
+# registry value, service start type and scheduled task it changes in
+# %ProgramData%\RockTune\. -Undo puts them back.
+.\gaming-pc-setup.ps1 -Undo
+.\extreme-privacy.ps1 -Undo
+.\rocktune.ps1 -Undo
 
 # Reserved for future config wiring (accepted but currently no-op)
 .\gaming-pc-setup.ps1 -Profile competitive

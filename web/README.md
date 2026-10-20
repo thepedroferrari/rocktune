@@ -27,7 +27,7 @@ A modern, interactive web application that generates personalized PowerShell scr
 
 ## 🌐 Browser Support
 
-- Chromium-based browsers (Chrome, Edge). Firefox is not supported due to modern CSS features like `oklch`, `color-mix`, and `@scope`.
+- Current Chrome, Edge, Firefox and Safari. The hardware help panel uses CSS anchor positioning where available and falls back to a fixed position elsewhere.
 
 ## 📁 Project Structure
 

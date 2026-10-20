@@ -8,6 +8,9 @@
     Generates a log file and a post-setup checklist on success.
 .PARAMETER DryRun
     When set, the script prints intended actions and skips all system changes.
+.PARAMETER Undo
+    Restores every registry value, service start type and scheduled task recorded
+    in %ProgramData%\RockTune\undo-journal.json by earlier runs, then exits.
 .PARAMETER SkipConfirmation
     When set, skips the "Apply these optimizations?" prompt for unattended execution.
 .PARAMETER ConfigFile
@@ -22,6 +25,8 @@
     .\gaming-pc-setup.ps1 -DryRun
 .EXAMPLE
     .\gaming-pc-setup.ps1 -SkipConfirmation
+.EXAMPLE
+    .\gaming-pc-setup.ps1 -Undo
 .NOTES
     Requires Administrator. Produces `gaming-pc-setup.log` and
     `POST-SETUP-CHECKLIST.txt`. See module files for exact registry/service changes.
@@ -32,6 +37,7 @@
 
 param(
     [switch]$DryRun,
+    [switch]$Undo,
     [switch]$SkipConfirmation,
     [string]$ConfigFile,
     [string]$Profile
@@ -44,17 +50,22 @@ if (-not $ScriptRoot) {
     $ScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 }
 
-Write-Host ""
-Write-Host "=== Gaming PC Setup (Modular) ===" -ForegroundColor Cyan
-Write-Host "Evidence-based Windows optimizations for gaming" -ForegroundColor Yellow
+Write-Host @'
+
+    ____             __   ______
+   / __ \____  _____/ /__/_  __/_  ______  ___
+  / /_/ / __ \/ ___/ //_/ / / / / / / __ \/ _ \
+ / _, _/ /_/ / /__/ ,<   / / / /_/ / / / /  __/
+/_/ |_|\____/\___/_/|_| /_/  \__,_/_/ /_/\___/
+
+      Gaming PC Setup - evidence-based Windows tuning
+'@ -ForegroundColor Magenta
 Write-Host ""
 
 if ($DryRun) {
-    Write-Host "DRY RUN MODE: No changes will be applied" -ForegroundColor Yellow
+    Write-Host "  DRY RUN: nothing on this PC will change. Every action is printed instead." -ForegroundColor Yellow
     Write-Host ""
 }
-
-
 
 Write-Host "Loading modules..." -ForegroundColor Cyan
 
@@ -80,6 +91,10 @@ Import-Module (Join-Path $ScriptRoot "modules\software\installer.psm1") -Force -
 Write-Host "All modules loaded successfully" -ForegroundColor Green
 Write-Host ""
 
+# Set after every Import-Module: each module re-imports registry.psm1 with -Force,
+# which resets its state.
+Set-RockTuneDryRun -Enabled ([bool]$DryRun)
+
 
 
 # Central log for all modules and sections.
@@ -89,6 +104,20 @@ Initialize-Logger -LogPath $logPath -ClearExisting $true
 Write-Log "=== Gaming PC Setup Started ===" "SUCCESS"
 Write-Log "Script root: $ScriptRoot" "INFO"
 Write-Log "Dry run: $DryRun" "INFO"
+
+if ($Undo) {
+    Write-Host ">> Undo: restoring everything recorded in $(Get-UndoJournalPath)" -ForegroundColor Cyan
+    $undoResult = Undo-RockTuneChanges
+    Write-Host ""
+    Write-Host "  Restored: $($undoResult.Restored)" -ForegroundColor Green
+    if ($undoResult.Failed -gt 0) {
+        Write-Host "  Failed:   $($undoResult.Failed) (see $logPath)" -ForegroundColor Red
+    }
+    Write-Host "  Power plan, page file and bcdedit changes are not in the journal: use the" -ForegroundColor Gray
+    Write-Host "  'Pre-Gaming-PC-Setup' System Restore point for a full rollback." -ForegroundColor Gray
+    Write-Host "  Reboot to finish." -ForegroundColor Yellow
+    exit 0
+}
 
 
 
@@ -267,40 +296,53 @@ Write-Host ""
 # Create a restore point before making any changes (safety feature).
 if (-not $DryRun) {
     Write-Host "Creating System Restore Point..." -ForegroundColor Yellow
-    New-RestorePoint -Description "Pre-Gaming-PC-Setup-$(Get-Date -Format 'yyyyMMdd-HHmm')"
+    $restoreOk = New-RestorePoint -Description "Pre-Gaming-PC-Setup-$(Get-Date -Format 'yyyyMMdd-HHmm')"
+    if ($restoreOk) {
+        Write-Host "  [OK] Restore point created" -ForegroundColor Green
+    } else {
+        Write-Host "  [!] No restore point (see log). Registry changes can still be undone with -Undo." -ForegroundColor Yellow
+    }
     Write-Host ""
 }
 
+$sectionResults = New-Object System.Collections.ArrayList
+$activeSections = @($sections | Where-Object { -not $_.Condition -or (& $_.Condition) })
+$stepTotal = $activeSections.Count
+$stepIndex = 0
 
 
-foreach ($section in $sections) {
-    if ($section.Condition) {
-        if (-not (& $section.Condition)) {
-            Write-Log "Skipping $($section.Name) (condition not met)" "INFO"
-            continue
-        }
-    }
 
+foreach ($section in $activeSections) {
+    $stepIndex++
     $progressPercent = [int](($completedWeight / $totalWeight) * 100)
-    Write-Progress -Activity "Gaming PC Setup" -Status $section.Name -PercentComplete $progressPercent
+    Write-Progress -Activity "Gaming PC Setup" -Status "[$stepIndex/$stepTotal] $($section.Name)" -PercentComplete $progressPercent
 
     Write-Log "=== $($section.Name) ===" "INFO"
-    Write-Host "[$progressPercent%] $($section.Name)..." -ForegroundColor Cyan
+    Write-Host "[$stepIndex/$stepTotal] " -NoNewline -ForegroundColor DarkCyan
+    Write-Host "$($section.Name)" -NoNewline -ForegroundColor Cyan
+    Write-Host "  ($($section.Description))" -ForegroundColor DarkGray
 
+    $status = "APPLIED"
     try {
-        if ($DryRun) {
+        if ($DryRun -and $section.Function -ne "Invoke-PrivacyOptimizations") {
+            # Most sections also run powercfg, bcdedit and adapter cmdlets directly,
+            # so only registry-only sections run in dry-run mode.
             Write-Log "DRY RUN: Would execute $($section.Function)" "INFO"
-            Write-Host "  DRY RUN: Would apply optimizations" -ForegroundColor Yellow
+            Write-Host "  [DRY RUN] would apply this section" -ForegroundColor Yellow
+            $status = "DRY RUN"
         } else {
-            & $section.Function
+            & $section.Function | Out-Null
 
-            if ($section.TestFunction) {
+            if ($DryRun) {
+                $status = "DRY RUN"
+            } elseif ($section.TestFunction) {
                 Write-Log "Verifying $($section.Name)..." "INFO"
                 $testResult = & $section.TestFunction
                 if ($testResult) {
                     Write-Log "$($section.Name) verification: PASSED" "SUCCESS"
                 } else {
                     Write-Log "$($section.Name) verification: FAILED (review above logs)" "ERROR"
+                    $status = "CHECK FAILED"
                 }
             }
         }
@@ -310,8 +352,10 @@ foreach ($section in $sections) {
     } catch {
         Write-Log "Error in $($section.Name): $_" "ERROR"
         Write-Host "  ERROR: $($_.Exception.Message)" -ForegroundColor Red
+        $status = "FAILED"
     }
 
+    [void]$sectionResults.Add([pscustomobject]@{ Name = $section.Name; Status = $status })
     Write-Host ""
 }
 
@@ -574,7 +618,7 @@ Remember:
 2. Run timer-tool.ps1 BEFORE gaming
 3. Configure GPU driver settings manually
 
-Happy gaming! 🎮
+Happy gaming!
 
 "@
 
@@ -590,7 +634,30 @@ Write-Host ""
 Write-Host "=== Gaming PC Setup Complete ===" -ForegroundColor Green
 Write-Host ""
 
+$stats = Get-RockTuneChangeStats
+Write-Host "  +------------------------------------------+" -ForegroundColor White
+Write-Host "  |              LOADOUT SUMMARY             |" -ForegroundColor White
+Write-Host "  +------------------------------------------+" -ForegroundColor White
+foreach ($r in $sectionResults) {
+    $color = switch ($r.Status) {
+        "APPLIED" { "Green" }
+        "DRY RUN" { "Yellow" }
+        default { "Red" }
+    }
+    Write-Host ("  {0,-34} {1}" -f $r.Name, $r.Status) -ForegroundColor $color
+}
+Write-Host ""
+if ($DryRun) {
+    Write-Host "  Would change: $($stats.DryRun) settings (privacy section previewed in full)" -ForegroundColor Yellow
+} else {
+    Write-Host "  Applied: $($stats.Applied)   Skipped: $($stats.Skipped)   Failed: $($stats.Failed)" -ForegroundColor $(if ($stats.Failed -gt 0) { "Yellow" } else { "Green" })
+    Write-Host "  Undo file: $(Get-UndoJournalPath)  (run with -Undo to restore)" -ForegroundColor Gray
+}
+Write-Host ""
+
 if (-not $DryRun) {
+    Write-Host "  REBOOT NEEDED: MSI mode, page file, timer and power changes apply after a restart." -ForegroundColor Magenta
+    Write-Host ""
     Write-Host "Next steps:" -ForegroundColor Yellow
     Write-Host "  1. REBOOT your system for changes to take effect" -ForegroundColor White
     Write-Host "  2. Run timer-tool.ps1 during gameplay for optimal timer resolution" -ForegroundColor White
@@ -600,14 +667,8 @@ if (-not $DryRun) {
     Write-Host ""
 
     $summary = Get-LogSummary
-    Write-Host "Summary:" -ForegroundColor Cyan
-    Write-Host "  SUCCESS: $($summary.Success)" -ForegroundColor Green
-    Write-Host "  ERROR:   $($summary.Error)" -ForegroundColor Red
-    Write-Host "  INFO:    $($summary.Info)" -ForegroundColor Gray
-    Write-Host ""
-
     Write-Log "=== Gaming PC Setup Complete ===" "SUCCESS"
-    Write-Log "Summary: $($summary.Success) success, $($summary.Error) errors, $($summary.Info) info" "SUCCESS"
+    Write-Log "Summary: $($stats.Applied) applied, $($stats.Skipped) skipped, $($stats.Failed) failed; log $($summary.Success) success, $($summary.Error) errors" "SUCCESS"
 } else {
     Write-Host "DRY RUN complete. No changes were applied." -ForegroundColor Yellow
     Write-Host ""

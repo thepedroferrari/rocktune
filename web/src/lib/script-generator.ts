@@ -227,6 +227,11 @@ export type ScriptGeneratorOptions = {
 
 const DEFAULT_DNS_PROVIDER = "cloudflare";
 
+/** Split a String.raw PowerShell block into lines (drops the leading/trailing newline) */
+function psLines(block: string): string[] {
+  return block.replace(/^\n/, "").replace(/\n\s*$/, "").split("\n");
+}
+
 function escapePsDoubleQuoted(value: string): string {
   return value.replace(/`/g, "``").replace(/"/g, '`"').replace(/\$/g, "`$")
     .replace(/\r?\n/g, " ");
@@ -260,6 +265,423 @@ const ASCII_BANNER = `
 /_/ |_|\\____/\\___/_/|_| /_/  \\__,_/_/ /_/\\___/
 
         Windows Gaming Loadout Builder
+'@
+`;
+
+/**
+ * Core helpers: exact-undo registry writes, task/service helpers that record
+ * their prior state, section progress, and the static restore script.
+ * String.raw keeps PowerShell backslashes literal.
+ */
+const CORE_HELPERS = String.raw`
+# --- OS flags used by version guards ---
+$script:IsWin11 = ([int]$script:WinBuild -ge 22000)
+$script:IsWin11_24H2 = ([int]$script:WinBuild -ge 26100)
+
+# --- Exact-undo tracking (registry values, extra undo commands, section stats) ---
+$script:RegValueChanges = @()
+$script:RegSeen = @{}
+$script:UndoCommands = @()
+$script:BackupSaved = $false
+$script:SkipCount = 0
+$script:SectionStats = @()
+$script:CurrentSection = $null
+
+function Write-Skip { param([string]$M) $script:SkipCount++; Write-Host "  [SKIP] $M" -ForegroundColor DarkGray }
+
+function Save-RegPriorState {
+    # Records what a value looked like before RockTune touched it, so undo can
+    # put it back exactly: restore the old data, or delete values and keys RockTune created.
+    param([string]$Path, [string]$Name)
+    if (-not $script:BackupDir) { return }
+    $id = "$Path|$Name"
+    if ($script:RegSeen.ContainsKey($id)) { return }
+    $script:RegSeen[$id] = $true
+    $rawName = $Name
+    if ($Name -eq '(Default)') { $rawName = '' }
+    $keyExisted = Test-Path $Path
+    $valueExisted = $false
+    $oldKind = $null
+    $oldValue = $null
+    if ($keyExisted) {
+        try {
+            $item = Get-Item -Path $Path -EA Stop
+            if ($item.GetValueNames() -contains $rawName) {
+                $valueExisted = $true
+                $oldKind = $item.GetValueKind($rawName).ToString()
+                $oldValue = $item.GetValue($rawName, $null, 'DoNotExpandEnvironmentNames')
+            }
+        } catch { }
+    }
+    $createdRoot = $null
+    if (-not $keyExisted) {
+        $probe = $Path
+        while ($probe -and -not (Test-Path $probe)) {
+            $createdRoot = $probe
+            $probe = Split-Path $probe -Parent
+        }
+    }
+    $script:RegValueChanges += [PSCustomObject]@{
+        Path = $Path
+        Name = $Name
+        KeyExisted = $keyExisted
+        CreatedRoot = $createdRoot
+        ValueExisted = $valueExisted
+        OldKind = $oldKind
+        OldValue = $oldValue
+    }
+}
+
+function Set-Reg {
+    param([string]$Path, [string]$Name, $Value, [string]$Type = "DWORD", [switch]$PassThru)
+    Backup-RegKey $Path
+    Save-RegPriorState $Path $Name
+    $success = $false
+    try {
+        if (-not (Test-Path $Path)) { New-Item -Path $Path -Force -ErrorAction Stop | Out-Null }
+        # New-ItemProperty -Force replaces the value AND its type, so a REG_SZ that
+        # should be a DWORD is recreated with the right type.
+        New-ItemProperty -Path $Path -Name $Name -Value $Value -PropertyType $Type -Force -ErrorAction Stop | Out-Null
+        $success = $true
+    } catch [System.Security.SecurityException] {
+        Write-Warn "Access denied: $Path\$Name - run as Administrator"
+    } catch [System.UnauthorizedAccessException] {
+        Write-Warn "Unauthorized: $Path\$Name - check permissions or ownership"
+    } catch {
+        Write-ErrorLog "Registry: $Path\$Name" $_
+    }
+    if ($PassThru) { return $success }
+}
+
+function Add-UndoCommand {
+    # Registers a PowerShell command the restore script runs to undo a non-registry change
+    param([string]$Label, [string]$Command)
+    if (-not $script:BackupDir) { return }
+    $script:UndoCommands += [PSCustomObject]@{ Label = $Label; Command = $Command }
+}
+
+function Disable-Task {
+    # Accepts a full task path such as "Microsoft\Windows\Autochk\Proxy".
+    # Get-ScheduledTask -TaskName only matches the leaf name, so split folder and leaf.
+    param([string]$TaskPath, [string]$Label)
+    $full = '\' + $TaskPath.Trim('\')
+    $name = Split-Path $full -Leaf
+    $folder = (Split-Path $full -Parent).TrimEnd('\') + '\'
+    try {
+        $task = Get-ScheduledTask -TaskPath $folder -TaskName $name -EA SilentlyContinue
+        if (-not $task) { return $false }
+        if ($task.State -ne 'Disabled') {
+            Disable-ScheduledTask -TaskPath $folder -TaskName $name -EA Stop | Out-Null
+            $script:ScheduledTaskChanges += [PSCustomObject]@{
+                Name = $full
+                TaskPath = $folder
+                TaskName = $name
+                OriginalState = $task.State.ToString()
+            }
+            if ($Label) { Write-OK $Label }
+        }
+        return $true
+    } catch {
+        if ($Label) { Write-ErrorLog "Task: $Label" $_ }
+        return $false
+    }
+}
+
+function Set-ServiceSafe {
+    param([string]$Name, [string]$StartupType, [switch]$Stop, [string]$Label)
+    $svc = Get-Service -Name $Name -ErrorAction SilentlyContinue
+    if (-not $svc) {
+        if ($Label) { Write-Warn "$Label - service not found" }
+        return $false
+    }
+    # Get-CimInstance works in Windows PowerShell 5.1 and PowerShell 7 (the WMI cmdlets were removed in 7)
+    $cim = Get-CimInstance Win32_Service -Filter "Name='$Name'" -EA SilentlyContinue
+    $original = $null
+    $delayed = $false
+    if ($cim) {
+        $original = $cim.StartMode
+        $delayed = [bool]$cim.DelayedAutoStart
+    }
+    if (-not $original) { $original = $svc.StartType.ToString() }
+    try {
+        # Change the startup type first: a service that refuses to stop still gets the new type
+        if ($StartupType -eq "AutomaticDelayedStart") {
+            $scResult = sc.exe config $Name start= delayed-auto 2>&1
+            if ($LASTEXITCODE -ne 0) { throw "sc.exe failed: $scResult" }
+        } else {
+            Set-Service -Name $Name -StartupType $StartupType -ErrorAction Stop
+        }
+        $script:ServiceChanges += [PSCustomObject]@{
+            Name = $Name
+            Original = $original
+            DelayedAutoStart = $delayed
+            New = $StartupType
+        }
+        if ($Stop) { Stop-Service -Name $Name -Force -ErrorAction SilentlyContinue }
+        if ($Label) { Write-OK $Label }
+        return $true
+    } catch [System.InvalidOperationException] {
+        if ($Label) { Write-Warn "$Label - cannot modify (protected service)" }
+        return $false
+    } catch {
+        if ($Label) { Write-ErrorLog "Service: $Label" $_ } else { Write-ErrorLog "Service: $Name" $_ }
+        return $false
+    }
+}
+
+function Remove-AppxSafe {
+    # Removes an app for all users AND its provisioned copy, so feature updates do not reinstall it
+    param([string]$Pattern)
+    $hit = $false
+    $pkgs = Get-AppxPackage -Name $Pattern -AllUsers -EA SilentlyContinue
+    foreach ($p in $pkgs) {
+        try { $p | Remove-AppxPackage -AllUsers -EA Stop; $hit = $true } catch { }
+    }
+    $prov = Get-AppxProvisionedPackage -Online -EA SilentlyContinue | Where-Object { $_.DisplayName -like $Pattern }
+    foreach ($p in $prov) {
+        try { $p | Remove-AppxProvisionedPackage -Online -EA Stop | Out-Null; $hit = $true } catch { }
+    }
+    if ($hit -and $script:BackupDir) { $script:RemovedApps += $Pattern }
+    return $hit
+}
+$script:RemovedApps = @()
+
+# --- Section progress and summary ---
+function Complete-Section {
+    if (-not $script:CurrentSection) { return }
+    $s = $script:CurrentSection
+    $script:SectionStats += [PSCustomObject]@{
+        Name = $s.Name
+        OK = ($script:SuccessCount - $s.Ok0)
+        Warn = ($script:WarningCount - $s.Warn0)
+        Fail = ($script:FailCount - $s.Fail0)
+        Seconds = [math]::Round(((Get-Date) - $s.Start).TotalSeconds, 1)
+    }
+    $script:CurrentSection = $null
+}
+
+function Start-Section {
+    param([string]$Name, [int]$Index, [int]$Total)
+    Complete-Section
+    $script:CurrentSection = [PSCustomObject]@{
+        Name = $Name
+        Ok0 = $script:SuccessCount
+        Warn0 = $script:WarningCount
+        Fail0 = $script:FailCount
+        Start = Get-Date
+    }
+    $bar = ('#' * $Index) + ('-' * [math]::Max(0, $Total - $Index))
+    Write-Host ""
+    Write-Host ("  [" + $bar + "] " + $Name.ToUpper() + "  (" + $Index + "/" + $Total + ")") -ForegroundColor Magenta
+    Write-ProgressStep "Applying Optimizations" $Name $Index $Total
+}
+
+function Write-SectionSummary {
+    Complete-Section
+    if ($script:SectionStats.Count -eq 0) { return }
+    Write-Host ""
+    Write-Host "  Section            OK  Warn  Fail    Time" -ForegroundColor White
+    Write-Host "  ---------------- ----  ----  ----  ------" -ForegroundColor DarkGray
+    foreach ($s in $script:SectionStats) {
+        $color = 'Green'
+        if ($s.Warn -gt 0) { $color = 'Yellow' }
+        if ($s.Fail -gt 0) { $color = 'Red' }
+        Write-Host ("  {0,-16} {1,4}  {2,4}  {3,4}  {4,5}s" -f $s.Name, $s.OK, $s.Warn, $s.Fail, $s.Seconds) -ForegroundColor $color
+    }
+}
+
+# --- Backup manifest + restore script ---
+function Save-BackupManifest {
+    if (-not $script:BackupDir) { return }
+    if ($script:BackupSaved) { return }
+    $script:BackupSaved = $true
+    $dir = $script:BackupDir
+    try {
+        ConvertTo-Json -InputObject @($script:BackupManifest) -Depth 4 | Set-Content (Join-Path $dir "manifest.json") -Encoding UTF8
+        ConvertTo-Json -InputObject @($script:RegValueChanges) -Depth 4 | Set-Content (Join-Path $dir "values.json") -Encoding UTF8
+        ConvertTo-Json -InputObject @($script:ServiceChanges) -Depth 4 | Set-Content (Join-Path $dir "services.json") -Encoding UTF8
+        ConvertTo-Json -InputObject @($script:ScheduledTaskChanges) -Depth 4 | Set-Content (Join-Path $dir "tasks.json") -Encoding UTF8
+        ConvertTo-Json -InputObject @($script:BcdeditChanges) -Depth 4 | Set-Content (Join-Path $dir "bcdedit.json") -Encoding UTF8
+        ConvertTo-Json -InputObject @($script:DNSChanges) -Depth 4 | Set-Content (Join-Path $dir "dns.json") -Encoding UTF8
+        ConvertTo-Json -InputObject @($script:UndoCommands) -Depth 4 | Set-Content (Join-Path $dir "undo.json") -Encoding UTF8
+        ConvertTo-Json -InputObject @($script:RemovedApps) -Depth 4 | Set-Content (Join-Path $dir "removed-apps.json") -Encoding UTF8
+        $restorePath = Join-Path $dir "Restore-RockTune.ps1"
+        $script:RestoreScriptBody | Set-Content $restorePath -Encoding UTF8
+        Write-Host ""
+        Write-Host "  Restore script: $restorePath" -ForegroundColor Green
+    } catch {
+        Write-Warn "Could not write restore files: $($_.Exception.Message)"
+    }
+}
+
+$script:RestoreScriptBody = @'
+#Requires -RunAsAdministrator
+# RockTune Restore Script
+# Undoes the changes recorded in this folder: registry values (exact prior state),
+# services, scheduled tasks, boot settings, DNS and other recorded commands.
+$here = $PSScriptRoot
+if (-not $here) { $here = Split-Path -Parent $MyInvocation.MyCommand.Path }
+$script:restored = 0
+$script:failed = 0
+function Read-Manifest {
+    param([string]$File)
+    $p = Join-Path $here $File
+    if (-not (Test-Path $p)) { return $null }
+    $raw = Get-Content $p -Raw
+    if (-not $raw) { return $null }
+    return ($raw | ConvertFrom-Json)
+}
+function Write-R {
+    param([bool]$Ok, [string]$M)
+    if ($Ok) { $script:restored++; Write-Host "  [OK] $M" -ForegroundColor Green }
+    else { $script:failed++; Write-Host "  [FAIL] $M" -ForegroundColor Red }
+}
+
+Write-Host ""
+Write-Host "  ROCKTUNE RESTORE" -ForegroundColor Cyan
+Write-Host "  Restoring settings from: $here" -ForegroundColor Gray
+Write-Host ""
+
+# 1. Registry keys that RockTune deleted come back from their .reg export.
+#    Without values.json (older backups), every export is imported.
+$values = Read-Manifest 'values.json'
+foreach ($item in (Read-Manifest 'manifest.json')) {
+    if (-not $item) { continue }
+    if (-not (Test-Path $item.File)) { continue }
+    if ($values -and (Test-Path $item.Path)) { continue }
+    $null = reg import $item.File 2>&1
+    Write-R ($LASTEXITCODE -eq 0) "Registry key: $($item.Path)"
+}
+
+# 2. Registry values: put back old data, delete values RockTune created
+if ($values) {
+    $valueList = @($values)
+    [array]::Reverse($valueList)
+    foreach ($v in $valueList) {
+        if (-not $v) { continue }
+        try {
+            if ($v.ValueExisted) {
+                if (-not (Test-Path $v.Path)) { New-Item -Path $v.Path -Force | Out-Null }
+                $data = $v.OldValue
+                if ($v.OldKind -eq 'Binary') { $data = [byte[]]@($v.OldValue) }
+                if ($v.OldKind -eq 'MultiString') { $data = [string[]]@($v.OldValue) }
+                New-ItemProperty -Path $v.Path -Name $v.Name -Value $data -PropertyType $v.OldKind -Force -EA Stop | Out-Null
+            } elseif (Test-Path $v.Path) {
+                Remove-ItemProperty -Path $v.Path -Name $v.Name -Force -EA SilentlyContinue
+            }
+            Write-R $true "Registry: $($v.Path)\$($v.Name)"
+        } catch {
+            Write-R $false "Registry: $($v.Path)\$($v.Name) - $($_.Exception.Message)"
+        }
+    }
+    # Keys RockTune created are deleted when nothing else wrote into them
+    $roots = @($valueList | Where-Object { $_ -and $_.CreatedRoot } | ForEach-Object { $_.CreatedRoot } | Sort-Object -Unique)
+    foreach ($root in $roots) {
+        if (-not (Test-Path $root)) { continue }
+        $left = (Get-Item $root).ValueCount
+        foreach ($sub in (Get-ChildItem $root -Recurse -EA SilentlyContinue)) { $left += $sub.ValueCount }
+        if ($left -eq 0) {
+            Remove-Item -Path $root -Recurse -Force -EA SilentlyContinue
+            Write-R (-not (Test-Path $root)) "Removed key created by RockTune: $root"
+        }
+    }
+}
+
+# 3. Services (Auto + DelayedAutoStart comes back as delayed-auto)
+foreach ($svc in (Read-Manifest 'services.json')) {
+    if (-not $svc) { continue }
+    try {
+        $mode = [string]$svc.Original
+        if ($mode -eq 'Auto' -or $mode -eq 'Automatic') {
+            if ($svc.DelayedAutoStart) {
+                $null = sc.exe config $svc.Name start= delayed-auto
+                if ($LASTEXITCODE -ne 0) { throw "sc.exe exit code $LASTEXITCODE" }
+                $label = 'Automatic (Delayed Start)'
+            } else {
+                Set-Service -Name $svc.Name -StartupType Automatic -ErrorAction Stop
+                $label = 'Automatic'
+            }
+        } elseif ($mode -eq 'Manual' -or $mode -eq 'Disabled') {
+            Set-Service -Name $svc.Name -StartupType $mode -ErrorAction Stop
+            $label = $mode
+        } else {
+            Write-Host "  [SKIP] Service $($svc.Name) (start mode '$mode' not restorable)" -ForegroundColor DarkGray
+            continue
+        }
+        Write-R $true "Service: $($svc.Name) -> $label"
+    } catch {
+        Write-R $false "Service: $($svc.Name) - $($_.Exception.Message)"
+    }
+}
+
+# 4. Scheduled tasks
+foreach ($t in (Read-Manifest 'tasks.json')) {
+    if (-not $t) { continue }
+    if ($t.OriginalState -eq 'Disabled') { continue }
+    $tp = $t.TaskPath
+    $tn = $t.TaskName
+    if (-not $tn) {
+        $full = '\' + ([string]$t.Name).Trim('\')
+        $tn = Split-Path $full -Leaf
+        $tp = (Split-Path $full -Parent).TrimEnd('\') + '\'
+    }
+    try {
+        Enable-ScheduledTask -TaskPath $tp -TaskName $tn -ErrorAction Stop | Out-Null
+        Write-R $true "Task: $tp$tn -> Enabled"
+    } catch {
+        Write-R $false "Task: $tp$tn"
+    }
+}
+
+# 5. Boot configuration
+foreach ($bcd in (Read-Manifest 'bcdedit.json')) {
+    if (-not $bcd) { continue }
+    try {
+        $null = Invoke-Expression $bcd.UndoCommand 2>&1
+        Write-R ($LASTEXITCODE -eq 0) "BCD: $($bcd.Setting)"
+    } catch {
+        Write-R $false "BCD: $($bcd.Setting) - $($_.Exception.Message)"
+    }
+}
+
+# 6. DNS
+foreach ($dns in (Read-Manifest 'dns.json')) {
+    if (-not $dns) { continue }
+    try {
+        if ($dns.OriginalDNS) {
+            Set-DnsClientServerAddress -InterfaceIndex $dns.InterfaceIndex -ServerAddresses ($dns.OriginalDNS -split ",") -ErrorAction Stop
+        } else {
+            Set-DnsClientServerAddress -InterfaceIndex $dns.InterfaceIndex -ResetServerAddresses -ErrorAction Stop
+        }
+        Write-R $true "DNS: $($dns.AdapterName)"
+    } catch {
+        Write-R $false "DNS: $($dns.AdapterName)"
+    }
+}
+
+# 7. Other recorded changes (page file, power plan, Windows features, ...)
+foreach ($u in (Read-Manifest 'undo.json')) {
+    if (-not $u) { continue }
+    try {
+        $null = Invoke-Expression $u.Command
+        Write-R $true $u.Label
+    } catch {
+        Write-R $false "$($u.Label) - $($_.Exception.Message)"
+    }
+}
+
+# 8. Removed apps cannot be restored by script; list them with the reinstall route
+$apps = Read-Manifest 'removed-apps.json'
+if ($apps) {
+    Write-Host ""
+    Write-Host "  Removed apps (reinstall from the Microsoft Store or winget if you want them back):" -ForegroundColor Yellow
+    foreach ($a in $apps) { if ($a) { Write-Host "    - $a" -ForegroundColor Gray } }
+}
+
+Write-Host ""
+Write-Host "  Restored: $script:restored | Failed: $script:failed" -ForegroundColor Cyan
+Write-Host "  Reboot recommended to apply all changes." -ForegroundColor Yellow
+Write-Host ""
 '@
 `;
 
@@ -308,32 +730,6 @@ function Write-ErrorLog {
             "$timestamp | $Context | $($Err.Exception.Message)\`n$($Err.ScriptStackTrace)" | Add-Content $logPath
         }
     }
-}
-function Set-Reg {
-    param([string]$Path, [string]$Name, $Value, [string]$Type = "DWORD", [switch]$PassThru)
-    # Backup the registry key before modifying (if backup is enabled)
-    Backup-RegKey $Path
-    $success = $false
-    try {
-        if (-not (Test-Path $Path)) { New-Item -Path $Path -Force -ErrorAction Stop | Out-Null }
-        $existing = Get-ItemProperty -Path $Path -Name $Name -EA SilentlyContinue
-        if ($null -eq $existing) {
-            New-ItemProperty -Path $Path -Name $Name -Value $Value -PropertyType $Type -Force -ErrorAction Stop | Out-Null
-        } else {
-            Set-ItemProperty -Path $Path -Name $Name -Value $Value -ErrorAction Stop
-        }
-        $success = $true
-    } catch [System.Security.SecurityException] {
-        Write-Warn "Access denied: $Path\\$Name - run as Administrator"
-        $success = $false
-    } catch [System.UnauthorizedAccessException] {
-        Write-Warn "Unauthorized: $Path\\$Name - check permissions or ownership"
-        $success = $false
-    } catch {
-        Write-ErrorLog "Registry: $Path\\$Name" $_
-        $success = $false
-    }
-    if ($PassThru) { return $success }
 }
 function Set-Reg-Verified {
     param([string]$Path, [string]$Name, $Value, [string]$Type = "DWORD", [string]$Label)
@@ -454,9 +850,19 @@ public class TokenPriv {
             $key.SetAccessControl($acl)
             $key.Close()
 
-            # Now set the value
-            New-ItemProperty -Path $Path -Name $Name -Value $Value -PropertyType $Type -Force -ErrorAction Stop | Out-Null
-            $success = $true
+            # Now set the value, then put the original owner and ACL back
+            try {
+                New-ItemProperty -Path $Path -Name $Name -Value $Value -PropertyType $Type -Force -ErrorAction Stop | Out-Null
+                $success = $true
+            } finally {
+                if ($originalAcl) {
+                    try {
+                        $key = $hive.OpenSubKey($subKey, [Microsoft.Win32.RegistryKeyPermissionCheck]::ReadWriteSubTree,
+                            ([System.Security.AccessControl.RegistryRights]::ChangePermissions -bor [System.Security.AccessControl.RegistryRights]::TakeOwnership))
+                        if ($key) { $key.SetAccessControl($originalAcl); $key.Close() }
+                    } catch { Write-Warn "Could not restore original permissions on $Path" }
+                }
+            }
 
         } catch {
             # Fallback failed - report it
@@ -467,25 +873,6 @@ public class TokenPriv {
     }
 
     if ($PassThru) { return $success }
-}
-function Disable-Task {
-    param([string]$TaskPath, [string]$Label)
-    try {
-        $task = Get-ScheduledTask -TaskName $TaskPath -EA SilentlyContinue
-        if (-not $task) { return $true }  # Task doesn't exist, that's fine
-        if ($task.State -ne 'Disabled') {
-            Disable-ScheduledTask -TaskName $TaskPath -EA Stop | Out-Null
-            $script:ScheduledTaskChanges += [PSCustomObject]@{
-                Name = $TaskPath
-                OriginalState = $task.State.ToString()
-            }
-            if ($Label) { Write-OK $Label }
-        }
-        return $true
-    } catch {
-        if ($Label) { Write-ErrorLog "Task: $Label" $_ }
-        return $false
-    }
 }
 function Set-Bcdedit {
     param([string]$Setting, [string]$Value, [string]$UndoCmd)
@@ -499,42 +886,6 @@ function Set-Bcdedit {
         return $true
     }
     return $false
-}
-
-function Set-ServiceSafe {
-    param([string]$Name, [string]$StartupType, [switch]$Stop, [string]$Label)
-    $svc = Get-Service -Name $Name -ErrorAction SilentlyContinue
-    if (-not $svc) {
-        if ($Label) { Write-Warn "$Label - service not found" }
-        return $false
-    }
-    $originalStartType = (Get-WmiObject Win32_Service -Filter "Name='$Name'" -EA SilentlyContinue).StartMode
-    try {
-        if ($Stop) { Stop-Service -Name $Name -Force -ErrorAction Stop }
-        # PS 5.0 doesn't support AutomaticDelayedStart via Set-Service, use sc.exe fallback
-        if (($PSVersionTable.PSVersion.Major -lt 6) -and ($StartupType -eq "AutomaticDelayedStart")) {
-            $scResult = sc.exe config $Name start=delayed-auto 2>&1
-            if ($LASTEXITCODE -ne 0) { throw "sc.exe failed: $scResult" }
-        } else {
-            Set-Service -Name $Name -StartupType $StartupType -ErrorAction Stop
-        }
-        $script:ServiceChanges += [PSCustomObject]@{
-            Name = $Name
-            Original = $originalStartType
-            New = $StartupType
-        }
-        if ($Label) { Write-OK $Label }
-        return $true
-    } catch [System.ServiceProcess.ServiceNotFoundException] {
-        if ($Label) { Write-Warn "$Label - service not found" }
-        return $false
-    } catch [System.InvalidOperationException] {
-        if ($Label) { Write-Warn "$Label - cannot modify (may be in use)" }
-        return $false
-    } catch {
-        if ($Label) { Write-ErrorLog "Service: $Label" $_ } else { Write-ErrorLog "Service: $Name" $_ }
-        return $false
-    }
 }
 
 function Remove-RegKeySafe {
@@ -673,6 +1024,17 @@ function Initialize-Backup {
     $timestamp = Get-Date -Format 'yyyy-MM-dd_HHmmss'
     $script:BackupDir = Join-Path $env:USERPROFILE "RockTune-Backup\\$timestamp"
     New-Item -ItemType Directory -Path $script:BackupDir -Force | Out-Null
+    $script:BackupManifest = @()
+    $script:BackedUpPaths = @{}
+    $script:RegValueChanges = @()
+    $script:RegSeen = @{}
+    $script:UndoCommands = @()
+    $script:RemovedApps = @()
+    $script:ServiceChanges = @()
+    $script:ScheduledTaskChanges = @()
+    $script:BcdeditChanges = @()
+    $script:DNSChanges = @()
+    $script:BackupSaved = $false
     Write-Host "  Backup location: $script:BackupDir" -ForegroundColor Gray
 }
 
@@ -691,148 +1053,6 @@ function Backup-RegKey {
         $script:BackupManifest += [PSCustomObject]@{ Path = $Path; File = $backupFile }
         $script:BackedUpPaths[$Path] = $true
     }
-}
-
-function Save-BackupManifest {
-    if (-not $script:BackupDir) { return }
-    $hasChanges = $script:BackupManifest.Count -gt 0 -or $script:ServiceChanges.Count -gt 0 -or $script:ScheduledTaskChanges.Count -gt 0 -or $script:BcdeditChanges.Count -gt 0 -or $script:DNSChanges.Count -gt 0
-    if (-not $hasChanges) { return }
-
-    # Save all manifests
-    $manifestPath = Join-Path $script:BackupDir "manifest.json"
-    $script:BackupManifest | ConvertTo-Json -Depth 3 | Set-Content $manifestPath -Encoding UTF8
-
-    $svcManifestPath = Join-Path $script:BackupDir "services.json"
-    $script:ServiceChanges | ConvertTo-Json -Depth 3 | Set-Content $svcManifestPath -Encoding UTF8
-
-    $taskManifestPath = Join-Path $script:BackupDir "tasks.json"
-    $script:ScheduledTaskChanges | ConvertTo-Json -Depth 3 | Set-Content $taskManifestPath -Encoding UTF8
-
-    $bcdeditManifestPath = Join-Path $script:BackupDir "bcdedit.json"
-    $script:BcdeditChanges | ConvertTo-Json -Depth 3 | Set-Content $bcdeditManifestPath -Encoding UTF8
-
-    $dnsManifestPath = Join-Path $script:BackupDir "dns.json"
-    $script:DNSChanges | ConvertTo-Json -Depth 3 | Set-Content $dnsManifestPath -Encoding UTF8
-
-    # Generate comprehensive restore script
-    $restorePath = Join-Path $script:BackupDir "Restore-RockTune.ps1"
-    $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
-    $restoreLines = @(
-        '#Requires -RunAsAdministrator'
-        "# RockTune Restore Script - Generated $timestamp"
-        '# This script restores your settings from before RockTune optimizations'
-        ''
-        'Write-Host ""'
-        'Write-Host "  ROCKTUNE RESTORE" -ForegroundColor Cyan'
-        "Write-Host \`"  Restoring settings from: $script:BackupDir\`" -ForegroundColor Gray"
-        'Write-Host ""'
-        ''
-        '$restored = 0'
-        '$failed = 0'
-        ''
-        '# Restore registry keys'
-        "if (Test-Path \`"$manifestPath\`") {"
-        "    \\$manifest = Get-Content \`"$manifestPath\`" | ConvertFrom-Json"
-        '    foreach ($item in $manifest) {'
-        '        if (Test-Path $item.File) {'
-        '            $null = reg import $item.File 2>&1'
-        '            if ($LASTEXITCODE -eq 0) {'
-        '                Write-Host "  [OK] Registry: $($item.Path)" -ForegroundColor Green'
-        '                $restored++'
-        '            } else {'
-        '                Write-Host "  [FAIL] Registry: $($item.Path)" -ForegroundColor Red'
-        '                $failed++'
-        '            }'
-        '        }'
-        '    }'
-        '}'
-        ''
-        '# Restore service states'
-        "if (Test-Path \`"$svcManifestPath\`") {"
-        "    \\$svcManifest = Get-Content \`"$svcManifestPath\`" | ConvertFrom-Json"
-        '    foreach ($svc in $svcManifest) {'
-        '        try {'
-        '            $startType = switch ($svc.Original) {'
-        "                'Auto' { 'Automatic' }"
-        "                'Manual' { 'Manual' }"
-        "                'Disabled' { 'Disabled' }"
-        '                default { $svc.Original }'
-        '            }'
-        '            Set-Service -Name $svc.Name -StartupType $startType -ErrorAction Stop'
-        '            Write-Host "  [OK] Service: $($svc.Name) -> $startType" -ForegroundColor Green'
-        '            $restored++'
-        '        } catch {'
-        '            Write-Host "  [FAIL] Service: $($svc.Name)" -ForegroundColor Red'
-        '            $failed++'
-        '        }'
-        '    }'
-        '}'
-        ''
-        '# Restore scheduled tasks'
-        "if (Test-Path \`"$taskManifestPath\`") {"
-        "    \\$taskManifest = Get-Content \`"$taskManifestPath\`" | ConvertFrom-Json"
-        '    foreach ($task in $taskManifest) {'
-        '        try {'
-        '            if ($task.OriginalState -eq "Ready") {'
-        '                Enable-ScheduledTask -TaskName $task.Name -ErrorAction Stop | Out-Null'
-        '                Write-Host "  [OK] Task: $($task.Name) -> Enabled" -ForegroundColor Green'
-        '                $restored++'
-        '            }'
-        '        } catch {'
-        '            Write-Host "  [FAIL] Task: $($task.Name)" -ForegroundColor Red'
-        '            $failed++'
-        '        }'
-        '    }'
-        '}'
-        ''
-        '# Restore bcdedit settings'
-        "if (Test-Path \`"$bcdeditManifestPath\`") {"
-        "    \\$bcdeditManifest = Get-Content \`"$bcdeditManifestPath\`" | ConvertFrom-Json"
-        '    foreach ($bcd in $bcdeditManifest) {'
-        '        try {'
-        '            $null = Invoke-Expression $bcd.UndoCommand 2>&1'
-        '            if ($LASTEXITCODE -eq 0) {'
-        '                Write-Host "  [OK] BCD: $($bcd.Setting)" -ForegroundColor Green'
-        '                $restored++'
-        '            } else {'
-        '                Write-Host "  [FAIL] BCD: $($bcd.Setting)" -ForegroundColor Red'
-        '                $failed++'
-        '            }'
-        '        } catch {'
-        '            Write-Host "  [FAIL] BCD: $($bcd.Setting) - $($_.Exception.Message)" -ForegroundColor Red'
-        '            $failed++'
-        '        }'
-        '    }'
-        '}'
-        ''
-        '# Restore DNS settings'
-        "if (Test-Path \`"$dnsManifestPath\`") {"
-        "    \\$dnsManifest = Get-Content \`"$dnsManifestPath\`" | ConvertFrom-Json"
-        '    foreach ($dns in $dnsManifest) {'
-        '        try {'
-        '            if ($dns.OriginalDNS) {'
-        '                $servers = $dns.OriginalDNS -split ","'
-        '                Set-DnsClientServerAddress -InterfaceIndex $dns.InterfaceIndex -ServerAddresses $servers -ErrorAction Stop'
-        '            } else {'
-        '                Set-DnsClientServerAddress -InterfaceIndex $dns.InterfaceIndex -ResetServerAddresses -ErrorAction Stop'
-        '            }'
-        '            Write-Host "  [OK] DNS: $($dns.AdapterName)" -ForegroundColor Green'
-        '            $restored++'
-        '        } catch {'
-        '            Write-Host "  [FAIL] DNS: $($dns.AdapterName)" -ForegroundColor Red'
-        '            $failed++'
-        '        }'
-        '    }'
-        '}'
-        ''
-        'Write-Host ""'
-        'Write-Host "  Restored: $restored | Failed: $failed" -ForegroundColor Cyan'
-        'Write-Host "  Reboot recommended to apply all changes." -ForegroundColor Yellow'
-        'Write-Host ""'
-    )
-    $restoreLines -join "\`r\`n" | Set-Content $restorePath -Encoding UTF8
-    Write-Host ""
-    Write-Host "  Restore script: $restorePath" -ForegroundColor Green
 }
 
 # --- Confirmation prompt ---
@@ -1068,9 +1288,13 @@ function Set-MonitorRefreshRate {
         if ($SetToMaximum) {
             $devMode.dmDisplayFrequency = $maxHz
             $devMode.dmFields = 0x00400000  # DM_DISPLAYFREQUENCY
-            $changeResult = [DisplayConfig]::ChangeDisplaySettings([ref]$devMode, 0)
+            # 0x01 = CDS_UPDATEREGISTRY: keep the mode after reboot / reconnect
+            $changeResult = [DisplayConfig]::ChangeDisplaySettings([ref]$devMode, 1)
             if ($changeResult -eq 0) {
                 Write-OK "Refresh rate set to $\${maxHz}Hz"
+            } elseif ($changeResult -eq 1) {
+                Write-OK "Refresh rate set to $\${maxHz}Hz (applies after restart)"
+                Add-RebootReason "Display refresh rate change"
             } else {
                 Write-Warn "Failed to change refresh rate (error: $changeResult)"
             }
@@ -1349,6 +1573,10 @@ export function buildScript(
   );
   lines.push("}");
   lines.push("");
+  // Everything after the lock runs inside try/finally so -Undo, Ctrl+C and early
+  // returns all release the mutex and still write the restore files.
+  lines.push("try {");
+  lines.push("");
   // Handle -Undo switch at script start
   lines.push("if ($Undo) {");
   lines.push('    $backupRoot = Join-Path $env:USERPROFILE "RockTune-Backup"');
@@ -1467,6 +1695,8 @@ export function buildScript(
 
   lines.push(HELPER_FUNCTIONS.trim());
   lines.push("");
+  lines.push(CORE_HELPERS.trim());
+  lines.push("");
 
   // Add timer tool code if enabled
   if (includeTimer) {
@@ -1481,6 +1711,9 @@ export function buildScript(
   stepCount++; // Upgrades
   if (allPackagesArray.length > 0) stepCount++;
   stepCount++; // Completion
+
+  const loadoutLine =
+    `Write-Host "  Loadout: ${optimizations.length} upgrades | ${allPackagesArray.length} apps | risk: ${riskProfile.toUpperCase()}" -ForegroundColor DarkCyan`;
 
   // When timer is included, wrap optimizations in a function
   if (includeTimer) {
@@ -1501,17 +1734,24 @@ export function buildScript(
     lines.push("    $script:SuccessCount = 0");
     lines.push("    $script:FailCount = 0");
     lines.push("    $script:WarningCount = 0");
+    lines.push("    $script:SkipCount = 0");
+    lines.push("    $script:SectionStats = @()");
+    lines.push("    $script:CurrentSection = $null");
+    lines.push("    $script:RebootRequired = $false");
+    lines.push("    $script:RebootReasons = @()");
     lines.push("    $script:ScanResults = @()");
     lines.push("    $script:AppliedChanges = @()");
     lines.push("    $script:StartTime = Get-Date");
     lines.push(`    $script:StepTotal = ${stepCount}`);
     lines.push("    Write-Banner");
+    lines.push(`    ${loadoutLine}`);
     lines.push('    Write-Host ""');
     lines.push("");
   } else {
     lines.push("Clear-Host");
     lines.push(`$script:StepTotal = ${stepCount}`);
     lines.push("Write-Banner");
+    lines.push(loadoutLine);
     lines.push('Write-Host ""');
     lines.push("");
   }
@@ -1607,28 +1847,22 @@ export function buildScript(
 
   if (selected.has("restore_point")) {
     lines.push(`${indent}Write-Step "Pre-flight: System Restore Point"`);
-    lines.push(`${indent}$recentRestorePoint = $null`);
-    lines.push(
-      `${indent}try { $recentRestorePoint = Get-ComputerRestorePoint -EA Stop | Sort-Object CreationTime -Descending | Select-Object -First 1 } catch { $recentRestorePoint = $null }`,
-    );
-    lines.push(
-      `${indent}if ($recentRestorePoint -and $recentRestorePoint.CreationTime -gt (Get-Date).AddMinutes(-1440)) {`,
-    );
-    lines.push(
-      `${indent}    Write-Warn "Restore point already created within last 24 hours (skipped)"`,
-    );
-    lines.push(`${indent}} else {`);
-    lines.push(`${indent}    try {`);
-    lines.push(
-      `${indent}        Checkpoint-Computer -Description "Before RockTune" -RestorePointType MODIFY_SETTINGS -EA Stop -WarningAction SilentlyContinue`,
-    );
-    lines.push(`${indent}        Write-OK "Restore point created"`);
-    lines.push(`${indent}    } catch {`);
-    lines.push(
-      `${indent}        Write-Warn "Could not create restore point: $($_.Exception.Message)"`,
-    );
-    lines.push(`${indent}    }`);
-    lines.push(`${indent}}`);
+    addIndented(psLines(String.raw`
+# Turn System Protection on for the system drive when no restore point exists yet
+$hasPoints = $null
+try { $hasPoints = Get-ComputerRestorePoint -EA Stop } catch { $hasPoints = $null }
+if (-not $hasPoints) {
+    try { Enable-ComputerRestore -Drive "$env:SystemDrive\" -EA Stop } catch { Write-Warn "Could not enable System Protection: $($_.Exception.Message)" }
+}
+# Windows silently refuses a second restore point within 24h unless this is 0
+Set-Reg "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SystemRestore" "SystemRestorePointCreationFrequency" 0
+try {
+    Checkpoint-Computer -Description "Before RockTune" -RestorePointType MODIFY_SETTINGS -EA Stop -WarningAction SilentlyContinue
+    Write-OK "Restore point created (System Restore > 'Before RockTune')"
+} catch {
+    Write-Warn "Could not create restore point: $($_.Exception.Message)"
+}
+`));
     lines.push("");
   }
 
@@ -1663,7 +1897,7 @@ export function buildScript(
     lines.push(`${indent}# System`);
     lines.push(`${indent}$optCatIndex++`);
     lines.push(
-      `${indent}Write-ProgressStep "Applying Optimizations" "System" $optCatIndex $optCategories.Count`,
+      `${indent}Start-Section "System" $optCatIndex $optCategories.Count`,
     );
     addIndented(systemOpts);
     lines.push("");
@@ -1673,7 +1907,7 @@ export function buildScript(
     lines.push(`${indent}# Performance`);
     lines.push(`${indent}$optCatIndex++`);
     lines.push(
-      `${indent}Write-ProgressStep "Applying Optimizations" "Performance" $optCatIndex $optCategories.Count`,
+      `${indent}Start-Section "Performance" $optCatIndex $optCategories.Count`,
     );
     addIndented(perfOpts);
     lines.push("");
@@ -1683,7 +1917,7 @@ export function buildScript(
     lines.push(`${indent}# Power`);
     lines.push(`${indent}$optCatIndex++`);
     lines.push(
-      `${indent}Write-ProgressStep "Applying Optimizations" "Power" $optCatIndex $optCategories.Count`,
+      `${indent}Start-Section "Power" $optCatIndex $optCategories.Count`,
     );
     addIndented(powerOpts);
     lines.push("");
@@ -1693,7 +1927,7 @@ export function buildScript(
     lines.push(`${indent}# Network`);
     lines.push(`${indent}$optCatIndex++`);
     lines.push(
-      `${indent}Write-ProgressStep "Applying Optimizations" "Network" $optCatIndex $optCategories.Count`,
+      `${indent}Start-Section "Network" $optCatIndex $optCategories.Count`,
     );
     addIndented(networkOpts);
     lines.push("");
@@ -1703,7 +1937,7 @@ export function buildScript(
     lines.push(`${indent}# Privacy`);
     lines.push(`${indent}$optCatIndex++`);
     lines.push(
-      `${indent}Write-ProgressStep "Applying Optimizations" "Privacy" $optCatIndex $optCategories.Count`,
+      `${indent}Start-Section "Privacy" $optCatIndex $optCategories.Count`,
     );
     addIndented(privacyOpts);
     lines.push("");
@@ -1713,7 +1947,7 @@ export function buildScript(
     lines.push(`${indent}# Audio`);
     lines.push(`${indent}$optCatIndex++`);
     lines.push(
-      `${indent}Write-ProgressStep "Applying Optimizations" "Audio" $optCatIndex $optCategories.Count`,
+      `${indent}Start-Section "Audio" $optCatIndex $optCategories.Count`,
     );
     addIndented(audioOpts);
     lines.push("");
@@ -1723,7 +1957,7 @@ export function buildScript(
     lines.push(`${indent}# Software`);
     lines.push(`${indent}$optCatIndex++`);
     lines.push(
-      `${indent}Write-ProgressStep "Applying Optimizations" "Software" $optCatIndex $optCategories.Count`,
+      `${indent}Start-Section "Software" $optCatIndex $optCategories.Count`,
     );
     addIndented(softwareOpts);
     lines.push("");
@@ -1813,6 +2047,7 @@ export function buildScript(
   );
   lines.push("");
   lines.push(`${indent}# Show applied changes manifest`);
+  lines.push(`${indent}Write-SectionSummary`);
   lines.push(`${indent}Write-AppliedManifest`);
   lines.push("");
 
@@ -1843,7 +2078,16 @@ export function buildScript(
     `${indent}if ($script:FailCount -gt 0) { Write-Host "  Failed:   $($script:FailCount)" -ForegroundColor Red }`,
   );
   lines.push(
+    `${indent}if ($script:SkipCount -gt 0) { Write-Host "  Skipped:  $($script:SkipCount) (not applicable to this PC)" -ForegroundColor DarkGray }`,
+  );
+  lines.push(
     `${indent}Write-Host "  Elapsed:  $elapsedStr" -ForegroundColor Cyan`,
+  );
+  lines.push(
+    `${indent}if ($script:RebootRequired) { Write-Host "  Reboot:   NEEDED ($($script:RebootReasons.Count) change(s), listed below)" -ForegroundColor Yellow } else { Write-Host "  Reboot:   not required (recommended)" -ForegroundColor Gray }`,
+  );
+  lines.push(
+    `${indent}if ($script:FailCount -eq 0) { Write-Host "  GG - loadout equipped cleanly." -ForegroundColor Green } else { Write-Host "  Loadout equipped with $($script:FailCount) failure(s). Details: error.log in the backup folder." -ForegroundColor Yellow }`,
   );
 
   if (createBackup) {
@@ -1965,12 +2209,17 @@ export function buildScript(
     lines.push("Show-RockTuneMenu");
   }
 
-  // Release mutex at script end
+  // Release mutex and save partial backups no matter how the run ends
   lines.push("");
-  lines.push("# Release process lock");
-  lines.push("if ($mutex) {");
-  lines.push("    $mutex.ReleaseMutex()");
-  lines.push("    $mutex.Dispose()");
+  lines.push("} finally {");
+  lines.push("    # A partial run (error, Ctrl+C) still gets a restore script");
+  lines.push(
+    "    if ($script:BackupDir -and -not $script:BackupSaved -and (Get-Command Save-BackupManifest -EA SilentlyContinue)) { Save-BackupManifest }",
+  );
+  lines.push("    if ($mutex) {");
+  lines.push("        try { $mutex.ReleaseMutex() } catch { }");
+  lines.push("        $mutex.Dispose()");
+  lines.push("    }");
   lines.push("}");
   lines.push("");
   lines.push("# Keep window open so user can see results");
@@ -2075,16 +2324,12 @@ function generatePreflightScan(
   }
 
   if (selected.has("input_buffer")) {
-    lines.push("# Scan: Input buffer size");
-    lines.push(
-      '$val = Get-RegValue "HKLM:\\SYSTEM\\CurrentControlSet\\Services\\mouclass\\Parameters" "MouseDataQueueSize"',
-    );
-    lines.push(
-      'if ($val -eq 32) { Add-ScanResult "Mouse buffer size" "32" "32" "OK" }',
-    );
-    lines.push(
-      'else { Add-ScanResult "Mouse buffer size" "$val" "32" "CHANGE" }',
-    );
+    lines.push(...psLines(String.raw`
+# Scan: Input queue size (Windows default is 100)
+$val = Get-RegValue "HKLM:\SYSTEM\CurrentControlSet\Services\mouclass\Parameters" "MouseDataQueueSize"
+if ($null -eq $val -or $val -ge 100) { Add-ScanResult "Mouse input queue" "$val" ">= 100" "OK" }
+else { Add-ScanResult "Mouse input queue" "$val" "100" "CHANGE" }
+`));
   }
 
   if (selected.has("background_polling")) {
@@ -2286,10 +2531,14 @@ function generatePreflightScan(
   }
 
   if (selected.has("smt_disable")) {
-    lines.push("# Scan: SMT (requires bcdedit)");
-    lines.push(
-      'Add-ScanResult "SMT/Hyperthreading" "(current)" "Disabled" "REBOOT"',
-    );
+    lines.push(...psLines(String.raw`
+# Scan: SMT state (logical vs physical cores)
+$cpuInfo = Get-CimInstance Win32_Processor
+$physCores = ($cpuInfo | Measure-Object NumberOfCores -Sum).Sum
+$logCores = ($cpuInfo | Measure-Object NumberOfLogicalProcessors -Sum).Sum
+if ($logCores -le $physCores) { Add-ScanResult "SMT/Hyperthreading" "Off" "Off (BIOS)" "OK" }
+else { Add-ScanResult "SMT/Hyperthreading" "On ($logCores threads)" "Off (BIOS)" "INFO" }
+`));
   }
 
   // === POWER OPTIMIZATIONS ===
@@ -3151,16 +3400,12 @@ function generatePreflightScan(
   }
 
   if (selected.has("razer_block")) {
-    lines.push("# Scan: Razer Block");
-    lines.push(
-      '$razer = Get-Service -Name "Razer*" -EA SilentlyContinue | Where-Object {$_.StartType -ne "Disabled"}',
-    );
-    lines.push(
-      'if (-not $razer) { Add-ScanResult "[SAFE] Block Razer Services" "Blocked" "Blocked" "OK" }',
-    );
-    lines.push(
-      'else { Add-ScanResult "[SAFE] Block Razer Services" "Running" "Blocked" "CHANGE" }',
-    );
+    lines.push(...psLines(String.raw`
+# Scan: OEM / peripheral auto-install block
+$val = Get-RegValue "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Device Metadata" "PreventDeviceMetadataFromNetwork"
+if ($val -eq 1) { Add-ScanResult "[SAFE] Block OEM Auto-Installs" "Blocked" "Blocked" "OK" }
+else { Add-ScanResult "[SAFE] Block OEM Auto-Installs" "Allowed" "Blocked" "CHANGE" }
+`));
   }
 
   if (selected.has("bloatware")) {
@@ -3250,7 +3495,7 @@ function generatePreflightScan(
   if (selected.has("pagefile")) {
     lines.push("# Scan: Page File");
     lines.push(
-      "$pf = Get-WmiObject Win32_PageFileSetting -EA SilentlyContinue",
+      "$pf = Get-CimInstance Win32_PageFileSetting -EA SilentlyContinue | Select-Object -First 1",
     );
     lines.push(
       "if ($pf -and $pf.InitialSize -eq $pf.MaximumSize -and $pf.InitialSize -gt 0) {",
@@ -3430,29 +3675,49 @@ function generatePreflightScan(
 function generateSystemOpts(selected: Set<string>): string[] {
   const lines: string[] = [];
 
+  if (selected.has("update_no_reboot")) {
+    lines.push(...psLines(String.raw`
+# [SAFE] No surprise reboots or "get updates ASAP" installs while gaming
+Set-Reg "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" "NoAutoRebootWithLoggedOnUsers" 1
+Set-Reg "HKLM:\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings" "IsContinuousInnovationOptedIn" 0
+Write-OK "Windows Update will not auto-reboot while you are signed in"
+`));
+  }
+
+
   if (selected.has("pagefile")) {
-    lines.push("# [SAFE] Configure fixed page file - reduces fragmentation");
-    lines.push(
-      "$ram = [math]::Round((Get-CimInstance Win32_PhysicalMemory | Measure-Object Capacity -Sum).Sum/1GB)",
-    );
-    lines.push("if ($ram -ge 16) {");
-    lines.push("    $size = if ($ram -ge 32) { 4096 } else { 8192 }");
-    lines.push(
-      "    $cs = Get-WmiObject Win32_ComputerSystem -EnableAllPrivileges",
-    );
-    lines.push(
-      "    $cs.AutomaticManagedPagefile = $false; $cs.Put() | Out-Null",
-    );
-    lines.push(
-      "    $pf = Get-WmiObject -Query \"Select * From Win32_PageFileSetting Where Name='C:\\\\pagefile.sys'\" -EA SilentlyContinue",
-    );
-    lines.push("    if ($pf) {");
-    lines.push(
-      "        $pf.InitialSize = $size; $pf.MaximumSize = $size; $pf.Put() | Out-Null",
-    );
-    lines.push('        Write-OK "Page file set to ' + "$" + '{size}MB fixed"');
-    lines.push('    } else { Write-Warn "Page file setting not found" }');
-    lines.push("}");
+    lines.push(...psLines(String.raw`
+# [SAFE] Fixed page file - never leaves the system without one
+$ram = [math]::Round((Get-CimInstance Win32_PhysicalMemory | Measure-Object Capacity -Sum).Sum/1GB)
+if ($ram -ge 16) {
+    $size = 8192
+    if ($ram -ge 32) { $size = 4096 }
+    $pfName = "$env:SystemDrive\pagefile.sys"
+    $cs = Get-CimInstance Win32_ComputerSystem
+    $wasAuto = [bool]$cs.AutomaticManagedPagefile
+    $oldPf = Get-CimInstance Win32_PageFileSetting -EA SilentlyContinue | Where-Object { $_.Name -eq $pfName } | Select-Object -First 1
+    try {
+        if ($wasAuto) { Set-CimInstance -InputObject $cs -Property @{ AutomaticManagedPagefile = $false } -EA Stop }
+        $pf = $oldPf
+        if (-not $pf) {
+            # Auto-managed systems usually have no Win32_PageFileSetting instance: create one
+            $pf = New-CimInstance -ClassName Win32_PageFileSetting -Property @{ Name = $pfName } -EA Stop
+        }
+        Set-CimInstance -InputObject $pf -Property @{ InitialSize = [uint32]$size; MaximumSize = [uint32]$size } -EA Stop
+        if ($wasAuto) {
+            Add-UndoCommand "Page file: automatic management" '$cs = Get-CimInstance Win32_ComputerSystem; Set-CimInstance -InputObject $cs -Property @{ AutomaticManagedPagefile = $true }'
+        } elseif ($oldPf) {
+            Add-UndoCommand "Page file: previous size" ('$pf = Get-CimInstance Win32_PageFileSetting | Where-Object { $_.Name -eq ' + [char]39 + $pfName + [char]39 + ' }; Set-CimInstance -InputObject $pf -Property @{ InitialSize = [uint32]' + $oldPf.InitialSize + '; MaximumSize = [uint32]' + $oldPf.MaximumSize + ' }')
+        }
+        Write-OK "Page file set to $size MB fixed on $env:SystemDrive"
+        Add-RebootReason "Page file size change"
+    } catch {
+        # Never leave the PC with automatic management off and no page file defined
+        if ($wasAuto) { try { Set-CimInstance -InputObject (Get-CimInstance Win32_ComputerSystem) -Property @{ AutomaticManagedPagefile = $true } -EA Stop } catch { } }
+        Write-Warn "Page file change failed, automatic management kept: $($_.Exception.Message)"
+    }
+} else { Write-Skip "Fixed page file (needs 16 GB+ RAM; Windows manages it better below that)" }
+`));
   }
 
   if (selected.has("mouse_accel")) {
@@ -3460,18 +3725,18 @@ function generateSystemOpts(selected: Set<string>): string[] {
       "# [SAFE] Disable mouse acceleration - improves aim consistency",
     );
     lines.push(
-      'if (Set-Reg "HKCU:\\Control Panel\\Mouse" "MouseSpeed" 0 -PassThru) { Write-OK "Mouse acceleration disabled"; Add-AppliedChange "Input" "Mouse Acceleration" "OK" }',
+      'if (Set-Reg "HKCU:\\Control Panel\\Mouse" "MouseSpeed" "0" "String" -PassThru) { Write-OK "Mouse acceleration disabled"; Add-AppliedChange "Input" "Mouse Acceleration" "OK" }',
     );
-    lines.push('Set-Reg "HKCU:\\Control Panel\\Mouse" "MouseThreshold1" 0');
-    lines.push('Set-Reg "HKCU:\\Control Panel\\Mouse" "MouseThreshold2" 0');
+    lines.push('Set-Reg "HKCU:\\Control Panel\\Mouse" "MouseThreshold1" "0" "String"');
+    lines.push('Set-Reg "HKCU:\\Control Panel\\Mouse" "MouseThreshold2" "0" "String"');
   }
 
   if (selected.has("keyboard_response")) {
     lines.push("# [SAFE] Faster keyboard response");
     lines.push(
-      'if (Set-Reg "HKCU:\\Control Panel\\Keyboard" "KeyboardDelay" 0 -PassThru) { Write-OK "Keyboard delay minimized"; Add-AppliedChange "Input" "Keyboard Response" "OK" }',
+      'if (Set-Reg "HKCU:\\Control Panel\\Keyboard" "KeyboardDelay" "0" "String" -PassThru) { Write-OK "Keyboard delay minimized"; Add-AppliedChange "Input" "Keyboard Response" "OK" }',
     );
-    lines.push('Set-Reg "HKCU:\\Control Panel\\Keyboard" "KeyboardSpeed" 31');
+    lines.push('Set-Reg "HKCU:\\Control Panel\\Keyboard" "KeyboardSpeed" "31" "String"');
   }
 
   if (selected.has("fastboot")) {
@@ -3663,16 +3928,15 @@ function generateSystemOpts(selected: Set<string>): string[] {
   }
 
   if (selected.has("input_buffer")) {
-    lines.push("# Increase input buffer size (for high polling rate devices)");
-    lines.push(
-      'Set-Reg "HKLM:\\SYSTEM\\CurrentControlSet\\Services\\mouclass\\Parameters" "MouseDataQueueSize" 32',
-    );
-    lines.push(
-      'Set-Reg "HKLM:\\SYSTEM\\CurrentControlSet\\Services\\kbdclass\\Parameters" "KeyboardDataQueueSize" 32',
-    );
-    lines.push(
-      'Write-OK "Input buffer size increased (prevents drops at 8000Hz)"',
-    );
+    lines.push(...psLines(String.raw`
+# Input queue size: restore the Windows default (100) where a tweak guide shrank it.
+# Smaller queues can drop input at high polling rates.
+$mq = Get-RegValue "HKLM:\SYSTEM\CurrentControlSet\Services\mouclass\Parameters" "MouseDataQueueSize"
+$kq = Get-RegValue "HKLM:\SYSTEM\CurrentControlSet\Services\kbdclass\Parameters" "KeyboardDataQueueSize"
+if ($null -ne $mq -and $mq -lt 100) { Set-Reg "HKLM:\SYSTEM\CurrentControlSet\Services\mouclass\Parameters" "MouseDataQueueSize" 100; Add-RebootReason "Input queue size" }
+if ($null -ne $kq -and $kq -lt 100) { Set-Reg "HKLM:\SYSTEM\CurrentControlSet\Services\kbdclass\Parameters" "KeyboardDataQueueSize" 100; Add-RebootReason "Input queue size" }
+Write-OK "Input queues at Windows default or larger (mouse: $mq, keyboard: $kq; empty = default 100)"
+`));
   }
 
   if (selected.has("filesystem_perf")) {
@@ -3916,6 +4180,25 @@ function generatePerformanceOpts(
     );
   }
 
+  if (selected.has("gamebar_popup_fix")) {
+    lines.push(...psLines(String.raw`
+# [SAFE] Stop "You'll need a new app to open this ms-gamebar link" popups
+if ($Config.hardware.cpu -eq "amd_x3d") {
+    Write-Skip "Game Bar popup fix (X3D CPUs need Game Bar game detection for core parking)"
+} else {
+    Set-Reg "HKCU:\SOFTWARE\Microsoft\GameBar" "UseNexusForGameBarEnabled" 0
+    foreach ($proto in @("ms-gamebar", "ms-gamebarservices")) {
+        $base = "HKLM:\SOFTWARE\Classes\$proto"
+        Set-Reg $base "(Default)" "URL:$proto" "String"
+        Set-Reg $base "URL Protocol" "" "String"
+        Set-Reg $base "NoOpenWith" "" "String"
+        Set-Reg "$base\shell\open\command" "(Default)" "%SystemRoot%\System32\systray.exe" "ExpandString"
+    }
+    Write-OK "ms-gamebar links now open nothing (no more popup)"
+}
+`));
+  }
+
   if (selected.has("process_mitigation")) {
     lines.push("# Disable process mitigations (benchmarking)");
     lines.push(
@@ -3925,21 +4208,23 @@ function generatePerformanceOpts(
   }
 
   if (selected.has("interrupt_affinity")) {
-    lines.push("# Configure GPU interrupt affinity");
-    lines.push(
-      '$gpu = Get-PnpDevice -Class Display | Where-Object {$_.Status -eq "OK"} | Select-Object -First 1',
-    );
-    lines.push("if ($gpu) {");
-    lines.push(
-      '    $affPath = "HKLM:\\SYSTEM\\CurrentControlSet\\Enum\\$($gpu.InstanceId)\\Device Parameters\\Interrupt Management\\Affinity Policy"',
-    );
-    lines.push(
-      "    if (-not (Test-Path $affPath)) { New-Item -Path $affPath -Force | Out-Null }",
-    );
-    lines.push('    Set-Reg $affPath "DevicePolicy" 3');
-    lines.push('    Set-Reg $affPath "AssignmentSetOverride" 1');
-    lines.push('    Write-OK "GPU interrupt affinity set to CPU 0"');
-    lines.push("}");
+    lines.push(...psLines(String.raw`
+# GPU interrupt affinity: KAFFINITY bitmask (REG_BINARY), off CPU 0 which handles most system interrupts
+$gpuDev = Get-PnpDevice -Class Display -EA SilentlyContinue | Where-Object {$_.Status -eq "OK"} | Select-Object -First 1
+$lp = (Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors
+if ($gpuDev -and $lp -ge 2) {
+    # Logical CPU 2 is the first thread of physical core 1 when SMT is on
+    $irqCpu = 1
+    if ($lp -ge 4) { $irqCpu = 2 }
+    $mask = [byte[]](0,0,0,0,0,0,0,0)
+    $mask[0] = [byte](1 -shl $irqCpu)
+    $affPath = "HKLM:\SYSTEM\CurrentControlSet\Enum\$($gpuDev.InstanceId)\Device Parameters\Interrupt Management\Affinity Policy"
+    Set-Reg $affPath "DevicePolicy" 3
+    Set-Reg $affPath "AssignmentSetOverride" $mask "Binary"
+    Write-OK "GPU interrupts pinned to CPU $irqCpu"
+    Add-RebootReason "GPU interrupt affinity"
+} else { Write-Skip "GPU interrupt affinity (no active GPU or single-core CPU)" }
+`));
   }
 
   if (selected.has("core_isolation_off")) {
@@ -4057,23 +4342,24 @@ function generatePerformanceOpts(
   }
 
   if (selected.has("smt_disable")) {
-    lines.push(
-      "# [RISKY] Disable SMT/Hyperthreading - significantly reduces multitasking",
-    );
-    lines.push("$cores = (Get-CimInstance Win32_Processor).NumberOfCores");
-    // Need to use raw bcdedit here since value is dynamic, but still track for undo
-    lines.push("$smtResult = bcdedit /set numproc $cores 2>&1");
-    lines.push("if ($LASTEXITCODE -eq 0) {");
-    lines.push("    $script:BcdeditChanges += [PSCustomObject]@{");
-    lines.push('        Setting = "numproc"');
-    lines.push("        Value = $cores.ToString()");
-    lines.push('        UndoCommand = "bcdedit /deletevalue numproc"');
-    lines.push("    }");
-    lines.push('    Write-OK "SMT disabled (cores limited to $cores)"');
-    lines.push('    Add-RebootReason "SMT/Hyperthreading disabled"');
-    lines.push("} else {");
-    lines.push('    Write-Fail "SMT disable failed: $smtResult"');
-    lines.push("}");
+    lines.push(...psLines(String.raw`
+# [RISKY] SMT/Hyperthreading off is a BIOS setting. "bcdedit numproc" does NOT do this:
+# Windows numbers SMT siblings next to each other, so numproc=N keeps N/2 cores WITH SMT.
+$numproc = bcdedit /enum "{current}" 2>$null | Select-String -Pattern "^numproc\s+(\d+)"
+if ($numproc) {
+    $null = bcdedit /deletevalue numproc 2>&1
+    if ($LASTEXITCODE -eq 0) { Write-OK "Removed numproc core limit (it was halving your cores)"; Add-RebootReason "numproc core limit removed" }
+}
+$cpuInfo = Get-CimInstance Win32_Processor
+$physCores = ($cpuInfo | Measure-Object NumberOfCores -Sum).Sum
+$logCores = ($cpuInfo | Measure-Object NumberOfLogicalProcessors -Sum).Sum
+if ($logCores -le $physCores) { Write-OK "SMT/Hyperthreading already off ($physCores cores)" }
+else {
+    Write-Warn "SMT is on ($physCores cores / $logCores threads). Turn it off in BIOS/UEFI:"
+    Write-Host "      AMD: Advanced > AMD CBS > CPU Common Options > SMT Control = Disabled" -ForegroundColor Gray
+    Write-Host "      Intel: Advanced > CPU Configuration > Hyper-Threading = Disabled" -ForegroundColor Gray
+}
+`));
   }
 
   if (selected.has("mmcss_gaming")) {
@@ -4154,28 +4440,22 @@ function generatePowerOpts(selected: Set<string>): string[] {
   const lines: string[] = [];
 
   if (selected.has("ultimate_perf")) {
-    lines.push("# Enable Ultimate Performance power plan");
-    lines.push(
-      "powercfg /duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61 >$null 2>&1",
-    );
-    lines.push("$planOutput = powercfg /list 2>&1");
-    lines.push('$plans = $planOutput | Select-String "Ultimate Performance"');
-    lines.push("if ($plans) {");
-    lines.push(
-      '    $guidMatch = [regex]::Match($plans.Line, "([A-Fa-f0-9-]{36})")',
-    );
-    lines.push("    if ($guidMatch.Success) {");
-    lines.push("        $guid = $guidMatch.Value");
-    lines.push("        powercfg /setactive $guid 2>&1 | Out-Null");
-    lines.push(
-      '        if ($LASTEXITCODE -eq 0) { Write-OK "Ultimate Performance enabled" } else { Write-Warn "Could not activate Ultimate Performance" }',
-    );
-    lines.push(
-      '    } else { Write-Warn "Could not parse Ultimate Performance GUID" }',
-    );
-    lines.push(
-      '} else { Write-Warn "Ultimate Performance plan not available" }',
-    );
+    lines.push(...psLines(String.raw`
+# Ultimate Performance in a fixed GUID: no duplicate plans on re-runs, works on any Windows language
+$rtPlan = "52f3b1c6-9d7a-4f0e-8b3a-726f636b7475"
+$prevPlan = [regex]::Match((powercfg /getactivescheme 2>$null | Out-String), "[A-Fa-f0-9]{8}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{12}").Value
+$null = powercfg /query $rtPlan 2>&1
+if ($LASTEXITCODE -ne 0) { $null = powercfg /duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61 $rtPlan 2>&1 }
+$null = powercfg /setactive $rtPlan 2>&1
+if ($LASTEXITCODE -eq 0) {
+    Write-OK "Ultimate Performance power plan active"
+    if ($prevPlan -and $prevPlan -ne $rtPlan) { Add-UndoCommand "Power plan: previous plan" ("powercfg /setactive " + $prevPlan) }
+} else {
+    $null = powercfg /setactive 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c 2>&1
+    if ($LASTEXITCODE -eq 0) { Write-Warn "Ultimate Performance unavailable (Modern Standby?) - High Performance active instead" }
+    else { Write-Warn "Could not activate Ultimate or High Performance plan" }
+}
+`));
   } else if (selected.has("power_plan")) {
     lines.push("# Set High Performance power plan");
     lines.push(
@@ -4269,21 +4549,25 @@ function generateNetworkOpts(
       dnsServers.cloudflare;
     const dnsLabel = escapePsDoubleQuoted(dnsProvider);
     lines.push(`# Set DNS to ${dnsLabel}`);
-    // Capture original DNS before changing (for restore)
+    // Physical adapters only: VPN, Hyper-V and WSL adapters keep their own DNS
     lines.push(
-      'Get-NetAdapter | Where-Object {$_.Status -eq "Up"} | ForEach-Object {',
+      'foreach ($nic in @(Get-NetAdapter -Physical -EA SilentlyContinue | Where-Object { $_.Status -eq "Up" })) {',
+    );
+    lines.push("    try {");
+    lines.push(
+      "        $origDns = (Get-DnsClientServerAddress -InterfaceIndex $nic.ifIndex -AddressFamily IPv4 -EA SilentlyContinue).ServerAddresses",
     );
     lines.push(
-      "    $origDns = (Get-DnsClientServerAddress -InterfaceIndex $_.ifIndex -AddressFamily IPv4 -EA SilentlyContinue).ServerAddresses",
+      `        Set-DnsClientServerAddress -InterfaceIndex $nic.ifIndex -ServerAddresses "${primary}","${secondary}" -EA Stop`,
     );
-    lines.push("    $script:DNSChanges += [PSCustomObject]@{");
-    lines.push("        AdapterName = $_.Name");
-    lines.push("        InterfaceIndex = $_.ifIndex");
-    lines.push('        OriginalDNS = ($origDns -join ",")');
+    lines.push("        $script:DNSChanges += [PSCustomObject]@{");
+    lines.push("            AdapterName = $nic.Name");
+    lines.push("            InterfaceIndex = $nic.ifIndex");
+    lines.push('            OriginalDNS = ($origDns -join ",")');
+    lines.push("        }");
+    lines.push("    } catch {");
+    lines.push('        Write-Warn "DNS not changed on $($nic.Name): $($_.Exception.Message)"');
     lines.push("    }");
-    lines.push(
-      `    Set-DnsClientServerAddress -InterfaceIndex $_.ifIndex -ServerAddresses "${primary}","${secondary}"`,
-    );
     lines.push("}");
     lines.push(`Write-OK "DNS set to ${dnsLabel} (${primary}, ${secondary})"`);
   }
@@ -4570,10 +4854,20 @@ function generatePrivacyOpts(selected: Set<string>): string[] {
       '    "Microsoft\\Windows\\Application Experience\\StartupAppTask",',
     );
     lines.push(
-      '    "Microsoft\\Windows\\Application Experience\\PcaPatchDbTask"',
+      '    "Microsoft\\Windows\\Application Experience\\PcaPatchDbTask",',
+    );
+    lines.push(
+      '    "Microsoft\\Windows\\Application Experience\\Microsoft Compatibility Appraiser",',
+    );
+    lines.push(
+      '    "Microsoft\\Windows\\Application Experience\\Microsoft Compatibility Appraiser Exp",',
+    );
+    lines.push(
+      '    "Microsoft\\Windows\\Application Experience\\ProgramDataUpdater"',
     );
     lines.push(")");
-    lines.push("foreach ($task in $telemetryTasks) { Disable-Task $task }");
+    lines.push("$tasksOff = 0");
+    lines.push("foreach ($task in $telemetryTasks) { if (Disable-Task $task) { $tasksOff++ } }");
     lines.push("");
     lines.push("# AllowTelemetry at both policy paths");
     lines.push(
@@ -4647,7 +4941,129 @@ function generatePrivacyOpts(selected: Set<string>): string[] {
       'Set-Reg "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced" "Start_TrackProgs" 0',
     );
     lines.push("");
-    lines.push('Write-OK "Telemetry minimized (tasks + registry)"');
+    lines.push('Write-OK "Telemetry minimized ($tasksOff telemetry tasks off + registry)"');
+  }
+
+  if (selected.has("ai_off")) {
+    lines.push(...psLines(String.raw`
+# [SAFE] Windows AI off: Recall, Click to Do, AI Fabric service, Settings agent, Notepad/Paint AI
+if (-not $script:IsWin11) {
+    Write-Skip "Windows AI off (Windows 11 only)"
+} else {
+    $aiPol = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsAI"
+    Set-Reg $aiPol "AllowRecallEnablement" 0
+    Set-Reg $aiPol "DisableAIDataAnalysis" 1
+    Set-Reg $aiPol "TurnOffSavingSnapshots" 1
+    Set-Reg $aiPol "DisableClickToDo" 1
+    Set-Reg $aiPol "DisableSettingsAgent" 1
+    Set-Reg "HKCU:\SOFTWARE\Policies\Microsoft\Windows\WindowsAI" "DisableAIDataAnalysis" 1
+    Set-Reg "HKCU:\SOFTWARE\Policies\Microsoft\Windows\WindowsAI" "DisableClickToDo" 1
+    Set-Reg "HKLM:\SOFTWARE\Policies\WindowsNotepad" "DisableAIFeatures" 1
+    $paintPol = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Paint"
+    Set-Reg $paintPol "DisableCocreator" 1
+    Set-Reg $paintPol "DisableGenerativeFill" 1
+    Set-Reg $paintPol "DisableImageCreator" 1
+    Set-Reg $paintPol "DisableGenerativeErase" 1
+    Set-Reg $paintPol "DisableRemoveBackground" 1
+    if (Test-Path "HKLM:\SYSTEM\CurrentControlSet\Services\WSAIFabricSvc") {
+        Set-Reg "HKLM:\SYSTEM\CurrentControlSet\Services\WSAIFabricSvc" "Start" 3
+        Stop-Service WSAIFabricSvc -Force -EA SilentlyContinue
+    }
+    if ($script:IsWin11_24H2) {
+        $recall = Get-WindowsOptionalFeature -Online -FeatureName "Recall" -EA SilentlyContinue
+        if ($recall -and $recall.State -eq "Enabled") {
+            try {
+                Disable-WindowsOptionalFeature -Online -FeatureName "Recall" -NoRestart -EA Stop | Out-Null
+                Add-UndoCommand "Windows feature: Recall" 'Enable-WindowsOptionalFeature -Online -FeatureName "Recall" -NoRestart | Out-Null'
+                Add-RebootReason "Recall feature removed"
+            } catch { Write-Warn "Recall feature could not be removed: $($_.Exception.Message)" }
+        }
+    }
+    Write-OK "Windows AI off (Recall, Click to Do, AI service, Notepad/Paint AI)"
+}
+`));
+  }
+
+  if (selected.has("widgets_off")) {
+    lines.push(...psLines(String.raw`
+# [SAFE] Widgets off (board + taskbar button + background web process)
+if (-not $script:IsWin11) {
+    Write-Skip "Widgets off (Windows 11 only; Windows 10 'News and interests' is separate)"
+} else {
+    Set-Reg "HKLM:\SOFTWARE\Policies\Microsoft\Dsh" "AllowNewsAndInterests" 0
+    Get-Process -Name "Widgets", "WidgetService" -EA SilentlyContinue | Stop-Process -Force -EA SilentlyContinue
+    Write-OK "Widgets off (taskbar button disappears after sign-out)"
+}
+`));
+  }
+
+  if (selected.has("start_recommended_off")) {
+    lines.push(...psLines(String.raw`
+# [SAFE] Start menu: no Recommended section, account nags or Phone Link panel
+$adv = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"
+Set-Reg $adv "Start_IrisRecommendations" 0
+Set-Reg $adv "Start_AccountNotifications" 0
+Set-Reg $adv "ShowSyncProviderNotifications" 0
+if ($script:IsWin11) {
+    Set-Reg "HKCU:\SOFTWARE\Policies\Microsoft\Windows\Explorer" "HideRecommendedSection" 1
+    Set-Reg "HKLM:\SOFTWARE\Microsoft\PolicyManager\current\device\Start" "HideRecommendedSection" 1
+    Set-Reg "HKCU:\Software\Microsoft\Windows\CurrentVersion\Start\Companions\Microsoft.YourPhone_8wekyb3d8bbwe" "IsEnabled" 0
+}
+Write-OK "Start menu recommendations and ads off"
+`));
+  }
+
+  if (selected.has("bing_search_off")) {
+    lines.push(...psLines(String.raw`
+# [SAFE] Start search stays local: no Bing or web results
+Set-Reg "HKCU:\Software\Policies\Microsoft\Windows\Explorer" "DisableSearchBoxSuggestions" 1
+Set-Reg "HKCU:\Software\Microsoft\Windows\CurrentVersion\Search" "BingSearchEnabled" 0
+Write-OK "Bing and web results removed from Start search"
+`));
+  }
+
+  if (selected.has("windows_ads_off")) {
+    lines.push(...psLines(String.raw`
+# [SAFE] No ads: promoted app installs, Microsoft 365 ads in Settings, suggestion nags
+Set-Reg "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" "DisableWindowsConsumerFeatures" 1
+Set-Reg "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" "DisableConsumerAccountStateContent" 1
+$cdm = "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager"
+foreach ($v in @("SubscribedContent-310093Enabled", "SubscribedContent-338393Enabled", "SubscribedContent-353694Enabled", "SubscribedContent-353696Enabled", "SoftLandingEnabled")) {
+    Set-Reg $cdm $v 0
+}
+Set-Reg "HKCU:\Software\Microsoft\Windows\CurrentVersion\UserProfileEngagement" "ScoobeSystemSettingEnabled" 0
+Set-Reg "HKCU:\Software\Microsoft\Windows\CurrentVersion\SystemSettings\AccountNotifications" "EnableAccountNotifications" 0
+Set-Reg "HKCU:\Software\Microsoft\Windows\CurrentVersion\Notifications\Settings\Windows.SystemToast.Suggested" "Enabled" 0
+Set-Reg "HKCU:\Software\Microsoft\Windows\CurrentVersion\Notifications\Settings\Windows.SystemToast.BackupReminder" "Enabled" 0
+Write-OK "Windows ads, promoted apps and 'finish setting up' nags off"
+`));
+  }
+
+  if (selected.has("onedrive_remove")) {
+    lines.push(...psLines(String.raw`
+# [CAUTION] Uninstall OneDrive (your files stay in the OneDrive folder)
+$odUser = $env:OneDrive
+if ($odUser -and (Test-Path $odUser)) {
+    # Deny delete to Administrators while uninstalling so no user file can be removed
+    $null = icacls $odUser /deny "*S-1-5-32-544:(D,DC)" 2>&1
+}
+Stop-Process -Name "OneDrive", "FileCoAuth" -Force -EA SilentlyContinue
+$odSetup = "$env:SystemRoot\System32\OneDriveSetup.exe"
+if (-not (Test-Path $odSetup)) { $odSetup = "$env:SystemRoot\SysWOW64\OneDriveSetup.exe" }
+$odRemoved = $false
+if (Test-Path $odSetup) {
+    Start-Process $odSetup -ArgumentList "/uninstall" -Wait -WindowStyle Hidden
+    $odRemoved = $true
+} elseif (Get-Command winget -EA SilentlyContinue) {
+    $null = winget uninstall --id Microsoft.OneDrive -e --silent --accept-source-agreements 2>&1
+    $odRemoved = ($LASTEXITCODE -eq 0)
+}
+if ($odUser -and (Test-Path $odUser)) { $null = icacls $odUser /remove:d "*S-1-5-32-544" 2>&1 }
+if ($odRemoved) {
+    if ($script:BackupDir) { $script:RemovedApps += "Microsoft.OneDrive (winget install Microsoft.OneDrive)" }
+    Write-OK "OneDrive uninstalled (files kept in $odUser)"
+} else { Write-Skip "OneDrive uninstall (OneDrive not found)" }
+`));
   }
 
   if (selected.has("background_apps")) {
@@ -4702,31 +5118,34 @@ function generatePrivacyOpts(selected: Set<string>): string[] {
   }
 
   if (selected.has("bloatware")) {
-    lines.push("# [CAUTION] Remove bloatware apps (installed + provisioned)");
-    lines.push(
-      '$bloatApps = @("Microsoft.BingNews", "Microsoft.GetHelp", "Microsoft.Getstarted", "Microsoft.MicrosoftSolitaireCollection", "Microsoft.People", "Microsoft.PowerAutomateDesktop", "Microsoft.Todos", "Microsoft.WindowsAlarms", "Microsoft.WindowsFeedbackHub", "Microsoft.WindowsMaps", "Microsoft.WindowsSoundRecorder", "Microsoft.YourPhone", "Microsoft.ZuneMusic", "Microsoft.ZuneVideo", "Clipchamp.Clipchamp", "Microsoft.549981C3F5F10", "*Copilot*", "Microsoft.Windows.Ai.Copilot.Provider", "Microsoft.MicrosoftOfficeHub")',
-    );
-    lines.push("$removedCount = 0");
-    lines.push("$deprovisionedCount = 0");
-    lines.push("foreach ($app in $bloatApps) {");
-    // Remove installed packages
-    lines.push(
-      "    $pkg = Get-AppxPackage -Name $app -AllUsers -EA SilentlyContinue",
-    );
-    lines.push(
-      "    if ($pkg) { $pkg | Remove-AppxPackage -AllUsers -EA SilentlyContinue; $removedCount++ }",
-    );
-    // Remove provisioned packages (prevents reinstall on updates)
-    lines.push(
-      "    $prov = Get-AppxProvisionedPackage -Online -EA SilentlyContinue | Where-Object { $_.DisplayName -like $app }",
-    );
-    lines.push(
-      "    if ($prov) { $prov | Remove-AppxProvisionedPackage -Online -EA SilentlyContinue | Out-Null; $deprovisionedCount++ }",
-    );
-    lines.push("}");
-    lines.push(
-      'Write-OK "Bloatware: $removedCount removed, $deprovisionedCount deprovisioned (won\'t return on updates)"',
-    );
+    lines.push(...psLines(String.raw`
+# [RISKY] Remove bloatware (installed for all users + provisioned, so updates do not bring it back)
+# Never removed: Microsoft.GamingApp, Microsoft.XboxIdentityProvider, Microsoft.Xbox.TCUI,
+# Microsoft.XboxGamingOverlay (Game Pass, Xbox sign-in in PC games, X3D Game Bar detection)
+$bloatApps = @(
+    "Microsoft.BingNews", "Microsoft.BingWeather", "Microsoft.BingFinance", "Microsoft.BingSports",
+    "Microsoft.BingTravel", "Microsoft.BingTranslator", "Microsoft.BingFoodAndDrink", "Microsoft.BingHealthAndFitness",
+    "Microsoft.GetHelp", "Microsoft.Getstarted", "Microsoft.MicrosoftSolitaireCollection", "Microsoft.People",
+    "Microsoft.PowerAutomateDesktop", "Microsoft.Todos", "Microsoft.WindowsAlarms", "Microsoft.WindowsFeedbackHub",
+    "Microsoft.WindowsMaps", "Microsoft.WindowsSoundRecorder", "Microsoft.YourPhone", "Microsoft.ZuneMusic",
+    "Microsoft.ZuneVideo", "Clipchamp.Clipchamp", "Microsoft.549981C3F5F10", "*Copilot*",
+    "Microsoft.Windows.Ai.Copilot.Provider", "Microsoft.MicrosoftOfficeHub",
+    "MSTeams", "MicrosoftTeams", "Microsoft.Windows.DevHome", "Microsoft.PCManager", "Microsoft.Windows.AIHub",
+    "Microsoft.MicrosoftStickyNotes", "Microsoft.MicrosoftJournal", "Microsoft.Office.OneNote", "Microsoft.SkypeApp",
+    "Microsoft.MixedReality.Portal", "MicrosoftCorporationII.QuickAssist", "MicrosoftCorporationII.MicrosoftFamily",
+    "king.com.CandyCrushSaga", "king.com.CandyCrushSodaSaga", "SpotifyAB.SpotifyMusic", "BytedancePte.Ltd.TikTok",
+    "Facebook.Instagram", "AmazonVideo.PrimeVideo", "4DF9E0F8.Netflix", "Disney.37853FC22B2CE", "*LinkedInforWindows"
+)
+$removedCount = 0
+$i = 0
+foreach ($app in $bloatApps) {
+    $i++
+    Write-Progress -Activity "Removing bloatware" -Status $app -PercentComplete ([math]::Round(($i / $bloatApps.Count) * 100))
+    if (Remove-AppxSafe $app) { $removedCount++ }
+}
+Write-Progress -Activity "Removing bloatware" -Completed
+Write-OK "Bloatware: $removedCount of $($bloatApps.Count) apps removed (Xbox and Game Pass apps kept)"
+`));
   }
 
   if (selected.has("privacy_tier3")) {
@@ -4745,17 +5164,27 @@ function generatePrivacyOpts(selected: Set<string>): string[] {
   }
 
   if (selected.has("edge_debloat")) {
-    lines.push("# Edge debloat");
-    lines.push(
-      'Set-Reg "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Edge" "HideFirstRunExperience" 1',
-    );
-    lines.push(
-      'Set-Reg "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Edge" "EdgeShoppingAssistantEnabled" 0',
-    );
-    lines.push(
-      'Set-Reg "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Edge" "WebWidgetAllowed" 0',
-    );
-    lines.push('Write-OK "Edge debloated"');
+    lines.push(...psLines(String.raw`
+# [SAFE] Edge debloat: first run, shopping, sidebar, Copilot/AI, new-tab ads (WebView2 untouched)
+$edgePol = "HKLM:\SOFTWARE\Policies\Microsoft\Edge"
+Set-Reg $edgePol "HideFirstRunExperience" 1
+Set-Reg $edgePol "EdgeShoppingAssistantEnabled" 0
+Set-Reg $edgePol "WebWidgetAllowed" 0
+Set-Reg $edgePol "HubsSidebarEnabled" 0
+Set-Reg $edgePol "CopilotPageContext" 0
+Set-Reg $edgePol "CopilotCDPPageContext" 0
+Set-Reg $edgePol "Microsoft365CopilotChatIconEnabled" 0
+Set-Reg $edgePol "EdgeEntraCopilotPageContext" 0
+Set-Reg $edgePol "EdgeHistoryAISearchEnabled" 0
+Set-Reg $edgePol "ComposeInlineEnabled" 0
+Set-Reg $edgePol "NewTabPageBingChatEnabled" 0
+Set-Reg $edgePol "GenAILocalFoundationalModelSettings" 1
+Set-Reg $edgePol "PersonalizationReportingEnabled" 0
+Set-Reg $edgePol "DiagnosticData" 0
+Set-Reg $edgePol "ShowRecommendationsEnabled" 0
+Set-Reg "HKLM:\SOFTWARE\Policies\Microsoft\EdgeUpdate" "CreateDesktopShortcutDefault" 0
+Write-OK "Edge debloated (no sidebar, Copilot hooks, AI model download or new-tab ads)"
+`));
   }
 
   if (selected.has("browser_background")) {
@@ -4790,20 +5219,13 @@ function generatePrivacyOpts(selected: Set<string>): string[] {
   }
 
   if (selected.has("razer_block")) {
-    lines.push("# Block Razer auto-install");
-    lines.push(
-      '$razerSvc = Get-Service | Where-Object {$_.Name -like "Razer*"}',
-    );
-    lines.push("$razerCount = 0");
-    lines.push("foreach ($svc in $razerSvc) {");
-    lines.push(
-      "    if (Set-ServiceSafe -Name $svc.Name -StartupType Disabled -Stop) { $razerCount++ }",
-    );
-    lines.push("}");
-    lines.push(
-      'if ($razerCount -gt 0) { Write-OK "Razer services blocked ($razerCount services)" }',
-    );
-    lines.push('else { Write-OK "Razer services blocked (none found)" }');
+    lines.push(...psLines(String.raw`
+# [SAFE] Block automatic OEM / peripheral app installs (Razer, Logitech, ASUS ... via device metadata)
+# Services are not touched, so Synapse / G HUB you install yourself keep working.
+Set-Reg "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Device Metadata" "PreventDeviceMetadataFromNetwork" 1
+Set-Reg "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Device Metadata" "PreventDeviceMetadataFromNetwork" 1
+Write-OK "Device app auto-installs blocked (drivers still come from Windows Update)"
+`));
   }
 
   if (selected.has("wpbt_disable")) {
@@ -4827,11 +5249,19 @@ function generatePrivacyOpts(selected: Set<string>): string[] {
   }
 
   if (selected.has("disk_cleanup")) {
-    lines.push("# Deep disk cleanup");
-    lines.push(
-      'Start-Process "cleanmgr.exe" -ArgumentList "/sagerun:100" -Wait -WindowStyle Hidden',
-    );
-    lines.push('Write-OK "Disk cleanup complete"');
+    lines.push(...psLines(String.raw`
+# [CAUTION] Deep disk cleanup: /sagerun:100 needs StateFlags0100 on each category or it cleans nothing.
+# Allow-list only: Recycle Bin, Downloads, previous Windows and ESD install files are never flagged.
+$cleanCategories = @("Temporary Files", "Update Cleanup", "Delivery Optimization Files", "Windows Error Reporting Files", "Temporary Setup Files", "Thumbnail Cache", "D3D Shader Cache", "Setup Log Files")
+$cacheRoot = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches"
+foreach ($cat in $cleanCategories) {
+    if (Test-Path "$cacheRoot\$cat") { Set-Reg "$cacheRoot\$cat" "StateFlags0100" 2 }
+}
+$freeBefore = (Get-PSDrive ($env:SystemDrive.TrimEnd(':'))).Free
+Start-Process "cleanmgr.exe" -ArgumentList "/sagerun:100" -Wait -WindowStyle Hidden
+$freedMB = [math]::Round(((Get-PSDrive ($env:SystemDrive.TrimEnd(':'))).Free - $freeBefore) / 1MB)
+Write-OK "Disk cleanup complete ($freedMB MB freed; Recycle Bin, Downloads and previous Windows kept)"
+`));
   }
 
   if (selected.has("delivery_opt")) {
@@ -5155,11 +5585,15 @@ export function buildVerificationScript(selection: SelectionState): string {
   }
 
   if (selected.has("smt_disable")) {
-    lines.push("$bcdeditSmt = bcdedit /enum 2>&1 | Out-String");
-    lines.push("$cores = (Get-CimInstance Win32_Processor).NumberOfCores");
-    lines.push(
-      'if ($bcdeditSmt -match "numproc\\s+$cores") { Write-Pass "SMT disabled (limited to $cores cores)" } else { Write-Fail "SMT may not be disabled" }',
-    );
+    lines.push(...psLines(String.raw`
+$cpuInfo = Get-CimInstance Win32_Processor
+$physCores = ($cpuInfo | Measure-Object NumberOfCores -Sum).Sum
+$logCores = ($cpuInfo | Measure-Object NumberOfLogicalProcessors -Sum).Sum
+$bcdNumproc = bcdedit /enum "{current}" 2>$null | Select-String -Pattern "^numproc"
+if ($bcdNumproc) { Write-Fail "numproc core limit is set (remove with: bcdedit /deletevalue numproc)" }
+elseif ($logCores -le $physCores) { Write-Pass "SMT/Hyperthreading off ($physCores cores)" }
+else { Write-Skip "SMT still on ($logCores threads) - turn it off in BIOS/UEFI" }
+`));
   }
 
   if (selected.has("core_isolation_off")) {
@@ -5220,9 +5654,9 @@ export function buildVerificationScript(selection: SelectionState): string {
   lines.push('Write-Section "Power Settings"');
 
   if (selected.has("ultimate_perf") || selected.has("power_plan")) {
-    lines.push("$plan = powercfg /getactivescheme");
+    lines.push("$plan = powercfg /getactivescheme | Out-String");
     lines.push(
-      'if ($plan -match "Ultimate Performance|High performance") { Write-Pass "High/Ultimate performance plan active" } else { Write-Fail "Performance power plan NOT active" }',
+      'if ($plan -match "52f3b1c6-9d7a-4f0e-8b3a-726f636b7475|e9a42b02-d5df-448d-aa00-03f14749eb61|8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c") { Write-Pass "High/Ultimate performance plan active" } else { Write-Fail "Performance power plan NOT active" }',
     );
   }
 
@@ -5286,6 +5720,66 @@ export function buildVerificationScript(selection: SelectionState): string {
   if (selected.has("copilot_disable")) {
     lines.push(
       'if (Test-RegValue "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsCopilot" "TurnOffWindowsCopilot" 1) { Write-Pass "Copilot disabled" } else { Write-Fail "Copilot NOT disabled" }',
+    );
+  }
+
+  if (selected.has("ai_off")) {
+    lines.push(
+      'if (Test-RegValue "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsAI" "AllowRecallEnablement" 0) { Write-Pass "Windows AI / Recall off" } else { Write-Fail "Windows AI / Recall NOT off" }',
+    );
+  }
+
+  if (selected.has("widgets_off")) {
+    lines.push(
+      'if (Test-RegValue "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Dsh" "AllowNewsAndInterests" 0) { Write-Pass "Widgets off" } else { Write-Fail "Widgets NOT off" }',
+    );
+  }
+
+  if (selected.has("start_recommended_off")) {
+    lines.push(
+      'if (Test-RegValue "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced" "Start_IrisRecommendations" 0) { Write-Pass "Start recommendations off" } else { Write-Fail "Start recommendations NOT off" }',
+    );
+  }
+
+  if (selected.has("bing_search_off")) {
+    lines.push(
+      'if (Test-RegValue "HKCU:\\Software\\Policies\\Microsoft\\Windows\\Explorer" "DisableSearchBoxSuggestions" 1) { Write-Pass "Bing search off" } else { Write-Fail "Bing search NOT off" }',
+    );
+  }
+
+  if (selected.has("windows_ads_off")) {
+    lines.push(
+      'if (Test-RegValue "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\CloudContent" "DisableWindowsConsumerFeatures" 1) { Write-Pass "Windows ads and promoted apps off" } else { Write-Fail "Windows ads NOT off" }',
+    );
+  }
+
+  if (selected.has("update_no_reboot")) {
+    lines.push(
+      'if (Test-RegValue "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate\\AU" "NoAutoRebootWithLoggedOnUsers" 1) { Write-Pass "No auto-reboot while signed in" } else { Write-Fail "Auto-reboot NOT blocked" }',
+    );
+  }
+
+  if (selected.has("gamebar_popup_fix") && selection.hardware.cpu !== "amd_x3d") {
+    lines.push(
+      'if (Test-Path "HKLM:\\SOFTWARE\\Classes\\ms-gamebar\\shell\\open\\command") { Write-Pass "ms-gamebar popup fix" } else { Write-Fail "ms-gamebar popup fix NOT applied" }',
+    );
+  }
+
+  if (selected.has("onedrive_remove")) {
+    lines.push(
+      'if (-not (Get-Process OneDrive -EA SilentlyContinue) -and -not (Test-Path "$env:LOCALAPPDATA\\Microsoft\\OneDrive\\OneDrive.exe")) { Write-Pass "OneDrive removed" } else { Write-Fail "OneDrive still installed" }',
+    );
+  }
+
+  if (selected.has("razer_block")) {
+    lines.push(
+      'if (Test-RegValue "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\Device Metadata" "PreventDeviceMetadataFromNetwork" 1) { Write-Pass "OEM app auto-installs blocked" } else { Write-Fail "OEM app auto-installs NOT blocked" }',
+    );
+  }
+
+  if (selected.has("edge_debloat")) {
+    lines.push(
+      'if (Test-RegValue "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Edge" "HubsSidebarEnabled" 0) { Write-Pass "Edge debloated" } else { Write-Fail "Edge NOT debloated" }',
     );
   }
 

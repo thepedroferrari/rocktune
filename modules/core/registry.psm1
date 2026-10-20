@@ -14,6 +14,321 @@ Import-Module (Join-Path $PSScriptRoot "logger.psm1") -Force
 $script:RegistryBackupIndexPath = Join-Path $PSScriptRoot "..\..\config\registry-backups.json"
 $script:RegistryBackupIndex = $null
 
+
+# --- Undo journal and dry-run state ---
+# Every registry value, service start type and scheduled task this module
+# changes is recorded once (first write wins, so the value from before RockTune
+# is kept across runs). Undo-RockTuneChanges replays the journal in reverse.
+
+$script:UndoJournalPath = Join-Path $env:ProgramData "RockTune\undo-journal.json"
+$script:UndoJournal = $null
+$script:DryRunMode = $false
+$script:ChangeStats = @{ Applied = 0; Skipped = 0; Failed = 0; DryRun = 0 }
+
+function Set-RockTuneDryRun {
+    <#
+    .SYNOPSIS
+        Turns dry-run mode on or off for every helper in this module.
+    #>
+    [CmdletBinding()]
+    param([Parameter(Mandatory=$true)][bool]$Enabled)
+    $script:DryRunMode = $Enabled
+}
+
+function Test-RockTuneDryRun {
+    return [bool]$script:DryRunMode
+}
+
+function Set-UndoJournalPath {
+    [CmdletBinding()]
+    param([Parameter(Mandatory=$true)][string]$Path)
+    $script:UndoJournalPath = $Path
+    $script:UndoJournal = $null
+}
+
+function Get-UndoJournalPath {
+    return $script:UndoJournalPath
+}
+
+function Get-RockTuneChangeStats {
+    return $script:ChangeStats
+}
+
+function Add-ChangeStat {
+    param([ValidateSet('Applied', 'Skipped', 'Failed', 'DryRun')][string]$Kind)
+    $script:ChangeStats[$Kind] = $script:ChangeStats[$Kind] + 1
+}
+
+function Get-UndoJournal {
+    if ($null -ne $script:UndoJournal) {
+        return ,$script:UndoJournal
+    }
+    $list = New-Object System.Collections.ArrayList
+    if (Test-Path $script:UndoJournalPath) {
+        try {
+            $raw = Get-Content $script:UndoJournalPath -Raw -ErrorAction Stop
+            if ($raw) {
+                foreach ($entry in @($raw | ConvertFrom-Json)) {
+                    [void]$list.Add($entry)
+                }
+            }
+        } catch {
+            Write-Log "Undo journal unreadable, starting a new one: $_" "WARNING"
+        }
+    }
+    $script:UndoJournal = $list
+    return ,$script:UndoJournal
+}
+
+function Save-UndoJournal {
+    if ($null -eq $script:UndoJournal) { return }
+    try {
+        $dir = Split-Path $script:UndoJournalPath -Parent
+        if ($dir -and -not (Test-Path $dir)) {
+            New-Item -ItemType Directory -Path $dir -Force | Out-Null
+        }
+        $json = ConvertTo-Json -InputObject @($script:UndoJournal.ToArray()) -Depth 6
+        Set-Content -Path $script:UndoJournalPath -Value $json -Encoding UTF8 -Force
+    } catch {
+        Write-Log "Failed to save undo journal: $_" "WARNING"
+    }
+}
+
+function Test-JournalHasEntry {
+    param([string]$Kind, [string]$Target, [string]$Name)
+    foreach ($entry in (Get-UndoJournal)) {
+        if ($entry.Kind -eq $Kind -and $entry.Target -eq $Target -and $entry.Name -eq $Name) {
+            return $true
+        }
+    }
+    return $false
+}
+
+function Add-UndoJournalEntry {
+    <#
+    .SYNOPSIS
+        Records the current state of a registry value, service or task before it changes.
+    .PARAMETER Kind
+        Registry, Service or Task.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)][ValidateSet('Registry', 'Service', 'Task')][string]$Kind,
+        [Parameter(Mandatory=$true)][string]$Target,
+        [string]$Name = ""
+    )
+
+    if ($script:DryRunMode) { return }
+    if (Test-JournalHasEntry -Kind $Kind -Target $Target -Name $Name) { return }
+
+    $entry = [ordered]@{
+        Kind = $Kind
+        Target = $Target
+        Name = $Name
+        Existed = $false
+        ValueKind = $null
+        Value = $null
+        RecordedAt = (Get-Date).ToString('o')
+    }
+
+    try {
+        switch ($Kind) {
+            'Registry' {
+                if (Test-Path $Target) {
+                    $key = Get-Item -Path $Target -ErrorAction Stop
+                    if ($key.GetValueNames() -contains $Name) {
+                        $entry.Existed = $true
+                        $entry.ValueKind = $key.GetValueKind($Name).ToString()
+                        $entry.Value = $key.GetValue($Name, $null, 'DoNotExpandEnvironmentNames')
+                    }
+                }
+            }
+            'Service' {
+                $svc = Get-Service -Name $Target -ErrorAction SilentlyContinue
+                if ($svc) {
+                    $entry.Existed = $true
+                    $entry.Value = (Get-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Services\$Target" -Name Start -ErrorAction SilentlyContinue).Start
+                }
+            }
+            'Task' {
+                $task = Get-ScheduledTask -TaskPath $Target -TaskName $Name -ErrorAction SilentlyContinue
+                if ($task) {
+                    $entry.Existed = $true
+                    $entry.Value = $task.State.ToString()
+                }
+            }
+        }
+    } catch {
+        Write-Log "Could not record undo state for $Target\$Name : $_" "WARNING"
+    }
+
+    [void](Get-UndoJournal).Add([pscustomobject]$entry)
+    Save-UndoJournal
+}
+
+function Set-ServiceStartTracked {
+    <#
+    .SYNOPSIS
+        Changes a service start type, recording the previous one for undo. Honors dry-run.
+    .PARAMETER StartupType
+        Automatic, Manual or Disabled.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)][string]$Name,
+        [Parameter(Mandatory=$true)][ValidateSet('Automatic', 'Manual', 'Disabled')][string]$StartupType,
+        [switch]$Stop
+    )
+
+    $svc = Get-Service -Name $Name -ErrorAction SilentlyContinue
+    if (-not $svc) {
+        Write-Log "Service not present, skipped: $Name" "INFO"
+        Add-ChangeStat Skipped
+        return $false
+    }
+    if ($script:DryRunMode) {
+        Write-Log "[DRY RUN] Would set service $Name to $StartupType" "INFO"
+        Add-ChangeStat DryRun
+        return $true
+    }
+    try {
+        Add-UndoJournalEntry -Kind Service -Target $Name
+        if ($Stop) {
+            Stop-Service -Name $Name -Force -ErrorAction SilentlyContinue
+        }
+        Set-Service -Name $Name -StartupType $StartupType -ErrorAction Stop
+        Write-Log "Service $Name set to $StartupType" "SUCCESS"
+        Add-ChangeStat Applied
+        return $true
+    } catch {
+        Write-Log "Failed to set service $Name : $_" "ERROR"
+        Add-ChangeStat Failed
+        return $false
+    }
+}
+
+function Set-ScheduledTaskTracked {
+    <#
+    .SYNOPSIS
+        Enables or disables a scheduled task by full path, recording the old state. Honors dry-run.
+    .PARAMETER FullPath
+        Task path including the name, e.g. "\Microsoft\Windows\Autochk\Proxy".
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)][string]$FullPath,
+        [ValidateSet('Disabled', 'Enabled')][string]$State = 'Disabled'
+    )
+
+    $normalized = '\' + $FullPath.Trim('\')
+    $idx = $normalized.LastIndexOf('\')
+    $taskPath = $normalized.Substring(0, $idx + 1)
+    $taskName = $normalized.Substring($idx + 1)
+
+    $task = Get-ScheduledTask -TaskPath $taskPath -TaskName $taskName -ErrorAction SilentlyContinue
+    if (-not $task) {
+        Write-Log "Scheduled task not present, skipped: $normalized" "INFO"
+        Add-ChangeStat Skipped
+        return $false
+    }
+    if ($script:DryRunMode) {
+        Write-Log "[DRY RUN] Would set task $normalized to $State" "INFO"
+        Add-ChangeStat DryRun
+        return $true
+    }
+    try {
+        Add-UndoJournalEntry -Kind Task -Target $taskPath -Name $taskName
+        if ($State -eq 'Disabled') {
+            Disable-ScheduledTask -TaskPath $taskPath -TaskName $taskName -ErrorAction Stop | Out-Null
+        } else {
+            Enable-ScheduledTask -TaskPath $taskPath -TaskName $taskName -ErrorAction Stop | Out-Null
+        }
+        Write-Log "Scheduled task $normalized set to $State" "SUCCESS"
+        Add-ChangeStat Applied
+        return $true
+    } catch {
+        Write-Log "Failed to set task $normalized : $_" "ERROR"
+        Add-ChangeStat Failed
+        return $false
+    }
+}
+
+function Undo-RockTuneChanges {
+    <#
+    .SYNOPSIS
+        Restores every registry value, service start type and task recorded in the undo journal.
+    .DESCRIPTION
+        Replays the journal newest-first. Values that did not exist before are deleted.
+        On success the journal is renamed so a second undo does nothing.
+    .OUTPUTS
+        [hashtable] Restored and Failed counts.
+    #>
+    [CmdletBinding()]
+    param()
+
+    $journal = Get-UndoJournal
+    $result = @{ Restored = 0; Failed = 0 }
+    if ($journal.Count -eq 0) {
+        Write-Log "Undo journal is empty: nothing to restore ($script:UndoJournalPath)" "WARNING"
+        return $result
+    }
+
+    $startTypes = @{ 2 = 'Automatic'; 3 = 'Manual'; 4 = 'Disabled' }
+    for ($i = $journal.Count - 1; $i -ge 0; $i--) {
+        $e = $journal[$i]
+        try {
+            if ($script:DryRunMode) {
+                Write-Log "[DRY RUN] Would restore $($e.Kind) $($e.Target) $($e.Name)" "INFO"
+                continue
+            }
+            switch ($e.Kind) {
+                'Registry' {
+                    if ($e.Existed) {
+                        if (-not (Test-Path $e.Target)) { New-Item -Path $e.Target -Force | Out-Null }
+                        $value = $e.Value
+                        if ($e.ValueKind -eq 'Binary') { $value = [byte[]]@($e.Value) }
+                        elseif ($e.ValueKind -eq 'MultiString') { $value = [string[]]@($e.Value) }
+                        New-ItemProperty -Path $e.Target -Name $e.Name -Value $value -PropertyType $e.ValueKind -Force -ErrorAction Stop | Out-Null
+                    } elseif (Test-Path $e.Target) {
+                        Remove-ItemProperty -Path $e.Target -Name $e.Name -ErrorAction SilentlyContinue
+                    }
+                }
+                'Service' {
+                    if ($e.Existed -and $null -ne $e.Value) {
+                        $start = [int]$e.Value
+                        if ($startTypes.ContainsKey($start)) {
+                            Set-Service -Name $e.Target -StartupType $startTypes[$start] -ErrorAction Stop
+                        } else {
+                            Set-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Services\$($e.Target)" -Name Start -Value $start -Type DWord -ErrorAction Stop
+                        }
+                    }
+                }
+                'Task' {
+                    if ($e.Existed) {
+                        if ($e.Value -eq 'Disabled') {
+                            Disable-ScheduledTask -TaskPath $e.Target -TaskName $e.Name -ErrorAction Stop | Out-Null
+                        } else {
+                            Enable-ScheduledTask -TaskPath $e.Target -TaskName $e.Name -ErrorAction Stop | Out-Null
+                        }
+                    }
+                }
+            }
+            $result.Restored++
+            Write-Log "Restored $($e.Kind): $($e.Target) $($e.Name)" "SUCCESS"
+        } catch {
+            $result.Failed++
+            Write-Log "Could not restore $($e.Kind) $($e.Target) $($e.Name): $_" "ERROR"
+        }
+    }
+
+    if (-not $script:DryRunMode -and $result.Failed -eq 0) {
+        $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
+        Rename-Item -Path $script:UndoJournalPath -NewName "undo-journal.restored-$stamp.json" -ErrorAction SilentlyContinue
+        $script:UndoJournal = $null
+    }
+    return $result
+}
+
 function Get-RegistryBackupIndex {
     if ($null -ne $script:RegistryBackupIndex) {
         return $script:RegistryBackupIndex
@@ -278,7 +593,15 @@ function Set-RegistryValue {
         [bool]$SkipBackup = $false
     )
 
+    if ($script:DryRunMode) {
+        Write-Log "[DRY RUN] Would set $Path\$Name = $Value ($Type)" "INFO"
+        Add-ChangeStat DryRun
+        return $true
+    }
+
     try {
+        Add-UndoJournalEntry -Kind Registry -Target $Path -Name $Name
+
         if (-not $SkipBackup -and (Test-Path $Path)) {
             Backup-RegistryKey -Path $Path | Out-Null
         }
@@ -288,12 +611,14 @@ function Set-RegistryValue {
             Write-Log "Created registry path: $Path"
         }
 
-        Set-ItemProperty -Path $Path -Name $Name -Value $Value -Type $Type -ErrorAction Stop
+        New-ItemProperty -Path $Path -Name $Name -Value $Value -PropertyType $Type -Force -ErrorAction Stop | Out-Null
         Write-Log "Set registry value: $Path\$Name = $Value ($Type)" "SUCCESS"
+        Add-ChangeStat Applied
         return $true
 
     } catch {
         Write-Log "Failed to set registry value $Path\$Name : $_" "ERROR"
+        Add-ChangeStat Failed
         return $false
     }
 }
@@ -366,7 +691,15 @@ function Remove-RegistryValue {
         [bool]$SkipBackup = $false
     )
 
+    if ($script:DryRunMode) {
+        Write-Log "[DRY RUN] Would remove $Path\$Name" "INFO"
+        Add-ChangeStat DryRun
+        return $true
+    }
+
     try {
+        Add-UndoJournalEntry -Kind Registry -Target $Path -Name $Name
+
         if (-not $SkipBackup -and (Test-Path $Path)) {
             Backup-RegistryKey -Path $Path | Out-Null
         }
@@ -472,6 +805,14 @@ function Set-ProtectedRegistryValue {
     )
 
     $success = $false
+
+    if ($script:DryRunMode) {
+        Write-Log "[DRY RUN] Would set protected $Path\$Name = $Value ($Type)" "INFO"
+        Add-ChangeStat DryRun
+        return $true
+    }
+
+    Add-UndoJournalEntry -Kind Registry -Target $Path -Name $Name
 
     try {
         # First try normal registry write
@@ -599,5 +940,14 @@ Export-ModuleMember -Function @(
     'Get-RegistryValue',
     'Remove-RegistryValue',
     'Test-RegistryKeyExists',
-    'Test-RegistryValueExists'
+    'Test-RegistryValueExists',
+    'Set-RockTuneDryRun',
+    'Test-RockTuneDryRun',
+    'Set-UndoJournalPath',
+    'Get-UndoJournalPath',
+    'Get-RockTuneChangeStats',
+    'Add-UndoJournalEntry',
+    'Set-ServiceStartTracked',
+    'Set-ScheduledTaskTracked',
+    'Undo-RockTuneChanges'
 )

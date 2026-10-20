@@ -7,6 +7,7 @@
  */
 
 import { PRESET_META, PRESET_ORDER, PRESETS } from '$lib/presets'
+import { scrollToSection } from '$lib/scroll'
 import {
   app,
   setActivePreset,
@@ -47,7 +48,7 @@ function selectAndScroll(presetId: PresetType) {
   setFilter(FILTER_RECOMMENDED)
   setOptimizations(config.opts)
 
-  document.getElementById('quick-start')?.scrollIntoView({ behavior: 'smooth' })
+  scrollToSection({ sectionId: 'quick-start' })
 }
 
 /** Check if user prefers reduced motion */
@@ -109,32 +110,24 @@ function handleBadgeMouseLeave(event: MouseEvent) {
         <p class="tagline-secondary">Yes, really.</p>
       </div>
 
+      <a
+        href="#quick-start"
+        class="hero-primary-cta"
+        onclick={(event) => {
+          event.preventDefault()
+          scrollToSection({ sectionId: 'quick-start' })
+        }}
+      >
+        <span>Build my script</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+          <path d="M5 12h14M13 6l6 6-6 6" />
+        </svg>
+      </a>
+
       <div class="provenance-bar" role="group" aria-label="Project information">
         <a
-          href="https://github.com/thepedroferrari/rocktune/tree/{__BUILD_COMMIT__}"
-          target="blank"
-          rel="noopener noreferrer"
-          class="proof-chip"
-          title="Built from commit {__BUILD_COMMIT__} on {__BUILD_DATE__}"
-        >
-          <svg
-            class="chip-icon"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            aria-hidden="true"
-          >
-            <path
-              d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"
-            />
-          </svg>
-          <span class="chip-label"
-            >Build: {__BUILD_COMMIT__.substring(0, 7)}</span
-          >
-        </a>
-
-        <a
           href="https://github.com/thepedroferrari/rocktune/blob/master/LICENSE"
-          target="blank"
+          target="_blank"
           rel="noopener noreferrer"
           class="proof-chip"
           title="MIT License - Free to use, modify, and distribute"
@@ -152,7 +145,7 @@ function handleBadgeMouseLeave(event: MouseEvent) {
 
         <a
           href="https://github.com/thepedroferrari/rocktune"
-          target="blank"
+          target="_blank"
           rel="noopener noreferrer"
           class="proof-chip"
           title="Open source on GitHub - inspect the code"
@@ -238,7 +231,7 @@ function handleBadgeMouseLeave(event: MouseEvent) {
           <div class="stat-line stat-line--highlight">
             <dt class="stat-label">Input delay</dt>
             <dd class="stat-value stat-value--accent">
-              <span class="stat-dots" aria-hidden="true"></span>2x FASTER
+              <span class="stat-dots" aria-hidden="true"></span>LOWER
             </dd>
           </div>
         </dl>
@@ -586,18 +579,69 @@ function handleBadgeMouseLeave(event: MouseEvent) {
     animation: fadeSlideUp 0.5s var(--ease-out-expo) 0.55s both;
   }
 
+  .hero-primary-cta {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-block-start: var(--space-xl);
+    min-block-size: 48px;
+    padding: var(--space-sm) var(--space-xl);
+    background: var(--fold-accent);
+    color: oklch(0.13 0.02 285);
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-decoration: none;
+    clip-path: var(--clip-cyber-sm);
+    box-shadow: 0 0 24px var(--fold-accent-glow);
+    transition:
+      transform 0.15s var(--ease-out-expo),
+      box-shadow 0.15s var(--ease-out-expo),
+      background-color 0.15s ease;
+    animation: fadeSlideUp 0.5s var(--ease-out-expo) 0.6s both;
+
+    & svg {
+      inline-size: 20px;
+      block-size: 20px;
+      transition: translate 0.15s var(--ease-out-expo);
+    }
+
+    &:hover {
+      background: oklch(0.96 0.2 102);
+      box-shadow: 0 0 36px var(--fold-accent-glow);
+      transform: translateY(-2px);
+    }
+
+    &:hover svg {
+      translate: 3px 0;
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--fold-cyan);
+      outline-offset: 4px;
+    }
+  }
+
   .provenance-bar {
     display: flex;
     gap: var(--space-xs);
-    margin-block-start: var(--space-md);
+    margin-block-start: var(--space-lg);
     flex-wrap: wrap;
-    justify-content: center;
+    justify-content: flex-start;
     animation: fadeSlideUp 0.6s var(--ease-out-expo) 0.65s both;
   }
 
   .proof-chip {
     display: inline-flex;
     align-items: center;
+    min-block-size: 32px;
     gap: var(--space-2xs);
     padding: var(--space-xs) var(--space-sm);
     background: oklch(0.15 0.02 285 / 0.5);
@@ -1115,6 +1159,11 @@ function handleBadgeMouseLeave(event: MouseEvent) {
 
     .profile-badge {
       font-size: 1rem;
+    }
+
+    .hero-primary-cta {
+      align-self: stretch;
+      justify-content: center;
     }
 
     .stats-panel {

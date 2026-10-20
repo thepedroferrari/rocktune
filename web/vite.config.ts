@@ -28,11 +28,16 @@ export default defineConfig({
         runes: true,
       },
     }),
-    visualizer({
-      filename: 'dist/stats.html',
-      gzipSize: true,
-      brotliSize: true,
-    }),
+    // Bundle report only on request (deno task analyze); never published with dist
+    ...(Deno.env.get('ANALYZE')
+      ? [
+          visualizer({
+            filename: 'stats.html',
+            gzipSize: true,
+            brotliSize: true,
+          }),
+        ]
+      : []),
   ],
   root: '.',
   build: {

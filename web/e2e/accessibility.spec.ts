@@ -16,7 +16,6 @@ test.describe("Accessibility (WCAG 2.1 AA)", () => {
   test("should have no critical accessibility violations on page load", async ({ page }) => {
     const accessibilityScanResults = await new AxeBuilder({ page })
       .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
-      .exclude(".cursor-glow") // Decorative element
       .analyze();
 
     // Filter to critical and serious violations only

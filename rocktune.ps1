@@ -16,6 +16,13 @@
 .EXAMPLE
     .\rocktune.ps1 -SkipConfirmation
 
+.EXAMPLE
+    .\rocktune.ps1 -DryRun
+
+.EXAMPLE
+    .\rocktune.ps1 -Undo
+    Restores every registry value an earlier run changed.
+
 .NOTES
     Source: https://github.com/thepedroferrari/rocktune
     Web App: https://rocktune.pedroferrari.com
@@ -25,7 +32,8 @@ param(
     [ValidateSet("gamer", "pro_gamer", "streamer", "benchmarker")]
     [string]$Preset,
     [switch]$SkipConfirmation,
-    [switch]$DryRun
+    [switch]$DryRun,
+    [switch]$Undo
 )
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -49,6 +57,14 @@ $script:SuccessCount = 0
 $script:FailCount = 0
 $script:WarningCount = 0
 $script:ScanResults = @()
+$script:JournalPath = Join-Path $env:ProgramData "RockTune\rocktune-undo.json"
+$script:Journal = New-Object System.Collections.ArrayList
+if (Test-Path $script:JournalPath) {
+    try {
+        $raw = Get-Content $script:JournalPath -Raw
+        if ($raw) { foreach ($e in @($raw | ConvertFrom-Json)) { [void]$script:Journal.Add($e) } }
+    } catch { Write-Host "  [!] Undo journal unreadable, starting a new one" -ForegroundColor Yellow }
+}
 
 # ════════════════════════════════════════════════════════════════════════════
 # HELPER FUNCTIONS
@@ -74,20 +90,94 @@ function Write-OK { param([string]$M) $script:SuccessCount++; Write-Host "  [OK]
 function Write-Fail { param([string]$M) $script:FailCount++; Write-Host "  [FAIL] $M" -ForegroundColor Red }
 function Write-Warn { param([string]$M) $script:WarningCount++; Write-Host "  [!] $M" -ForegroundColor Yellow }
 
+function Save-RegJournal {
+    try {
+        $dir = Split-Path $script:JournalPath -Parent
+        if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
+        $json = ConvertTo-Json -InputObject @($script:Journal.ToArray()) -Depth 6
+        Set-Content -Path $script:JournalPath -Value $json -Encoding UTF8 -Force
+    } catch { Write-Host "  [!] Could not save undo journal: $_" -ForegroundColor Yellow }
+}
+
 function Set-Reg {
     param([string]$Path, [string]$Name, $Value, [string]$Type = "DWORD", [switch]$PassThru)
     $success = $false
+    if ($DryRun) {
+        Write-Host "  [DRY RUN] $Path\$Name = $Value" -ForegroundColor Yellow
+        if ($PassThru) { return $true }
+        return
+    }
     try {
-        if (-not (Test-Path $Path)) { New-Item -Path $Path -Force | Out-Null }
-        $existing = Get-ItemProperty -Path $Path -Name $Name -EA SilentlyContinue
-        if ($null -eq $existing) {
-            New-ItemProperty -Path $Path -Name $Name -Value $Value -PropertyType $Type -Force | Out-Null
-        } else {
-            Set-ItemProperty -Path $Path -Name $Name -Value $Value -EA Stop
+        # Record the value from before the first RockTune run so -Undo can restore it.
+        $known = $false
+        foreach ($e in $script:Journal) { if ($e.Path -eq $Path -and $e.Name -eq $Name) { $known = $true; break } }
+        if (-not $known) {
+            $entry = [pscustomobject]@{ Path = $Path; Name = $Name; Existed = $false; Kind = $null; Value = $null }
+            if (Test-Path $Path) {
+                $key = Get-Item -Path $Path
+                if ($key.GetValueNames() -contains $Name) {
+                    $entry.Existed = $true
+                    $entry.Kind = $key.GetValueKind($Name).ToString()
+                    $entry.Value = $key.GetValue($Name, $null, 'DoNotExpandEnvironmentNames')
+                }
+            }
+            [void]$script:Journal.Add($entry)
+            Save-RegJournal
         }
+        if (-not (Test-Path $Path)) { New-Item -Path $Path -Force | Out-Null }
+        New-ItemProperty -Path $Path -Name $Name -Value $Value -PropertyType $Type -Force -EA Stop | Out-Null
         $success = $true
     } catch { $success = $false }
     if ($PassThru) { return $success }
+}
+
+function Invoke-RegUndo {
+    if ($script:Journal.Count -eq 0) {
+        Write-Warn "Nothing to undo ($script:JournalPath not found)"
+        return
+    }
+    for ($i = $script:Journal.Count - 1; $i -ge 0; $i--) {
+        $e = $script:Journal[$i]
+        try {
+            if ($e.Existed) {
+                if (-not (Test-Path $e.Path)) { New-Item -Path $e.Path -Force | Out-Null }
+                $value = $e.Value
+                if ($e.Kind -eq 'Binary') { $value = [byte[]]@($e.Value) }
+                elseif ($e.Kind -eq 'MultiString') { $value = [string[]]@($e.Value) }
+                New-ItemProperty -Path $e.Path -Name $e.Name -Value $value -PropertyType $e.Kind -Force -EA Stop | Out-Null
+            } elseif (Test-Path $e.Path) {
+                Remove-ItemProperty -Path $e.Path -Name $e.Name -EA SilentlyContinue
+            }
+            Write-OK "Restored $($e.Path)\$($e.Name)"
+        } catch {
+            Write-Fail "Could not restore $($e.Path)\$($e.Name): $($_.Exception.Message)"
+        }
+    }
+    if ($script:FailCount -eq 0) {
+        Rename-Item -Path $script:JournalPath -NewName "rocktune-undo.restored-$(Get-Date -Format 'yyyyMMdd-HHmmss').json" -EA SilentlyContinue
+    }
+}
+
+function New-SafetyRestorePoint {
+    $srKey = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SystemRestore"
+    $freqName = "SystemRestorePointCreationFrequency"
+    $old = Get-ItemProperty -Path $srKey -Name $freqName -EA SilentlyContinue
+    try {
+        Enable-ComputerRestore -Drive "$env:SystemDrive\" -EA SilentlyContinue
+        if (-not (Test-Path $srKey)) { New-Item -Path $srKey -Force | Out-Null }
+        # 0 = allow a new point even if one was made in the last 24 hours
+        New-ItemProperty -Path $srKey -Name $freqName -Value 0 -PropertyType DWord -Force | Out-Null
+        Checkpoint-Computer -Description "Pre-RockTune $(Get-Date -Format 'yyyy-MM-dd HH:mm')" -RestorePointType "MODIFY_SETTINGS" -EA Stop -WarningAction SilentlyContinue
+        Write-Host "  [OK] Restore point created" -ForegroundColor Green
+    } catch {
+        Write-Warn "No restore point ($($_.Exception.Message)). Registry changes can still be undone with -Undo."
+    } finally {
+        if ($null -ne $old) {
+            New-ItemProperty -Path $srKey -Name $freqName -Value $old.$freqName -PropertyType DWord -Force -EA SilentlyContinue | Out-Null
+        } else {
+            Remove-ItemProperty -Path $srKey -Name $freqName -EA SilentlyContinue
+        }
+    }
 }
 
 function Add-ScanResult {
@@ -228,7 +318,7 @@ $OPT_FUNCTIONS = @{
         if ($LASTEXITCODE -eq 0) { Write-OK "High Performance power plan enabled" } else { Write-Warn "High Performance plan not available" }
     }
     '5' = {
-        Set-Reg "HKLM:\SYSTEM\CurrentControlSet\Services\USB\DisableSelectiveSuspend" "DisableSelectiveSuspend" 1
+        Set-Reg "HKLM:\SYSTEM\CurrentControlSet\Services\USB" "DisableSelectiveSuspend" 1
         Write-OK "USB selective suspend disabled"
     }
     '6' = {
@@ -266,13 +356,13 @@ $OPT_FUNCTIONS = @{
         Write-OK "Multiplane Overlay disabled"
     }
     '26' = {
-        if (Set-Reg "HKCU:\Control Panel\Mouse" "MouseSpeed" 0 -PassThru) { Write-OK "Mouse acceleration disabled" }
-        Set-Reg "HKCU:\Control Panel\Mouse" "MouseThreshold1" 0
-        Set-Reg "HKCU:\Control Panel\Mouse" "MouseThreshold2" 0
+        if (Set-Reg "HKCU:\Control Panel\Mouse" "MouseSpeed" "0" "String" -PassThru) { Write-OK "Mouse acceleration disabled" }
+        Set-Reg "HKCU:\Control Panel\Mouse" "MouseThreshold1" "0" "String"
+        Set-Reg "HKCU:\Control Panel\Mouse" "MouseThreshold2" "0" "String"
     }
     '28' = {
-        if (Set-Reg "HKCU:\Control Panel\Keyboard" "KeyboardDelay" 0 -PassThru) { Write-OK "Keyboard delay minimized" }
-        Set-Reg "HKCU:\Control Panel\Keyboard" "KeyboardSpeed" 31
+        if (Set-Reg "HKCU:\Control Panel\Keyboard" "KeyboardDelay" "0" "String" -PassThru) { Write-OK "Keyboard delay minimized" }
+        Set-Reg "HKCU:\Control Panel\Keyboard" "KeyboardSpeed" "31" "String"
     }
     '29' = {
         Set-Reg "HKCU:\Software\Microsoft\GameBar" "AllowAutoGameMode" 1
@@ -355,7 +445,7 @@ $OPT_FUNCTIONS = @{
         $adapter = Get-NetAdapter | Where-Object {$_.Status -eq "Up" -and ($_.InterfaceDescription -like "*Ethernet*" -or $_.InterfaceDescription -like "*Wi-Fi*")} | Select-Object -First 1
         if ($adapter) {
             try {
-                Set-NetAdapterAdvancedProperty -Name $adapter.Name -RegistryKeyword "*InterruptModeration" -RegistryValue "0" -ErrorAction SilentlyContinue
+                Set-NetAdapterAdvancedProperty -Name $adapter.Name -RegistryKeyword "*InterruptModeration" -RegistryValue "0" -ErrorAction Stop
                 Write-OK "NIC interrupt moderation disabled"
             } catch { Write-Warn "NIC property not supported" }
         }
@@ -364,7 +454,7 @@ $OPT_FUNCTIONS = @{
         $adapter = Get-NetAdapter | Where-Object {$_.Status -eq "Up" -and ($_.InterfaceDescription -like "*Ethernet*" -or $_.InterfaceDescription -like "*Wi-Fi*")} | Select-Object -First 1
         if ($adapter) {
             try {
-                Set-NetAdapterAdvancedProperty -Name $adapter.Name -RegistryKeyword "*FlowControl" -RegistryValue "0" -ErrorAction SilentlyContinue
+                Set-NetAdapterAdvancedProperty -Name $adapter.Name -RegistryKeyword "*FlowControl" -RegistryValue "0" -ErrorAction Stop
                 Write-OK "NIC flow control disabled"
             } catch { Write-Warn "NIC property not supported" }
         }
@@ -373,11 +463,11 @@ $OPT_FUNCTIONS = @{
         $adapter = Get-NetAdapter | Where-Object {$_.Status -eq "Up" -and ($_.InterfaceDescription -like "*Ethernet*" -or $_.InterfaceDescription -like "*Wi-Fi*")} | Select-Object -First 1
         if ($adapter) {
             try {
-                Set-NetAdapterAdvancedProperty -Name $adapter.Name -RegistryKeyword "EEELinkAdvertisement" -RegistryValue "0" -ErrorAction SilentlyContinue
+                Set-NetAdapterAdvancedProperty -Name $adapter.Name -RegistryKeyword "EEELinkAdvertisement" -RegistryValue "0" -ErrorAction Stop
                 Write-OK "NIC energy efficient ethernet disabled"
             } catch {
                 try {
-                    Set-NetAdapterAdvancedProperty -Name $adapter.Name -RegistryKeyword "GreenEthernet" -RegistryValue "0" -ErrorAction SilentlyContinue
+                    Set-NetAdapterAdvancedProperty -Name $adapter.Name -RegistryKeyword "GreenEthernet" -RegistryValue "0" -ErrorAction Stop
                     Write-OK "NIC green ethernet disabled"
                 } catch { Write-Warn "NIC energy property not supported" }
             }
@@ -405,6 +495,16 @@ $OPT_FUNCTIONS = @{
 # ════════════════════════════════════════════════════════════════════════════
 
 Write-Banner
+
+if ($Undo) {
+    Write-Step "Undo: restoring registry values from $script:JournalPath"
+    Invoke-RegUndo
+    Write-Host ""
+    Write-Host "  Restored: $($script:SuccessCount)   Failed: $($script:FailCount)" -ForegroundColor Cyan
+    Write-Host "  Power plan and NIC changes are not in the journal: use the 'Pre-RockTune' restore point." -ForegroundColor Gray
+    Write-Host "  REBOOT to finish." -ForegroundColor Magenta
+    exit 0
+}
 
 # Show system info
 $cpu = (Get-CimInstance Win32_Processor).Name
@@ -515,12 +615,24 @@ if (-not $SkipConfirmation -and -not $DryRun) {
 
 if ($DryRun) {
     Write-Host ""
-    Write-Host "  DRY RUN - No changes applied" -ForegroundColor Yellow
+    Write-Host "  DRY RUN - nothing is applied" -ForegroundColor Yellow
+    Write-Step "This loadout would apply"
+    foreach ($id in $optIds) {
+        $info = $OPT_DESCRIPTIONS[$id]
+        if ($info) { Write-Host "  - [$($info.tier)] $($info.name)" -ForegroundColor Gray }
+    }
+    Write-Host ""
+    Write-Host "  Run without -DryRun to apply. A restore point and an undo file are created first." -ForegroundColor Yellow
     exit 0
 }
 
+Write-Step "Creating a System Restore point"
+New-SafetyRestorePoint
+
 # Apply optimizations
 Write-Step "Applying Optimizations"
+$stepIndex = 0
+$stepTotal = @($optIds | Where-Object { $OPT_FUNCTIONS.ContainsKey($_) }).Count
 
 foreach ($id in $optIds) {
     if (-not $OPT_FUNCTIONS.ContainsKey($id)) { continue }
@@ -532,6 +644,9 @@ foreach ($id in $optIds) {
         continue
     }
 
+    $stepIndex++
+    $info = $OPT_DESCRIPTIONS[$id]
+    if ($info) { Write-Host ("  [{0,2}/{1}] {2}" -f $stepIndex, $stepTotal, $info.name) -ForegroundColor DarkCyan }
     try {
         & $OPT_FUNCTIONS[$id]
     } catch {
@@ -550,7 +665,9 @@ Write-Host "  Applied:  $($script:SuccessCount) changes" -ForegroundColor Green
 if ($script:WarningCount -gt 0) { Write-Host "  Warnings: $($script:WarningCount)" -ForegroundColor Yellow }
 if ($script:FailCount -gt 0) { Write-Host "  Failed:   $($script:FailCount)" -ForegroundColor Red }
 Write-Host ""
-Write-Host "  Reboot recommended for all changes to take effect." -ForegroundColor Cyan
+Write-Host "  Undo file: $script:JournalPath  (run with -Undo to restore)" -ForegroundColor Gray
+Write-Host ""
+Write-Host "  REBOOT NEEDED for all changes to take effect." -ForegroundColor Magenta
 Write-Host ""
 Write-Host "  Source: https://rocktune.pedroferrari.com" -ForegroundColor DarkGray
 Write-Host ""

@@ -16,6 +16,9 @@ import { assertEquals, assertStringIncludes } from 'jsr:@std/assert'
 import { PERSONA_META, type PersonaId } from './persona-registry.ts'
 import { buildScript, buildVerificationScript, type SelectionState } from './script-generator.ts'
 import type { PackageKey, SoftwareCatalog } from './types.ts'
+import { OPTIMIZATIONS } from './optimizations.ts'
+import { getPersonaOptimizations } from './persona-config.ts'
+import { OPT_VALUE_TO_ID } from './share-registry.ts'
 
 // Minimal test catalog with proper IDs
 const TEST_CATALOG: SoftwareCatalog = {
@@ -556,5 +559,250 @@ Deno.test('MONITOR_TO_PACKAGE - All monitor types have mappings', async () => {
       true,
       `Missing mapping for monitor software: ${monitor}`,
     )
+  }
+})
+
+// ====================================================================
+// 2026 debloat pass: fixes + new 24H2-era features
+// ====================================================================
+
+function scriptFor(optimizations: string[], overrides: Partial<SelectionState> = {}): string {
+  const selection: SelectionState = {
+    ...createTestSelection('gamer'),
+    hardware: { cpu: 'intel', gpu: 'nvidia', peripherals: [], monitorSoftware: [] },
+    optimizations: optimizations as SelectionState['optimizations'],
+    ...overrides,
+  }
+  return buildScript(selection, { catalog: TEST_CATALOG })
+}
+
+Deno.test('Fix - Disable-Task splits folder and leaf (TaskName alone matches nothing)', () => {
+  const script = scriptFor(['privacy_tier2'])
+  assertStringIncludes(script, 'Get-ScheduledTask -TaskPath $folder -TaskName $name')
+  assertStringIncludes(script, 'Disable-ScheduledTask -TaskPath $folder -TaskName $name')
+  assertStringIncludes(script, 'Microsoft Compatibility Appraiser Exp')
+  assertStringIncludes(script, 'Enable-ScheduledTask -TaskPath $tp -TaskName $tn')
+})
+
+Deno.test('Fix - Undo restores exact registry state (values.json, created keys removed)', () => {
+  const script = scriptFor(['spectre_meltdown_off'])
+  assertStringIncludes(script, 'Save-RegPriorState $Path $Name')
+  assertStringIncludes(script, 'values.json')
+  assertStringIncludes(script, 'Remove-ItemProperty -Path $v.Path -Name $v.Name')
+  assertStringIncludes(script, 'Removed key created by RockTune')
+})
+
+Deno.test('Fix - SMT never uses bcdedit numproc', () => {
+  const script = scriptFor(['smt_disable'])
+  assertEquals(script.includes('bcdedit /set numproc'), false)
+  assertStringIncludes(script, 'bcdedit /deletevalue numproc')
+  assertStringIncludes(script, 'NumberOfCores -Sum')
+  const verify = buildVerificationScript({
+    ...createTestSelection('gamer'),
+    optimizations: ['smt_disable'],
+  })
+  assertEquals(verify.includes('numproc\\s+$cores'), false)
+})
+
+Deno.test('Fix - Page file creates the setting when missing and falls back to auto', () => {
+  const script = scriptFor(['pagefile'])
+  assertStringIncludes(script, 'New-CimInstance -ClassName Win32_PageFileSetting')
+  assertStringIncludes(script, 'AutomaticManagedPagefile = $true')
+  assertStringIncludes(script, '$env:SystemDrive\\pagefile.sys')
+})
+
+Deno.test('Fix - generated script never calls Get-WmiObject (absent in PowerShell 7)', () => {
+  const all = OPTIMIZATIONS.map((o) => o.key)
+  const script = scriptFor(all)
+  assertEquals(script.includes('Get-WmiObject'), false)
+})
+
+Deno.test('Fix - Disk cleanup selects cleanmgr categories before /sagerun', () => {
+  const script = scriptFor(['disk_cleanup'])
+  const flags = script.indexOf('"StateFlags0100" 2')
+  const run = script.indexOf('Start-Process "cleanmgr.exe"')
+  assertEquals(flags > 0 && flags < run, true)
+})
+
+Deno.test('Fix - GPU interrupt affinity is a binary mask off CPU 0', () => {
+  const script = scriptFor(['interrupt_affinity'])
+  assertStringIncludes(script, 'Set-Reg $affPath "AssignmentSetOverride" $mask "Binary"')
+  assertEquals(script.includes('"AssignmentSetOverride" 1'), false)
+})
+
+Deno.test('Fix - Input queue is never shrunk below the Windows default', () => {
+  const script = scriptFor(['input_buffer'])
+  assertEquals(script.includes('"MouseDataQueueSize" 32'), false)
+  assertStringIncludes(script, '"MouseDataQueueSize" 100')
+})
+
+Deno.test('Fix - Razer block uses device metadata policy, not service shutdown', () => {
+  const script = scriptFor(['razer_block'], {
+    hardware: { cpu: 'intel', gpu: 'nvidia', peripherals: ['razer'], monitorSoftware: [] },
+  })
+  assertStringIncludes(script, 'PreventDeviceMetadataFromNetwork')
+  assertEquals(script.includes('Name -like "Razer*"'), false)
+})
+
+Deno.test('Fix - DNS only on physical adapters with errors caught', () => {
+  const script = scriptFor(['dns'])
+  assertStringIncludes(script, 'Get-NetAdapter -Physical')
+  assertStringIncludes(script, 'Set-DnsClientServerAddress -InterfaceIndex $nic.ifIndex')
+})
+
+Deno.test('Fix - Mutex released in finally; partial runs still save restore files', () => {
+  const script = scriptFor(['pagefile'])
+  assertStringIncludes(script, '} finally {')
+  assertStringIncludes(script, '$mutex.ReleaseMutex()')
+  assertStringIncludes(script, 'Save-BackupManifest }')
+  assertEquals(script.indexOf('try {') < script.indexOf('if ($Undo) {'), true)
+})
+
+Deno.test('Fix - Services: startup type set before stop, delayed-auto restored', () => {
+  const script = scriptFor(['services_trim'])
+  assertStringIncludes(script, 'Get-CimInstance Win32_Service -Filter')
+  assertStringIncludes(script, 'DelayedAutoStart')
+  assertStringIncludes(script, 'start= delayed-auto')
+})
+
+Deno.test('Fix - Ultimate Performance uses a fixed GUID (no duplicate plans)', () => {
+  const script = scriptFor(['ultimate_perf'])
+  assertStringIncludes(
+    script,
+    'powercfg /duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61 $rtPlan',
+  )
+  assertEquals(script.includes('Select-String "Ultimate Performance"'), false)
+})
+
+Deno.test('Fix - Restore point is always created (frequency limit lifted)', () => {
+  const script = scriptFor(['restore_point'])
+  assertStringIncludes(script, 'SystemRestorePointCreationFrequency')
+  assertStringIncludes(script, 'Enable-ComputerRestore')
+  assertEquals(script.includes('already created within last 24 hours'), false)
+})
+
+Deno.test('Feature - Windows AI off: Recall, Click to Do, AI service, Win11 + 24H2 guards', () => {
+  const script = scriptFor(['ai_off'])
+  for (const key of [
+    'AllowRecallEnablement',
+    'DisableAIDataAnalysis',
+    'DisableClickToDo',
+    'WSAIFabricSvc',
+    'DisableCocreator',
+    'WindowsNotepad',
+  ]) {
+    assertStringIncludes(script, key)
+  }
+  assertStringIncludes(script, 'if (-not $script:IsWin11)')
+  assertStringIncludes(script, 'if ($script:IsWin11_24H2)')
+})
+
+Deno.test('Feature - Widgets, Start, Bing, ads, reboot items emit their policies', () => {
+  const script = scriptFor([
+    'widgets_off',
+    'start_recommended_off',
+    'bing_search_off',
+    'windows_ads_off',
+    'update_no_reboot',
+  ])
+  for (const key of [
+    'AllowNewsAndInterests',
+    'HideRecommendedSection',
+    'Start_IrisRecommendations',
+    'DisableSearchBoxSuggestions',
+    'BingSearchEnabled',
+    'DisableWindowsConsumerFeatures',
+    'ScoobeSystemSettingEnabled',
+    'NoAutoRebootWithLoggedOnUsers',
+    'IsContinuousInnovationOptedIn',
+  ]) {
+    assertStringIncludes(script, key)
+  }
+})
+
+Deno.test('Feature - Game Bar popup fix is skipped on X3D CPUs', () => {
+  const script = scriptFor(['gamebar_popup_fix'])
+  assertStringIncludes(script, 'ms-gamebarservices')
+  assertStringIncludes(script, 'if ($Config.hardware.cpu -eq "amd_x3d")')
+})
+
+Deno.test('Feature - Edge debloat blocks AI hooks and local model download', () => {
+  const script = scriptFor(['edge_debloat'])
+  assertStringIncludes(script, 'HubsSidebarEnabled')
+  assertStringIncludes(script, 'GenAILocalFoundationalModelSettings')
+})
+
+Deno.test('Feature - Bloatware list grows but never touches Xbox / Game Pass apps', () => {
+  const script = scriptFor(['bloatware'])
+  assertStringIncludes(script, '"MSTeams"')
+  assertStringIncludes(script, 'Remove-AppxSafe $app')
+  const listLine = script.slice(
+    script.indexOf('$bloatApps = @('),
+    script.indexOf('$removedCount = 0'),
+  )
+  for (const keep of [
+    'Microsoft.GamingApp"',
+    'Microsoft.XboxIdentityProvider"',
+    'Microsoft.Xbox.TCUI"',
+  ]) {
+    assertEquals(listLine.includes(`"${keep}`), false, `${keep} must not be removed`)
+  }
+})
+
+Deno.test('Feature - OneDrive removal protects user files during uninstall', () => {
+  const script = scriptFor(['onedrive_remove'])
+  assertStringIncludes(script, '/deny "*S-1-5-32-544:(D,DC)"')
+  assertStringIncludes(script, '/remove:d "*S-1-5-32-544"')
+})
+
+Deno.test('Feature - Verification script checks new items', () => {
+  const verify = buildVerificationScript({
+    ...createTestSelection('gamer'),
+    hardware: { cpu: 'intel', gpu: 'nvidia', peripherals: [], monitorSoftware: [] },
+    optimizations: [
+      'ai_off',
+      'widgets_off',
+      'windows_ads_off',
+      'update_no_reboot',
+      'gamebar_popup_fix',
+    ],
+  })
+  assertStringIncludes(verify, 'Windows AI / Recall off')
+  assertStringIncludes(verify, 'Widgets off')
+  assertStringIncludes(verify, 'No auto-reboot while signed in')
+  assertStringIncludes(verify, 'ms-gamebar popup fix')
+})
+
+Deno.test('Run output - per-section progress and end summary', () => {
+  const script = scriptFor(['pagefile', 'dns', 'ai_off'])
+  assertStringIncludes(script, 'Start-Section "System"')
+  assertStringIncludes(script, 'Write-SectionSummary')
+  assertStringIncludes(script, 'Reboot:   NEEDED')
+  assertStringIncludes(script, 'Loadout: 3 upgrades')
+})
+
+Deno.test('Presets - non-benchmarker personas never include LUDICROUS items', () => {
+  const ludicrous = new Set(
+    OPTIMIZATIONS.filter((o) => o.tier === 'ludicrous').map((o) => o.key as string),
+  )
+  for (const persona of ['gamer', 'pro_gamer', 'streamer'] as PersonaId[]) {
+    for (const key of getPersonaOptimizations(persona)) {
+      assertEquals(ludicrous.has(key), false, `${persona} includes LUDICROUS ${key}`)
+    }
+  }
+})
+
+Deno.test('Catalog - every new key has a share ID', () => {
+  for (const key of [
+    'ai_off',
+    'widgets_off',
+    'start_recommended_off',
+    'bing_search_off',
+    'windows_ads_off',
+    'gamebar_popup_fix',
+    'update_no_reboot',
+    'onedrive_remove',
+  ]) {
+    assertEquals(typeof OPT_VALUE_TO_ID[key as keyof typeof OPT_VALUE_TO_ID], 'number', key)
   }
 })

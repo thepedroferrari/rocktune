@@ -51,11 +51,8 @@ function saveToStorage(data: ProgressData): void {
   } catch {}
 }
 
-let progressData = $state<ProgressData>(getDefaultData())
-
-if (typeof window !== 'undefined') {
-  progressData = loadFromStorage()
-}
+// loadFromStorage returns defaults outside the browser
+let progressData = $state<ProgressData>(loadFromStorage())
 
 /**
  * Check if an item is completed

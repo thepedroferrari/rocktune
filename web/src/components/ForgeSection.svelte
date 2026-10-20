@@ -8,12 +8,13 @@
  * - SHA256 checksum for verification
  */
 
+import './forge/forge.styles.css'
 import { soundSettings } from '$lib/audio/sound-settings.svelte'
 import { copyToClipboard, generateSHA256 } from '$lib/checksum'
 import { buildVerificationScript, type SelectionState } from '$lib/script-generator'
+import { generateCurrentScript } from '$lib/current-script'
 import {
   app,
-  generateCurrentScript,
   openPreviewModal,
   openShareModal,
   setIncludeManualSteps,

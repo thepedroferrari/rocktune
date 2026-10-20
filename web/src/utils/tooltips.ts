@@ -313,7 +313,11 @@ export function tooltip(node: HTMLElement, content: TooltipContent) {
     }
   }
 
+  /** Touch screens fire mouseenter on tap; only real hover devices get hover tooltips */
+  const canHover = typeof window !== 'undefined' && window.matchMedia('(hover: hover)').matches
+
   function handleMouseEnter() {
+    if (!canHover) return
     clearTimeouts()
     showTimeout = setTimeout(show, config.showDelay)
   }
@@ -323,7 +327,10 @@ export function tooltip(node: HTMLElement, content: TooltipContent) {
     hideTimeout = setTimeout(hide, config.hideDelay)
   }
 
-  function handleFocusIn() {
+  function handleFocusIn(event: FocusEvent) {
+    // Keyboard focus only: a tap or click also focuses, and should not open a tooltip
+    const target = event.target
+    if (target instanceof Element && !target.matches(':focus-visible')) return
     clearTimeouts()
     show()
   }

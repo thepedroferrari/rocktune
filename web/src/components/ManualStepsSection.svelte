@@ -8,6 +8,7 @@
  * - Hardware (NVIDIA vs AMD GPU)
  */
 
+import './manual-steps/manual-steps.styles.css'
 import { generateToolConfig, getSectionConfigTool, isToolAvailable } from '$lib/config-generator'
 import { downloadConfigs } from '$lib/download-utils'
 import {

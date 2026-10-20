@@ -31,15 +31,15 @@ function Test-PowerOptimizations {
 
     $activePlan = powercfg /getactivescheme
     if ($activePlan -like "*High performance*" -or $activePlan -like "*Ultimate Performance*") {
-        Write-Log "✓ High Performance power plan active" "SUCCESS"
+        Write-Log "[OK] High Performance power plan active" "SUCCESS"
     } else {
-        Write-Log "✗ High Performance power plan not active" "ERROR"
+        Write-Log "[FAIL] High Performance power plan not active" "ERROR"
         $allPassed = $false
     }
 
     $hiberFile = Test-Path "C:\hiberfil.sys"
     if (-not $hiberFile) {
-        Write-Log "✓ Hibernation disabled" "SUCCESS"
+        Write-Log "[OK] Hibernation disabled" "SUCCESS"
     } else {
         Write-Log "Hibernation file still exists (may be enabled)" "INFO"
     }

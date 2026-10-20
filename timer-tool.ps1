@@ -30,6 +30,8 @@ param(
 )
 
 # Native interop wrapper for timer resolution APIs.
+# Guarded: Add-Type throws if the type already exists (second run in the same session).
+if (-not ([System.Management.Automation.PSTypeName]'TimerResolution').Type) {
 Add-Type @"
 using System;
 using System.Runtime.InteropServices;
@@ -48,6 +50,7 @@ public class TimerResolution {
     public static extern uint timeEndPeriod(uint uPeriod);
 }
 "@
+}
 
 <#
 .SYNOPSIS

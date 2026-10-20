@@ -228,6 +228,7 @@ $effect(() => {
   <div
     bind:this={rotator}
     class="preset-card__rotator"
+    role="presentation"
     style:transform
     onpointermove={handlePointerMove}
     onpointerenter={handlePointerEnter}

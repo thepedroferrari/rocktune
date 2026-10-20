@@ -9,7 +9,7 @@
 import { soundSettings } from '$lib/audio/sound-settings.svelte'
 import { getDefaultOptimizations } from '$lib/optimizations'
 import { getRecommendedPreset } from '$lib/presets'
-import { scrollToSection } from '$lib/scroll'
+import { LOAD_DEFERRED_EVENT, scrollToSection } from '$lib/scroll'
 import {
   clearShareHash,
   type DecodedBuild,
@@ -55,11 +55,54 @@ import { showToast } from '$lib/toast.svelte'
 import HeroSection from './components/HeroSection.svelte'
 import PresetSection from './components/PresetSection.svelte'
 import SRAnnounce from './components/SRAnnounce.svelte'
-import ShareModal from './components/ShareModal.svelte'
 import Toast from './components/Toast.svelte'
 import UnifiedNav from './components/UnifiedNav.svelte'
 
 let loading = $state(true)
+
+/**
+ * Below-the-fold sections (Forge, Guide) load when the visitor scrolls near
+ * them, follows a link to them, or after 8 seconds, so first load skips about
+ * 100KB gzip of JavaScript and CSS.
+ */
+let deferredReady = $state(false)
+let deferSentinel = $state<HTMLElement | null>(null)
+
+$effect(() => {
+  if (deferredReady) return
+  const release = () => {
+    deferredReady = true
+  }
+  if (window.location.hash && !window.location.hash.startsWith('#b=')) {
+    release()
+    return
+  }
+  // A plain #anchor link to a deferred section: load it, then scroll once it renders
+  const releaseForHash = () => {
+    release()
+    const id = window.location.hash.slice(1)
+    if (id) void scrollToSection({ sectionId: id })
+  }
+  window.addEventListener(LOAD_DEFERRED_EVENT, release)
+  window.addEventListener('hashchange', releaseForHash)
+  const timeoutId = setTimeout(release, 8000)
+  let observer: IntersectionObserver | undefined
+  if (deferSentinel && 'IntersectionObserver' in window) {
+    observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) release()
+      },
+      { rootMargin: '1500px 0px' },
+    )
+    observer.observe(deferSentinel)
+  }
+  return () => {
+    clearTimeout(timeoutId)
+    observer?.disconnect()
+    window.removeEventListener(LOAD_DEFERRED_EVENT, release)
+    window.removeEventListener('hashchange', releaseForHash)
+  }
+})
 let error = $state<string | null>(null)
 
 /** Pending packages from share URL (validated after catalog loads) */
@@ -72,6 +115,19 @@ const activeView = $derived(app.view)
 
 /** Track if we loaded from a shared URL */
 let loadedFromShare = $state(false)
+
+/**
+ * Modals load on first open and then stay mounted, so Modal.svelte can call
+ * dialog.close() and the browser returns focus to the button that opened it.
+ */
+let previewLoaded = $state(false)
+let shareLoaded = $state(false)
+$effect(() => {
+  if (app.ui.previewModalOpen) previewLoaded = true
+})
+$effect(() => {
+  if (app.ui.shareModalOpen) shareLoaded = true
+})
 
 /** Check if any LUDICROUS optimizations are selected */
 const hasLudicrousSelected = $derived(LUDICROUS_KEYS.some((key) => app.optimizations.has(key)))
@@ -540,6 +596,8 @@ onMount(() => {
     </section>
   </div>
 
+  <div bind:this={deferSentinel} aria-hidden="true"></div>
+  {#if deferredReady}
   <svelte:boundary>
     {#await import("./components/ForgeSection.svelte")}
       <SectionSkeleton height="600px" />
@@ -561,15 +619,23 @@ onMount(() => {
       <ErrorState {error} {reset} title="Manual Steps Error" />
     {/snippet}
   </svelte:boundary>
+  {:else}
+    <SectionSkeleton height="600px" />
+    <SectionSkeleton height="500px" />
+  {/if}
 </main>
 
-{#if app.ui.previewModalOpen}
+{#if previewLoaded}
   {#await import("./components/PreviewModal.svelte") then { default: PreviewModal }}
     <PreviewModal />
   {/await}
 {/if}
 
-<ShareModal open={app.ui.shareModalOpen} onclose={closeShareModal} />
+{#if shareLoaded}
+  {#await import("./components/ShareModal.svelte") then { default: ShareModal }}
+    <ShareModal open={app.ui.shareModalOpen} onclose={closeShareModal} />
+  {/await}
+{/if}
 
 <Toast />
 

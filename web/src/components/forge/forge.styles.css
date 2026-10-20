@@ -1,4 +1,6 @@
-@layer components {
+/* Loaded by its lazy section component. The nested layer name matches the old
+   style.css @import (layer(components) + inner @layer components). */
+@layer components.components {
   @scope (.step--forge) {
     .header-row {
       display: flex;

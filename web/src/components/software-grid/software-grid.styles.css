@@ -1,7 +1,7 @@
 @layer components {
   .software-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(120px, 100%), 1fr));
     gap: var(--space-md);
     max-height: 540px;
     overflow-y: auto;
@@ -29,7 +29,7 @@
   }
 
   .software-grid.list-view {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--space-2xs);
     max-height: 540px;
 
@@ -116,16 +116,28 @@
 
   @media (max-width: 768px) {
     .software-grid {
-      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(min(100px, 100%), 1fr));
       gap: var(--space-sm);
     }
   }
 
   @media (max-width: 480px) {
     .software-grid {
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: var(--space-xs);
       padding: var(--space-xs);
+      /* A scroll box inside the page scroll is awkward on touch screens */
+      max-height: none;
+      overflow-y: visible;
+    }
+
+    .software-grid.list-view {
+      grid-template-columns: minmax(0, 1fr);
+      max-height: none;
+    }
+
+    .software-grid .software-card {
+      min-inline-size: 0;
     }
   }
 }

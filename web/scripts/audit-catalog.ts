@@ -18,7 +18,7 @@ type Issue = {
 
 const CATALOG_PATH = new URL('../public/catalog.json', import.meta.url)
 const PERSONAS_PATH = new URL('../docs/personas.json', import.meta.url)
-const ICONS_DIR = new URL('../public/icons/', import.meta.url)
+const ICONS_DIR = new URL('../assets/icons-src/', import.meta.url)
 
 const decoder = new TextDecoder()
 

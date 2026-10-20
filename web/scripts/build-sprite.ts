@@ -1,7 +1,8 @@
 #!/usr/bin/env -S deno run --allow-read --allow-write
 
-const ICONS_DIR = new URL('../public/icons', import.meta.url).pathname
-const OUTPUT_FILE = `${ICONS_DIR}/sprite.svg`
+// Source SVGs live outside public/ so only the built sprite ships to production
+const ICONS_DIR = new URL('../assets/icons-src', import.meta.url).pathname
+const OUTPUT_FILE = new URL('../public/icons/sprite.svg', import.meta.url).pathname
 
 const svgFiles: string[] = []
 for await (const entry of Deno.readDir(ICONS_DIR)) {

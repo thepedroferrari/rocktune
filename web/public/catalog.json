@@ -818,7 +818,7 @@
     "id": "Microsoft.PowerShell",
     "name": "PowerShell",
     "category": "dev",
-    "icon": "powershell",
+    "icon": "icons/powershell.svg",
     "desc": "Modern PowerShell (pwsh). Nice for scripting and automation.",
     "selected": false
   },

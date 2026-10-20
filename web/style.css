@@ -19,8 +19,6 @@
    @import './src/components/optimizations/optimizations.styles.css' layer(components);
    @import './src/components/unified-nav/unified-nav.styles.css' layer(components);
    @import './src/components/preview-modal/preview-modal.styles.css' layer(components);
-   @import './src/components/forge/forge.styles.css' layer(components);
-   @import './src/components/manual-steps/manual-steps.styles.css' layer(components);
    @import './src/components/step-banner/step-banner.styles.css' layer(components);
    @import './src/styles/overrides.css' layer(overrides);
 
@@ -1131,6 +1129,14 @@
        }
      }
 
+     /* Browsers without CSS anchor positioning: pin the panel under the nav */
+     @supports not (anchor-name: --a) {
+       .hardware-help-panel.hardware-help-panel {
+         inset: calc(var(--nav-height) + var(--space-md)) var(--space-md) auto auto;
+         translate: none;
+       }
+     }
+
      .hardware-help-panel {
        position: fixed;
        position-anchor: --hw-help-anchor;
@@ -1772,7 +1778,6 @@
 
        body::before,
        body::after,
-       .cursor-glow,
        .skip-link,
        .site-footer,
        #sr-announce {
@@ -1863,10 +1868,6 @@
 
        body::after {
          animation: none !important;
-       }
-
-       .cursor-glow {
-         display: none !important;
        }
 
        .software-card:hover {

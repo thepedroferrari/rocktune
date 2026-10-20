@@ -1000,3 +1000,18 @@
   --focus-color: oklch(0.72 0.18 10);
   --focus-glow: oklch(0.72 0.18 10 / 0.4);
 }
+
+/* Phones: less nested padding so option text gets the width */
+@media (max-width: 480px) {
+  #optimizations.step {
+    padding-inline: var(--space-sm);
+  }
+
+  #optimizations .control-fieldset {
+    padding: var(--space-sm) var(--space-md);
+  }
+
+  #optimizations .ludicrous-warning-card {
+    padding: var(--space-lg) var(--space-md);
+  }
+}

@@ -33,6 +33,10 @@ const BASE_OPTIMIZATIONS: readonly OptimizationKey[] = [
   'pcie_power',
   'audio_enhancements',
   'game_mode',
+  'update_no_reboot',
+  'windows_ads_off',
+  'ai_off',
+  'bing_search_off',
 ] as const
 
 // ====================================================================
@@ -108,6 +112,8 @@ const PERSONA_ADDITIONS: Record<PersonaId, readonly OptimizationKey[]> = {
     'delivery_opt',
     'feedback_disable',
     'rss_enable',
+    'widgets_off',
+    'start_recommended_off',
   ],
 
   /**

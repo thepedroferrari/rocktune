@@ -305,6 +305,15 @@ const SAFE_OPTIMIZATIONS = {
   NIC_FLOW_CONTROL: 'nic_flow_control',
   NIC_ENERGY_EFFICIENT: 'nic_energy_efficient',
   BROWSER_BACKGROUND: 'browser_background',
+
+  // 24H2-era debloat (Win11Debloat / winutil parity)
+  AI_OFF: 'ai_off',
+  WIDGETS_OFF: 'widgets_off',
+  START_RECOMMENDED_OFF: 'start_recommended_off',
+  BING_SEARCH_OFF: 'bing_search_off',
+  WINDOWS_ADS_OFF: 'windows_ads_off',
+  GAMEBAR_POPUP_FIX: 'gamebar_popup_fix',
+  UPDATE_NO_REBOOT: 'update_no_reboot',
 } as const
 
 const CAUTION_OPTIMIZATIONS = {
@@ -339,6 +348,8 @@ const CAUTION_OPTIMIZATIONS = {
 
   // FR33THY: GPU-specific optimizations
   AMD_ULPS_DISABLE: 'amd_ulps_disable',
+
+  ONEDRIVE_REMOVE: 'onedrive_remove',
 } as const
 
 const RISKY_OPTIMIZATIONS = {

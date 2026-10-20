@@ -1,4 +1,6 @@
-@layer components {
+/* Loaded by its lazy section component. The nested layer name matches the old
+   style.css @import (layer(components) + inner @layer components). */
+@layer components.components {
   @scope (.guide) {
     :scope {
       margin-block-start: var(--space-xl);
@@ -270,6 +272,7 @@
 
     .guide__filters {
       display: flex;
+      flex-wrap: wrap;
       gap: var(--space-xs);
     }
 

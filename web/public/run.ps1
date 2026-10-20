@@ -1,4 +1,3 @@
-#Requires -RunAsAdministrator
 <#
 .SYNOPSIS
     RockTune Universal Loader - Execute shared loadouts via one-liner
@@ -11,19 +10,32 @@
     Recipients must use the web UI to enable dangerous optimizations.
 
 .EXAMPLE
-    irm "https://rocktune.pedroferrari.com/run.ps1?c=1&g=1&o=1,2,10" | iex
+    $env:RT="c=1&g=1&o=1,2,10"; irm https://rocktune.pedroferrari.com/run.ps1 | iex
 
 .EXAMPLE
-    irm "https://rocktune.pedroferrari.com/run.ps1?c=1&g=1&d=1&o=1,2,3,10,11&s=steam,discord" | iex
+    $env:RT="c=1&g=1&d=1&o=1,2,3,10,11&s=steam,discord"; irm https://rocktune.pedroferrari.com/run.ps1 | iex
 
 .NOTES
     Generated from RockTune web app: https://rocktune.pedroferrari.com
     Source: https://github.com/thepedroferrari/rocktune
 #>
 
-# ════════════════════════════════════════════════════════════════════════════
+# ============================================================================
+# ADMIN CHECK
+# ============================================================================
+# This script runs as "irm ... | iex": #Requires is ignored there and "exit" would
+# close the whole PowerShell window, so check explicitly and use "return".
+if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+    Write-Host ""
+    Write-Host "  Run PowerShell as Administrator" -ForegroundColor Red
+    Write-Host "  Right-click PowerShell / Terminal > 'Run as administrator', then paste the one-liner again." -ForegroundColor Yellow
+    Write-Host ""
+    return
+}
+
+# ============================================================================
 # OS DETECTION
-# ════════════════════════════════════════════════════════════════════════════
+# ============================================================================
 
 $script:WinBuild = [int](Get-CimInstance Win32_OperatingSystem).BuildNumber
 $script:IsWin11 = $script:WinBuild -ge 22000
@@ -31,12 +43,12 @@ $script:IsWin11_24H2 = $script:WinBuild -ge 26100
 $script:WinVersion = if ($script:IsWin11) { "Windows 11" } else { "Windows 10" }
 
 # IDs that only work on Windows 11
-$script:Win11OnlyIds = @('18', '21', '22')  # Classic menu, End Task, Explorer cleanup
+$script:Win11OnlyIds = @('18', '21', '22', '113', '114')  # Classic menu, End Task, Explorer cleanup, Windows AI, Widgets
 $script:Win11_24H2OnlyIds = @('86')  # Native NVMe
 
-# ════════════════════════════════════════════════════════════════════════════
+# ============================================================================
 # PARSE CONFIGURATION
-# ════════════════════════════════════════════════════════════════════════════
+# ============================================================================
 # Configuration is passed via $env:RT environment variable as query string format
 # Example: $env:RT='c=1&g=1&o=1,2,3&s=steam'; irm url | iex
 
@@ -50,7 +62,7 @@ if (-not $configString) {
     Write-Host ""
     Write-Host "  Get your one-liner at: https://rocktune.pedroferrari.com" -ForegroundColor Gray
     Write-Host ""
-    exit 1
+    return
 }
 
 # Parse the config string as query parameters
@@ -59,7 +71,7 @@ try {
     $query = [System.Web.HttpUtility]::ParseQueryString($configString)
 } catch {
     Write-Host "ERROR: Invalid configuration format." -ForegroundColor Red
-    exit 1
+    return
 }
 
 # Extract parameters
@@ -94,9 +106,9 @@ $pkgKeys = $pkgKeys | Where-Object { $_ -match '^[a-zA-Z0-9._-]+$' }
 # Clear the env var after reading (security)
 $env:RT = $null
 
-# ════════════════════════════════════════════════════════════════════════════
+# ============================================================================
 # ID MAPPINGS - MUST STAY IN SYNC with web/src/lib/share-registry.ts
-# ════════════════════════════════════════════════════════════════════════════
+# ============================================================================
 #
 # To find next available ID:
 #   cd web && deno task share:audit
@@ -107,7 +119,7 @@ $env:RT = $null
 # 3. Add entry to $OPT_FUNCTIONS below
 # 4. Run: cd web && deno task share:audit (verify passes)
 #
-# ════════════════════════════════════════════════════════════════════════════
+# ============================================================================
 
 $CPU_MAP = @{ '1'='amd_x3d'; '2'='amd'; '3'='intel' }
 $GPU_MAP = @{ '1'='nvidia'; '2'='amd'; '3'='intel' }
@@ -119,9 +131,9 @@ $DNS_MAP = @{
     '5' = @{ name='AdGuard'; primary='94.140.14.14'; secondary='94.140.15.15' }
 }
 
-# ════════════════════════════════════════════════════════════════════════════
+# ============================================================================
 # PACKAGE MAPPINGS (from catalog.json)
-# ════════════════════════════════════════════════════════════════════════════
+# ============================================================================
 
 $PACKAGE_MAP = @{
     'steam' = @{ id='Valve.Steam'; name='Steam' }
@@ -255,9 +267,9 @@ $PACKAGE_MAP = @{
     'unigine_superposition' = @{ id='Unigine.SuperpositionBenchmark'; name='Unigine Superposition' }
 }
 
-# ════════════════════════════════════════════════════════════════════════════
+# ============================================================================
 # HELPER FUNCTIONS
-# ════════════════════════════════════════════════════════════════════════════
+# ============================================================================
 
 $script:SuccessCount = 0
 $script:FailCount = 0
@@ -285,13 +297,9 @@ function Set-Reg {
     param([string]$Path, [string]$Name, $Value, [string]$Type = "DWORD", [switch]$PassThru)
     $success = $false
     try {
-        if (-not (Test-Path $Path)) { New-Item -Path $Path -Force | Out-Null }
-        $existing = Get-ItemProperty -Path $Path -Name $Name -EA SilentlyContinue
-        if ($null -eq $existing) {
-            New-ItemProperty -Path $Path -Name $Name -Value $Value -PropertyType $Type -Force | Out-Null
-        } else {
-            Set-ItemProperty -Path $Path -Name $Name -Value $Value -EA Stop
-        }
+        if (-not (Test-Path $Path)) { New-Item -Path $Path -Force -EA Stop | Out-Null }
+        # -Force replaces the value and its type (a REG_SZ that should be DWORD is recreated)
+        New-ItemProperty -Path $Path -Name $Name -Value $Value -PropertyType $Type -Force -EA Stop | Out-Null
         $success = $true
     } catch { $success = $false }
     if ($PassThru) { return $success }
@@ -315,9 +323,9 @@ function Write-ScanResults {
     $targetWidth = 18
 
     Write-Host ""
-    Write-Host "  ╔$('═' * $nameWidth)╤$('═' * $currentWidth)╤$('═' * $targetWidth)╗" -ForegroundColor White
-    Write-Host "  ║ Setting$(' ' * ($nameWidth - 9))│ Current$(' ' * ($currentWidth - 9))│ Target$(' ' * ($targetWidth - 8))║" -ForegroundColor White
-    Write-Host "  ╠$('═' * $nameWidth)╪$('═' * $currentWidth)╪$('═' * $targetWidth)╣" -ForegroundColor White
+    Write-Host "  +$('=' * $nameWidth)+$('=' * $currentWidth)+$('=' * $targetWidth)+" -ForegroundColor White
+    Write-Host "  | Setting$(' ' * ($nameWidth - 9))| Current$(' ' * ($currentWidth - 9))| Target$(' ' * ($targetWidth - 8))|" -ForegroundColor White
+    Write-Host "  +$('=' * $nameWidth)+$('=' * $currentWidth)+$('=' * $targetWidth)+" -ForegroundColor White
 
     foreach ($result in $script:ScanResults) {
         $name = $result.Name
@@ -340,16 +348,16 @@ function Write-ScanResults {
             default   { "White" }
         }
 
-        Write-Host "  ║" -NoNewline -ForegroundColor White
+        Write-Host "  |" -NoNewline -ForegroundColor White
         Write-Host $name -NoNewline -ForegroundColor $color
-        Write-Host "│" -NoNewline -ForegroundColor White
+        Write-Host "|" -NoNewline -ForegroundColor White
         Write-Host $current -NoNewline -ForegroundColor $color
-        Write-Host "│" -NoNewline -ForegroundColor White
+        Write-Host "|" -NoNewline -ForegroundColor White
         Write-Host $target -NoNewline -ForegroundColor $color
-        Write-Host "║" -ForegroundColor White
+        Write-Host "|" -ForegroundColor White
     }
 
-    Write-Host "  ╚$('═' * $nameWidth)╧$('═' * $currentWidth)╧$('═' * $targetWidth)╝" -ForegroundColor White
+    Write-Host "  +$('=' * $nameWidth)+$('=' * $currentWidth)+$('=' * $targetWidth)+" -ForegroundColor White
     Write-Host ""
 
     $changeCount = ($script:ScanResults | Where-Object { $_.Status -eq "CHANGE" }).Count
@@ -358,9 +366,9 @@ function Write-ScanResults {
     Write-Host ""
 }
 
-# ════════════════════════════════════════════════════════════════════════════
+# ============================================================================
 # OPTIMIZATION DESCRIPTIONS (for interactive mode)
-# ════════════════════════════════════════════════════════════════════════════
+# ============================================================================
 
 $OPT_DESCRIPTIONS = @{
     # SAFE tier (1-45)
@@ -452,27 +460,44 @@ $OPT_DESCRIPTIONS = @{
     '105' = @{ name='AMD ULPS'; tier='CAUTION'; desc='Disable AMD Ultra Low Power State (prevents downclock stutters)' }
     '106' = @{ name='NVIDIA P0 State'; tier='RISKY'; desc='Force GPU to max clocks (increases heat/power!)' }
     '107' = @{ name='Network Binding Strip'; tier='RISKY'; desc='Remove IPv6/sharing bindings (breaks file sharing!)' }
+
+    # 24H2-era debloat (113+)
+    '113' = @{ name='Windows AI Off'; tier='SAFE'; desc='Recall, Click to Do, AI Fabric service, Notepad/Paint AI off' }
+    '114' = @{ name='Widgets Off'; tier='SAFE'; desc='Widgets board, taskbar button and its background web process off' }
+    '115' = @{ name='Clean Start Menu'; tier='SAFE'; desc='No Recommended section, account nags or Phone Link panel' }
+    '116' = @{ name='Bing Search Off'; tier='SAFE'; desc='Start search finds your apps, not web results' }
+    '117' = @{ name='No Ads & Nags'; tier='SAFE'; desc='No promoted app installs, 365 ads or setup nags' }
+    '118' = @{ name='Game Bar Popup Fix'; tier='SAFE'; desc='Stops the ms-gamebar popup when Game Bar is off (skipped on X3D)' }
+    '119' = @{ name='No Surprise Reboots'; tier='SAFE'; desc='Windows Update never auto-restarts while you are signed in' }
+    '120' = @{ name='Uninstall OneDrive'; tier='CAUTION'; desc='Remove OneDrive (files stay in the OneDrive folder)' }
 }
 
-# ════════════════════════════════════════════════════════════════════════════
+# ============================================================================
 # OPTIMIZATION FUNCTIONS (by ID from share-registry.ts)
 # NOTE: LUDICROUS tier IDs (100-103) are intentionally NOT included
-# ════════════════════════════════════════════════════════════════════════════
+# ============================================================================
 
 $OPT_FUNCTIONS = @{
     # SAFE tier (1-45)
     '1' = { # pagefile
         $ram = [math]::Round((Get-CimInstance Win32_PhysicalMemory | Measure-Object Capacity -Sum).Sum/1GB)
         if ($ram -ge 16) {
-            $size = if ($ram -ge 32) { 4096 } else { 8192 }
-            $cs = Get-WmiObject Win32_ComputerSystem -EnableAllPrivileges
-            $cs.AutomaticManagedPagefile = $false; $cs.Put() | Out-Null
-            $pf = Get-WmiObject -Query "Select * From Win32_PageFileSetting Where Name='C:\\pagefile.sys'" -EA SilentlyContinue
-            if ($pf) {
-                $pf.InitialSize = $size; $pf.MaximumSize = $size; $pf.Put() | Out-Null
-                Write-OK "Page file set to ${size}MB fixed"
-            } else { Write-Warn "Page file setting not found" }
-        }
+            $size = 8192
+            if ($ram -ge 32) { $size = 4096 }
+            $pfName = "$env:SystemDrive\pagefile.sys"
+            $cs = Get-CimInstance Win32_ComputerSystem
+            $wasAuto = [bool]$cs.AutomaticManagedPagefile
+            try {
+                if ($wasAuto) { Set-CimInstance -InputObject $cs -Property @{ AutomaticManagedPagefile = $false } -EA Stop }
+                $pf = Get-CimInstance Win32_PageFileSetting -EA SilentlyContinue | Where-Object { $_.Name -eq $pfName } | Select-Object -First 1
+                if (-not $pf) { $pf = New-CimInstance -ClassName Win32_PageFileSetting -Property @{ Name = $pfName } -EA Stop }
+                Set-CimInstance -InputObject $pf -Property @{ InitialSize = [uint32]$size; MaximumSize = [uint32]$size } -EA Stop
+                Write-OK "Page file set to $size MB fixed (reboot to apply)"
+            } catch {
+                if ($wasAuto) { try { Set-CimInstance -InputObject (Get-CimInstance Win32_ComputerSystem) -Property @{ AutomaticManagedPagefile = $true } -EA Stop } catch { } }
+                Write-Warn "Page file change failed, automatic management kept"
+            }
+        } else { Write-Host "  [SKIP] Fixed page file (needs 16 GB+ RAM)" -ForegroundColor DarkGray }
     }
     '2' = { # fastboot
         if (Set-Reg "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Power" "HiberbootEnabled" 0 -PassThru) { Write-OK "Fast startup disabled" }
@@ -528,7 +553,12 @@ $OPT_FUNCTIONS = @{
         Set-Reg "HKLM:\SOFTWARE\Policies\Microsoft\Edge" "HideFirstRunExperience" 1
         Set-Reg "HKLM:\SOFTWARE\Policies\Microsoft\Edge" "EdgeShoppingAssistantEnabled" 0
         Set-Reg "HKLM:\SOFTWARE\Policies\Microsoft\Edge" "WebWidgetAllowed" 0
-        Write-OK "Edge debloated"
+        foreach ($n in @("HubsSidebarEnabled", "CopilotPageContext", "CopilotCDPPageContext", "Microsoft365CopilotChatIconEnabled", "EdgeEntraCopilotPageContext", "EdgeHistoryAISearchEnabled", "ComposeInlineEnabled", "NewTabPageBingChatEnabled", "PersonalizationReportingEnabled", "DiagnosticData", "ShowRecommendationsEnabled")) {
+            Set-Reg "HKLM:\SOFTWARE\Policies\Microsoft\Edge" $n 0
+        }
+        Set-Reg "HKLM:\SOFTWARE\Policies\Microsoft\Edge" "GenAILocalFoundationalModelSettings" 1
+        Set-Reg "HKLM:\SOFTWARE\Policies\Microsoft\EdgeUpdate" "CreateDesktopShortcutDefault" 0
+        Write-OK "Edge debloated (no sidebar, Copilot hooks or new-tab ads)"
     }
     '13' = { # copilot_disable
         Set-Reg "HKCU:\Software\Policies\Microsoft\Windows\WindowsCopilot" "TurnOffWindowsCopilot" 1
@@ -556,34 +586,24 @@ $OPT_FUNCTIONS = @{
         }
         Write-OK "Temp folders purged ($itemsRemoved items)"
     }
-    '16' = { # razer_block
-        Get-Service | Where-Object {$_.Name -like "Razer*"} | Stop-Service -Force -EA SilentlyContinue
-        Get-Service | Where-Object {$_.Name -like "Razer*"} | Set-Service -StartupType Disabled -EA SilentlyContinue
-        Write-OK "Razer services blocked"
+    '16' = { # razer_block -> block OEM/peripheral app auto-installs (services untouched)
+        Set-Reg "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Device Metadata" "PreventDeviceMetadataFromNetwork" 1
+        Set-Reg "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Device Metadata" "PreventDeviceMetadataFromNetwork" 1
+        Write-OK "Device app auto-installs blocked (Synapse / G HUB you install keep working)"
     }
     '17' = { # restore_point
-        $recentRestorePoint = $null
-        # Check if System Protection is enabled first
-        $srEnabled = $false
+        $hasPoints = $null
+        try { $hasPoints = Get-ComputerRestorePoint -EA Stop } catch { $hasPoints = $null }
+        if (-not $hasPoints) {
+            try { Enable-ComputerRestore -Drive "$env:SystemDrive\" -EA Stop } catch { Write-Warn "Could not enable System Protection" }
+        }
+        # Windows silently skips a second restore point within 24h unless this is 0
+        Set-Reg "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SystemRestore" "SystemRestorePointCreationFrequency" 0
         try {
-            $sr = Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SystemRestore" -Name "RPSessionInterval" -EA SilentlyContinue
-            $srEnabled = ($null -ne $sr -and $sr.RPSessionInterval -ne 0)
-        } catch { }
-
-        if (-not $srEnabled) {
-            Write-Warn "System Restore disabled (enable in System Protection to create restore points)"
-        } else {
-            try { $recentRestorePoint = Get-ComputerRestorePoint -EA Stop | Sort-Object CreationTime -Descending | Select-Object -First 1 } catch { $recentRestorePoint = $null }
-            if ($recentRestorePoint -and $recentRestorePoint.CreationTime -gt (Get-Date).AddMinutes(-1440)) {
-                Write-Warn "Restore point already created within last 24 hours (skipped)"
-            } else {
-                try {
-                    Checkpoint-Computer -Description "Before RockTune" -RestorePointType MODIFY_SETTINGS -EA Stop -WarningAction SilentlyContinue
-                    Write-OK "Restore point created"
-                } catch {
-                    Write-Warn "Could not create restore point (System Restore may be disabled)"
-                }
-            }
+            Checkpoint-Computer -Description "Before RockTune" -RestorePointType MODIFY_SETTINGS -EA Stop -WarningAction SilentlyContinue
+            Write-OK "Restore point created"
+        } catch {
+            Write-Warn "Could not create restore point: $($_.Exception.Message)"
         }
     }
     '18' = { # classic_menu
@@ -635,17 +655,17 @@ $OPT_FUNCTIONS = @{
         Write-OK "Multiplane Overlay disabled"
     }
     '26' = { # mouse_accel
-        if (Set-Reg "HKCU:\Control Panel\Mouse" "MouseSpeed" 0 -PassThru) { Write-OK "Mouse acceleration disabled" }
-        Set-Reg "HKCU:\Control Panel\Mouse" "MouseThreshold1" 0
-        Set-Reg "HKCU:\Control Panel\Mouse" "MouseThreshold2" 0
+        if (Set-Reg "HKCU:\Control Panel\Mouse" "MouseSpeed" "0" "String" -PassThru) { Write-OK "Mouse acceleration disabled" }
+        Set-Reg "HKCU:\Control Panel\Mouse" "MouseThreshold1" "0" "String"
+        Set-Reg "HKCU:\Control Panel\Mouse" "MouseThreshold2" "0" "String"
     }
     '27' = { # usb_suspend
         Set-Reg "HKLM:\SYSTEM\CurrentControlSet\Services\USB\DisableSelectiveSuspend" "DisableSelectiveSuspend" 1
         Write-OK "USB selective suspend disabled"
     }
     '28' = { # keyboard_response
-        if (Set-Reg "HKCU:\Control Panel\Keyboard" "KeyboardDelay" 0 -PassThru) { Write-OK "Keyboard delay minimized" }
-        Set-Reg "HKCU:\Control Panel\Keyboard" "KeyboardSpeed" 31
+        if (Set-Reg "HKCU:\Control Panel\Keyboard" "KeyboardDelay" "0" "String" -PassThru) { Write-OK "Keyboard delay minimized" }
+        Set-Reg "HKCU:\Control Panel\Keyboard" "KeyboardSpeed" "31" "String"
     }
     '29' = { # game_mode
         Set-Reg "HKCU:\Software\Microsoft\GameBar" "AllowAutoGameMode" 1
@@ -718,10 +738,14 @@ $OPT_FUNCTIONS = @{
         Get-ChildItem "HKCU:\AppEvents\Schemes\Apps" -Recurse | Where-Object {$_.PSChildName -eq ".Current"} | ForEach-Object { Set-ItemProperty -Path $_.PSPath -Name "(Default)" -Value "" -EA SilentlyContinue }
         Write-OK "Windows system sounds muted"
     }
-    '43' = { # input_buffer
-        Set-Reg "HKLM:\SYSTEM\CurrentControlSet\Services\mouclass\Parameters" "MouseDataQueueSize" 32
-        Set-Reg "HKLM:\SYSTEM\CurrentControlSet\Services\kbdclass\Parameters" "KeyboardDataQueueSize" 32
-        Write-OK "Input buffer size increased (prevents drops at 8000Hz)"
+    '43' = { # input_buffer -> restore default queue size (100) where it was shrunk
+        $mPath = "HKLM:\SYSTEM\CurrentControlSet\Services\mouclass\Parameters"
+        $kPath = "HKLM:\SYSTEM\CurrentControlSet\Services\kbdclass\Parameters"
+        $mq = (Get-ItemProperty $mPath -Name "MouseDataQueueSize" -EA SilentlyContinue).MouseDataQueueSize
+        $kq = (Get-ItemProperty $kPath -Name "KeyboardDataQueueSize" -EA SilentlyContinue).KeyboardDataQueueSize
+        if ($null -ne $mq -and $mq -lt 100) { Set-Reg $mPath "MouseDataQueueSize" 100 }
+        if ($null -ne $kq -and $kq -lt 100) { Set-Reg $kPath "KeyboardDataQueueSize" 100 }
+        Write-OK "Input queues at Windows default (100) or larger"
     }
     '44' = { # filesystem_perf
         fsutil behavior set disablelastaccess 1 >$null 2>&1
@@ -763,27 +787,31 @@ $OPT_FUNCTIONS = @{
         Set-Reg "HKCU:\System\GameConfigStore" "GameDVR_FSEBehavior" 2
         Write-OK "Fullscreen optimizations disabled"
     }
-    '55' = { # ultimate_perf
-        powercfg /duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61 >$null 2>&1
-        $planOutput = powercfg /list 2>&1
-        $plans = $planOutput | Select-String "Ultimate Performance"
-        if ($plans) {
-            $guidMatch = [regex]::Match($plans.Line, "([A-Fa-f0-9-]{36})")
-            if ($guidMatch.Success) {
-                $guid = $guidMatch.Value
-                powercfg /setactive $guid 2>&1 | Out-Null
-                if ($LASTEXITCODE -eq 0) { Write-OK "Ultimate Performance enabled" } else { Write-Warn "Could not activate Ultimate Performance" }
-            } else { Write-Warn "Could not parse Ultimate Performance GUID" }
-        } else { Write-Warn "Ultimate Performance plan not available" }
+    '55' = { # ultimate_perf (fixed GUID: no duplicate plans, works on any Windows language)
+        $rtPlan = "52f3b1c6-9d7a-4f0e-8b3a-726f636b7475"
+        $null = powercfg /query $rtPlan 2>&1
+        if ($LASTEXITCODE -ne 0) { $null = powercfg /duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61 $rtPlan 2>&1 }
+        $null = powercfg /setactive $rtPlan 2>&1
+        if ($LASTEXITCODE -eq 0) { Write-OK "Ultimate Performance enabled" }
+        else {
+            $null = powercfg /setactive 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c 2>&1
+            Write-Warn "Ultimate Performance unavailable - High Performance used instead"
+        }
     }
     '56' = { # services_trim
         $trimSvc = @("DiagTrack","dmwappushservice","lfsvc","RetailDemo","Fax","SharedAccess")
         foreach ($s in $trimSvc) { Set-Service $s -StartupType Manual -EA SilentlyContinue; Stop-Service $s -Force -EA SilentlyContinue }
         Write-OK "Services trimmed"
     }
-    '57' = { # disk_cleanup
+    '57' = { # disk_cleanup (/sagerun needs StateFlags0100 per category)
+        # Allow-list only: Recycle Bin, Downloads, previous Windows and ESD install files are never flagged
+        $cleanCategories = @("Temporary Files", "Update Cleanup", "Delivery Optimization Files", "Windows Error Reporting Files", "Temporary Setup Files", "Thumbnail Cache", "D3D Shader Cache", "Setup Log Files")
+        $cacheRoot = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches"
+        foreach ($cat in $cleanCategories) {
+            if (Test-Path "$cacheRoot\$cat") { Set-ItemProperty -Path "$cacheRoot\$cat" -Name "StateFlags0100" -Value 2 -Type DWord -EA SilentlyContinue }
+        }
         Start-Process "cleanmgr.exe" -ArgumentList "/sagerun:100" -Wait -WindowStyle Hidden
-        Write-OK "Disk cleanup complete"
+        Write-OK "Disk cleanup complete (Recycle Bin, Downloads and previous Windows kept)"
     }
     '58' = { # wpbt_disable
         Set-Reg "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager" "DisableWpbtExecution" 1
@@ -797,15 +825,19 @@ $OPT_FUNCTIONS = @{
         Set-Reg "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" "NetworkThrottlingIndex" 0xffffffff
         Write-OK "Network throttling disabled"
     }
-    '61' = { # interrupt_affinity
-        $gpu = Get-PnpDevice -Class Display | Where-Object {$_.Status -eq "OK"} | Select-Object -First 1
-        if ($gpu) {
+    '61' = { # interrupt_affinity (REG_BINARY KAFFINITY mask, off CPU 0)
+        $gpu = Get-PnpDevice -Class Display -EA SilentlyContinue | Where-Object {$_.Status -eq "OK"} | Select-Object -First 1
+        $lp = (Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors
+        if ($gpu -and $lp -ge 2) {
+            $irqCpu = 1
+            if ($lp -ge 4) { $irqCpu = 2 }
+            $mask = [byte[]](0,0,0,0,0,0,0,0)
+            $mask[0] = [byte](1 -shl $irqCpu)
             $affPath = "HKLM:\SYSTEM\CurrentControlSet\Enum\$($gpu.InstanceId)\Device Parameters\Interrupt Management\Affinity Policy"
-            if (-not (Test-Path $affPath)) { New-Item -Path $affPath -Force | Out-Null }
             Set-Reg $affPath "DevicePolicy" 3
-            Set-Reg $affPath "AssignmentSetOverride" 1
-            Write-OK "GPU interrupt affinity set to CPU 0"
-        }
+            Set-Reg $affPath "AssignmentSetOverride" $mask "Binary"
+            Write-OK "GPU interrupts pinned to CPU $irqCpu (reboot to apply)"
+        } else { Write-Warn "No active GPU found, interrupt affinity skipped" }
     }
     '62' = { # process_mitigation
         Set-Reg "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\kernel" "KernelShadowStacksForceDisabled" 1
@@ -876,19 +908,25 @@ $OPT_FUNCTIONS = @{
     '81' = { # privacy_tier2
         Set-Reg "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection" "AllowTelemetry" 0
         Set-Reg "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" "Start_TrackProgs" 0
-        Write-OK "Telemetry minimized"
+        foreach ($t in @("Microsoft Compatibility Appraiser", "Microsoft Compatibility Appraiser Exp", "ProgramDataUpdater")) {
+            Disable-ScheduledTask -TaskPath "\Microsoft\Windows\Application Experience\" -TaskName $t -EA SilentlyContinue | Out-Null
+        }
+        Write-OK "Telemetry minimized (incl. Compatibility Appraiser tasks)"
     }
     '82' = { # privacy_tier3
         $xboxSvc = @("XblAuthManager","XblGameSave","XboxGipSvc","XboxNetApiSvc")
         foreach ($s in $xboxSvc) { Stop-Service $s -Force -EA SilentlyContinue; Set-Service $s -StartupType Disabled -EA SilentlyContinue }
         Write-OK "Xbox services disabled (Game Pass broken)"
     }
-    '83' = { # bloatware
-        $bloatApps = @("Microsoft.BingNews", "Microsoft.GetHelp", "Microsoft.Getstarted", "Microsoft.MicrosoftSolitaireCollection", "Microsoft.People", "Microsoft.PowerAutomateDesktop", "Microsoft.Todos", "Microsoft.WindowsAlarms", "Microsoft.WindowsFeedbackHub", "Microsoft.WindowsMaps", "Microsoft.WindowsSoundRecorder", "Microsoft.YourPhone", "Microsoft.ZuneMusic", "Microsoft.ZuneVideo", "Clipchamp.Clipchamp", "Microsoft.549981C3F5F10")
+    '83' = { # bloatware (Xbox / Game Pass apps are never touched)
+        $bloatApps = @("Microsoft.BingNews", "Microsoft.BingWeather", "Microsoft.BingFinance", "Microsoft.BingSports", "Microsoft.BingTravel", "Microsoft.BingTranslator", "Microsoft.BingFoodAndDrink", "Microsoft.BingHealthAndFitness", "Microsoft.GetHelp", "Microsoft.Getstarted", "Microsoft.MicrosoftSolitaireCollection", "Microsoft.People", "Microsoft.PowerAutomateDesktop", "Microsoft.Todos", "Microsoft.WindowsAlarms", "Microsoft.WindowsFeedbackHub", "Microsoft.WindowsMaps", "Microsoft.WindowsSoundRecorder", "Microsoft.YourPhone", "Microsoft.ZuneMusic", "Microsoft.ZuneVideo", "Clipchamp.Clipchamp", "Microsoft.549981C3F5F10", "MSTeams", "MicrosoftTeams", "Microsoft.Windows.DevHome", "Microsoft.PCManager", "Microsoft.Windows.AIHub", "Microsoft.MicrosoftStickyNotes", "Microsoft.MicrosoftJournal", "Microsoft.Office.OneNote", "Microsoft.SkypeApp", "Microsoft.MixedReality.Portal", "MicrosoftCorporationII.QuickAssist", "MicrosoftCorporationII.MicrosoftFamily", "king.com.CandyCrushSaga", "king.com.CandyCrushSodaSaga", "SpotifyAB.SpotifyMusic", "BytedancePte.Ltd.TikTok", "Facebook.Instagram", "AmazonVideo.PrimeVideo", "4DF9E0F8.Netflix", "Disney.37853FC22B2CE", "*LinkedInforWindows")
+        $removed = 0
         foreach ($app in $bloatApps) {
-            Get-AppxPackage -Name $app -AllUsers | Remove-AppxPackage -AllUsers -EA SilentlyContinue
+            $pkg = Get-AppxPackage -Name $app -AllUsers -EA SilentlyContinue
+            if ($pkg) { $pkg | Remove-AppxPackage -AllUsers -EA SilentlyContinue; $removed++ }
+            Get-AppxProvisionedPackage -Online -EA SilentlyContinue | Where-Object { $_.DisplayName -like $app } | Remove-AppxProvisionedPackage -Online -EA SilentlyContinue | Out-Null
         }
-        Write-OK "Bloatware removed"
+        Write-OK "Bloatware removed ($removed apps; Xbox and Game Pass apps kept)"
     }
     '84' = { # ipv4_prefer
         Set-Reg "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip6\Parameters" "DisabledComponents" 32
@@ -907,9 +945,18 @@ $OPT_FUNCTIONS = @{
             Write-OK "Native NVMe enabled (reboot required)"
         } else { Write-Fail "Native NVMe requires Win11 24H2+" }
     }
-    '87' = { # smt_disable
-        $cores = (Get-CimInstance Win32_Processor).NumberOfCores; bcdedit /set numproc $cores 2>$null
-        Write-OK "SMT disabled (reboot required)"
+    '87' = { # smt_disable -> BIOS guidance (bcdedit numproc keeps SMT on and halves cores)
+        $np = bcdedit /enum "{current}" 2>$null | Select-String -Pattern "^numproc"
+        if ($np) { $null = bcdedit /deletevalue numproc 2>&1; Write-OK "Removed numproc core limit (it was halving your cores)" }
+        $cpuInfo = Get-CimInstance Win32_Processor
+        $phys = ($cpuInfo | Measure-Object NumberOfCores -Sum).Sum
+        $logi = ($cpuInfo | Measure-Object NumberOfLogicalProcessors -Sum).Sum
+        if ($logi -le $phys) { Write-OK "SMT/Hyperthreading already off ($phys cores)" }
+        else {
+            Write-Warn "SMT is on ($phys cores / $logi threads). Turn it off in BIOS/UEFI:"
+            Write-Host "      AMD: Advanced > AMD CBS > CPU Common Options > SMT Control = Disabled" -ForegroundColor Gray
+            Write-Host "      Intel: Advanced > CPU Configuration > Hyper-Threading = Disabled" -ForegroundColor Gray
+        }
     }
     '88' = { # audio_exclusive
         Set-Reg "HKCU:\AppEvents\Schemes" "(Default)" ".None" "String"
@@ -985,13 +1032,99 @@ $OPT_FUNCTIONS = @{
         else { Write-Warn "No bindings modified (may already be stripped)" }
     }
 
+    # 24H2-era debloat (113+)
+    '113' = { # ai_off
+        $aiPol = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsAI"
+        Set-Reg $aiPol "AllowRecallEnablement" 0
+        Set-Reg $aiPol "DisableAIDataAnalysis" 1
+        Set-Reg $aiPol "TurnOffSavingSnapshots" 1
+        Set-Reg $aiPol "DisableClickToDo" 1
+        Set-Reg $aiPol "DisableSettingsAgent" 1
+        Set-Reg "HKCU:\SOFTWARE\Policies\Microsoft\Windows\WindowsAI" "DisableAIDataAnalysis" 1
+        Set-Reg "HKCU:\SOFTWARE\Policies\Microsoft\Windows\WindowsAI" "DisableClickToDo" 1
+        Set-Reg "HKLM:\SOFTWARE\Policies\WindowsNotepad" "DisableAIFeatures" 1
+        foreach ($n in @("DisableCocreator", "DisableGenerativeFill", "DisableImageCreator", "DisableGenerativeErase", "DisableRemoveBackground")) {
+            Set-Reg "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Paint" $n 1
+        }
+        if (Test-Path "HKLM:\SYSTEM\CurrentControlSet\Services\WSAIFabricSvc") {
+            Set-Reg "HKLM:\SYSTEM\CurrentControlSet\Services\WSAIFabricSvc" "Start" 3
+            Stop-Service WSAIFabricSvc -Force -EA SilentlyContinue
+        }
+        if ($script:IsWin11_24H2) {
+            $recall = Get-WindowsOptionalFeature -Online -FeatureName "Recall" -EA SilentlyContinue
+            if ($recall -and $recall.State -eq "Enabled") { Disable-WindowsOptionalFeature -Online -FeatureName "Recall" -NoRestart -EA SilentlyContinue | Out-Null }
+        }
+        Write-OK "Windows AI off (Recall, Click to Do, AI service, Notepad/Paint AI)"
+    }
+    '114' = { # widgets_off
+        Set-Reg "HKLM:\SOFTWARE\Policies\Microsoft\Dsh" "AllowNewsAndInterests" 0
+        Get-Process -Name "Widgets", "WidgetService" -EA SilentlyContinue | Stop-Process -Force -EA SilentlyContinue
+        Write-OK "Widgets off (taskbar button disappears after sign-out)"
+    }
+    '115' = { # start_recommended_off
+        $adv = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"
+        Set-Reg $adv "Start_IrisRecommendations" 0
+        Set-Reg $adv "Start_AccountNotifications" 0
+        Set-Reg $adv "ShowSyncProviderNotifications" 0
+        if ($script:IsWin11) {
+            Set-Reg "HKCU:\SOFTWARE\Policies\Microsoft\Windows\Explorer" "HideRecommendedSection" 1
+            Set-Reg "HKLM:\SOFTWARE\Microsoft\PolicyManager\current\device\Start" "HideRecommendedSection" 1
+            Set-Reg "HKCU:\Software\Microsoft\Windows\CurrentVersion\Start\Companions\Microsoft.YourPhone_8wekyb3d8bbwe" "IsEnabled" 0
+        }
+        Write-OK "Start menu recommendations and ads off"
+    }
+    '116' = { # bing_search_off
+        Set-Reg "HKCU:\Software\Policies\Microsoft\Windows\Explorer" "DisableSearchBoxSuggestions" 1
+        Set-Reg "HKCU:\Software\Microsoft\Windows\CurrentVersion\Search" "BingSearchEnabled" 0
+        Write-OK "Bing and web results removed from Start search"
+    }
+    '117' = { # windows_ads_off
+        Set-Reg "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" "DisableWindowsConsumerFeatures" 1
+        Set-Reg "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" "DisableConsumerAccountStateContent" 1
+        $cdm = "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager"
+        foreach ($v in @("SubscribedContent-310093Enabled", "SubscribedContent-338393Enabled", "SubscribedContent-353694Enabled", "SubscribedContent-353696Enabled", "SoftLandingEnabled")) { Set-Reg $cdm $v 0 }
+        Set-Reg "HKCU:\Software\Microsoft\Windows\CurrentVersion\UserProfileEngagement" "ScoobeSystemSettingEnabled" 0
+        Set-Reg "HKCU:\Software\Microsoft\Windows\CurrentVersion\SystemSettings\AccountNotifications" "EnableAccountNotifications" 0
+        Set-Reg "HKCU:\Software\Microsoft\Windows\CurrentVersion\Notifications\Settings\Windows.SystemToast.Suggested" "Enabled" 0
+        Set-Reg "HKCU:\Software\Microsoft\Windows\CurrentVersion\Notifications\Settings\Windows.SystemToast.BackupReminder" "Enabled" 0
+        Write-OK "Windows ads, promoted apps and setup nags off"
+    }
+    '118' = { # gamebar_popup_fix
+        if ($cpuId -eq '1') { Write-Host "  [SKIP] Game Bar popup fix (X3D CPUs need Game Bar detection)" -ForegroundColor DarkGray; return }
+        Set-Reg "HKCU:\SOFTWARE\Microsoft\GameBar" "UseNexusForGameBarEnabled" 0
+        foreach ($proto in @("ms-gamebar", "ms-gamebarservices")) {
+            $base = "HKLM:\SOFTWARE\Classes\$proto"
+            Set-Reg $base "(Default)" "URL:$proto" "String"
+            Set-Reg $base "URL Protocol" "" "String"
+            Set-Reg $base "NoOpenWith" "" "String"
+            Set-Reg "$base\shell\open\command" "(Default)" "%SystemRoot%\System32\systray.exe" "ExpandString"
+        }
+        Write-OK "ms-gamebar links no longer show a popup"
+    }
+    '119' = { # update_no_reboot
+        Set-Reg "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" "NoAutoRebootWithLoggedOnUsers" 1
+        Set-Reg "HKLM:\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings" "IsContinuousInnovationOptedIn" 0
+        Write-OK "Windows Update will not auto-reboot while you are signed in"
+    }
+    '120' = { # onedrive_remove
+        $odUser = $env:OneDrive
+        if ($odUser -and (Test-Path $odUser)) { $null = icacls $odUser /deny "*S-1-5-32-544:(D,DC)" 2>&1 }
+        Stop-Process -Name "OneDrive", "FileCoAuth" -Force -EA SilentlyContinue
+        $odSetup = "$env:SystemRoot\System32\OneDriveSetup.exe"
+        if (-not (Test-Path $odSetup)) { $odSetup = "$env:SystemRoot\SysWOW64\OneDriveSetup.exe" }
+        if (Test-Path $odSetup) { Start-Process $odSetup -ArgumentList "/uninstall" -Wait -WindowStyle Hidden }
+        elseif (Get-Command winget -EA SilentlyContinue) { $null = winget uninstall --id Microsoft.OneDrive -e --silent --accept-source-agreements 2>&1 }
+        if ($odUser -and (Test-Path $odUser)) { $null = icacls $odUser /remove:d "*S-1-5-32-544" 2>&1 }
+        Write-OK "OneDrive uninstalled (files kept; reinstall: winget install Microsoft.OneDrive)"
+    }
+
     # NOTE: LUDICROUS tier (100-103) intentionally NOT included for security
     # IDs 100, 101, 102, 103 would disable critical security mitigations
 }
 
-# ════════════════════════════════════════════════════════════════════════════
+# ============================================================================
 # MAIN EXECUTION
-# ════════════════════════════════════════════════════════════════════════════
+# ============================================================================
 
 Clear-Host
 Write-Banner
@@ -1021,13 +1154,13 @@ Write-Host "    RAM: ${ram}GB" -ForegroundColor Gray
 # Win10 compatibility notice
 if (-not $script:IsWin11) {
     Write-Host ""
-    Write-Host "  ⚠ Windows 10 detected - some Win11-only options will be skipped" -ForegroundColor Yellow
+    Write-Host "  ! Windows 10 detected - some Win11-only options will be skipped" -ForegroundColor Yellow
 }
 Write-Host ""
 
-# ════════════════════════════════════════════════════════════════════════════
+# ============================================================================
 # PRE-FLIGHT SCAN
-# ════════════════════════════════════════════════════════════════════════════
+# ============================================================================
 
 if ($optIds.Count -gt 0) {
     Write-Host "  Scanning current system state..." -ForegroundColor Gray
@@ -1038,14 +1171,14 @@ if ($optIds.Count -gt 0) {
         if (-not $info) { continue }
 
         $name = "[$($info.tier)] $($info.name)"
-        $current = "—"
+        $current = "-"
         $target = "Will apply"
         $status = "PENDING"
 
         switch ($id) {
             '1' { # pagefile
                 try {
-                    $cs = Get-WmiObject Win32_ComputerSystem
+                    $cs = Get-CimInstance Win32_ComputerSystem
                     if ($cs.AutomaticManagedPagefile) {
                         $current = "Auto"
                         $target = "Fixed size"
@@ -1214,9 +1347,9 @@ if ($optIds.Count -gt 0) {
     Write-ScanResults
 }
 
-# ════════════════════════════════════════════════════════════════════════════
+# ============================================================================
 # INTERACTIVE APPROVAL MODE
-# ════════════════════════════════════════════════════════════════════════════
+# ============================================================================
 
 function Get-TierColor {
     param([string]$Tier)
@@ -1253,9 +1386,9 @@ function Show-OptimizationPrompt {
 if ($optIds.Count -gt 0) {
     Write-Step "Upgrades"
     Write-Host ""
-    Write-Host "  ╔════════════════════════════════════════════════════════════════╗" -ForegroundColor White
-    Write-Host "  ║  INTERACTIVE MODE - Review each optimization before applying   ║" -ForegroundColor White
-    Write-Host "  ╚════════════════════════════════════════════════════════════════╝" -ForegroundColor White
+    Write-Host "  +================================================================+" -ForegroundColor White
+    Write-Host "  |  INTERACTIVE MODE - Review each optimization before applying   |" -ForegroundColor White
+    Write-Host "  +================================================================+" -ForegroundColor White
     Write-Host ""
     Write-Host "  This loadout contains $($optIds.Count) optimization(s)." -ForegroundColor Gray
     Write-Host "  You will be prompted to approve each one." -ForegroundColor Gray
@@ -1265,6 +1398,14 @@ if ($optIds.Count -gt 0) {
     Write-Host "    CAUTION - " -NoNewline; Write-Host "May affect some features, test after" -ForegroundColor Yellow
     Write-Host "    RISKY   - " -NoNewline; Write-Host "May break features, know what you're doing" -ForegroundColor Red
     Write-Host ""
+
+    # Restore point runs first so it captures the system before any change
+    if ($optIds -contains '17') {
+        $optIds = @($optIds | Where-Object { $_ -eq '17' }) + @($optIds | Where-Object { $_ -ne '17' })
+    } else {
+        Write-Host "  Creating a safety restore point before any change..." -ForegroundColor DarkGray
+        try { & $OPT_FUNCTIONS['17'] } catch { Write-Warn "Restore point skipped: $($_.Exception.Message)" }
+    }
 
     $autoApprove = $false
     $consecutiveYes = 0  # Track consecutive Y responses for smart auto-All
@@ -1306,11 +1447,15 @@ if ($optIds.Count -gt 0) {
                 $autoApprove = $true
                 $remaining = $total - $current
                 Write-Host ""
-                Write-Host "  $([char]0x2192) Auto-applying remaining $remaining optimizations (3 consecutive approvals)" -ForegroundColor Cyan
+                Write-Host "  $([char]0x2192) Auto-applying remaining $remaining optimizations (3 consecutive approvals; RISKY items still ask)" -ForegroundColor Cyan
                 Write-Host "  $([char]0x2192) Press Ctrl+C to abort if needed" -ForegroundColor DarkGray
                 Write-Host ""
             }
-            Get-NetAdapter | Where-Object {$_.Status -eq "Up"} | Set-DnsClientServerAddress -ServerAddresses $dns.primary,$dns.secondary
+            # Physical adapters only: VPN, Hyper-V and WSL adapters keep their DNS
+            foreach ($nic in @(Get-NetAdapter -Physical -EA SilentlyContinue | Where-Object { $_.Status -eq "Up" })) {
+                try { Set-DnsClientServerAddress -InterfaceIndex $nic.ifIndex -ServerAddresses $dns.primary,$dns.secondary -EA Stop }
+                catch { Write-Warn "DNS not changed on $($nic.Name): $($_.Exception.Message)" }
+            }
             Write-OK "DNS set to $($dns.name)"
             $approvedIds += '7'
         } else {
@@ -1348,7 +1493,9 @@ if ($optIds.Count -gt 0) {
             continue
         }
 
-        if (-not $autoApprove) {
+        # RISKY items always get a prompt, even after [A]ll or 3 consecutive Y
+        $isRisky = ($OPT_DESCRIPTIONS[$id] -and $OPT_DESCRIPTIONS[$id].tier -eq 'RISKY')
+        if (-not $autoApprove -or $isRisky) {
             Show-OptimizationPrompt -Id $id -Current $current -Total $total
             $response = Read-Host
         } else {
@@ -1368,7 +1515,7 @@ if ($optIds.Count -gt 0) {
                 $autoApprove = $true
                 $remaining = $total - $current
                 Write-Host ""
-                Write-Host "  $([char]0x2192) Auto-applying remaining $remaining optimizations (3 consecutive approvals)" -ForegroundColor Cyan
+                Write-Host "  $([char]0x2192) Auto-applying remaining $remaining optimizations (3 consecutive approvals; RISKY items still ask)" -ForegroundColor Cyan
                 Write-Host "  $([char]0x2192) Press Ctrl+C to abort if needed" -ForegroundColor DarkGray
                 Write-Host ""
             }
@@ -1390,7 +1537,7 @@ if ($optIds.Count -gt 0) {
 
     # Show approval summary
     Write-Host ""
-    Write-Host "  ────────────────────────────────────────" -ForegroundColor DarkGray
+    Write-Host "  ----------------------------------------" -ForegroundColor DarkGray
     Write-Host "  Applied: $($approvedIds.Count) | Skipped: $($skippedIds.Count)" -ForegroundColor Gray
     if ($quit) { Write-Host "  (User quit early)" -ForegroundColor Yellow }
 }
@@ -1399,9 +1546,9 @@ if ($optIds.Count -gt 0) {
 if ($pkgKeys.Count -gt 0) {
     Write-Step "Arsenal (winget)"
     Write-Host ""
-    Write-Host "  ╔════════════════════════════════════════════════════════════════╗" -ForegroundColor White
-    Write-Host "  ║  PACKAGE INSTALLATION - Review each software before install    ║" -ForegroundColor White
-    Write-Host "  ╚════════════════════════════════════════════════════════════════╝" -ForegroundColor White
+    Write-Host "  +================================================================+" -ForegroundColor White
+    Write-Host "  |  PACKAGE INSTALLATION - Review each software before install    |" -ForegroundColor White
+    Write-Host "  +================================================================+" -ForegroundColor White
     Write-Host ""
     Write-Host "  This loadout includes $($pkgKeys.Count) package(s) to install via winget." -ForegroundColor Gray
     Write-Host ""
@@ -1474,7 +1621,7 @@ if ($pkgKeys.Count -gt 0) {
 
         # Show package summary
         Write-Host ""
-        Write-Host "  ────────────────────────────────────────" -ForegroundColor DarkGray
+        Write-Host "  ----------------------------------------" -ForegroundColor DarkGray
         Write-Host "  Installed: $($installedPkgs.Count) | Skipped: $($skippedPkgs.Count)" -ForegroundColor Gray
         if ($pkgQuit) { Write-Host "  (User quit early)" -ForegroundColor Yellow }
     }
@@ -1483,9 +1630,9 @@ if ($pkgKeys.Count -gt 0) {
 # Summary
 Write-Step "Complete"
 Write-Host ""
-Write-Host "  ╔════════════════════════════════════════╗" -ForegroundColor White
-Write-Host "  ║           LOADOUT SUMMARY              ║" -ForegroundColor White
-Write-Host "  ╚════════════════════════════════════════╝" -ForegroundColor White
+Write-Host "  +========================================+" -ForegroundColor White
+Write-Host "  |           LOADOUT SUMMARY              |" -ForegroundColor White
+Write-Host "  +========================================+" -ForegroundColor White
 Write-Host ""
 Write-Host "  Applied:  $($script:SuccessCount) changes" -ForegroundColor Green
 if ($script:WarningCount -gt 0) { Write-Host "  Warnings: $($script:WarningCount)" -ForegroundColor Yellow }

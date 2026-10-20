@@ -74,17 +74,17 @@ const presetLabel = $derived(
     </div>
     <div class="item">
       <span id="summary-opts" class="value">{optimizationCount}</span>
-      <span class="label">Tweaks</span>
+      <span class="label">{optimizationCount === 1 ? 'Tweak' : 'Tweaks'}</span>
     </div>
     {#if peripheralCount > 0}
       <div class="item">
         <span id="summary-peripherals" class="value">{peripheralCount}</span>
-        <span class="label">Devices</span>
+        <span class="label">{peripheralCount === 1 ? 'Device' : 'Devices'}</span>
       </div>
     {/if}
     <div class="item">
       <span id="summary-software" class="value">{softwareCount}</span>
-      <span class="label">Apps</span>
+      <span class="label">{softwareCount === 1 ? 'App' : 'Apps'}</span>
     </div>
   </div>
 </div>

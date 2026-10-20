@@ -424,8 +424,10 @@ function New-RestorePoint {
     .SYNOPSIS
         Creates a Windows System Restore Point before applying optimizations.
     .DESCRIPTION
-        Safety feature - creates a restore point so user can roll back if needed.
-        Requires System Restore to be enabled on the system drive.
+        Turns System Restore on for the system drive if it is off, sets
+        SystemRestorePointCreationFrequency to 0 so Windows does not silently skip
+        a second point within 24 hours, creates the point, then puts the frequency
+        value back. Never throws: a failed restore point is logged and the run continues.
     .PARAMETER Description
         Restore point description string.
     .OUTPUTS
@@ -435,26 +437,48 @@ function New-RestorePoint {
         [string]$Description = "Pre-Gaming-PC-Setup"
     )
 
-    try {
-        # Check if System Restore is enabled
-        $srStatus = Get-ComputerRestorePoint -ErrorAction SilentlyContinue
-
-        # Enable System Restore on C: if needed (will fail silently if already enabled)
-        Enable-ComputerRestore -Drive "C:\" -ErrorAction SilentlyContinue
-
-        # Create restore point
-        Checkpoint-Computer -Description $Description -RestorePointType "MODIFY_SETTINGS" -ErrorAction Stop
-        Write-Log "Created System Restore Point: $Description" "SUCCESS"
+    if (Test-RockTuneDryRun) {
+        Write-Log "[DRY RUN] Would create restore point: $Description" "INFO"
         return $true
-    } catch {
-        if ($_.Exception.Message -like "*1058*" -or $_.Exception.Message -like "*disabled*") {
-            Write-Log "System Restore is disabled - skipping restore point creation" "INFO"
-        } elseif ($_.Exception.Message -like "*frequency*" -or $_.Exception.Message -like "*already*") {
-            Write-Log "Restore point recently created (Windows limits frequency) - continuing" "INFO"
-        } else {
-            Write-Log "Could not create restore point: $_" "ERROR"
+    }
+
+    $srKey = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SystemRestore"
+    $freqName = "SystemRestorePointCreationFrequency"
+    $previousFreq = $null
+    $hadFreq = $false
+
+    try {
+        $existing = Get-ItemProperty -Path $srKey -Name $freqName -ErrorAction SilentlyContinue
+        if ($null -ne $existing) {
+            $hadFreq = $true
+            $previousFreq = $existing.$freqName
         }
+
+        $drive = "$env:SystemDrive\"
+        Enable-ComputerRestore -Drive $drive -ErrorAction SilentlyContinue
+
+        if (-not (Test-Path $srKey)) { New-Item -Path $srKey -Force | Out-Null }
+        New-ItemProperty -Path $srKey -Name $freqName -Value 0 -PropertyType DWord -Force | Out-Null
+
+        $before = @(Get-ComputerRestorePoint -ErrorAction SilentlyContinue).Count
+        Checkpoint-Computer -Description $Description -RestorePointType "MODIFY_SETTINGS" -ErrorAction Stop -WarningAction SilentlyContinue
+        $after = @(Get-ComputerRestorePoint -ErrorAction SilentlyContinue).Count
+
+        if ($after -gt $before) {
+            Write-Log "Created System Restore Point: $Description" "SUCCESS"
+            return $true
+        }
+        Write-Log "Windows did not create a new restore point (System Restore may be off by policy)" "WARNING"
         return $false
+    } catch {
+        Write-Log "Could not create restore point, continuing: $($_.Exception.Message)" "WARNING"
+        return $false
+    } finally {
+        if ($hadFreq) {
+            New-ItemProperty -Path $srKey -Name $freqName -Value $previousFreq -PropertyType DWord -Force -ErrorAction SilentlyContinue | Out-Null
+        } else {
+            Remove-ItemProperty -Path $srKey -Name $freqName -ErrorAction SilentlyContinue
+        }
     }
 }
 
