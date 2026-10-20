@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     AMD Ryzen X3D-specific optimizations and validation.
 .DESCRIPTION
@@ -63,18 +63,18 @@ function Test-AMDChipsetDrivers {
         $ppmDriver = Get-PnpDevice -FriendlyName "*Provisioning Packages*" -ErrorAction SilentlyContinue
 
         if ($vCacheOptimizer -and $ppmDriver) {
-            Write-Log "✓ AMD Chipset Drivers detected (3D V-Cache optimizer and Provisioning Packages)" "SUCCESS"
+            Write-Log "[OK] AMD Chipset Drivers detected (3D V-Cache optimizer and Provisioning Packages)" "SUCCESS"
             return $true
         } elseif ($vCacheOptimizer) {
-            Write-Log "⚠ AMD 3D V-Cache optimizer found, but Provisioning Packages driver missing" "ERROR"
+            Write-Log "[!] AMD 3D V-Cache optimizer found, but Provisioning Packages driver missing" "ERROR"
             Write-Log "Install AMD Chipset Drivers: https://www.amd.com/en/support" "ERROR"
             return $false
         } elseif ($ppmDriver) {
-            Write-Log "⚠ AMD Provisioning Packages driver found, but 3D V-Cache optimizer missing" "ERROR"
+            Write-Log "[!] AMD Provisioning Packages driver found, but 3D V-Cache optimizer missing" "ERROR"
             Write-Log "Install AMD Chipset Drivers: https://www.amd.com/en/support" "ERROR"
             return $false
         } else {
-            Write-Log "✗ AMD Chipset Drivers NOT DETECTED!" "ERROR"
+            Write-Log "[FAIL] AMD Chipset Drivers NOT DETECTED!" "ERROR"
             Write-Log "Install AMD Chipset Drivers from https://www.amd.com/en/support" "ERROR"
             Write-Log "Required for X3D thread steering - CPPC optimizations won't work without them!" "ERROR"
             return $false
@@ -106,17 +106,17 @@ function Test-X3DOptimizations {
 
     $cppcValue = Get-RegistryValue -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Power" -Name "CppcEnable"
     if ($cppcValue -eq 1) {
-        Write-Log "✓ CPPC is ENABLED (correct)" "SUCCESS"
+        Write-Log "[OK] CPPC is ENABLED (correct)" "SUCCESS"
     } else {
-        Write-Log "✗ CPPC is not enabled correctly (current value: $cppcValue, expected: 1)" "ERROR"
+        Write-Log "[FAIL] CPPC is not enabled correctly (current value: $cppcValue, expected: 1)" "ERROR"
         $allPassed = $false
     }
 
     $heteroExists = Test-RegistryValueExists -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Power" -Name "HeteroPolicy"
     if (-not $heteroExists) {
-        Write-Log "✓ HeteroPolicy removed (correct)" "SUCCESS"
+        Write-Log "[OK] HeteroPolicy removed (correct)" "SUCCESS"
     } else {
-        Write-Log "✗ HeteroPolicy still exists (should be removed)" "ERROR"
+        Write-Log "[FAIL] HeteroPolicy still exists (should be removed)" "ERROR"
         $allPassed = $false
     }
 
@@ -125,9 +125,9 @@ function Test-X3DOptimizations {
     $gameDvrDisabled = (Get-RegistryValue -Path $gameDvrPath -Name "GameDVR_Enabled") -eq 0
 
     if ($appCaptureDisabled -and $gameDvrDisabled) {
-        Write-Log "✓ Game Bar overlays disabled (correct)" "SUCCESS"
+        Write-Log "[OK] Game Bar overlays disabled (correct)" "SUCCESS"
     } else {
-        Write-Log "✗ Game Bar overlay configuration incorrect" "ERROR"
+        Write-Log "[FAIL] Game Bar overlay configuration incorrect" "ERROR"
         $allPassed = $false
     }
 
@@ -225,7 +225,7 @@ function Invoke-X3DOptimizations {
     $chipsetDriversInstalled = Test-AMDChipsetDrivers
     if (-not $chipsetDriversInstalled) {
         Write-Host ""
-        Write-Host "  ⚠️  WARNING: AMD Chipset Drivers NOT DETECTED!" -ForegroundColor Yellow
+        Write-Host "  [!]  WARNING: AMD Chipset Drivers NOT DETECTED!" -ForegroundColor Yellow
         Write-Host "  The CPPC optimizations will be applied, but they WON'T WORK without:" -ForegroundColor Yellow
         Write-Host "    - AMD 3D V-Cache Performance Optimizer" -ForegroundColor White
         Write-Host "    - AMD PPM Provisioning File Driver" -ForegroundColor White

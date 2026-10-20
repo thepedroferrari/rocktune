@@ -34,9 +34,7 @@ const BASE_OPTIMIZATIONS: readonly OptimizationKey[] = [
   'audio_enhancements',
   'game_mode',
   'update_no_reboot',
-  'windows_ads_off',
   'ai_off',
-  'bing_search_off',
 ] as const
 
 // ====================================================================
@@ -61,14 +59,12 @@ const PERSONA_ADDITIONS: Record<PersonaId, readonly OptimizationKey[]> = {
     'nic_energy_efficient',
     'gamedvr',
     'background_apps',
-    'edge_debloat',
     'copilot_disable',
     'browser_background',
     'audio_communications',
     'timer',
     'end_task',
     'delivery_opt',
-    'feedback_disable',
   ],
 
   /**
@@ -89,7 +85,6 @@ const PERSONA_ADDITIONS: Record<PersonaId, readonly OptimizationKey[]> = {
     'background_polling',
     'gamedvr',
     'background_apps',
-    'edge_debloat',
     'copilot_disable',
     'browser_background',
     'audio_communications',
@@ -99,9 +94,7 @@ const PERSONA_ADDITIONS: Record<PersonaId, readonly OptimizationKey[]> = {
     'msi_mode',
     'fso_disable',
     'ultimate_perf',
-    'services_trim',
     'services_search_off',
-    'wpbt_disable',
     'qos_gaming',
     'network_throttling',
     'interrupt_affinity',
@@ -110,10 +103,8 @@ const PERSONA_ADDITIONS: Record<PersonaId, readonly OptimizationKey[]> = {
     'timer_registry',
     'min_processor_state',
     'delivery_opt',
-    'feedback_disable',
     'rss_enable',
     'widgets_off',
-    'start_recommended_off',
   ],
 
   /**
@@ -127,12 +118,10 @@ const PERSONA_ADDITIONS: Record<PersonaId, readonly OptimizationKey[]> = {
     'nic_interrupt_mod',
     'nic_flow_control',
     'nic_energy_efficient',
-    'edge_debloat',
     'copilot_disable',
     'browser_background',
     'audio_communications',
     'delivery_opt',
-    'feedback_disable',
     'timer',
     // NOTE: NO gamedvr - breaks OBS capture
     // NOTE: High Performance (not Ultimate) - balanced for streaming

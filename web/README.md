@@ -9,7 +9,8 @@ A modern, interactive web application that generates personalized PowerShell scr
 - **Hardware-aware optimization** — Detects CPU (AMD X3D, AMD, Intel) and GPU (NVIDIA, AMD, Intel) to apply relevant tweaks
 - **Software installation** — Integrates with `winget` to install gaming essentials (Steam, Discord, OBS, etc.)
 - **Performance tuning** — Applies registry tweaks, power plans, timer resolution, and other gaming-focused optimizations
-- **Privacy controls** — Optional privacy hardening tiers (safe → moderate → aggressive)
+- **Gaming compatibility check** — Finds and restores Xbox services, Game Bar and Store parts that a cleanup tool turned off
+- **Clean Windows first** — General cleanup (preinstalled apps, telemetry, ads) is handed to [WinUtil](https://github.com/ChrisTitusTech/winutil) and [Win11Debloat](https://github.com/Raphire/Win11Debloat). The site shows both commands; run one, then RockTune
 - **User-friendly interface** — Visual card-based selection with presets (Pro Gamer, Streaming, Balanced, Minimal)
 - **Transparency & review** — Preflight checks, audit panel, and diff/preview before export
 

@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Network performance and latency optimizations.
 .DESCRIPTION
@@ -62,9 +62,9 @@ function Test-NetworkOptimizations {
     $tcpPath = "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters"
     $rssEnabled = Get-RegistryValue -Path $tcpPath -Name "EnableRSS"
     if ($rssEnabled -eq 1) {
-        Write-Log "✓ RSS (Receive Side Scaling) enabled" "SUCCESS"
+        Write-Log "[OK] RSS (Receive Side Scaling) enabled" "SUCCESS"
     } else {
-        Write-Log "✗ RSS not enabled" "ERROR"
+        Write-Log "[FAIL] RSS not enabled" "ERROR"
         $allPassed = $false
     }
 
@@ -725,10 +725,10 @@ function Test-NetworkAdapterAdvancedSettings {
                     $prop = Get-NetAdapterAdvancedProperty -Name $AdapterName -RegistryKeyword $propName -ErrorAction SilentlyContinue
                     if ($prop) {
                         if ($prop.RegistryValue -eq $ExpectedValue) {
-                            Write-Log "✓ $Description disabled" "SUCCESS"
+                            Write-Log "[OK] $Description disabled" "SUCCESS"
                             return $true
                         } else {
-                            Write-Log "✗ $Description not disabled (current: $($prop.RegistryValue))" "ERROR"
+                            Write-Log "[FAIL] $Description not disabled (current: $($prop.RegistryValue))" "ERROR"
                             return $false
                         }
                     }
@@ -737,7 +737,7 @@ function Test-NetworkAdapterAdvancedSettings {
                 }
             }
 
-            Write-Log "○ $Description not found on this adapter" "INFO"
+            Write-Log "[--] $Description not found on this adapter" "INFO"
             return $true  # Don't fail if property doesn't exist
         }
 

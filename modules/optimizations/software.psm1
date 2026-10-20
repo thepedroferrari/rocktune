@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Software configuration automation (Discord, Steam, Audio, Monitor).
 .DESCRIPTION
@@ -99,7 +99,7 @@ function Set-DiscordGamingSettings {
     # Check if Discord is running
     $discordProcess = Get-Process -Name "Discord" -ErrorAction SilentlyContinue
     if ($discordProcess) {
-        Write-Log "⚠️  Discord is running! Please close Discord and re-run this script." "WARNING"
+        Write-Log "[!]  Discord is running! Please close Discord and re-run this script." "WARNING"
         Write-Log "Discord settings NOT applied (app must be closed first)" "WARNING"
         return
     }
@@ -122,39 +122,39 @@ function Set-DiscordGamingSettings {
         # Note: Hardware acceleration is NOT exposed in settings.json
         # It can only be disabled via UI or by modifying Discord shortcuts with --disable-hardware-acceleration flag
         if ($DisableHardwareAccel) {
-            Write-Log "  ⚠️  Hardware acceleration requires manual configuration:" "WARNING"
-            Write-Log "      Option 1: User Settings → Advanced → Toggle Hardware Acceleration OFF" "INFO"
+            Write-Log "  [!]  Hardware acceleration requires manual configuration:" "WARNING"
+            Write-Log "      Option 1: User Settings -> Advanced -> Toggle Hardware Acceleration OFF" "INFO"
             Write-Log "      Option 2: Add --disable-hardware-acceleration to Discord shortcut target" "INFO"
         }
 
         if ($DisableOverlay) {
             $settings | Add-Member -NotePropertyName "OVERLAY" -NotePropertyValue $false -Force
             $changesMade = $true
-            Write-Log "  ✓ Overlay disabled" "INFO"
+            Write-Log "  [OK] Overlay disabled" "INFO"
         }
 
         if ($DisableActivityStatus) {
             $settings | Add-Member -NotePropertyName "status" -NotePropertyValue "invisible" -Force
             $changesMade = $true
-            Write-Log "  ✓ Activity status hidden" "INFO"
+            Write-Log "  [OK] Activity status hidden" "INFO"
         }
 
         if ($DisableEchoCancellation) {
             $settings | Add-Member -NotePropertyName "echoCancellation" -NotePropertyValue $false -Force
             $changesMade = $true
-            Write-Log "  ✓ Echo cancellation disabled" "INFO"
+            Write-Log "  [OK] Echo cancellation disabled" "INFO"
         }
 
         if ($StandardNoiseSuppression) {
             $settings | Add-Member -NotePropertyName "noiseSuppression" -NotePropertyValue "standard" -Force
             $changesMade = $true
-            Write-Log "  ✓ Noise suppression set to standard" "INFO"
+            Write-Log "  [OK] Noise suppression set to standard" "INFO"
         }
 
         if ($DisableAutoGainControl) {
             $settings | Add-Member -NotePropertyName "automaticGainControl" -NotePropertyValue $false -Force
             $changesMade = $true
-            Write-Log "  ✓ Auto gain control disabled" "INFO"
+            Write-Log "  [OK] Auto gain control disabled" "INFO"
         }
 
         if ($changesMade) {
@@ -245,7 +245,7 @@ function Set-AudioDeviceProperties {
         # Calculate format value (sample rate + bit depth)
         # This is a complex binary value - simplified approach
         if ($SampleRate -or $BitDepth) {
-            Write-Log "  ⚠️  Sample rate/bit depth changes require manual configuration" "WARNING"
+            Write-Log "  [!]  Sample rate/bit depth changes require manual configuration" "WARNING"
             Write-Log "  Open Sound settings > Device properties > Additional device properties" "INFO"
         }
 
@@ -254,7 +254,7 @@ function Set-AudioDeviceProperties {
             $spatialPath = Join-Path $devicePath "FxProperties"
             if (Set-ProtectedRegistryValue -Path $spatialPath -Name "{e4870e26-3cc5-4cd2-ba46-ca0a9a70ed04},3" -Value 0 -Type "DWORD") {
                 $changesMade = $true
-                Write-Log "  ✓ Spatial audio disabled" "INFO"
+                Write-Log "  [OK] Spatial audio disabled" "INFO"
             }
         }
 
@@ -262,7 +262,7 @@ function Set-AudioDeviceProperties {
         if ($EnableExclusiveMode) {
             if (Set-ProtectedRegistryValue -Path $devicePath -Name "PKEY_AudioEndpoint_Disable_SysFx" -Value 0 -Type "DWORD") {
                 $changesMade = $true
-                Write-Log "  ✓ Exclusive mode enabled" "INFO"
+                Write-Log "  [OK] Exclusive mode enabled" "INFO"
             }
         }
 
@@ -270,13 +270,13 @@ function Set-AudioDeviceProperties {
         if ($DisableEnhancements) {
             if (Set-ProtectedRegistryValue -Path $devicePath -Name "{fc52a749-4be9-4510-896e-966ba6525980},3" -Value 0 -Type "DWORD") {
                 $changesMade = $true
-                Write-Log "  ✓ Audio enhancements disabled" "INFO"
+                Write-Log "  [OK] Audio enhancements disabled" "INFO"
             }
         }
 
         if ($changesMade) {
             Write-Log "Audio device properties configured successfully" "SUCCESS"
-            Write-Log "⚠️  Reboot or restart audio service for changes to take effect" "WARNING"
+            Write-Log "[!]  Reboot or restart audio service for changes to take effect" "WARNING"
         }
         else {
             Write-Log "No audio settings were changed" "INFO"
@@ -337,7 +337,7 @@ function Set-SteamGamingSettings {
     # Check if Steam is running
     $steamProcess = Get-Process -Name "steam" -ErrorAction SilentlyContinue
     if ($steamProcess) {
-        Write-Log "⚠️  Steam is running! Please close Steam and re-run this script." "WARNING"
+        Write-Log "[!]  Steam is running! Please close Steam and re-run this script." "WARNING"
         Write-Log "Steam settings NOT applied (app must be closed first)" "WARNING"
         return
     }
@@ -386,21 +386,21 @@ function Set-SteamGamingSettings {
             # VDF uses key-value format: "key"		"value"
             $configContent = $configContent -replace '("InGameOverlayShowFPSContrast"\s+")\d+(")', '${1}0${2}'
             $changesMade = $true
-            Write-Log "  ✓ Steam overlay disabled" "INFO"
+            Write-Log "  [OK] Steam overlay disabled" "INFO"
         }
 
         # Disable downloads during gameplay
         if ($DisableDownloadsDuringGameplay) {
             $configContent = $configContent -replace '("AllowDownloadsWhileRunning"\s+")\d+(")', '${1}0${2}'
             $changesMade = $true
-            Write-Log "  ✓ Downloads during gameplay disabled" "INFO"
+            Write-Log "  [OK] Downloads during gameplay disabled" "INFO"
         }
 
         # Enable low bandwidth mode
         if ($EnableLowBandwidthMode) {
             $configContent = $configContent -replace '("LowBandwidthMode"\s+")\d+(")', '${1}1${2}'
             $changesMade = $true
-            Write-Log "  ✓ Low bandwidth mode enabled" "INFO"
+            Write-Log "  [OK] Low bandwidth mode enabled" "INFO"
         }
 
         if ($changesMade) {

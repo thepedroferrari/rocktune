@@ -436,3 +436,19 @@ Deno.test('One-liner - Empty build generates minimal command', () => {
   assertEquals(result.command.includes('iex'), true)
   assertEquals(result.blockedCount, 0)
 })
+
+Deno.test('Share URL - Old links with retired general-debloat IDs still decode', async () => {
+  const { default: LZString } = await import('lz-string')
+  // 1 pagefile, 12 edge_debloat, 80-83 privacy/bloatware, 116 bing_search_off, 120 onedrive_remove
+  const json = JSON.stringify({ v: 1, c: 1, g: 1, o: [1, 12, 80, 81, 82, 83, 116, 120] })
+  const decoded = decodeShareURL(`b=1.${LZString.compressToEncodedURIComponent(json)}`)
+  assertEquals(decoded.success, true)
+  if (decoded.success) {
+    assertEquals(decoded.build.optimizations, ['pagefile'])
+    assertEquals(decoded.build.skippedCount, 7)
+    assertEquals(
+      decoded.build.warnings.some((w) => w.includes('WinUtil / Win11Debloat')),
+      true,
+    )
+  }
+})

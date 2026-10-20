@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Performance-focused optimizations (scheduler, timer, GameDVR, NVMe, etc).
 .DESCRIPTION
@@ -43,25 +43,25 @@ function Test-PerformanceOptimizations {
     $mmcssPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games"
     $gpuPriority = Get-RegistryValue -Path $mmcssPath -Name "GPU Priority"
     if ($gpuPriority -eq 8) {
-        Write-Log "✓ MMCSS GPU Priority: 8 (correct)" "SUCCESS"
+        Write-Log "[OK] MMCSS GPU Priority: 8 (correct)" "SUCCESS"
     } else {
-        Write-Log "✗ MMCSS GPU Priority incorrect (current: $gpuPriority, expected: 8)" "ERROR"
+        Write-Log "[FAIL] MMCSS GPU Priority incorrect (current: $gpuPriority, expected: 8)" "ERROR"
         $allPassed = $false
     }
 
     $schedulerPath = "HKLM:\SYSTEM\CurrentControlSet\Control\PriorityControl"
     $win32Priority = Get-RegistryValue -Path $schedulerPath -Name "Win32PrioritySeparation"
     if ($win32Priority -eq 26) {
-        Write-Log "✓ Win32PrioritySeparation: 26 (balanced gaming)" "SUCCESS"
+        Write-Log "[OK] Win32PrioritySeparation: 26 (balanced gaming)" "SUCCESS"
     } else {
-        Write-Log "✗ Win32PrioritySeparation incorrect (current: $win32Priority, expected: 26)" "ERROR"
+        Write-Log "[FAIL] Win32PrioritySeparation incorrect (current: $win32Priority, expected: 26)" "ERROR"
         $allPassed = $false
     }
 
     $timerPath = "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\kernel"
     $globalTimer = Get-RegistryValue -Path $timerPath -Name "GlobalTimerResolutionRequests"
     if ($globalTimer -eq 1) {
-        Write-Log "✓ GlobalTimerResolutionRequests enabled" "SUCCESS"
+        Write-Log "[OK] GlobalTimerResolutionRequests enabled" "SUCCESS"
     }
 
     return $allPassed

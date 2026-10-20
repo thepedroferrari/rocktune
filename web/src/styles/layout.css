@@ -150,9 +150,9 @@
     font-size: var(--text-sm);
     border-block-start: 1px solid var(--border);
     margin-block-start: var(--space-3xl);
-    min-height: 80px;
+    min-height: 110px;
     content-visibility: auto;
-    contain-intrinsic-size: auto 80px;
+    contain-intrinsic-size: auto 110px;
 
     & p {
       margin: 0;
@@ -176,6 +176,11 @@
 
     & .footer-divider {
       color: var(--border);
+    }
+
+    & p.footer-partners {
+      display: block;
+      margin-block-start: var(--space-sm);
     }
   }
 

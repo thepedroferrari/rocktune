@@ -10,7 +10,8 @@
     When set, the script prints intended actions and skips all system changes.
 .PARAMETER Undo
     Restores every registry value, service start type and scheduled task recorded
-    in %ProgramData%\RockTune\undo-journal.json by earlier runs, then exits.
+    in %ProgramData%\RockTune\undo-journal.json by earlier runs, plus anything the
+    retired extreme-privacy.ps1 recorded in extreme-privacy-undo.json, then exits.
 .PARAMETER SkipConfirmation
     When set, skips the "Apply these optimizations?" prompt for unattended execution.
 .PARAMETER ConfigFile
@@ -61,6 +62,8 @@ Write-Host @'
       Gaming PC Setup - evidence-based Windows tuning
 '@ -ForegroundColor Magenta
 Write-Host ""
+Write-Host "  General Windows cleanup (apps, telemetry, ads) is a job for WinUtil (https://github.com/ChrisTitusTech/winutil) or Win11Debloat (https://github.com/Raphire/Win11Debloat). RockTune tunes for games." -ForegroundColor DarkGray
+Write-Host ""
 
 if ($DryRun) {
     Write-Host "  DRY RUN: nothing on this PC will change. Every action is printed instead." -ForegroundColor Yellow
@@ -82,7 +85,8 @@ Import-Module (Join-Path $ScriptRoot "modules\optimizations\performance.psm1") -
 Import-Module (Join-Path $ScriptRoot "modules\optimizations\power.psm1") -Force -Global
 Import-Module (Join-Path $ScriptRoot "modules\optimizations\network.psm1") -Force -Global
 Import-Module (Join-Path $ScriptRoot "modules\optimizations\audio.psm1") -Force -Global
-Import-Module (Join-Path $ScriptRoot "modules\optimizations\privacy.psm1") -Force -Global
+Import-Module (Join-Path $ScriptRoot "modules\optimizations\background.psm1") -Force -Global
+Import-Module (Join-Path $ScriptRoot "modules\optimizations\gaming-compat.psm1") -Force -Global
 Import-Module (Join-Path $ScriptRoot "modules\optimizations\gpu.psm1") -Force -Global
 Import-Module (Join-Path $ScriptRoot "modules\optimizations\peripherals.psm1") -Force -Global
 Import-Module (Join-Path $ScriptRoot "modules\optimizations\browsers.psm1") -Force -Global
@@ -108,10 +112,16 @@ Write-Log "Dry run: $DryRun" "INFO"
 if ($Undo) {
     Write-Host ">> Undo: restoring everything recorded in $(Get-UndoJournalPath)" -ForegroundColor Cyan
     $undoResult = Undo-RockTuneChanges
+    $legacyResult = Undo-LegacyPrivacyJournal
+    $restoredTotal = $undoResult.Restored + $legacyResult.Restored
+    $failedTotal = $undoResult.Failed + $legacyResult.Failed
     Write-Host ""
-    Write-Host "  Restored: $($undoResult.Restored)" -ForegroundColor Green
-    if ($undoResult.Failed -gt 0) {
-        Write-Host "  Failed:   $($undoResult.Failed) (see $logPath)" -ForegroundColor Red
+    Write-Host "  Restored: $restoredTotal" -ForegroundColor Green
+    if ($legacyResult.Restored -gt 0) {
+        Write-Host "  ($($legacyResult.Restored) of these came from the retired extreme-privacy.ps1)" -ForegroundColor Gray
+    }
+    if ($failedTotal -gt 0) {
+        Write-Host "  Failed:   $failedTotal (see $logPath)" -ForegroundColor Red
     }
     Write-Host "  Power plan, page file and bcdedit changes are not in the journal: use the" -ForegroundColor Gray
     Write-Host "  'Pre-Gaming-PC-Setup' System Restore point for a full rollback." -ForegroundColor Gray
@@ -161,6 +171,7 @@ Write-Log "System: $($sysInfo.CPU) | $($sysInfo.RAM) | $($sysInfo.GPU)" "INFO"
 
 
 
+
 # Ordered list of optimization sections to execute.
 $sections = @(
     @{
@@ -177,7 +188,7 @@ $sections = @(
         TestFunction = "Test-SystemOptimizations"
         Condition = $null
         Weight = 10
-        Description = "Page file, fast startup off, classic context menu, Storage Sense off, display performance, End Task in taskbar, Explorer cleanup"
+        Description = "Page file, fast startup off, display performance, End Task in taskbar, Razer/OEM auto-install block"
     },
     @{
         Name = "Performance Optimizations"
@@ -236,12 +247,12 @@ $sections = @(
         Description = "HAGS disabled (opt-in), vendor-specific tweaks"
     },
     @{
-        Name = "Privacy Optimizations"
-        Function = "Invoke-PrivacyOptimizations"
-        TestFunction = "Test-PrivacyOptimizations"
+        Name = "Background Load"
+        Function = "Invoke-BackgroundOptimizations"
+        TestFunction = "Test-BackgroundOptimizations"
         Condition = $null
-        Weight = 15
-        Description = "Telemetry reduced, notifications off, WPBT blocked, PS7 telemetry off, background apps off, Edge debloat, Copilot disable"
+        Weight = 10
+        Description = "Background apps, Copilot, Widgets, Recall and AI services, notifications and forced update reboots off"
     },
     @{
         Name = "Software Installation"
@@ -305,6 +316,17 @@ if (-not $DryRun) {
     Write-Host ""
 }
 
+# Debloat tools and older guides sometimes remove the Store, Game Bar or Xbox
+# sign-in parts. Find them and offer to put them back. This runs after the
+# restore point, so the restore point covers these changes too.
+try {
+    [void](Invoke-GamingCompatCheck -IsX3D ([bool](Test-X3DCpu)) -ListOnly ([bool]$SkipConfirmation))
+} catch {
+    Write-Log "Gaming compatibility check failed: $_" "WARNING"
+    Write-Host "  [!] Gaming compatibility check skipped: $($_.Exception.Message)" -ForegroundColor Yellow
+    Write-Host ""
+}
+
 $sectionResults = New-Object System.Collections.ArrayList
 $activeSections = @($sections | Where-Object { -not $_.Condition -or (& $_.Condition) })
 $stepTotal = $activeSections.Count
@@ -324,7 +346,7 @@ foreach ($section in $activeSections) {
 
     $status = "APPLIED"
     try {
-        if ($DryRun -and $section.Function -ne "Invoke-PrivacyOptimizations") {
+        if ($DryRun -and $section.Function -ne "Invoke-BackgroundOptimizations") {
             # Most sections also run powercfg, bcdedit and adapter cmdlets directly,
             # so only registry-only sections run in dry-run mode.
             Write-Log "DRY RUN: Would execute $($section.Function)" "INFO"
@@ -648,7 +670,7 @@ foreach ($r in $sectionResults) {
 }
 Write-Host ""
 if ($DryRun) {
-    Write-Host "  Would change: $($stats.DryRun) settings (privacy section previewed in full)" -ForegroundColor Yellow
+    Write-Host "  Would change: $($stats.DryRun) settings (background load section previewed in full)" -ForegroundColor Yellow
 } else {
     Write-Host "  Applied: $($stats.Applied)   Skipped: $($stats.Skipped)   Failed: $($stats.Failed)" -ForegroundColor $(if ($stats.Failed -gt 0) { "Yellow" } else { "Green" })
     Write-Host "  Undo file: $(Get-UndoJournalPath)  (run with -Undo to restore)" -ForegroundColor Gray

@@ -263,19 +263,12 @@ const SAFE_OPTIMIZATIONS = {
   AUDIO_ENHANCEMENTS: 'audio_enhancements',
   GAMEDVR: 'gamedvr',
   BACKGROUND_APPS: 'background_apps',
-  EDGE_DEBLOAT: 'edge_debloat',
   COPILOT_DISABLE: 'copilot_disable',
-  EXPLORER_SPEED: 'explorer_speed',
-  TEMP_PURGE: 'temp_purge',
   RAZER_BLOCK: 'razer_block',
   RESTORE_POINT: 'restore_point',
-  CLASSIC_MENU: 'classic_menu',
-  STORAGE_SENSE: 'storage_sense',
   DISPLAY_PERF: 'display_perf',
   END_TASK: 'end_task',
-  EXPLORER_CLEANUP: 'explorer_cleanup',
   NOTIFICATIONS_OFF: 'notifications_off',
-  PS7_TELEMETRY: 'ps7_telemetry',
   MULTIPLANE_OVERLAY: 'multiplane_overlay',
   MOUSE_ACCEL: 'mouse_accel',
   USB_SUSPEND: 'usb_suspend',
@@ -286,11 +279,6 @@ const SAFE_OPTIMIZATIONS = {
   RSS_ENABLE: 'rss_enable',
   ADAPTER_POWER: 'adapter_power',
   DELIVERY_OPT: 'delivery_opt',
-  WER_DISABLE: 'wer_disable',
-  WIFI_SENSE: 'wifi_sense',
-  SPOTLIGHT_DISABLE: 'spotlight_disable',
-  FEEDBACK_DISABLE: 'feedback_disable',
-  CLIPBOARD_SYNC: 'clipboard_sync',
 
   ACCESSIBILITY_SHORTCUTS: 'accessibility_shortcuts',
   AUDIO_COMMUNICATIONS: 'audio_communications',
@@ -306,12 +294,9 @@ const SAFE_OPTIMIZATIONS = {
   NIC_ENERGY_EFFICIENT: 'nic_energy_efficient',
   BROWSER_BACKGROUND: 'browser_background',
 
-  // 24H2-era debloat (Win11Debloat / winutil parity)
+  // Windows 11 background load (AI, Widgets) and game-session fixes
   AI_OFF: 'ai_off',
   WIDGETS_OFF: 'widgets_off',
-  START_RECOMMENDED_OFF: 'start_recommended_off',
-  BING_SEARCH_OFF: 'bing_search_off',
-  WINDOWS_ADS_OFF: 'windows_ads_off',
   GAMEBAR_POPUP_FIX: 'gamebar_popup_fix',
   UPDATE_NO_REBOOT: 'update_no_reboot',
 } as const
@@ -323,10 +308,7 @@ const CAUTION_OPTIMIZATIONS = {
   HAGS: 'hags',
   FSO_DISABLE: 'fso_disable',
   ULTIMATE_PERF: 'ultimate_perf',
-  SERVICES_TRIM: 'services_trim',
-  DISK_CLEANUP: 'disk_cleanup',
 
-  WPBT_DISABLE: 'wpbt_disable',
   QOS_GAMING: 'qos_gaming',
   NETWORK_THROTTLING: 'network_throttling',
   INTERRUPT_AFFINITY: 'interrupt_affinity',
@@ -348,17 +330,11 @@ const CAUTION_OPTIMIZATIONS = {
 
   // FR33THY: GPU-specific optimizations
   AMD_ULPS_DISABLE: 'amd_ulps_disable',
-
-  ONEDRIVE_REMOVE: 'onedrive_remove',
 } as const
 
 const RISKY_OPTIMIZATIONS = {
   // FR33THY: Force NVIDIA GPU to maximum P0 power state
   NVIDIA_P0_STATE: 'nvidia_p0_state',
-  PRIVACY_TIER1: 'privacy_tier1',
-  PRIVACY_TIER2: 'privacy_tier2',
-  PRIVACY_TIER3: 'privacy_tier3',
-  BLOATWARE: 'bloatware',
   IPV4_PREFER: 'ipv4_prefer',
   TEREDO_DISABLE: 'teredo_disable',
   NATIVE_NVME: 'native_nvme',

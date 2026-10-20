@@ -111,11 +111,11 @@ function handleBadgeMouseLeave(event: MouseEvent) {
       </div>
 
       <a
-        href="#quick-start"
+        href="#clean-first"
         class="hero-primary-cta"
         onclick={(event) => {
           event.preventDefault()
-          scrollToSection({ sectionId: 'quick-start' })
+          scrollToSection({ sectionId: 'clean-first' })
         }}
       >
         <span>Build my script</span>
@@ -207,9 +207,9 @@ function handleBadgeMouseLeave(event: MouseEvent) {
             </dd>
           </div>
           <div class="stat-line">
-            <dt class="stat-label">Windows tracking</dt>
+            <dt class="stat-label">Power plan</dt>
             <dd class="stat-value">
-              <span class="stat-dots" aria-hidden="true"></span>NUKED
+              <span class="stat-dots" aria-hidden="true"></span>FULL SPEED
             </dd>
           </div>
 
@@ -264,7 +264,7 @@ function handleBadgeMouseLeave(event: MouseEvent) {
     </div>
   </div>
 
-  <a href="#quick-start" class="scroll-indicator">
+  <a href="#clean-first" class="scroll-indicator">
     <span class="scroll-text">CUSTOMIZE YOUR BUILD</span>
     <svg
       class="scroll-chevron"

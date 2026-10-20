@@ -44,7 +44,8 @@ Deno.test('Persona config - pro_gamer includes CAUTION tier optimizations', () =
   // Pro gamer should include aggressive optimizations
   assert(proGamerOpts.includes('msi_mode'), 'Should include CAUTION: msi_mode')
   assert(proGamerOpts.includes('ultimate_perf'), 'Should include CAUTION: ultimate_perf')
-  assert(proGamerOpts.includes('services_trim'), 'Should include CAUTION: services_trim')
+  assert(proGamerOpts.includes('fso_disable'), 'Should include CAUTION: fso_disable')
+  assert(!proGamerOpts.includes('services_trim' as never), 'Retired keys stay out of presets')
 })
 
 // ====================================================================

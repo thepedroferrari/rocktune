@@ -31,15 +31,23 @@ import DnsProviderSelector from './DnsProviderSelector.svelte'
 import OptimizationCheckbox from './OptimizationCheckbox.svelte'
 import TierLegendDialog from './TierLegendDialog.svelte'
 
-/** Category display names */
-const CATEGORY_LABELS: Record<OptimizationCategory, string> = {
+/**
+ * Category display names. Keyed by string so the label survives the rename of
+ * the 'privacy' category (what is left there is background load).
+ */
+const CATEGORY_LABELS: Record<string, string> = {
   system: 'System',
   power: 'Power',
   network: 'Network',
   input: 'Input',
   display: 'Display',
-  privacy: 'Privacy',
+  privacy: 'Background apps',
+  background: 'Background apps',
   audio: 'Audio',
+}
+
+function categoryLabel(category: OptimizationCategory): string {
+  return CATEGORY_LABELS[category] ?? category
 }
 
 /** Tier order for rendering - LUDICROUS excluded from normal flow */
@@ -186,7 +194,7 @@ function handleBeforeToggle(key: OptimizationKey, isCurrentlyChecked: boolean): 
         </button>
       </h2>
       <p class="step-banner__subtitle">
-        Safe options enabled by default — hover for details
+        Hardware tuning and stutter fixes. Safe options start on — hover for details
       </p>
     </div>
     <div class="step-banner__actions">
@@ -273,7 +281,7 @@ function handleBeforeToggle(key: OptimizationKey, isCurrentlyChecked: boolean): 
           <fieldset class="control-fieldset tier-{tier}-field">
             <legend class="control-legend">
               <span class="tier tier-{tier}">{TIER_LABELS[tier]}</span>
-              {CATEGORY_LABELS[category]}
+              {categoryLabel(category)}
             </legend>
             {#each opts as opt (opt.key)}
               <OptimizationCheckbox {opt} onBeforeToggle={handleBeforeToggle} />

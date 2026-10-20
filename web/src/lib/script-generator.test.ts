@@ -577,10 +577,11 @@ function scriptFor(optimizations: string[], overrides: Partial<SelectionState> =
 }
 
 Deno.test('Fix - Disable-Task splits folder and leaf (TaskName alone matches nothing)', () => {
-  const script = scriptFor(['privacy_tier2'])
+  const script = scriptFor(['scheduled_tasks_gaming'])
   assertStringIncludes(script, 'Get-ScheduledTask -TaskPath $folder -TaskName $name')
   assertStringIncludes(script, 'Disable-ScheduledTask -TaskPath $folder -TaskName $name')
-  assertStringIncludes(script, 'Microsoft Compatibility Appraiser Exp')
+  assertStringIncludes(script, 'Microsoft Compatibility Appraiser')
+  assertEquals(script.includes('XblGameSaveTask'), false, 'Xbox cloud-save tasks stay on')
   assertStringIncludes(script, 'Enable-ScheduledTask -TaskPath $tp -TaskName $tn')
 })
 
@@ -615,13 +616,6 @@ Deno.test('Fix - generated script never calls Get-WmiObject (absent in PowerShel
   const all = OPTIMIZATIONS.map((o) => o.key)
   const script = scriptFor(all)
   assertEquals(script.includes('Get-WmiObject'), false)
-})
-
-Deno.test('Fix - Disk cleanup selects cleanmgr categories before /sagerun', () => {
-  const script = scriptFor(['disk_cleanup'])
-  const flags = script.indexOf('"StateFlags0100" 2')
-  const run = script.indexOf('Start-Process "cleanmgr.exe"')
-  assertEquals(flags > 0 && flags < run, true)
 })
 
 Deno.test('Fix - GPU interrupt affinity is a binary mask off CPU 0', () => {
@@ -659,7 +653,7 @@ Deno.test('Fix - Mutex released in finally; partial runs still save restore file
 })
 
 Deno.test('Fix - Services: startup type set before stop, delayed-auto restored', () => {
-  const script = scriptFor(['services_trim'])
+  const script = scriptFor(['sysmain_disable'])
   assertStringIncludes(script, 'Get-CimInstance Win32_Service -Filter')
   assertStringIncludes(script, 'DelayedAutoStart')
   assertStringIncludes(script, 'start= delayed-auto')
@@ -697,22 +691,10 @@ Deno.test('Feature - Windows AI off: Recall, Click to Do, AI service, Win11 + 24
   assertStringIncludes(script, 'if ($script:IsWin11_24H2)')
 })
 
-Deno.test('Feature - Widgets, Start, Bing, ads, reboot items emit their policies', () => {
-  const script = scriptFor([
-    'widgets_off',
-    'start_recommended_off',
-    'bing_search_off',
-    'windows_ads_off',
-    'update_no_reboot',
-  ])
+Deno.test('Feature - Widgets and reboot items emit their policies', () => {
+  const script = scriptFor(['widgets_off', 'update_no_reboot'])
   for (const key of [
     'AllowNewsAndInterests',
-    'HideRecommendedSection',
-    'Start_IrisRecommendations',
-    'DisableSearchBoxSuggestions',
-    'BingSearchEnabled',
-    'DisableWindowsConsumerFeatures',
-    'ScoobeSystemSettingEnabled',
     'NoAutoRebootWithLoggedOnUsers',
     'IsContinuousInnovationOptedIn',
   ]) {
@@ -726,46 +708,11 @@ Deno.test('Feature - Game Bar popup fix is skipped on X3D CPUs', () => {
   assertStringIncludes(script, 'if ($Config.hardware.cpu -eq "amd_x3d")')
 })
 
-Deno.test('Feature - Edge debloat blocks AI hooks and local model download', () => {
-  const script = scriptFor(['edge_debloat'])
-  assertStringIncludes(script, 'HubsSidebarEnabled')
-  assertStringIncludes(script, 'GenAILocalFoundationalModelSettings')
-})
-
-Deno.test('Feature - Bloatware list grows but never touches Xbox / Game Pass apps', () => {
-  const script = scriptFor(['bloatware'])
-  assertStringIncludes(script, '"MSTeams"')
-  assertStringIncludes(script, 'Remove-AppxSafe $app')
-  const listLine = script.slice(
-    script.indexOf('$bloatApps = @('),
-    script.indexOf('$removedCount = 0'),
-  )
-  for (const keep of [
-    'Microsoft.GamingApp"',
-    'Microsoft.XboxIdentityProvider"',
-    'Microsoft.Xbox.TCUI"',
-  ]) {
-    assertEquals(listLine.includes(`"${keep}`), false, `${keep} must not be removed`)
-  }
-})
-
-Deno.test('Feature - OneDrive removal protects user files during uninstall', () => {
-  const script = scriptFor(['onedrive_remove'])
-  assertStringIncludes(script, '/deny "*S-1-5-32-544:(D,DC)"')
-  assertStringIncludes(script, '/remove:d "*S-1-5-32-544"')
-})
-
 Deno.test('Feature - Verification script checks new items', () => {
   const verify = buildVerificationScript({
     ...createTestSelection('gamer'),
     hardware: { cpu: 'intel', gpu: 'nvidia', peripherals: [], monitorSoftware: [] },
-    optimizations: [
-      'ai_off',
-      'widgets_off',
-      'windows_ads_off',
-      'update_no_reboot',
-      'gamebar_popup_fix',
-    ],
+    optimizations: ['ai_off', 'widgets_off', 'update_no_reboot', 'gamebar_popup_fix'],
   })
   assertStringIncludes(verify, 'Windows AI / Recall off')
   assertStringIncludes(verify, 'Widgets off')
@@ -793,16 +740,55 @@ Deno.test('Presets - non-benchmarker personas never include LUDICROUS items', ()
 })
 
 Deno.test('Catalog - every new key has a share ID', () => {
-  for (const key of [
-    'ai_off',
-    'widgets_off',
-    'start_recommended_off',
-    'bing_search_off',
-    'windows_ads_off',
-    'gamebar_popup_fix',
-    'update_no_reboot',
-    'onedrive_remove',
-  ]) {
+  for (const key of ['ai_off', 'widgets_off', 'gamebar_popup_fix', 'update_no_reboot']) {
     assertEquals(typeof OPT_VALUE_TO_ID[key as keyof typeof OPT_VALUE_TO_ID], 'number', key)
   }
+})
+
+Deno.test('Handoff - banner points general cleanup to WinUtil and Win11Debloat', () => {
+  const script = scriptFor(['pagefile'])
+  assertStringIncludes(script, 'https://github.com/ChrisTitusTech/winutil')
+  assertStringIncludes(script, 'https://github.com/Raphire/Win11Debloat')
+})
+
+Deno.test('Handoff - stale retired keys print one skip line and generate nothing', () => {
+  const script = scriptFor(['pagefile', 'bloatware', 'privacy_tier3'])
+  assertStringIncludes(script, '[skip] Remove Bloatware: moved to WinUtil / Win11Debloat')
+  assertStringIncludes(script, '[skip] Privacy Tier 3: moved to WinUtil / Win11Debloat')
+  assertEquals(script.includes('$bloatApps'), false)
+})
+
+Deno.test('Compat - scan checks Xbox services, apps, GameInput and Store downloads', () => {
+  const script = scriptFor(['pagefile'])
+  for (const needle of [
+    "'XblAuthManager', 'XblGameSave', 'XboxNetApiSvc', 'XboxGipSvc'",
+    "Test-CompatAppx 'Microsoft.XboxIdentityProvider'",
+    "Test-CompatAppx 'Microsoft.Xbox.TCUI'",
+    "Get-AppxState 'Microsoft.WindowsStore'",
+    'GameInputSvc',
+    'DODownloadMode',
+    'Confirm-Continue "Restore these gaming features?"',
+    'Add-AppxPackage -DisableDevelopmentMode -Register $manifest',
+  ]) {
+    assertStringIncludes(script, needle)
+  }
+  // Restore runs after the backup starts so undo covers it
+  assertEquals(script.indexOf('Initialize-Backup\n') < script.indexOf('Restore these gaming'), true)
+})
+
+Deno.test('Compat - X3D flags a missing Game Bar as critical', () => {
+  const x3d = scriptFor(['pagefile'], {
+    hardware: { cpu: 'amd_x3d', gpu: 'nvidia', peripherals: [], monitorSoftware: [] },
+  })
+  assertStringIncludes(x3d, 'Game Bar (X3D)')
+  assertStringIncludes(x3d, 'CRITICAL')
+  const intel = scriptFor(['pagefile'])
+  assertEquals(intel.includes('Game Bar (X3D)'), false)
+  const verify = buildVerificationScript({
+    ...createTestSelection('gamer'),
+    hardware: { cpu: 'amd_x3d', gpu: 'nvidia', peripherals: [], monitorSoftware: [] },
+    optimizations: ['pagefile'],
+  })
+  assertStringIncludes(verify, 'Write-Section "Gaming Compatibility"')
+  assertStringIncludes(verify, 'Game Bar installed (X3D core parking)')
 })

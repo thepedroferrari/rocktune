@@ -60,14 +60,6 @@ function Get-DefaultConfig {
             usb_selective_suspend_disable = $true
             processor_idle_disable = $true
         }
-        privacy = @{
-            telemetry_services_disable = $true
-            location_tracking_disable = $true
-            camera_access_disable = $true
-            biometrics_disable = $true
-            cloud_sync_disable = $false
-            hosts_file_blocking = $true
-        }
         software = @{
             steam = $true
             discord = $true
@@ -170,7 +162,7 @@ function Get-Profile {
         Reads a profile JSON file and converts it to a hashtable. Falls back to
         defaults when the profile is missing or invalid.
     .PARAMETER ProfileName
-        Profile identifier. Valid values: competitive, balanced, privacy-focused.
+        Profile identifier. Valid values: competitive, balanced.
     .OUTPUTS
         [hashtable] Profile configuration.
     #>
@@ -178,7 +170,7 @@ function Get-Profile {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true)]
-        [ValidateSet('competitive', 'balanced', 'privacy-focused')]
+        [ValidateSet('competitive', 'balanced')]
         [string]$ProfileName
     )
 
@@ -215,7 +207,7 @@ function Get-AvailableProfiles {
         return $profiles
     }
 
-    return @('competitive', 'balanced', 'privacy-focused')
+    return @('competitive', 'balanced')
 }
 
 function Merge-Config {
@@ -277,7 +269,7 @@ function Test-ConfigValid {
         [hashtable]$Config
     )
 
-    $requiredKeys = @('performance', 'power', 'privacy', 'software', 'network', 'games')
+    $requiredKeys = @('performance', 'power', 'software', 'network', 'games')
 
     foreach ($key in $requiredKeys) {
         if (-not $Config.ContainsKey($key)) {

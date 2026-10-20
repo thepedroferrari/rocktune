@@ -43,7 +43,7 @@ $script:IsWin11_24H2 = $script:WinBuild -ge 26100
 $script:WinVersion = if ($script:IsWin11) { "Windows 11" } else { "Windows 10" }
 
 # IDs that only work on Windows 11
-$script:Win11OnlyIds = @('18', '21', '22', '113', '114')  # Classic menu, End Task, Explorer cleanup, Windows AI, Widgets
+$script:Win11OnlyIds = @('21', '113', '114')  # End Task, Windows AI, Widgets
 $script:Win11_24H2OnlyIds = @('86')  # Native NVMe
 
 # ============================================================================
@@ -101,6 +101,20 @@ if ($dnsId -and $dnsId -notin $validDnsIds) {
 }
 
 $optIds = $optIds | Where-Object { $_ -match '^\d+$' }
+
+# Retired IDs: general Windows cleanup moved to WinUtil / Win11Debloat.
+# Old share links still list them; skip each one with a single line.
+# MUST STAY IN SYNC with DEPRECATED_OPT_IDS in web/src/lib/share-registry.ts
+$RETIRED_OPT_IDS = @{
+    '12'='Edge Debloat'; '14'='Explorer Speed'; '15'='Purge Temp Files'; '18'='Classic Context Menu'
+    '19'='Storage Sense'; '22'='Explorer Cleanup'; '24'='PowerShell 7 Telemetry'; '35'='Error Reporting Off'
+    '36'='WiFi Sense Off'; '37'='Spotlight Off'; '38'='Feedback Off'; '39'='Clipboard Sync Off'
+    '56'='Trim Services'; '57'='Deep Disk Cleanup'; '58'='WPBT Disable'; '80'='Privacy Tier 1'
+    '81'='Privacy Tier 2'; '82'='Privacy Tier 3'; '83'='Remove Bloatware'; '115'='Clean Start Menu'
+    '116'='Bing Search Off'; '117'='No Ads & Nags'; '120'='Uninstall OneDrive'
+}
+$retiredHits = @($optIds | Where-Object { $RETIRED_OPT_IDS.ContainsKey($_) })
+$optIds = @($optIds | Where-Object { -not $RETIRED_OPT_IDS.ContainsKey($_) })
 $pkgKeys = $pkgKeys | Where-Object { $_ -match '^[a-zA-Z0-9._-]+$' }
 
 # Clear the env var after reading (security)
@@ -342,6 +356,7 @@ function Write-ScanResults {
 
         $color = switch ($result.Status) {
             "OK"      { "Green" }
+            "WARN"    { "Red" }
             "CHANGE"  { "Yellow" }
             "INFO"    { "Cyan" }
             "PENDING" { "Gray" }
@@ -362,7 +377,9 @@ function Write-ScanResults {
 
     $changeCount = ($script:ScanResults | Where-Object { $_.Status -eq "CHANGE" }).Count
     $okCount = ($script:ScanResults | Where-Object { $_.Status -eq "OK" }).Count
+    $warnCount = ($script:ScanResults | Where-Object { $_.Status -eq "WARN" }).Count
     Write-Host "  Summary: $changeCount changes needed, $okCount already configured" -ForegroundColor Gray
+    if ($warnCount -gt 0) { Write-Host "  $warnCount gaming feature(s) turned off or removed (see [COMPAT] rows)" -ForegroundColor Red }
     Write-Host ""
 }
 
@@ -383,19 +400,12 @@ $OPT_DESCRIPTIONS = @{
     '9'  = @{ name='Audio Ducking'; tier='SAFE'; desc='Disable audio volume reduction during calls' }
     '10' = @{ name='Game DVR'; tier='SAFE'; desc='Disable background game recording' }
     '11' = @{ name='Background Apps'; tier='SAFE'; desc='Disable background app activity' }
-    '12' = @{ name='Edge Debloat'; tier='SAFE'; desc='Disable Edge shopping assistant and widgets' }
     '13' = @{ name='Copilot'; tier='SAFE'; desc='Disable Windows Copilot' }
-    '14' = @{ name='Explorer Speed'; tier='SAFE'; desc='Optimize folder type detection for faster browsing' }
-    '15' = @{ name='Temp Purge'; tier='SAFE'; desc='Clear temporary folders' }
     '16' = @{ name='Razer Block'; tier='SAFE'; desc='Stop and disable Razer background services' }
     '17' = @{ name='Restore Point'; tier='SAFE'; desc='Create system restore point before changes' }
-    '18' = @{ name='Classic Menu'; tier='SAFE'; desc='Enable Windows 10 style context menu' }
-    '19' = @{ name='Storage Sense'; tier='SAFE'; desc='Disable automatic storage cleanup' }
     '20' = @{ name='Visual Effects'; tier='SAFE'; desc='Set visual effects to performance mode' }
     '21' = @{ name='End Task'; tier='SAFE'; desc='Enable End Task option in taskbar' }
-    '22' = @{ name='Explorer Cleanup'; tier='SAFE'; desc='Remove OneDrive and Gallery from Explorer' }
     '23' = @{ name='Notifications'; tier='SAFE'; desc='Disable notification center and toasts' }
-    '24' = @{ name='PS7 Telemetry'; tier='SAFE'; desc='Disable PowerShell 7 telemetry' }
     '25' = @{ name='Multiplane Overlay'; tier='SAFE'; desc='Disable DWM overlay for cleaner fullscreen' }
     '26' = @{ name='Mouse Acceleration'; tier='SAFE'; desc='Disable mouse acceleration for raw input' }
     '27' = @{ name='USB Suspend'; tier='SAFE'; desc='Disable USB selective suspend' }
@@ -406,11 +416,6 @@ $OPT_DESCRIPTIONS = @{
     '32' = @{ name='RSS'; tier='SAFE'; desc='Enable Receive Side Scaling for network' }
     '33' = @{ name='Adapter Power'; tier='SAFE'; desc='Disable network adapter power saving' }
     '34' = @{ name='Delivery Opt'; tier='SAFE'; desc='Disable P2P update delivery' }
-    '35' = @{ name='Error Reporting'; tier='SAFE'; desc='Disable Windows Error Reporting' }
-    '36' = @{ name='WiFi Sense'; tier='SAFE'; desc='Disable WiFi Sense auto-connect' }
-    '37' = @{ name='Spotlight'; tier='SAFE'; desc='Disable Windows Spotlight on lock screen' }
-    '38' = @{ name='Feedback'; tier='SAFE'; desc='Disable Windows feedback prompts' }
-    '39' = @{ name='Clipboard Sync'; tier='SAFE'; desc='Disable cloud clipboard sync' }
     '40' = @{ name='Accessibility'; tier='SAFE'; desc='Disable Sticky Keys and other shortcuts' }
     '41' = @{ name='Audio Comm'; tier='SAFE'; desc='Disable volume ducking during communications' }
     '42' = @{ name='System Sounds'; tier='SAFE'; desc='Mute Windows system sounds' }
@@ -421,13 +426,10 @@ $OPT_DESCRIPTIONS = @{
     # CAUTION tier (50-72)
     '50' = @{ name='MSI Mode'; tier='CAUTION'; desc='Enable Message Signaled Interrupts for GPU (lower DPC latency)' }
     '51' = @{ name='HPET'; tier='CAUTION'; desc='Disable High Precision Event Timer (test before/after)' }
-    '52' = @{ name='Game Bar Overlay'; tier='CAUTION'; desc='Disable Game Bar overlays (keep core enabled)' }
+    '52' = @{ name='Game Bar Popups'; tier='CAUTION'; desc='Hide the Game Bar startup panel and tips (Game Bar stays installed)' }
     '53' = @{ name='HAGS'; tier='CAUTION'; desc='Enable Hardware Accelerated GPU Scheduling' }
     '54' = @{ name='FSO'; tier='CAUTION'; desc='Disable fullscreen optimizations globally' }
     '55' = @{ name='Ultimate Perf'; tier='CAUTION'; desc='Enable Ultimate Performance power plan' }
-    '56' = @{ name='Services Trim'; tier='CAUTION'; desc='Set unnecessary services to manual startup' }
-    '57' = @{ name='Disk Cleanup'; tier='CAUTION'; desc='Run Windows disk cleanup utility' }
-    '58' = @{ name='WPBT'; tier='CAUTION'; desc='Disable WPBT (blocks OEM pre-installed software)' }
     '59' = @{ name='QoS Gaming'; tier='CAUTION'; desc='Remove bandwidth reservations for gaming' }
     '60' = @{ name='Network Throttle'; tier='CAUTION'; desc='Disable network throttling during multimedia' }
     '61' = @{ name='GPU Affinity'; tier='CAUTION'; desc='Set GPU interrupt affinity to CPU 0' }
@@ -444,10 +446,6 @@ $OPT_DESCRIPTIONS = @{
     '72' = @{ name='Priority Boost'; tier='CAUTION'; desc='Disable priority boost (consistent scheduling)' }
 
     # RISKY tier (80-89)
-    '80' = @{ name='Privacy T1'; tier='RISKY'; desc='Disable advertising ID and tailored experiences' }
-    '81' = @{ name='Privacy T2'; tier='RISKY'; desc='Minimize diagnostic telemetry' }
-    '82' = @{ name='Privacy T3'; tier='RISKY'; desc='Disable Xbox services (breaks Game Pass!)' }
-    '83' = @{ name='Bloatware'; tier='RISKY'; desc='Remove pre-installed bloatware apps' }
     '84' = @{ name='IPv4 Prefer'; tier='RISKY'; desc='Prefer IPv4 over IPv6' }
     '85' = @{ name='Teredo'; tier='RISKY'; desc='Disable Teredo tunneling' }
     '86' = @{ name='Native NVMe'; tier='RISKY'; desc='Enable native NVMe stack (Win11 24H2+)' }
@@ -461,15 +459,11 @@ $OPT_DESCRIPTIONS = @{
     '106' = @{ name='NVIDIA P0 State'; tier='RISKY'; desc='Force GPU to max clocks (increases heat/power!)' }
     '107' = @{ name='Network Binding Strip'; tier='RISKY'; desc='Remove IPv6/sharing bindings (breaks file sharing!)' }
 
-    # 24H2-era debloat (113+)
+    # Windows 11 background load and game-session fixes (113+)
     '113' = @{ name='Windows AI Off'; tier='SAFE'; desc='Recall, Click to Do, AI Fabric service, Notepad/Paint AI off' }
     '114' = @{ name='Widgets Off'; tier='SAFE'; desc='Widgets board, taskbar button and its background web process off' }
-    '115' = @{ name='Clean Start Menu'; tier='SAFE'; desc='No Recommended section, account nags or Phone Link panel' }
-    '116' = @{ name='Bing Search Off'; tier='SAFE'; desc='Start search finds your apps, not web results' }
-    '117' = @{ name='No Ads & Nags'; tier='SAFE'; desc='No promoted app installs, 365 ads or setup nags' }
     '118' = @{ name='Game Bar Popup Fix'; tier='SAFE'; desc='Stops the ms-gamebar popup when Game Bar is off (skipped on X3D)' }
     '119' = @{ name='No Surprise Reboots'; tier='SAFE'; desc='Windows Update never auto-restarts while you are signed in' }
-    '120' = @{ name='Uninstall OneDrive'; tier='CAUTION'; desc='Remove OneDrive (files stay in the OneDrive folder)' }
 }
 
 # ============================================================================
@@ -549,42 +543,9 @@ $OPT_FUNCTIONS = @{
         Set-Reg "HKCU:\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications" "GlobalUserDisabled" 1
         Write-OK "Background apps disabled"
     }
-    '12' = { # edge_debloat
-        Set-Reg "HKLM:\SOFTWARE\Policies\Microsoft\Edge" "HideFirstRunExperience" 1
-        Set-Reg "HKLM:\SOFTWARE\Policies\Microsoft\Edge" "EdgeShoppingAssistantEnabled" 0
-        Set-Reg "HKLM:\SOFTWARE\Policies\Microsoft\Edge" "WebWidgetAllowed" 0
-        foreach ($n in @("HubsSidebarEnabled", "CopilotPageContext", "CopilotCDPPageContext", "Microsoft365CopilotChatIconEnabled", "EdgeEntraCopilotPageContext", "EdgeHistoryAISearchEnabled", "ComposeInlineEnabled", "NewTabPageBingChatEnabled", "PersonalizationReportingEnabled", "DiagnosticData", "ShowRecommendationsEnabled")) {
-            Set-Reg "HKLM:\SOFTWARE\Policies\Microsoft\Edge" $n 0
-        }
-        Set-Reg "HKLM:\SOFTWARE\Policies\Microsoft\Edge" "GenAILocalFoundationalModelSettings" 1
-        Set-Reg "HKLM:\SOFTWARE\Policies\Microsoft\EdgeUpdate" "CreateDesktopShortcutDefault" 0
-        Write-OK "Edge debloated (no sidebar, Copilot hooks or new-tab ads)"
-    }
     '13' = { # copilot_disable
         Set-Reg "HKCU:\Software\Policies\Microsoft\Windows\WindowsCopilot" "TurnOffWindowsCopilot" 1
         Write-OK "Copilot disabled"
-    }
-    '14' = { # explorer_speed
-        Set-Reg "HKCU:\Software\Classes\Local Settings\Software\Microsoft\Windows\Shell\Bags\AllFolders\Shell" "FolderType" "NotSpecified" "String"
-        Write-OK "Explorer speed optimized"
-    }
-    '15' = { # temp_purge
-        $itemsRemoved = 0
-        if ($env:TEMP -and (Test-Path $env:TEMP)) {
-            $tempPath = [System.IO.Path]::GetFullPath($env:TEMP)
-            if ($tempPath -like "*\Temp*" -or $tempPath -like "*\tmp*") {
-                Get-ChildItem $tempPath -Force -EA SilentlyContinue | ForEach-Object {
-                    try { Remove-Item $_.FullName -Recurse -Force -EA Stop; $itemsRemoved++ } catch {}
-                }
-            }
-        }
-        $winTemp = Join-Path $env:WINDIR "Temp"
-        if (Test-Path $winTemp) {
-            Get-ChildItem $winTemp -Force -EA SilentlyContinue | ForEach-Object {
-                try { Remove-Item $_.FullName -Recurse -Force -EA Stop; $itemsRemoved++ } catch {}
-            }
-        }
-        Write-OK "Temp folders purged ($itemsRemoved items)"
     }
     '16' = { # razer_block -> block OEM/peripheral app auto-installs (services untouched)
         Set-Reg "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Device Metadata" "PreventDeviceMetadataFromNetwork" 1
@@ -606,21 +567,6 @@ $OPT_FUNCTIONS = @{
             Write-Warn "Could not create restore point: $($_.Exception.Message)"
         }
     }
-    '18' = { # classic_menu
-        if (-not $script:IsWin11) {
-            Write-Warn "Classic context menu is a Windows 11 feature (Win10 already has it)"
-            return
-        }
-        $clsid = "{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}"
-        $path = "HKCU:\Software\Classes\CLSID\$clsid\InprocServer32"
-        if (-not (Test-Path $path)) { New-Item -Path $path -Force | Out-Null }
-        Set-ItemProperty -Path $path -Name "(Default)" -Value ""
-        Write-OK "Classic context menu enabled"
-    }
-    '19' = { # storage_sense
-        Set-Reg "HKCU:\Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy" "01" 0
-        Write-OK "Storage Sense disabled"
-    }
     '20' = { # display_perf
         Set-Reg "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects" "VisualFXSetting" 2
         Write-OK "Visual effects set to performance"
@@ -632,23 +578,10 @@ $OPT_FUNCTIONS = @{
         }
         if (Set-Reg "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\TaskbarDeveloperSettings" "TaskbarEndTask" 1 -PassThru) { Write-OK "End Task enabled in taskbar" }
     }
-    '22' = { # explorer_cleanup
-        if (-not $script:IsWin11) {
-            Write-Warn "Explorer Home/Gallery are Windows 11 features (Win10 doesn't have them)"
-            return
-        }
-        Remove-Item "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Desktop\NameSpace\{f874310e-b6b7-47dc-bc84-b9e6b38f5903}" -Force -EA SilentlyContinue
-        Remove-Item "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Desktop\NameSpace\{e88865ea-0e1c-4e20-9aa6-edcd0212c87c}" -Force -EA SilentlyContinue
-        Write-OK "Explorer clutter removed"
-    }
     '23' = { # notifications_off
         Set-Reg "HKCU:\Software\Policies\Microsoft\Windows\Explorer" "DisableNotificationCenter" 1
         Set-Reg "HKCU:\Software\Microsoft\Windows\CurrentVersion\PushNotifications" "ToastEnabled" 0
         Write-OK "Notifications disabled"
-    }
-    '24' = { # ps7_telemetry
-        [Environment]::SetEnvironmentVariable("POWERSHELL_TELEMETRY_OPTOUT", "1", "Machine")
-        Write-OK "PS7 telemetry disabled"
     }
     '25' = { # multiplane_overlay
         Set-Reg "HKLM:\SOFTWARE\Microsoft\Windows\Dwm" "OverlayTestMode" 5
@@ -698,29 +631,6 @@ $OPT_FUNCTIONS = @{
     '34' = { # delivery_opt
         Set-Reg "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\DeliveryOptimization\Config" "DODownloadMode" 0
         Write-OK "Delivery Optimization P2P disabled"
-    }
-    '35' = { # wer_disable
-        Set-Reg "HKLM:\SOFTWARE\Microsoft\Windows\Windows Error Reporting" "Disabled" 1
-        Stop-Service WerSvc -Force -EA SilentlyContinue
-        Set-Service WerSvc -StartupType Disabled -EA SilentlyContinue
-        Write-OK "Windows Error Reporting disabled"
-    }
-    '36' = { # wifi_sense
-        Set-Reg "HKLM:\SOFTWARE\Microsoft\WcmSvc\wifinetworkmanager\config" "AutoConnectAllowedOEM" 0
-        Write-OK "WiFi Sense disabled"
-    }
-    '37' = { # spotlight_disable
-        Set-Reg "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" "RotatingLockScreenEnabled" 0
-        Set-Reg "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" "RotatingLockScreenOverlayEnabled" 0
-        Write-OK "Windows Spotlight disabled"
-    }
-    '38' = { # feedback_disable
-        Set-Reg "HKCU:\Software\Microsoft\Siuf\Rules" "NumberOfSIUFInPeriod" 0
-        Write-OK "Windows Feedback prompts disabled"
-    }
-    '39' = { # clipboard_sync
-        Set-Reg "HKCU:\Software\Microsoft\Clipboard" "EnableClipboardHistory" 0
-        Write-OK "Cloud Clipboard sync disabled"
     }
     '40' = { # accessibility_shortcuts
         Set-Reg "HKCU:\Control Panel\Accessibility\StickyKeys" "Flags" "506" "String"
@@ -797,25 +707,6 @@ $OPT_FUNCTIONS = @{
             $null = powercfg /setactive 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c 2>&1
             Write-Warn "Ultimate Performance unavailable - High Performance used instead"
         }
-    }
-    '56' = { # services_trim
-        $trimSvc = @("DiagTrack","dmwappushservice","lfsvc","RetailDemo","Fax","SharedAccess")
-        foreach ($s in $trimSvc) { Set-Service $s -StartupType Manual -EA SilentlyContinue; Stop-Service $s -Force -EA SilentlyContinue }
-        Write-OK "Services trimmed"
-    }
-    '57' = { # disk_cleanup (/sagerun needs StateFlags0100 per category)
-        # Allow-list only: Recycle Bin, Downloads, previous Windows and ESD install files are never flagged
-        $cleanCategories = @("Temporary Files", "Update Cleanup", "Delivery Optimization Files", "Windows Error Reporting Files", "Temporary Setup Files", "Thumbnail Cache", "D3D Shader Cache", "Setup Log Files")
-        $cacheRoot = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches"
-        foreach ($cat in $cleanCategories) {
-            if (Test-Path "$cacheRoot\$cat") { Set-ItemProperty -Path "$cacheRoot\$cat" -Name "StateFlags0100" -Value 2 -Type DWord -EA SilentlyContinue }
-        }
-        Start-Process "cleanmgr.exe" -ArgumentList "/sagerun:100" -Wait -WindowStyle Hidden
-        Write-OK "Disk cleanup complete (Recycle Bin, Downloads and previous Windows kept)"
-    }
-    '58' = { # wpbt_disable
-        Set-Reg "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager" "DisableWpbtExecution" 1
-        Write-OK "WPBT disabled (blocks OEM bloatware)"
     }
     '59' = { # qos_gaming
         Set-Reg "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Psched" "NonBestEffortLimit" 0
@@ -900,34 +791,6 @@ $OPT_FUNCTIONS = @{
     }
 
     # RISKY tier (80-89)
-    '80' = { # privacy_tier1
-        Set-Reg "HKCU:\Software\Microsoft\Windows\CurrentVersion\AdvertisingInfo" "Enabled" 0
-        Set-Reg "HKCU:\Software\Microsoft\Windows\CurrentVersion\Privacy" "TailoredExperiencesWithDiagnosticDataEnabled" 0
-        Write-OK "Advertising ID and tailored experiences disabled"
-    }
-    '81' = { # privacy_tier2
-        Set-Reg "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection" "AllowTelemetry" 0
-        Set-Reg "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" "Start_TrackProgs" 0
-        foreach ($t in @("Microsoft Compatibility Appraiser", "Microsoft Compatibility Appraiser Exp", "ProgramDataUpdater")) {
-            Disable-ScheduledTask -TaskPath "\Microsoft\Windows\Application Experience\" -TaskName $t -EA SilentlyContinue | Out-Null
-        }
-        Write-OK "Telemetry minimized (incl. Compatibility Appraiser tasks)"
-    }
-    '82' = { # privacy_tier3
-        $xboxSvc = @("XblAuthManager","XblGameSave","XboxGipSvc","XboxNetApiSvc")
-        foreach ($s in $xboxSvc) { Stop-Service $s -Force -EA SilentlyContinue; Set-Service $s -StartupType Disabled -EA SilentlyContinue }
-        Write-OK "Xbox services disabled (Game Pass broken)"
-    }
-    '83' = { # bloatware (Xbox / Game Pass apps are never touched)
-        $bloatApps = @("Microsoft.BingNews", "Microsoft.BingWeather", "Microsoft.BingFinance", "Microsoft.BingSports", "Microsoft.BingTravel", "Microsoft.BingTranslator", "Microsoft.BingFoodAndDrink", "Microsoft.BingHealthAndFitness", "Microsoft.GetHelp", "Microsoft.Getstarted", "Microsoft.MicrosoftSolitaireCollection", "Microsoft.People", "Microsoft.PowerAutomateDesktop", "Microsoft.Todos", "Microsoft.WindowsAlarms", "Microsoft.WindowsFeedbackHub", "Microsoft.WindowsMaps", "Microsoft.WindowsSoundRecorder", "Microsoft.YourPhone", "Microsoft.ZuneMusic", "Microsoft.ZuneVideo", "Clipchamp.Clipchamp", "Microsoft.549981C3F5F10", "MSTeams", "MicrosoftTeams", "Microsoft.Windows.DevHome", "Microsoft.PCManager", "Microsoft.Windows.AIHub", "Microsoft.MicrosoftStickyNotes", "Microsoft.MicrosoftJournal", "Microsoft.Office.OneNote", "Microsoft.SkypeApp", "Microsoft.MixedReality.Portal", "MicrosoftCorporationII.QuickAssist", "MicrosoftCorporationII.MicrosoftFamily", "king.com.CandyCrushSaga", "king.com.CandyCrushSodaSaga", "SpotifyAB.SpotifyMusic", "BytedancePte.Ltd.TikTok", "Facebook.Instagram", "AmazonVideo.PrimeVideo", "4DF9E0F8.Netflix", "Disney.37853FC22B2CE", "*LinkedInforWindows")
-        $removed = 0
-        foreach ($app in $bloatApps) {
-            $pkg = Get-AppxPackage -Name $app -AllUsers -EA SilentlyContinue
-            if ($pkg) { $pkg | Remove-AppxPackage -AllUsers -EA SilentlyContinue; $removed++ }
-            Get-AppxProvisionedPackage -Online -EA SilentlyContinue | Where-Object { $_.DisplayName -like $app } | Remove-AppxProvisionedPackage -Online -EA SilentlyContinue | Out-Null
-        }
-        Write-OK "Bloatware removed ($removed apps; Xbox and Game Pass apps kept)"
-    }
     '84' = { # ipv4_prefer
         Set-Reg "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip6\Parameters" "DisabledComponents" 32
         Write-OK "IPv4 preferred over IPv6"
@@ -1032,7 +895,7 @@ $OPT_FUNCTIONS = @{
         else { Write-Warn "No bindings modified (may already be stripped)" }
     }
 
-    # 24H2-era debloat (113+)
+    # Windows 11 background load and game-session fixes (113+)
     '113' = { # ai_off
         $aiPol = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsAI"
         Set-Reg $aiPol "AllowRecallEnablement" 0
@@ -1061,34 +924,6 @@ $OPT_FUNCTIONS = @{
         Get-Process -Name "Widgets", "WidgetService" -EA SilentlyContinue | Stop-Process -Force -EA SilentlyContinue
         Write-OK "Widgets off (taskbar button disappears after sign-out)"
     }
-    '115' = { # start_recommended_off
-        $adv = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"
-        Set-Reg $adv "Start_IrisRecommendations" 0
-        Set-Reg $adv "Start_AccountNotifications" 0
-        Set-Reg $adv "ShowSyncProviderNotifications" 0
-        if ($script:IsWin11) {
-            Set-Reg "HKCU:\SOFTWARE\Policies\Microsoft\Windows\Explorer" "HideRecommendedSection" 1
-            Set-Reg "HKLM:\SOFTWARE\Microsoft\PolicyManager\current\device\Start" "HideRecommendedSection" 1
-            Set-Reg "HKCU:\Software\Microsoft\Windows\CurrentVersion\Start\Companions\Microsoft.YourPhone_8wekyb3d8bbwe" "IsEnabled" 0
-        }
-        Write-OK "Start menu recommendations and ads off"
-    }
-    '116' = { # bing_search_off
-        Set-Reg "HKCU:\Software\Policies\Microsoft\Windows\Explorer" "DisableSearchBoxSuggestions" 1
-        Set-Reg "HKCU:\Software\Microsoft\Windows\CurrentVersion\Search" "BingSearchEnabled" 0
-        Write-OK "Bing and web results removed from Start search"
-    }
-    '117' = { # windows_ads_off
-        Set-Reg "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" "DisableWindowsConsumerFeatures" 1
-        Set-Reg "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" "DisableConsumerAccountStateContent" 1
-        $cdm = "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager"
-        foreach ($v in @("SubscribedContent-310093Enabled", "SubscribedContent-338393Enabled", "SubscribedContent-353694Enabled", "SubscribedContent-353696Enabled", "SoftLandingEnabled")) { Set-Reg $cdm $v 0 }
-        Set-Reg "HKCU:\Software\Microsoft\Windows\CurrentVersion\UserProfileEngagement" "ScoobeSystemSettingEnabled" 0
-        Set-Reg "HKCU:\Software\Microsoft\Windows\CurrentVersion\SystemSettings\AccountNotifications" "EnableAccountNotifications" 0
-        Set-Reg "HKCU:\Software\Microsoft\Windows\CurrentVersion\Notifications\Settings\Windows.SystemToast.Suggested" "Enabled" 0
-        Set-Reg "HKCU:\Software\Microsoft\Windows\CurrentVersion\Notifications\Settings\Windows.SystemToast.BackupReminder" "Enabled" 0
-        Write-OK "Windows ads, promoted apps and setup nags off"
-    }
     '118' = { # gamebar_popup_fix
         if ($cpuId -eq '1') { Write-Host "  [SKIP] Game Bar popup fix (X3D CPUs need Game Bar detection)" -ForegroundColor DarkGray; return }
         Set-Reg "HKCU:\SOFTWARE\Microsoft\GameBar" "UseNexusForGameBarEnabled" 0
@@ -1106,17 +941,6 @@ $OPT_FUNCTIONS = @{
         Set-Reg "HKLM:\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings" "IsContinuousInnovationOptedIn" 0
         Write-OK "Windows Update will not auto-reboot while you are signed in"
     }
-    '120' = { # onedrive_remove
-        $odUser = $env:OneDrive
-        if ($odUser -and (Test-Path $odUser)) { $null = icacls $odUser /deny "*S-1-5-32-544:(D,DC)" 2>&1 }
-        Stop-Process -Name "OneDrive", "FileCoAuth" -Force -EA SilentlyContinue
-        $odSetup = "$env:SystemRoot\System32\OneDriveSetup.exe"
-        if (-not (Test-Path $odSetup)) { $odSetup = "$env:SystemRoot\SysWOW64\OneDriveSetup.exe" }
-        if (Test-Path $odSetup) { Start-Process $odSetup -ArgumentList "/uninstall" -Wait -WindowStyle Hidden }
-        elseif (Get-Command winget -EA SilentlyContinue) { $null = winget uninstall --id Microsoft.OneDrive -e --silent --accept-source-agreements 2>&1 }
-        if ($odUser -and (Test-Path $odUser)) { $null = icacls $odUser /remove:d "*S-1-5-32-544" 2>&1 }
-        Write-OK "OneDrive uninstalled (files kept; reinstall: winget install Microsoft.OneDrive)"
-    }
 
     # NOTE: LUDICROUS tier (100-103) intentionally NOT included for security
     # IDs 100, 101, 102, 103 would disable critical security mitigations
@@ -1128,6 +952,10 @@ $OPT_FUNCTIONS = @{
 
 Clear-Host
 Write-Banner
+Write-Host "  General Windows cleanup is WinUtil or Win11Debloat's job: https://github.com/ChrisTitusTech/winutil | https://github.com/Raphire/Win11Debloat" -ForegroundColor DarkGray
+foreach ($rid in $retiredHits) {
+    Write-Host "  [skip] $($RETIRED_OPT_IDS[$rid]): moved to WinUtil / Win11Debloat" -ForegroundColor DarkGray
+}
 Write-Host ""
 
 # Display configuration
@@ -1287,20 +1115,6 @@ if ($optIds.Count -gt 0) {
                     else { $current = "Auto"; $target = "Manual"; $status = "CHANGE" }
                 } catch { }
             }
-            '80' { # privacy_tier1
-                try {
-                    $val = Get-ItemProperty "HKCU:\Software\Microsoft\Windows\CurrentVersion\AdvertisingInfo" -Name "Enabled" -EA SilentlyContinue
-                    if ($val.Enabled -eq 0) { $current = "OFF"; $status = "OK" }
-                    else { $current = "ON"; $target = "OFF"; $status = "CHANGE" }
-                } catch { }
-            }
-            '81' { # privacy_tier2
-                try {
-                    $val = Get-ItemProperty "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection" -Name "AllowTelemetry" -EA SilentlyContinue
-                    if ($val.AllowTelemetry -eq 0) { $current = "Minimal"; $status = "OK" }
-                    else { $current = "Full"; $target = "Minimal"; $status = "CHANGE" }
-                } catch { }
-            }
             '85' { # teredo_disable
                 try {
                     $teredo = netsh interface teredo show state 2>$null | Select-String "Type"
@@ -1343,9 +1157,95 @@ if ($optIds.Count -gt 0) {
 
         Add-ScanResult $name $current $target $status
     }
-
-    Write-ScanResults
 }
+
+# ============================================================================
+# GAMING COMPATIBILITY CHECK
+# ============================================================================
+# General cleanup tools (WinUtil, Win11Debloat) and old tweak guides can turn off
+# parts of Windows that games need. Each problem adds a WARN row and a fix entry.
+
+$script:CompatFixes = @()
+function Add-CompatFix { param([string]$Id, [string]$Label, $Arg) $script:CompatFixes += [PSCustomObject]@{ Id = $Id; Label = $Label; Arg = $Arg } }
+function Get-AppxState {
+    param([string]$Name)
+    try { if (Get-AppxPackage -Name $Name -EA Stop) { return 'Installed' } } catch { return 'Unknown' }
+    try { if (Get-AppxPackage -AllUsers -Name $Name -EA Stop) { return 'Unregistered' } } catch { }
+    return 'Missing'
+}
+function Test-CompatAppx {
+    param([string]$Name, [string]$Label, [string]$StoreId, [bool]$Required)
+    $state = Get-AppxState $Name
+    if ($state -eq 'Installed') { Add-ScanResult "[COMPAT] $Label" "Installed" "Installed" "OK"; return }
+    if ($state -eq 'Unknown') { Add-ScanResult "[COMPAT] $Label" "Cannot check" "Installed" "INFO"; return }
+    if ($state -eq 'Missing' -and -not $Required) { Add-ScanResult "[COMPAT] $Label" "Not installed" "Optional" "INFO"; return }
+    Add-ScanResult "[COMPAT] $Label" $state "Installed" "WARN"
+    Add-CompatFix 'appx' "Reinstall $Label" @($Name, $StoreId, $Label)
+}
+
+$xblDisabled = @()
+foreach ($s in @('XblAuthManager', 'XblGameSave', 'XboxNetApiSvc', 'XboxGipSvc')) {
+    $svc = Get-Service -Name $s -EA SilentlyContinue
+    if ($svc -and $svc.StartType.ToString() -eq 'Disabled') { $xblDisabled += $s }
+}
+if ($xblDisabled.Count -eq 0) { Add-ScanResult "[COMPAT] Xbox services" "Not disabled" "Manual" "OK" }
+else {
+    Add-ScanResult "[COMPAT] Xbox services" "$($xblDisabled.Count) disabled" "Manual" "WARN"
+    Add-CompatFix 'services' "Set Xbox services back to Manual ($($xblDisabled -join ', '))" $xblDisabled
+}
+
+$storeState = Get-AppxState 'Microsoft.WindowsStore'
+if ($storeState -eq 'Installed') { Add-ScanResult "[COMPAT] Microsoft Store" "Installed" "Installed" "OK" }
+elseif ($storeState -eq 'Unknown') { Add-ScanResult "[COMPAT] Microsoft Store" "Cannot check" "Installed" "INFO" }
+else {
+    Add-ScanResult "[COMPAT] Microsoft Store" $storeState "Installed" "WARN"
+    Add-CompatFix 'store' "Reinstall the Microsoft Store (Game Pass downloads need it)" $null
+}
+
+if ($cpuId -eq '1') {
+    # AMD X3D: the V-Cache driver uses Game Bar to detect games and park the non-cache CCD
+    $gbState = Get-AppxState 'Microsoft.XboxGamingOverlay'
+    if ($gbState -eq 'Installed') { Add-ScanResult "[COMPAT] Game Bar (X3D)" "Installed" "Installed" "OK" }
+    elseif ($gbState -eq 'Unknown') { Add-ScanResult "[COMPAT] Game Bar (X3D)" "Cannot check" "Installed" "INFO" }
+    else {
+        Add-ScanResult "[COMPAT] Game Bar (X3D)" "$gbState - CRITICAL" "Installed" "WARN"
+        Write-Host "  [!] CRITICAL: Game Bar is missing. On X3D CPUs games can run on the slower CCD without it." -ForegroundColor Red
+        Add-CompatFix 'appx' "Reinstall Xbox Game Bar (X3D core parking needs it)" @('Microsoft.XboxGamingOverlay', '9NZKPSTSNW4P', 'Xbox Game Bar')
+    }
+} else {
+    Test-CompatAppx 'Microsoft.XboxGamingOverlay' 'Xbox Game Bar' '9NZKPSTSNW4P' $false
+}
+Test-CompatAppx 'Microsoft.XboxIdentityProvider' 'Xbox Identity Provider' '9WZDNCRD1HKW' $true
+Test-CompatAppx 'Microsoft.Xbox.TCUI' 'Xbox TCUI' '' $true
+Test-CompatAppx 'Microsoft.GamingApp' 'Xbox app' '9MV0B5HZVK9Z' $false
+Test-CompatAppx 'Microsoft.GamingServices' 'Gaming Services' '9MWPM2CQNLHN' $false
+
+$gi = Get-Service -Name 'GameInputSvc' -EA SilentlyContinue
+if (-not $gi) { Add-ScanResult "[COMPAT] GameInput service" "Not installed" "Optional" "INFO" }
+elseif ($gi.StartType.ToString() -eq 'Disabled') {
+    Add-ScanResult "[COMPAT] GameInput service" "Disabled" "Manual" "WARN"
+    Add-CompatFix 'gameinput' "Set the GameInput service back to Manual" $null
+} else { Add-ScanResult "[COMPAT] GameInput service" $gi.StartType.ToString() "Manual" "OK" }
+
+$doMode = (Get-ItemProperty "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DeliveryOptimization" -EA SilentlyContinue).DODownloadMode
+$doStart = (Get-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Services\DoSvc" -EA SilentlyContinue).Start
+if ($doMode -eq 100) {
+    Add-ScanResult "[COMPAT] Store downloads" "Bypass (100)" "HTTP only (0)" "WARN"
+    Add-CompatFix 'do_mode' "Set Delivery Optimization to HTTP only so Store downloads work" $null
+} elseif ($doStart -eq 4) {
+    Add-ScanResult "[COMPAT] Store downloads" "Service off" "Service on" "WARN"
+    Add-CompatFix 'do_service' "Turn the Delivery Optimization service back on (reboot needed)" $null
+} else { Add-ScanResult "[COMPAT] Store downloads" "Working" "Working" "OK" }
+
+if ($optIds -notcontains '85') {
+    $teredo = (netsh interface teredo show state 2>$null | Out-String)
+    if ($teredo -match 'Type\s*:\s*disabled') {
+        Add-ScanResult "[COMPAT] Teredo (Xbox party chat)" "Disabled" "Default" "WARN"
+        Add-CompatFix 'teredo' "Turn Teredo back on for Xbox party chat" $null
+    } elseif ($teredo) { Add-ScanResult "[COMPAT] Teredo (Xbox party chat)" "On" "Default" "OK" }
+}
+
+Write-ScanResults
 
 # ============================================================================
 # INTERACTIVE APPROVAL MODE
@@ -1540,6 +1440,80 @@ if ($optIds.Count -gt 0) {
     Write-Host "  ----------------------------------------" -ForegroundColor DarkGray
     Write-Host "  Applied: $($approvedIds.Count) | Skipped: $($skippedIds.Count)" -ForegroundColor Gray
     if ($quit) { Write-Host "  (User quit early)" -ForegroundColor Yellow }
+}
+
+# ============================================================================
+# GAMING COMPATIBILITY RESTORE
+# ============================================================================
+
+function Restore-GamingAppx {
+    param([string]$Name, [string]$StoreId, [string]$Label)
+    $staged = $null
+    try { $staged = Get-AppxPackage -AllUsers -Name $Name -EA Stop | Select-Object -First 1 } catch { }
+    if ($staged -and $staged.InstallLocation) {
+        $manifest = Join-Path $staged.InstallLocation 'AppXManifest.xml'
+        if (Test-Path $manifest) {
+            try {
+                Add-AppxPackage -DisableDevelopmentMode -Register $manifest -EA Stop
+                Write-OK "$Label registered again"
+                return
+            } catch { }
+        }
+    }
+    if (-not $StoreId) { Write-Warn "$Label - reinstall the Xbox app to bring it back"; return }
+    if (-not (Get-Command winget -EA SilentlyContinue)) { Write-Warn "$Label - winget not found. Install it from the Microsoft Store (ID $StoreId)"; return }
+    $null = winget install --id $StoreId -s msstore --accept-package-agreements --accept-source-agreements --silent 2>&1
+    if ($LASTEXITCODE -eq 0) { Write-OK "$Label installed from the Microsoft Store" }
+    else { Write-Warn "$Label - winget exit code $LASTEXITCODE. Install it from the Microsoft Store (ID $StoreId)" }
+}
+
+if ($script:CompatFixes.Count -gt 0) {
+    Write-Step "Gaming Compatibility"
+    Write-Host ""
+    Write-Host "  Gaming features that are turned off or removed:" -ForegroundColor Yellow
+    foreach ($f in $script:CompatFixes) { Write-Host "    - $($f.Label)" -ForegroundColor Yellow }
+    Write-Host ""
+    Write-Host "  Restore these gaming features? [Y/N]: " -NoNewline -ForegroundColor Cyan
+    $compatResponse = Read-Host
+    if ($compatResponse -match '^[Yy]') {
+        # Undo for this step is the restore point. Create one if the upgrades step did not.
+        if ($optIds.Count -eq 0) {
+            try { & $OPT_FUNCTIONS['17'] } catch { Write-Warn "Restore point skipped: $($_.Exception.Message)" }
+        }
+        foreach ($f in $script:CompatFixes) {
+            switch ($f.Id) {
+                'services' {
+                    foreach ($s in $f.Arg) {
+                        try { Set-Service -Name $s -StartupType Manual -EA Stop; Write-OK "$s set to Manual" }
+                        catch { Write-Warn "$s - could not change startup type: $($_.Exception.Message)" }
+                    }
+                }
+                'store' {
+                    try {
+                        Start-Process -FilePath 'wsreset.exe' -ArgumentList '-i' -WindowStyle Hidden -EA Stop
+                        Write-OK "Microsoft Store reinstall started. It finishes in the background in a few minutes"
+                    } catch { Write-Warn "Could not start wsreset.exe -i: $($_.Exception.Message)" }
+                }
+                'appx' { Restore-GamingAppx $f.Arg[0] $f.Arg[1] $f.Arg[2] }
+                'gameinput' {
+                    try { Set-Service -Name 'GameInputSvc' -StartupType Manual -EA Stop; Write-OK "GameInput service set to Manual" }
+                    catch { Write-Warn "GameInput service - could not change startup type: $($_.Exception.Message)" }
+                }
+                'do_mode' {
+                    if (Set-Reg "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DeliveryOptimization" "DODownloadMode" 0 -PassThru) { Write-OK "Delivery Optimization set to HTTP only" }
+                    else { Write-Warn "Could not change Delivery Optimization mode" }
+                }
+                'do_service' {
+                    if (Set-Reg "HKLM:\SYSTEM\CurrentControlSet\Services\DoSvc" "Start" 2 -PassThru) { Write-OK "Delivery Optimization service turned back on (reboot to apply)" }
+                    else { Write-Warn "Could not change the Delivery Optimization service" }
+                }
+                'teredo' {
+                    $null = netsh interface teredo set state type=default 2>&1
+                    Write-OK "Teredo back to the Windows default"
+                }
+            }
+        }
+    } else { Write-Host "  [SKIP] Gaming features left as they are" -ForegroundColor DarkGray }
 }
 
 # Install packages

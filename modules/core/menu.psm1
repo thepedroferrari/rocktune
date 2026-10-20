@@ -55,7 +55,6 @@
     See also:
     - gaming-pc-setup.ps1 -SkipConfirmation (skip final confirmation prompt)
     - benchmark-setup.ps1 -AutoAccept (skip install consent prompt)
-    - extreme-privacy.ps1 -SkipConfirmations (skip all confirmation prompts)
 
 .NOTES
     Designed for PowerShell console UX; uses Clear-Host and Read-Host.
@@ -483,7 +482,7 @@ function Show-SetupModeSelection {
 
         - "express"  : Express Setup - uses proven defaults, best for most users
         - "custom"   : Custom Setup - select each optimization individually
-        - "profile"  : Load Profile - use pre-made competitive/balanced/privacy configurations
+        - "profile"  : Load Profile - use pre-made competitive or balanced configurations
         - "exit"     : Exit the wizard without making changes
 
         This is useful for:
@@ -572,7 +571,7 @@ function Show-SetupModeSelection {
     Write-Host ""
     Write-Host "  3) Load Profile" -ForegroundColor Cyan
     Write-Host "     - Pre-made configurations" -ForegroundColor DarkGray
-    Write-Host "     - Competitive / Balanced / Privacy-Focused" -ForegroundColor DarkGray
+    Write-Host "     - Competitive / Balanced" -ForegroundColor DarkGray
     Write-Host ""
     Write-Host "  4) Exit" -ForegroundColor Red
     Write-Host ""

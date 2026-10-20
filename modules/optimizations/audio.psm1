@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Audio-related latency and quality-of-life optimizations.
 .DESCRIPTION
@@ -32,7 +32,7 @@ function Test-AudioOptimizations {
     $audioPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Audio"
     $systemSoundsDisabled = Get-RegistryValue -Path $audioPath -Name "DisableSystemSounds"
     if ($systemSoundsDisabled -eq 1) {
-        Write-Log "✓ System sounds disabled" "SUCCESS"
+        Write-Log "[OK] System sounds disabled" "SUCCESS"
     } else {
         Write-Log "System sounds not disabled" "INFO"
         $allPassed = $false
@@ -214,7 +214,7 @@ function Invoke-AudioOptimizations {
         Set-AudioExclusiveMode -Enable $EnableExclusiveMode
 
         Write-Log "Audio optimizations complete" "SUCCESS"
-        Write-Log "NOTE: Validate with LatencyMon → WPR/WPA to measure DPC improvement" "INFO"
+        Write-Log "NOTE: Validate with LatencyMon -> WPR/WPA to measure DPC improvement" "INFO"
 
     } catch {
         Write-Log "Error applying audio optimizations: $_" "ERROR"

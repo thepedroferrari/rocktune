@@ -17,6 +17,7 @@ import { capitalize } from './utils/string'
 import {
   CPU_ID_TO_VALUE,
   CPU_VALUE_TO_ID,
+  DEPRECATED_OPT_ID_SET,
   DNS_ID_TO_VALUE,
   DNS_VALUE_TO_ID,
   GPU_ID_TO_VALUE,
@@ -352,14 +353,23 @@ function decodeV1(data: ShareDataV1): DecodeResult {
   if (data.o) {
     const limitedOpts = safeSlice(data.o, MAX_ARRAY_LENGTH)
     let optSkips = 0
+    let retiredSkips = 0
     for (const id of limitedOpts) {
       const opt = OPT_ID_TO_VALUE[id]
       if (opt && isOptimizationKey(opt)) {
         build.optimizations.push(opt)
+      } else if (DEPRECATED_OPT_ID_SET.has(id)) {
+        retiredSkips++
+        skippedCount++
       } else {
         optSkips++
         skippedCount++
       }
+    }
+    if (retiredSkips > 0) {
+      warnings.push(
+        `${retiredSkips} general cleanup setting(s) moved to WinUtil / Win11Debloat and were skipped`,
+      )
     }
     if (optSkips > 0) {
       warnings.push(`${optSkips} optimization(s) no longer available`)

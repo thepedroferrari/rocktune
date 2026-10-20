@@ -9,7 +9,7 @@
  * 2. Never reuse an ID for a different value
  * 3. To deprecate: set value to null AND add entry to DEPRECATED_OPT_IDS
  *    a) In OPT_ID_TO_VALUE: set `45: null,`
- *    b) In DEPRECATED_OPT_IDS: add `{ id: 45, was: 'old_feature', removed: '2025-01-03' }`
+ *    b) In DEPRECATED_OPT_IDS: add `{ id: 45, was: 'old_feature', label: 'Old Feature', removed: '2025-01-03' }`
  *    The audit script validates both are in sync.
  * 4. To rename: update the value string, keep the same ID
  * 5. NEW IDs: Always use next sequential ID (run: deno task share:audit)
@@ -68,14 +68,177 @@ export const SHARE_SCHEMA_VERSION = 1
  *
  * This ensures deprecation history survives minification/refactoring.
  */
+const GENERAL_DEBLOAT = 'General Windows debloat: use WinUtil or Win11Debloat'
+
 export const DEPRECATED_OPT_IDS: ReadonlyArray<{
   readonly id: number
   readonly was: string
+  /** Name shown in the skip line when an old share link still lists it */
+  readonly label: string
   readonly removed: string // ISO date YYYY-MM-DD
   readonly reason?: string
 }> = [
-  // Example (uncomment when first deprecation happens):
-  // { id: 45, was: 'old_feature', removed: '2025-01-03', reason: 'No longer needed on Win11 24H2' },
+  {
+    id: 12,
+    was: 'edge_debloat',
+    label: 'Edge Debloat',
+    removed: '2026-10-21',
+    reason: GENERAL_DEBLOAT,
+  },
+  {
+    id: 14,
+    was: 'explorer_speed',
+    label: 'Explorer Speed',
+    removed: '2026-10-21',
+    reason: GENERAL_DEBLOAT,
+  },
+  {
+    id: 15,
+    was: 'temp_purge',
+    label: 'Purge Temp Files',
+    removed: '2026-10-21',
+    reason: GENERAL_DEBLOAT,
+  },
+  {
+    id: 18,
+    was: 'classic_menu',
+    label: 'Classic Context Menu',
+    removed: '2026-10-21',
+    reason: GENERAL_DEBLOAT,
+  },
+  {
+    id: 19,
+    was: 'storage_sense',
+    label: 'Storage Sense',
+    removed: '2026-10-21',
+    reason: GENERAL_DEBLOAT,
+  },
+  {
+    id: 22,
+    was: 'explorer_cleanup',
+    label: 'Explorer Cleanup',
+    removed: '2026-10-21',
+    reason: GENERAL_DEBLOAT,
+  },
+  {
+    id: 24,
+    was: 'ps7_telemetry',
+    label: 'PowerShell 7 Telemetry',
+    removed: '2026-10-21',
+    reason: GENERAL_DEBLOAT,
+  },
+  {
+    id: 35,
+    was: 'wer_disable',
+    label: 'Error Reporting Off',
+    removed: '2026-10-21',
+    reason: GENERAL_DEBLOAT,
+  },
+  {
+    id: 36,
+    was: 'wifi_sense',
+    label: 'WiFi Sense Off',
+    removed: '2026-10-21',
+    reason: GENERAL_DEBLOAT,
+  },
+  {
+    id: 37,
+    was: 'spotlight_disable',
+    label: 'Spotlight Off',
+    removed: '2026-10-21',
+    reason: GENERAL_DEBLOAT,
+  },
+  {
+    id: 38,
+    was: 'feedback_disable',
+    label: 'Feedback Off',
+    removed: '2026-10-21',
+    reason: GENERAL_DEBLOAT,
+  },
+  {
+    id: 39,
+    was: 'clipboard_sync',
+    label: 'Clipboard Sync Off',
+    removed: '2026-10-21',
+    reason: GENERAL_DEBLOAT,
+  },
+  {
+    id: 56,
+    was: 'services_trim',
+    label: 'Trim Services',
+    removed: '2026-10-21',
+    reason: GENERAL_DEBLOAT,
+  },
+  {
+    id: 57,
+    was: 'disk_cleanup',
+    label: 'Deep Disk Cleanup',
+    removed: '2026-10-21',
+    reason: GENERAL_DEBLOAT,
+  },
+  {
+    id: 58,
+    was: 'wpbt_disable',
+    label: 'WPBT Disable',
+    removed: '2026-10-21',
+    reason: GENERAL_DEBLOAT,
+  },
+  {
+    id: 80,
+    was: 'privacy_tier1',
+    label: 'Privacy Tier 1',
+    removed: '2026-10-21',
+    reason: GENERAL_DEBLOAT,
+  },
+  {
+    id: 81,
+    was: 'privacy_tier2',
+    label: 'Privacy Tier 2',
+    removed: '2026-10-21',
+    reason: GENERAL_DEBLOAT,
+  },
+  {
+    id: 82,
+    was: 'privacy_tier3',
+    label: 'Privacy Tier 3',
+    removed: '2026-10-21',
+    reason: GENERAL_DEBLOAT,
+  },
+  {
+    id: 83,
+    was: 'bloatware',
+    label: 'Remove Bloatware',
+    removed: '2026-10-21',
+    reason: GENERAL_DEBLOAT,
+  },
+  {
+    id: 115,
+    was: 'start_recommended_off',
+    label: 'Clean Start Menu',
+    removed: '2026-10-21',
+    reason: GENERAL_DEBLOAT,
+  },
+  {
+    id: 116,
+    was: 'bing_search_off',
+    label: 'Bing Search Off',
+    removed: '2026-10-21',
+    reason: GENERAL_DEBLOAT,
+  },
+  {
+    id: 117,
+    was: 'windows_ads_off',
+    label: 'No Ads & Nags',
+    removed: '2026-10-21',
+    reason: GENERAL_DEBLOAT,
+  },
+  {
+    id: 120,
+    was: 'onedrive_remove',
+    label: 'Uninstall OneDrive',
+    removed: '2026-10-21',
+    reason: GENERAL_DEBLOAT,
+  },
 ]
 
 /**
@@ -193,7 +356,7 @@ export const PRESET_VALUE_TO_ID: Record<PresetType, number> = {
 /**
  * Optimization stable IDs
  *
- * This is the largest registry (82+ entries).
+ * This is the largest registry (120 IDs, 23 of them retired to null).
  *
  * IMPORTANT: IDs are organized below by LEGACY tier ranges for historical
  * context only. New IDs should use the next sequential number regardless
@@ -212,19 +375,19 @@ export const OPT_ID_TO_VALUE: Record<number, OptimizationKey | null> = {
   9: 'audio_enhancements',
   10: 'gamedvr',
   11: 'background_apps',
-  12: 'edge_debloat',
+  12: null, // was edge_debloat
   13: 'copilot_disable',
-  14: 'explorer_speed',
-  15: 'temp_purge',
+  14: null, // was explorer_speed
+  15: null, // was temp_purge
   16: 'razer_block',
   17: 'restore_point',
-  18: 'classic_menu',
-  19: 'storage_sense',
+  18: null, // was classic_menu
+  19: null, // was storage_sense
   20: 'display_perf',
   21: 'end_task',
-  22: 'explorer_cleanup',
+  22: null, // was explorer_cleanup
   23: 'notifications_off',
-  24: 'ps7_telemetry',
+  24: null, // was ps7_telemetry
   25: 'multiplane_overlay',
   26: 'mouse_accel',
   27: 'usb_suspend',
@@ -235,11 +398,11 @@ export const OPT_ID_TO_VALUE: Record<number, OptimizationKey | null> = {
   32: 'rss_enable',
   33: 'adapter_power',
   34: 'delivery_opt',
-  35: 'wer_disable',
-  36: 'wifi_sense',
-  37: 'spotlight_disable',
-  38: 'feedback_disable',
-  39: 'clipboard_sync',
+  35: null, // was wer_disable
+  36: null, // was wifi_sense
+  37: null, // was spotlight_disable
+  38: null, // was feedback_disable
+  39: null, // was clipboard_sync
   40: 'accessibility_shortcuts',
   41: 'audio_communications',
   42: 'audio_system_sounds',
@@ -254,9 +417,9 @@ export const OPT_ID_TO_VALUE: Record<number, OptimizationKey | null> = {
   53: 'hags',
   54: 'fso_disable',
   55: 'ultimate_perf',
-  56: 'services_trim',
-  57: 'disk_cleanup',
-  58: 'wpbt_disable',
+  56: null, // was services_trim
+  57: null, // was disk_cleanup
+  58: null, // was wpbt_disable
   59: 'qos_gaming',
   60: 'network_throttling',
   61: 'interrupt_affinity',
@@ -273,10 +436,10 @@ export const OPT_ID_TO_VALUE: Record<number, OptimizationKey | null> = {
   72: 'priority_boost_off',
 
   // ═══ LEGACY RISKY RANGE (80-99) ═══
-  80: 'privacy_tier1',
-  81: 'privacy_tier2',
-  82: 'privacy_tier3',
-  83: 'bloatware',
+  80: null, // was privacy_tier1
+  81: null, // was privacy_tier2
+  82: null, // was privacy_tier3
+  83: null, // was bloatware
   84: 'ipv4_prefer',
   85: 'teredo_disable',
   86: 'native_nvme',
@@ -301,12 +464,12 @@ export const OPT_ID_TO_VALUE: Record<number, OptimizationKey | null> = {
   112: 'scheduled_tasks_gaming',
   113: 'ai_off',
   114: 'widgets_off',
-  115: 'start_recommended_off',
-  116: 'bing_search_off',
-  117: 'windows_ads_off',
+  115: null, // was start_recommended_off
+  116: null, // was bing_search_off
+  117: null, // was windows_ads_off
   118: 'gamebar_popup_fix',
   119: 'update_no_reboot',
-  120: 'onedrive_remove',
+  120: null, // was onedrive_remove
 }
 
 export const OPT_VALUE_TO_ID: Record<OptimizationKey, number> = Object.fromEntries(

@@ -52,6 +52,7 @@ import { KonamiDetector } from '$lib/konami/konami-detector'
 import { activateKonami, deactivateKonami, getKonamiState } from '$lib/konami/konami-state.svelte'
 import { closeShareModal } from '$lib/state.svelte'
 import { showToast } from '$lib/toast.svelte'
+import CleanFirstSection from './components/CleanFirstSection.svelte'
 import HeroSection from './components/HeroSection.svelte'
 import PresetSection from './components/PresetSection.svelte'
 import SRAnnounce from './components/SRAnnounce.svelte'
@@ -373,11 +374,11 @@ function tryLoadFromShareURL(): void {
     const summary = counts || 'Settings'
 
     if (result.build.skippedCount > 0) {
-      showToast(
-        `Build loaded! ${summary} applied. ${result.build.skippedCount} setting(s) no longer available.`,
-        'warning',
-        6000,
-      )
+      const details =
+        result.build.warnings.length > 0
+          ? result.build.warnings.join('. ')
+          : `${result.build.skippedCount} setting(s) no longer available`
+      showToast(`Build loaded! ${summary} applied. ${details}.`, 'warning', 9000)
     } else {
       showToast(`Build loaded! ${summary} applied.`, 'success')
     }
@@ -435,6 +436,10 @@ onMount(() => {
 <HeroSection />
 
 <main class="container" id="main-content">
+  <div class="step-container step-container--flexible">
+    <CleanFirstSection />
+  </div>
+
   <div class="step-container">
     <section id="quick-start" class="step step--loadouts">
       <div class="loadouts-header">

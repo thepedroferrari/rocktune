@@ -180,8 +180,8 @@ Deno.test('isOptimizationKey - Returns true for valid optimization keys', () => 
   assertEquals(isOptimizationKey('hpet'), true)
 
   // Risky tier
-  assertEquals(isOptimizationKey('privacy_tier1'), true)
-  assertEquals(isOptimizationKey('bloatware'), true)
+  assertEquals(isOptimizationKey('teredo_disable'), true)
+  assertEquals(isOptimizationKey('smt_disable'), true)
 
   // Ludicrous tier
   assertEquals(isOptimizationKey('spectre_meltdown_off'), true)
@@ -190,6 +190,9 @@ Deno.test('isOptimizationKey - Returns true for valid optimization keys', () => 
 
 Deno.test('isOptimizationKey - Returns false for invalid values', () => {
   assertFalse(isOptimizationKey('invalid'))
+  // Retired: general Windows debloat moved to WinUtil / Win11Debloat
+  assertFalse(isOptimizationKey('privacy_tier1'))
+  assertFalse(isOptimizationKey('bloatware'))
   assertFalse(isOptimizationKey('PAGEFILE')) // case sensitive
   assertFalse(isOptimizationKey(''))
   assertFalse(isOptimizationKey(null))
@@ -207,8 +210,8 @@ Deno.test('OPTIMIZATION_KEYS - Contains all tiers', () => {
   assertEquals(OPTIMIZATION_KEYS.HPET, 'hpet')
 
   // Check risky optimizations
-  assertEquals(OPTIMIZATION_KEYS.PRIVACY_TIER1, 'privacy_tier1')
-  assertEquals(OPTIMIZATION_KEYS.BLOATWARE, 'bloatware')
+  assertEquals(OPTIMIZATION_KEYS.TEREDO_DISABLE, 'teredo_disable')
+  assertEquals(OPTIMIZATION_KEYS.SMT_DISABLE, 'smt_disable')
 
   // Check ludicrous optimizations
   assertEquals(OPTIMIZATION_KEYS.SPECTRE_MELTDOWN_OFF, 'spectre_meltdown_off')

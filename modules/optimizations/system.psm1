@@ -1,19 +1,19 @@
-﻿<#
+<#
 .SYNOPSIS
-    System-level optimizations and housekeeping.
+    System-level optimizations for gaming.
 .DESCRIPTION
-    Applies page file sizing, fast startup changes, storage cleanup, UI tweaks,
-    input settings, and service trimming intended for gaming stability.
+    Applies page file sizing, fast startup changes, display performance settings,
+    the taskbar End Task option, and input settings. General Windows cleanup
+    (disk cleanup, Explorer layout, Storage Sense, service trimming) is left to
+    WinUtil and Win11Debloat.
 .NOTES
     Requires Administrator. Several changes require a reboot to take effect.
 #>
 #Requires -RunAsAdministrator
 
 
-
 Import-Module (Join-Path $PSScriptRoot "..\core\logger.psm1") -Force -Global
 Import-Module (Join-Path $PSScriptRoot "..\core\registry.psm1") -Force -Global
-
 
 
 function Get-SystemRAM {
@@ -58,33 +58,33 @@ function Test-SystemOptimizations {
 
         if ($totalRAM -ge 16) {
             if ($ComputerSystem.AutomaticManagedPagefile -eq $false) {
-                Write-Log "✓ Automatic page file management disabled" "SUCCESS"
+                Write-Log "[OK] Automatic page file management disabled" "SUCCESS"
 
                 $PageFile = Get-WmiObject -Query "Select * From Win32_PageFileSetting Where Name='C:\\pagefile.sys'"
                 if ($PageFile) {
                     $expectedSize = if ($totalRAM -ge 32) { 4096 } else { 8192 }
 
                     if ($PageFile.InitialSize -eq $expectedSize -and $PageFile.MaximumSize -eq $expectedSize) {
-                        Write-Log "✓ Page file size: ${expectedSize}MB (correct for ${totalRAM}GB RAM)" "SUCCESS"
+                        Write-Log "[OK] Page file size: ${expectedSize}MB (correct for ${totalRAM}GB RAM)" "SUCCESS"
                     } else {
-                        Write-Log "✗ Page file size mismatch (current: $($PageFile.InitialSize)MB, expected: ${expectedSize}MB)" "ERROR"
+                        Write-Log "[FAIL] Page file size mismatch (current: $($PageFile.InitialSize)MB, expected: ${expectedSize}MB)" "ERROR"
                         $allPassed = $false
                     }
                 } else {
-                    Write-Log "✗ Page file not found" "ERROR"
+                    Write-Log "[FAIL] Page file not found" "ERROR"
                     $allPassed = $false
                 }
             } else {
-                Write-Log "✗ Automatic page file management still enabled" "ERROR"
+                Write-Log "[FAIL] Automatic page file management still enabled" "ERROR"
                 $allPassed = $false
             }
         }
 
         $hiberboot = Get-RegistryValue -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Power" -Name "HiberbootEnabled"
         if ($hiberboot -eq 0) {
-            Write-Log "✓ Fast Startup disabled" "SUCCESS"
+            Write-Log "[OK] Fast Startup disabled" "SUCCESS"
         } else {
-            Write-Log "✗ Fast Startup not disabled (current value: $hiberboot)" "ERROR"
+            Write-Log "[FAIL] Fast Startup not disabled (current value: $hiberboot)" "ERROR"
             $allPassed = $false
         }
 
@@ -101,8 +101,6 @@ function Test-SystemOptimizations {
 
     return $allPassed
 }
-
-
 
 
 function Set-PageFile {
@@ -223,165 +221,6 @@ function Disable-FastStartup {
 }
 
 
-function Disable-ExplorerAutoType {
-    <#
-    .SYNOPSIS
-        Disables Explorer automatic folder type detection.
-    .DESCRIPTION
-        Forces a generic folder type to reduce Explorer metadata churn.
-    .OUTPUTS
-        None.
-    #>
-    try {
-        $shellPath = "HKCU:\Software\Classes\Local Settings\Software\Microsoft\Windows\Shell\Bags\AllFolders\Shell"
-        Backup-RegistryKey -Path $shellPath
-        Set-RegistryValue -Path $shellPath -Name "FolderType" -Value "NotSpecified" -Type "String"
-        Write-Log "Disabled Explorer auto folder-type detection" "SUCCESS"
-    } catch {
-        Write-Log "Error disabling Explorer auto-type: $_" "ERROR"
-        throw
-    }
-}
-
-
-function Invoke-DiskCleanup {
-    <#
-    .SYNOPSIS
-        Runs disk cleanup when usage exceeds a threshold.
-    .DESCRIPTION
-        Executes cleanmgr and optional DISM ResetBase to reclaim disk space.
-        Can run DISM asynchronously with a toast notification on completion.
-    .PARAMETER Async
-        When true, runs DISM cleanup asynchronously.
-    .PARAMETER ThresholdPercent
-        Minimum disk usage percentage required to run cleanup.
-    .OUTPUTS
-        None.
-    #>
-    param(
-        [switch]$Async,
-        [int]$ThresholdPercent = 90
-    )
-
-    try {
-        # Check disk usage before running expensive cleanup
-        $sysDrive = (Get-CimInstance Win32_OperatingSystem).SystemDrive
-        $disk = Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='$sysDrive'"
-        $usedPercent = [math]::Round((($disk.Size - $disk.FreeSpace) / $disk.Size) * 100, 1)
-        $freeGB = [math]::Round($disk.FreeSpace / 1GB, 1)
-
-        if ($usedPercent -lt $ThresholdPercent) {
-            Write-Log "System drive $usedPercent% full (${freeGB}GB free) - skipping cleanup (threshold: ${ThresholdPercent}%)" "INFO"
-            return
-        }
-
-        Write-Log "System drive $usedPercent% full (${freeGB}GB free) - running cleanup" "INFO"
-
-        # Set cleanup flags for cleanmgr
-        $cleanupKey = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches"
-        Get-ChildItem $cleanupKey -EA SilentlyContinue | ForEach-Object {
-            Set-ItemProperty -Path $_.PSPath -Name "StateFlags0100" -Value 2 -EA SilentlyContinue
-        }
-
-        # Run cleanmgr synchronously (reasonably fast)
-        Start-Process "cleanmgr.exe" -ArgumentList "/sagerun:100" -Wait -WindowStyle Hidden
-        Write-Log "Disk Cleanup (cleanmgr) complete" "SUCCESS"
-
-        if ($Async) {
-            # DISM ResetBase can take 10-30+ minutes, run async with notification
-            $dismJob = Start-Job -ScriptBlock {
-                Dism.exe /Online /Cleanup-Image /StartComponentCleanup /ResetBase 2>&1 | Out-Null
-            }
-
-            Register-ObjectEvent -InputObject $dismJob -EventName StateChanged -Action {
-                if ($Sender.State -eq 'Completed') {
-                    try {
-                        [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null
-                        $template = [Windows.UI.Notifications.ToastNotificationManager]::GetTemplateContent([Windows.UI.Notifications.ToastTemplateType]::ToastText02)
-                        $text = $template.GetElementsByTagName("text")
-                        $text.Item(0).AppendChild($template.CreateTextNode("Gaming PC Setup")) | Out-Null
-                        $text.Item(1).AppendChild($template.CreateTextNode("DISM ResetBase complete! Disk space reclaimed.")) | Out-Null
-                        $notifier = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("Gaming PC Setup")
-                        $notifier.Show([Windows.UI.Notifications.ToastNotification]::new($template))
-                    } catch {
-                        # Toast failed silently
-                    }
-                    Unregister-Event -SourceIdentifier $Event.SourceIdentifier
-                    Remove-Job $Sender
-                }
-            } | Out-Null
-
-            Write-Log "DISM ResetBase started in background (toast notification on completion)" "INFO"
-        } else {
-            # Synchronous mode for backwards compatibility
-            Dism.exe /Online /Cleanup-Image /StartComponentCleanup /ResetBase 2>&1 | Out-Null
-            Write-Log "DISM ResetBase complete" "SUCCESS"
-        }
-    } catch {
-        Write-Log "Error running Disk Cleanup: $_" "ERROR"
-        throw
-    }
-}
-
-
-function Invoke-TempPurge {
-    <#
-    .SYNOPSIS
-        Clears common temporary folders.
-    .DESCRIPTION
-        Removes files under %TEMP% and %WINDIR%\Temp with best-effort error handling.
-    .OUTPUTS
-        None.
-    #>
-    try {
-        $tempPaths = @("$env:TEMP","$env:WINDIR\Temp")
-        foreach ($p in $tempPaths) {
-            if (Test-Path $p) {
-                Get-ChildItem -Path $p -Recurse -Force -ErrorAction SilentlyContinue | Remove-Item -Force -Recurse -ErrorAction SilentlyContinue
-            }
-        }
-        Write-Log "Temp folders cleared" "SUCCESS"
-    } catch {
-        Write-Log "Error purging temp folders: $_" "ERROR"
-        throw
-    }
-}
-
-
-function Set-ServiceTrimSafe {
-    <#
-    .SYNOPSIS
-        Sets select services to Manual to reduce background load.
-    .DESCRIPTION
-        Targets a curated list of non-essential services and stops them.
-    .PARAMETER Enable
-        When true, applies service trimming.
-    .OUTPUTS
-        None.
-    #>
-    param(
-        [bool]$Enable = $true
-    )
-
-    if (-not $Enable) {
-        Write-Log "Service trim skipped" "INFO"
-        return
-    }
-
-    $services = @("DiagTrack","dmwappushservice","lfsvc","RetailDemo","Fax","SharedAccess","XblGameSave","XblAuthManager","XboxNetApiSvc")
-
-    foreach ($svc in $services) {
-        try {
-            Set-Service -Name $svc -StartupType Manual -EA SilentlyContinue
-            Stop-Service -Name $svc -Force -EA SilentlyContinue
-            Write-Log "Trimmed service to Manual: $svc" "SUCCESS"
-        } catch {
-            Write-Log "Could not trim service $svc : $_" "ERROR"
-        }
-    }
-}
-
-
 function Disable-RazerAutoInstall {
     <#
     .SYNOPSIS
@@ -483,88 +322,6 @@ function New-RestorePoint {
 }
 
 
-function Set-ClassicContextMenu {
-    <#
-    .SYNOPSIS
-        Restores the classic Windows 10-style right-click context menu on Windows 11.
-    .DESCRIPTION
-        Windows 11's new context menu is slower and requires extra clicks.
-        This tweak restores the full classic menu for faster navigation.
-    .PARAMETER Enable
-        When true, enables the classic context menu on Windows 11.
-    .OUTPUTS
-        None.
-    #>
-    param(
-        [bool]$Enable = $true
-    )
-
-    if (-not $Enable) {
-        Write-Log "Classic context menu: skipped" "INFO"
-        return
-    }
-
-    try {
-        # Check if Windows 11
-        $build = [int](Get-CimInstance Win32_OperatingSystem).BuildNumber
-        if ($build -lt 22000) {
-            Write-Log "Classic context menu: Not needed (Windows 10 detected)" "INFO"
-            return
-        }
-
-        $classicMenuPath = "HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32"
-
-        # Create the key path if it doesn't exist
-        if (-not (Test-Path $classicMenuPath)) {
-            New-Item -Path $classicMenuPath -Force | Out-Null
-        }
-
-        # Set empty default value to enable classic menu
-        Set-ItemProperty -Path $classicMenuPath -Name "(Default)" -Value "" -Force
-
-        Write-Log "Classic right-click context menu enabled (restart Explorer to apply)" "SUCCESS"
-    } catch {
-        Write-Log "Error setting classic context menu: $_" "ERROR"
-    }
-}
-
-
-function Disable-StorageSense {
-    <#
-    .SYNOPSIS
-        Disables Windows Storage Sense automatic cleanup.
-    .DESCRIPTION
-        Storage Sense can cause background disk activity during gaming.
-        Disabling it prevents unexpected cleanup operations.
-    .PARAMETER Enable
-        When true, disables Storage Sense.
-    .OUTPUTS
-        None.
-    #>
-    param(
-        [bool]$Enable = $true
-    )
-
-    if (-not $Enable) {
-        Write-Log "Disable Storage Sense: skipped" "INFO"
-        return
-    }
-
-    try {
-        $storagePath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy"
-        Backup-RegistryKey -Path $storagePath
-
-        # Disable Storage Sense
-        Set-RegistryValue -Path $storagePath -Name "01" -Value 0 -Type "DWORD"
-        Set-RegistryValue -Path $storagePath -Name "StoragePoliciesNotified" -Value 1 -Type "DWORD"
-
-        Write-Log "Disabled Storage Sense (no background cleanup during gaming)" "SUCCESS"
-    } catch {
-        Write-Log "Error disabling Storage Sense: $_" "ERROR"
-    }
-}
-
-
 function Set-DisplayPerformance {
     <#
     .SYNOPSIS
@@ -647,55 +404,6 @@ function Enable-TaskbarEndTask {
         Write-Log "Enabled 'End Task' in taskbar right-click menu" "SUCCESS"
     } catch {
         Write-Log "Error enabling taskbar End Task: $_" "ERROR"
-    }
-}
-
-
-function Remove-ExplorerClutter {
-    <#
-    .SYNOPSIS
-        Removes Home and Gallery from Windows 11 Explorer navigation pane.
-    .DESCRIPTION
-        Cleans up Explorer navigation for faster access to files.
-        Only applies to Windows 11.
-    .PARAMETER Enable
-        When true, removes Home/Gallery entries.
-    .OUTPUTS
-        None.
-    #>
-    param(
-        [bool]$Enable = $true
-    )
-
-    if (-not $Enable) {
-        Write-Log "Remove Explorer clutter: skipped" "INFO"
-        return
-    }
-
-    try {
-        # Check if Windows 11
-        $build = [int](Get-CimInstance Win32_OperatingSystem).BuildNumber
-        if ($build -lt 22000) {
-            Write-Log "Remove Explorer clutter: Not needed (Windows 10 detected)" "INFO"
-            return
-        }
-
-        # Remove Home from Explorer
-        $homePath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Desktop\NameSpace\{f874310e-b6b7-47dc-bc84-b9e6b38f5903}"
-        if (Test-Path $homePath) {
-            Remove-Item -Path $homePath -Force -ErrorAction SilentlyContinue
-            Write-Log "Removed 'Home' from Explorer navigation" "SUCCESS"
-        }
-
-        # Remove Gallery from Explorer
-        $galleryPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Desktop\NameSpace\{e88865ea-0e1c-4e20-9aa6-edcd0212c87c}"
-        if (Test-Path $galleryPath) {
-            Remove-Item -Path $galleryPath -Force -ErrorAction SilentlyContinue
-            Write-Log "Removed 'Gallery' from Explorer navigation" "SUCCESS"
-        }
-
-    } catch {
-        Write-Log "Error removing Explorer clutter: $_" "ERROR"
     }
 }
 
@@ -910,45 +618,24 @@ function Invoke-SystemOptimizations {
     .SYNOPSIS
         Applies system optimization bundle.
     .DESCRIPTION
-        Runs page file tuning, fast startup changes, cleanup, service trimming,
-        UI tweaks, and device-related settings as configured.
+        Runs page file tuning, fast startup changes, display performance and
+        device-related settings as configured.
     .PARAMETER DisableMemoryCompression
         Disables memory compression when true (opt-in).
-    .PARAMETER DisableExplorerAutoType
-        Disables Explorer auto folder type detection when true.
-    .PARAMETER RunDiskCleanup
-        Runs Disk Cleanup and DISM ResetBase when true.
-    .PARAMETER RunTempPurge
-        Purges temp folders when true.
-    .PARAMETER ServiceTrimSafe
-        Trims select services when true.
     .PARAMETER BlockRazer
         Blocks Razer/OEM auto-installs when true.
-    .PARAMETER ClassicContextMenu
-        Enables the classic Windows 11 context menu when true.
-    .PARAMETER DisableStorageSense
-        Disables Storage Sense when true.
     .PARAMETER DisplayPerformance
         Applies visual performance settings when true.
     .PARAMETER TaskbarEndTask
         Enables taskbar End Task option when true.
-    .PARAMETER RemoveExplorerClutter
-        Removes Explorer Home/Gallery entries when true.
     .OUTPUTS
         None.
     #>
     param(
         [bool]$DisableMemoryCompression = $false,
-        [bool]$DisableExplorerAutoType = $true,
-        [bool]$RunDiskCleanup = $true,
-        [bool]$RunTempPurge = $true,
-        [bool]$ServiceTrimSafe = $true,
         [bool]$BlockRazer = $true,
-        [bool]$ClassicContextMenu = $true,
-        [bool]$DisableStorageSense = $true,
         [bool]$DisplayPerformance = $true,
-        [bool]$TaskbarEndTask = $true,
-        [bool]$RemoveExplorerClutter = $true
+        [bool]$TaskbarEndTask = $true
     )
 
     Write-Log "Applying system optimizations..." "INFO"
@@ -960,31 +647,11 @@ function Invoke-SystemOptimizations {
 
         Set-MemoryCompression -Disable $DisableMemoryCompression
 
-        if ($DisableExplorerAutoType) {
-            Disable-ExplorerAutoType
-        }
-
-        if ($RunDiskCleanup) {
-            Invoke-DiskCleanup -Async
-        }
-
-        if ($RunTempPurge) {
-            Invoke-TempPurge
-        }
-
-        Set-ServiceTrimSafe -Enable $ServiceTrimSafe
-
         Disable-RazerAutoInstall -Enable $BlockRazer
-
-        Set-ClassicContextMenu -Enable $ClassicContextMenu
-
-        Disable-StorageSense -Enable $DisableStorageSense
 
         Set-DisplayPerformance -Enable $DisplayPerformance
 
         Enable-TaskbarEndTask -Enable $TaskbarEndTask
-
-        Remove-ExplorerClutter -Enable $RemoveExplorerClutter
 
         Write-Log "System optimizations complete" "SUCCESS"
 
@@ -1049,17 +716,10 @@ Export-ModuleMember -Function @(
     'Set-PageFile',
     'Set-MemoryCompression',
     'Disable-FastStartup',
-    'Disable-ExplorerAutoType',
-    'Invoke-DiskCleanup',
-    'Invoke-TempPurge',
-    'Set-ServiceTrimSafe',
     'Disable-RazerAutoInstall',
     'New-RestorePoint',
-    'Set-ClassicContextMenu',
-    'Disable-StorageSense',
     'Set-DisplayPerformance',
     'Enable-TaskbarEndTask',
-    'Remove-ExplorerClutter',
     'Disable-MouseAcceleration',
     'Set-BackgroundPollingUnlock',
     'Set-KeyboardResponse',
