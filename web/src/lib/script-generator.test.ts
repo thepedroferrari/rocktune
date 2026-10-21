@@ -809,7 +809,11 @@ Deno.test('Feature - DirectX settings merge into the existing string', () => {
 })
 
 Deno.test('Feature - Defender and active hours items back up and register undo', () => {
-  const script = scriptFor(['defender_scan_idle', 'defender_game_exclusions', 'active_hours_gaming'])
+  const script = scriptFor([
+    'defender_scan_idle',
+    'defender_game_exclusions',
+    'active_hours_gaming',
+  ])
   assertStringIncludes(script, 'Set-MpPreference -ScanOnlyIfIdleEnabled $true')
   assertStringIncludes(script, 'Add-UndoCommand "Defender scan settings" $undoMp')
   assertStringIncludes(script, 'libraryfolders.vdf')
@@ -849,7 +853,11 @@ Deno.test('Catalog - game-session items and maintenance tasks are selectable wit
     'active_hours_gaming',
     'defender_game_exclusions',
   ]) {
-    assertEquals(OPTIMIZATIONS.some((o) => o.key === key), true, `${key} has no catalog entry`)
+    assertEquals(
+      OPTIMIZATIONS.some((o) => o.key === key),
+      true,
+      `${key} has no catalog entry`,
+    )
     assertEquals(typeof OPT_VALUE_TO_ID[key as keyof typeof OPT_VALUE_TO_ID], 'number', key)
   }
   assertEquals(OPT_VALUE_TO_ID.scheduled_tasks_gaming, 112)
@@ -878,7 +886,10 @@ Deno.test('Anti-cheat - conflicts are exported and warned about before the confi
   const warn = script.indexOf('ANTI-CHEAT WARNING')
   const confirm = script.indexOf('Confirm-Continue "Apply these optimizations?"')
   assertEquals(warn > 0 && warn < confirm, true)
-  assertStringIncludes(script, 'FACEIT AC (Counter-Strike 2 on FACEIT): FACEIT AC does not start until DEP is on')
+  assertStringIncludes(
+    script,
+    'FACEIT AC (Counter-Strike 2 on FACEIT): FACEIT AC does not start until DEP is on',
+  )
   assertStringIncludes(script, 'Riot Vanguard (Valorant, League of Legends)')
   assertEquals(scriptFor(['pagefile']).includes('ANTI-CHEAT WARNING'), false)
 })

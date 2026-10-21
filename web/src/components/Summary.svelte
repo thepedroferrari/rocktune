@@ -27,7 +27,9 @@ const gpuLabels: Record<GpuType, string> = {
 
 const cpuLabel = $derived(cpuLabels[app.hardware.cpu] || app.hardware.cpu)
 const gpuLabel = $derived(gpuLabels[app.hardware.gpu] || app.hardware.gpu)
-const presetLabel = $derived(app.activePreset ? (PRESET_META[app.activePreset]?.label ?? null) : null)
+const presetLabel = $derived(
+  app.activePreset ? (PRESET_META[app.activePreset]?.label ?? null) : null,
+)
 </script>
 
 <div class="summary-shell">

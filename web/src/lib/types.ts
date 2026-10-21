@@ -229,15 +229,17 @@ export const ANTI_CHEATS = {
 export type AntiCheat = (typeof ANTI_CHEATS)[keyof typeof ANTI_CHEATS]
 
 /** Display names for anti-cheat systems and the games that use them */
-export const ANTI_CHEAT_LABELS: Record<AntiCheat, { readonly name: string; readonly games: string }> =
-  {
-    vanguard: { name: 'Riot Vanguard', games: 'Valorant, League of Legends' },
-    faceit: { name: 'FACEIT AC', games: 'Counter-Strike 2 on FACEIT' },
-    javelin: { name: 'EA Javelin', games: 'Battlefield 6, EA SPORTS FC' },
-    battleye: { name: 'BattlEye', games: 'PUBG, Rainbow Six Siege, Escape from Tarkov' },
-    easy_anti_cheat: { name: 'Easy Anti-Cheat', games: 'Fortnite, Apex Legends, Elden Ring' },
-    ricochet: { name: 'Ricochet', games: 'Call of Duty' },
-  } as const
+export const ANTI_CHEAT_LABELS: Record<
+  AntiCheat,
+  { readonly name: string; readonly games: string }
+> = {
+  vanguard: { name: 'Riot Vanguard', games: 'Valorant, League of Legends' },
+  faceit: { name: 'FACEIT AC', games: 'Counter-Strike 2 on FACEIT' },
+  javelin: { name: 'EA Javelin', games: 'Battlefield 6, EA SPORTS FC' },
+  battleye: { name: 'BattlEye', games: 'PUBG, Rainbow Six Siege, Escape from Tarkov' },
+  easy_anti_cheat: { name: 'Easy Anti-Cheat', games: 'Fortnite, Apex Legends, Elden Ring' },
+  ricochet: { name: 'Ricochet', games: 'Call of Duty' },
+} as const
 
 /** A known clash between an optimization and an anti-cheat */
 export interface AntiCheatConflict {

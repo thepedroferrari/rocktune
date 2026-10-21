@@ -34,7 +34,6 @@ function getDefaultSelection(): PackageKey[] {
 }
 
 function handlePresetSelect(preset: PresetType, config: PresetConfig) {
-
   if (app.activePreset === preset) {
     setActivePreset(null)
     clearRecommendedPackages()

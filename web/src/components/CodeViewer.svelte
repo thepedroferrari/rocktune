@@ -79,7 +79,9 @@ const diffChunks = $derived.by((): DiffChunk[] => {
 })
 
 const diffTargets = $derived(
-  diffChunks.map((chunk, index) => ({ chunk, index })).filter(({ chunk }) => chunk.type !== 'unchanged'),
+  diffChunks
+    .map((chunk, index) => ({ chunk, index }))
+    .filter(({ chunk }) => chunk.type !== 'unchanged'),
 )
 
 const showNav = $derived(activeMode === 'diff' && diffTargets.length > 0)

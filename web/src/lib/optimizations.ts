@@ -52,8 +52,7 @@ export interface OptimizationDef {
   readonly antiCheatConflicts?: readonly AntiCheatConflict[]
 }
 
-const VANGUARD_EXPLOIT_PROTECTION =
-  'https://support.riotgames.com/riot/client/error-van-9002'
+const VANGUARD_EXPLOIT_PROTECTION = 'https://support.riotgames.com/riot/client/error-van-9002'
 const VANGUARD_MEMORY_INTEGRITY =
   'https://support.riotgames.com/en-us/riot/penalties/error-van-restriction-5'
 const FACEIT_VBS =
@@ -256,14 +255,19 @@ const SAFE_SYSTEM: readonly OptimizationDef[] = [
     tooltip: {
       title: 'Gaming Active Hours',
       desc: 'Sets Windows Update active hours to 10:00-04:00, the 18-hour maximum. Windows does not restart for updates inside active hours, so evening and late-night sessions are covered.',
-      pros: ['Covers late-night sessions', 'Pairs with No Surprise Reboots', 'Updates still install'],
+      pros: [
+        'Covers late-night sessions',
+        'Pairs with No Surprise Reboots',
+        'Updates still install',
+      ],
       cons: ['Update restarts happen 04:00-10:00', 'Settings shows "managed by your organization"'],
     },
     defaultChecked: false,
     rank: EFFECTIVENESS_RANKS.B,
     evidence: {
       level: EVIDENCE_LEVELS.HIGH,
-      sources: [        'https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-update',
+      sources: [
+        'https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-update',
       ],
     },
   },
@@ -681,7 +685,8 @@ const SAFE_DISPLAY: readonly OptimizationDef[] = [
     rank: EFFECTIVENESS_RANKS.B,
     evidence: {
       level: EVIDENCE_LEVELS.HIGH,
-      sources: [        'https://support.microsoft.com/en-us/windows/optimizations-for-windowed-games-in-windows-11-3f006843-2c7e-4ed0-9a5e-f9389e535952',
+      sources: [
+        'https://support.microsoft.com/en-us/windows/optimizations-for-windowed-games-in-windows-11-3f006843-2c7e-4ed0-9a5e-f9389e535952',
         'https://devblogs.microsoft.com/directx/updates-in-graphics-and-gaming/',
       ],
     },
@@ -702,7 +707,8 @@ const SAFE_DISPLAY: readonly OptimizationDef[] = [
     rank: EFFECTIVENESS_RANKS.C,
     evidence: {
       level: EVIDENCE_LEVELS.HIGH,
-      sources: [        'https://www.elevenforum.com/t/enable-or-disable-variable-refresh-rate-for-games-in-windows-11.12052/',
+      sources: [
+        'https://www.elevenforum.com/t/enable-or-disable-variable-refresh-rate-for-games-in-windows-11.12052/',
       ],
     },
   },
@@ -817,7 +823,8 @@ const SAFE_BACKGROUND: readonly OptimizationDef[] = [
     rank: EFFECTIVENESS_RANKS.B,
     evidence: {
       level: EVIDENCE_LEVELS.HIGH,
-      sources: [        'https://learn.microsoft.com/en-us/powershell/module/defender/set-mppreference',
+      sources: [
+        'https://learn.microsoft.com/en-us/powershell/module/defender/set-mppreference',
         'https://learn.microsoft.com/en-us/defender-endpoint/schedule-antivirus-scans-powershell',
       ],
     },
@@ -1349,7 +1356,11 @@ const CAUTION_OPTIMIZATIONS: readonly OptimizationDef[] = [
     tooltip: {
       title: 'Defender Skips Game Folders',
       desc: 'Adds your Steam library folders and the default Epic, EA app and Xbox game folders to Microsoft Defender exclusions. Game updates, shader builds and level loads no longer wait for real-time scanning.',
-      pros: ['Faster game updates and installs', 'Less disk stutter during loads', 'Undo removes each exclusion'],
+      pros: [
+        'Faster game updates and installs',
+        'Less disk stutter during loads',
+        'Undo removes each exclusion',
+      ],
       cons: [
         'Malware saved into those folders is not scanned',
         'Mods and cracks dropped there are not scanned either',
@@ -1359,12 +1370,9 @@ const CAUTION_OPTIMIZATIONS: readonly OptimizationDef[] = [
     rank: EFFECTIVENESS_RANKS.C,
     evidence: {
       level: EVIDENCE_LEVELS.MEDIUM,
-      sources: [        'https://learn.microsoft.com/en-us/powershell/module/defender/add-mppreference',
-      ],
+      sources: ['https://learn.microsoft.com/en-us/powershell/module/defender/add-mppreference'],
     },
-    breakingChanges: [
-      { feature: 'Security', impact: 'Real-time scan skips game library folders' },
-    ],
+    breakingChanges: [{ feature: 'Security', impact: 'Real-time scan skips game library folders' }],
   },
   {
     key: OPTIMIZATION_KEYS.SERVICES_SEARCH_OFF,
