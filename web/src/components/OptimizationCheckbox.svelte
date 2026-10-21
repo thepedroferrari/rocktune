@@ -84,16 +84,15 @@ function handleClick(event: MouseEvent) {
 </label>
 
 <style>
-  .tier-rank {
-    font-family: var(--font-mono);
-    font-weight: 700;
-    opacity: 0.6;
-  }
+.tier-rank {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  opacity: 0.6;
+}
 
-  .breaking-warn {
-    color: var(--caution, oklch(0.82 0.15 85));
-    font-size: 0.85em;
-    margin-inline-end: 0.15em;
-    filter: drop-shadow(0 0 3px oklch(0.82 0.15 85 / 0.5));
-  }
+.breaking-warn {
+  color: var(--caution, oklch(0.82 0.15 85));
+  font-size: 0.85em;
+  margin-inline-end: 0.15em;
+}
 </style>

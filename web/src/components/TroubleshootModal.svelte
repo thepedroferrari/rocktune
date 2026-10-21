@@ -151,7 +151,7 @@ powershell -Command "Start-Process powershell -ArgumentList '-ExecutionPolicy By
 
     <article class="card card--action">
       <button type="button" class="bat-btn" onclick={handleDownloadBat}>
-        <svg
+        <svg aria-hidden="true"
           class="bat-btn__icon"
           viewBox="0 0 24 24"
           fill="none"
@@ -172,10 +172,9 @@ powershell -Command "Start-Process powershell -ArgumentList '-ExecutionPolicy By
 </Modal>
 
 <style>
-  /* Modal overrides */
-  :global(.troubleshoot-modal) {
-    --width: 600px;
-    --clip: polygon(
+:global(.troubleshoot-modal) {
+  --width: 600px;
+  --clip: polygon(
       0 0,
       calc(100% - 16px) 0,
       100% 16px,
@@ -183,209 +182,170 @@ powershell -Command "Start-Process powershell -ArgumentList '-ExecutionPolicy By
       16px 100%,
       0 calc(100% - 16px)
     );
-    color: var(--text-primary);
-  }
+  color: var(--text-primary);
+}
 
-  :global(.troubleshoot-modal .modal-header) {
-    background: linear-gradient(
-      180deg,
-      rgba(var(--accent-rgb, 255, 107, 0), 0.08) 0%,
-      transparent 100%
-    );
-  }
+:global(.troubleshoot-modal .modal-header) {
+  background: rgba(var(--accent-rgb, 255, 107, 0), 0.08);
+}
 
-  .troubleshoot-modal__header-content {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-xs);
-  }
+.troubleshoot-modal__header-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
 
-  .troubleshoot-modal__title {
-    font-size: 1.5rem;
-    font-weight: 800;
-    letter-spacing: 0.05em;
-    color: var(--accent);
-  }
+.troubleshoot-modal__title {
+  font-size: var(--text-xl);
+  font-weight: 800;
+  color: var(--accent);
+}
 
-  .troubleshoot-modal__subtitle {
-    margin: 0;
-    font-size: 0.95rem;
-    color: var(--text-2);
-  }
+.troubleshoot-modal__subtitle {
+  margin: 0;
+  font-size: var(--text-md);
+  color: var(--text-2);
+}
 
-  /* Options container */
-  .options {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-md);
-    padding: var(--space-lg);
-  }
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+}
 
-  /* Card - each option */
-  .card {
-    background: var(--surface-2);
-    border: 1px solid var(--border);
-    border-inline-start: 3px solid var(--border);
-    padding: var(--space-lg);
-  }
+.card {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-inline-start: 3px solid var(--border);
+  padding: var(--space-lg);
+}
 
-  .card--primary {
-    border-color: var(--accent);
-    border-left-color: var(--accent);
-    box-shadow: 0 0 30px rgba(var(--accent-rgb, 255, 107, 0), 0.12);
-    background: linear-gradient(
-      135deg,
-      rgba(var(--accent-rgb, 255, 107, 0), 0.06) 0%,
-      var(--surface-2) 50%
-    );
-  }
+.card--primary {
+  border-color: var(--accent);
+  border-left-color: var(--accent);
+  background: rgba(var(--accent-rgb, 255, 107, 0), 0.06);
+}
 
-  .card--action {
-    background: transparent;
-    border: none;
-    border-inline-start: none;
-    padding: var(--space-md) 0;
-  }
+.card--action {
+  background: transparent;
+  border: none;
+  border-inline-start: none;
+  padding: var(--space-md) 0;
+}
 
-  .card__header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-md);
-    margin-block-end: var(--space-sm);
-  }
+.card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin-block-end: var(--space-sm);
+}
 
-  .card__title {
-    margin: 0;
-    font-size: 0.85rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    color: var(--text-1);
-    text-transform: uppercase;
-  }
+.card__title {
+  margin: 0;
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--text-1);
+}
 
-  .card--primary .card__title {
-    color: var(--accent);
-  }
+.card--primary .card__title {
+  color: var(--accent);
+}
 
-  .card__desc {
-    margin: 0 0 var(--space-sm);
-    font-size: 0.875rem;
-    color: var(--text-2);
-  }
+.card__desc {
+  margin: 0 0 var(--space-sm);
+  font-size: var(--text-base);
+  color: var(--text-2);
+}
 
-  .card__hint {
-    margin: var(--space-sm) 0 0;
-    font-size: 0.8rem;
-    color: var(--text-3);
-  }
+.card__hint {
+  margin: var(--space-sm) 0 0;
+  font-size: var(--text-sm);
+  color: var(--text-3);
+}
 
-  /* Code block (pre) */
-  .code {
-    margin: 0;
-    padding: var(--space-md);
-    background: #0a0a0a;
-    border: 1px solid var(--border);
-    font-family: var(--font-mono);
-    font-size: 0.8rem;
-    line-height: 1.5;
-    color: var(--accent);
-    white-space: pre-wrap;
-    word-break: break-all;
-    overflow-x: auto;
-  }
+.code {
+  margin: 0;
+  padding: var(--space-md);
+  background: #0a0a0a;
+  border: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  color: var(--accent);
+  white-space: pre-wrap;
+  word-break: break-all;
+  overflow-x: auto;
+}
 
-  /* Code input (single line, scrollable) */
-  .code-input {
-    width: 100%;
-    padding: var(--space-md);
-    background: #0a0a0a;
-    border: 1px solid var(--border);
-    font-family: var(--font-mono);
-    font-size: 0.8rem;
-    color: var(--accent);
-    cursor: text;
-    /* Single line, horizontal scroll */
-    white-space: nowrap;
-    overflow-x: auto;
-  }
+.code-input {
+  width: 100%;
+  padding: var(--space-md);
+  background: #0a0a0a;
+  border: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--accent);
+  cursor: text;
+  white-space: nowrap;
+  overflow-x: auto;
+}
 
-  .code-input:focus {
-    outline: none;
-    border-color: var(--accent);
-    box-shadow: 0 0 0 1px var(--accent);
-  }
+.code-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
 
-  .code-input::selection {
-    background: var(--accent);
-    color: #000;
-  }
+.code-input::selection {
+  background: var(--accent);
+  color: #000;
+}
 
-  /* Copy button - big and obvious */
-  .copy-btn {
-    flex-shrink: 0;
-    padding: var(--space-xs) var(--space-lg);
-    background: var(--accent);
-    border: none;
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    color: var(--bg-primary);
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
-  }
+.copy-btn {
+  flex-shrink: 0;
+  padding: var(--space-xs) var(--space-lg);
+  background: var(--accent);
+  border: none;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: var(--bg-primary);
+  cursor: pointer;
+}
 
-  .copy-btn:hover {
-    filter: brightness(1.15);
-  }
+.copy-btn.copied {
+  background: var(--success, #22c55e);
+}
 
-  .copy-btn.copied {
-    background: var(--success, #22c55e);
-  }
+.bat-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-lg);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-1);
+  cursor: pointer;
+}
 
-  /* BAT download button */
-  .bat-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-sm);
-    padding: var(--space-sm) var(--space-lg);
-    background: var(--surface-2);
-    border: 1px solid var(--border);
-    font-family: var(--font-mono);
-    font-size: 0.8rem;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    color: var(--text-1);
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    clip-path: polygon(
-      0 0,
-      calc(100% - 8px) 0,
-      100% 8px,
-      100% 100%,
-      8px 100%,
-      0 calc(100% - 8px)
-    );
-  }
+.bat-btn:hover {
+  background: var(--surface-3);
+  border-color: var(--accent);
+  color: var(--accent);
+}
 
-  .bat-btn:hover {
-    background: var(--surface-3);
-    border-color: var(--accent);
-    color: var(--accent);
-  }
+.bat-btn__icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
 
-  .bat-btn__icon {
-    width: 1.25rem;
-    height: 1.25rem;
-  }
-
-  @media (max-width: 640px) {
-    :global(.troubleshoot-modal) {
-      --clip: polygon(
+@media (max-width: 640px) {
+  :global(.troubleshoot-modal) {
+    --clip: polygon(
         0 0,
         calc(100% - 10px) 0,
         100% 10px,
@@ -393,30 +353,25 @@ powershell -Command "Start-Process powershell -ArgumentList '-ExecutionPolicy By
         10px 100%,
         0 calc(100% - 10px)
       );
-    }
-
-    .troubleshoot-modal__title {
-      font-size: 1.25rem;
-    }
-
-    .options {
-      padding: var(--space-md);
-    }
-
-    .card {
-      padding: var(--space-md);
-    }
-
-    .card__header {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: var(--space-sm);
-    }
-
-    .copy-btn {
-      width: 100%;
-      text-align: center;
-      padding: var(--space-sm);
-    }
   }
+  .troubleshoot-modal__title {
+    font-size: var(--text-lg);
+  }
+  .options {
+    padding: var(--space-md);
+  }
+  .card {
+    padding: var(--space-md);
+  }
+  .card__header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-sm);
+  }
+  .copy-btn {
+    width: 100%;
+    text-align: center;
+    padding: var(--space-sm);
+  }
+}
 </style>

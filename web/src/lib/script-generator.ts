@@ -3771,11 +3771,13 @@ if ($dxDone.Count -gt 0) {
     lines.push(...psLines(String.raw`
 # [SAFE] Windows Update active hours 10:00-04:00 (18 h, the maximum): no update restarts in that window
 $wuPol = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate"
-Set-Reg $wuPol "SetActiveHours" 1
-Set-Reg $wuPol "ActiveHoursStart" 10
-Set-Reg $wuPol "ActiveHoursEnd" 4
-Write-OK "Update active hours set to 10:00-04:00"
-Add-AppliedChange "System" "Update active hours" "OK"
+$ahOk = (Set-Reg $wuPol "SetActiveHours" 1 -PassThru)
+$ahOk = (Set-Reg $wuPol "ActiveHoursStart" 10 -PassThru) -and $ahOk
+$ahOk = (Set-Reg $wuPol "ActiveHoursEnd" 4 -PassThru) -and $ahOk
+if ($ahOk) {
+    Write-OK "Update active hours set to 10:00-04:00"
+    Add-AppliedChange "System" "Update active hours" "OK"
+} else { Write-Warn "Update active hours not fully set (run as Administrator)" }
 `));
   }
 
@@ -3783,8 +3785,13 @@ Add-AppliedChange "System" "Update active hours" "OK"
     lines.push(...psLines(`
 # [SAFE] Defender scheduled scans run only when the PC is idle and at low CPU priority.
 # Real-time protection is unchanged.
+# Get-MpPreference still answers when another antivirus has put Defender in passive
+# mode, so ask Get-MpComputerStatus whether Defender is the active antivirus.
 $mp = $null
-try { $mp = Get-MpPreference -EA Stop } catch { $mp = $null }
+try {
+    $mpState = Get-MpComputerStatus -EA Stop
+    if ($mpState.AntivirusEnabled -and (-not $mpState.AMRunningMode -or $mpState.AMRunningMode -eq 'Normal')) { $mp = Get-MpPreference -EA Stop }
+} catch { $mp = $null }
 if ($mp) {
     $undoMp = 'Set-MpPreference -ScanOnlyIfIdleEnabled $' + [bool]$mp.ScanOnlyIfIdleEnabled + ' -ScanAvgCPULoadFactor ' + [int]$mp.ScanAvgCPULoadFactor + ' -EnableLowCpuPriority $' + [bool]$mp.EnableLowCpuPriority
     try {
@@ -3801,8 +3808,13 @@ if ($mp) {
     lines.push(...psLines(String.raw`
 # [CAUTION] Defender real-time scan skips game library folders (faster game updates and shader builds).
 # Files in these folders are no longer scanned when written. Remove-MpPreference undoes it.
+# Get-MpPreference still answers when another antivirus has put Defender in passive
+# mode, so ask Get-MpComputerStatus whether Defender is the active antivirus.
 $mp = $null
-try { $mp = Get-MpPreference -EA Stop } catch { $mp = $null }
+try {
+    $mpState = Get-MpComputerStatus -EA Stop
+    if ($mpState.AntivirusEnabled -and (-not $mpState.AMRunningMode -or $mpState.AMRunningMode -eq 'Normal')) { $mp = Get-MpPreference -EA Stop }
+} catch { $mp = $null }
 if ($mp) {
     $gameDirs = New-Object System.Collections.Generic.List[string]
     $steamPath = (Get-ItemProperty "HKCU:\Software\Valve\Steam" -Name "SteamPath" -EA SilentlyContinue).SteamPath
@@ -5523,19 +5535,19 @@ else { Write-Skip "SMT still on ($logCores threads) - turn it off in BIOS/UEFI" 
 
   if (selected.has("active_hours_gaming")) {
     lines.push(
-      'if ((Test-RegValue "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate" "ActiveHoursStart" 10) -and (Test-RegValue "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate" "ActiveHoursEnd" 4)) { Write-Pass "Update active hours 10:00-04:00" } else { Write-Fail "Update active hours NOT set" }',
+      'if ((Test-RegValue "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate" "SetActiveHours" 1) -and (Test-RegValue "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate" "ActiveHoursStart" 10) -and (Test-RegValue "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate" "ActiveHoursEnd" 4)) { Write-Pass "Update active hours 10:00-04:00" } else { Write-Fail "Update active hours NOT set" }',
     );
   }
 
   if (selected.has("defender_scan_idle")) {
     lines.push(
-      '$mpv = $null; try { $mpv = Get-MpPreference -EA Stop } catch { $mpv = $null }; if (-not $mpv) { Write-Skip "Defender not active" } elseif ($mpv.ScanOnlyIfIdleEnabled -and $mpv.EnableLowCpuPriority) { Write-Pass "Defender scans idle-only at low priority" } else { Write-Fail "Defender scan settings NOT applied" }',
+      '$mpv = $null; try { $mpvs = Get-MpComputerStatus -EA Stop; if ($mpvs.AntivirusEnabled -and (-not $mpvs.AMRunningMode -or $mpvs.AMRunningMode -eq "Normal")) { $mpv = Get-MpPreference -EA Stop } } catch { $mpv = $null }; if (-not $mpv) { Write-Skip "Defender not active" } elseif ($mpv.ScanOnlyIfIdleEnabled -and $mpv.EnableLowCpuPriority) { Write-Pass "Defender scans idle-only at low priority" } else { Write-Fail "Defender scan settings NOT applied" }',
     );
   }
 
   if (selected.has("defender_game_exclusions")) {
     lines.push(
-      '$mpx = $null; try { $mpx = Get-MpPreference -EA Stop } catch { $mpx = $null }; if (-not $mpx) { Write-Skip "Defender not active" } elseif (@($mpx.ExclusionPath | Where-Object { $_ -match "steamapps|Epic Games|EA Games|XboxGames" }).Count -gt 0) { Write-Pass "Defender skips game library folders" } else { Write-Fail "No game library exclusions found" }',
+      '$mpx = $null; try { $mpxs = Get-MpComputerStatus -EA Stop; if ($mpxs.AntivirusEnabled -and (-not $mpxs.AMRunningMode -or $mpxs.AMRunningMode -eq "Normal")) { $mpx = Get-MpPreference -EA Stop } } catch { $mpx = $null }; if (-not $mpx) { Write-Skip "Defender not active" } elseif (@($mpx.ExclusionPath | Where-Object { $_ -match "steamapps|Epic Games|EA Games|XboxGames" }).Count -gt 0) { Write-Pass "Defender skips game library folders" } else { Write-Fail "No game library exclusions found" }',
     );
   }
 

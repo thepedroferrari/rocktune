@@ -12,74 +12,22 @@ const { class: className = '' }: Props = $props()
 const filtered = $derived(getFiltered())
 const selectedSet = $derived(app.selected)
 
-let gridEl: HTMLDivElement | undefined = $state()
-let columnsPerRow = $state(6)
-let resizeRaf: number | null = null
-
-$effect(() => {
-  if (!gridEl) return
-
-  let pendingWidth = 0
-
-  const updateColumns = (gridWidth: number) => {
-    const minCardWidth = 120
-    const gap = 16
-    const nextColumns = Math.max(1, Math.floor((gridWidth + gap) / (minCardWidth + gap)))
-
-    if (nextColumns !== columnsPerRow) {
-      columnsPerRow = nextColumns
-    }
-  }
-
-  const scheduleUpdate = (gridWidth: number) => {
-    pendingWidth = gridWidth
-    if (resizeRaf !== null) return
-    resizeRaf = requestAnimationFrame(() => {
-      resizeRaf = null
-      updateColumns(pendingWidth)
-    })
-  }
-
-  const observer = new ResizeObserver((entries) => {
-    const entry = entries[0]
-    if (!entry) return
-    scheduleUpdate(entry.contentRect.width)
-  })
-  observer.observe(gridEl)
-
-  return () => {
-    observer.disconnect()
-    if (resizeRaf !== null) {
-      cancelAnimationFrame(resizeRaf)
-      resizeRaf = null
-    }
-  }
-})
-
-function getOverlayPosition(index: number): 'right' | 'left' {
-  const columnIndex = index % columnsPerRow
-
-  return columnIndex >= columnsPerRow - 2 ? 'left' : 'right'
-}
-
 function handleToggle(key: PackageKey) {
   toggleSoftware(key)
 }
 </script>
 
 <div
-  bind:this={gridEl}
   id="software-grid"
   class="software-grid {className}"
   class:list-view={app.view === "list"}
 >
-  {#each filtered as [key, pkg], index (key)}
+  {#each filtered as [key, pkg] (key)}
     <SoftwareCard
       {key}
       {pkg}
       selected={selectedSet.has(key)}
       onToggle={handleToggle}
-      overlayPosition={getOverlayPosition(index)}
     />
   {/each}
 

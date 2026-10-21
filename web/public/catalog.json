@@ -925,5 +925,53 @@
     "icon": "icons/torbrowser.svg",
     "desc": "Privacy browser via Tor network (winget install can be inconsistent).",
     "selected": false
+  },
+  "systeminformer": {
+    "id": "WinsiderSS.SystemInformer",
+    "name": "System Informer",
+    "category": "monitoring",
+    "icon": "icons/systeminformer.svg",
+    "desc": "Task Manager with more detail. Shows which process uses CPU, disk, network and GPU, and what each one loaded.",
+    "selected": false
+  },
+  "autoruns": {
+    "id": "Microsoft.Sysinternals.Autoruns",
+    "name": "Autoruns",
+    "category": "utility",
+    "icon": "icons/autoruns.svg",
+    "desc": "Lists everything that starts with Windows: apps, services, scheduled tasks, drivers. Untick an entry to stop it starting.",
+    "selected": false
+  },
+  "presentmon": {
+    "id": "Intel.PresentMon",
+    "name": "Intel PresentMon",
+    "category": "monitoring",
+    "icon": "icons/presentmon.svg",
+    "desc": "Free frame time overlay and logger from Intel. Works on any GPU and shows how long the GPU and CPU take per frame.",
+    "selected": false
+  },
+  "portmaster": {
+    "id": "Safing.Portmaster",
+    "name": "Safing Portmaster",
+    "category": "utility",
+    "icon": "icons/portmaster.svg",
+    "desc": "Firewall that shows every app's connections. Allow Steam, Epic, Battle.net, Discord and your game's anti-cheat service before you switch to block by default.",
+    "selected": false
+  },
+  "simplewall": {
+    "id": "Henry++.simplewall",
+    "name": "simplewall",
+    "category": "utility",
+    "icon": "icons/simplewall.svg",
+    "desc": "Small app that controls the firewall built into Windows. Allow Steam, Epic, Battle.net, Discord and your game's anti-cheat service before you switch to block by default.",
+    "selected": false
+  },
+  "btop4win": {
+    "id": "aristocratos.btop4win",
+    "name": "btop4win",
+    "category": "monitoring",
+    "icon": "icons/btop4win.svg",
+    "desc": "Resource monitor in the terminal. Shows CPU, memory, disk, network and processes on one screen.",
+    "selected": false
   }
 }

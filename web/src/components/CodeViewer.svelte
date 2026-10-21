@@ -4,7 +4,7 @@
  *
  * Displays generated PowerShell scripts with:
  * - Current: Plain text view
- * - Diff: Line-by-line comparison with previous version
+ * - Diff: changed blocks against the previous version
  * - Edit: Editable textarea for modifications
  */
 
@@ -48,7 +48,7 @@ let isEditing = $state(false)
 let editContent = $state('')
 let copyText = $state('Copy')
 let copyTimeout: ReturnType<typeof setTimeout> | null = null
-let diffPaneEl: HTMLDivElement | null = $state(null)
+let diffPaneEl: HTMLPreElement | null = $state(null)
 
 $effect(() => {
   void mode
@@ -64,64 +64,22 @@ $effect(() => {
 const lines = $derived(script ? script.split('\n').length : 0)
 const sizeKb = $derived(script ? (new Blob([script]).size / 1024).toFixed(1) : '0.0')
 
-interface DiffLine {
+interface DiffChunk {
   type: 'added' | 'removed' | 'unchanged'
-  oldLineNum: number | null
-  newLineNum: number | null
-  content: string
+  text: string
 }
 
-const diffLines$ = $derived.by(() => {
-  const result: DiffLine[] = []
-  let oldLine = 1
-  let newLine = 1
-
-  const changes = diffLines(previousScript || '', script || '')
-
-  for (const part of changes) {
-    const lines = part.value.split('\n')
-
-    if (lines.length > 0 && lines[lines.length - 1] === '') {
-      lines.pop()
-    }
-
-    for (const line of lines) {
-      if (part.added) {
-        result.push({
-          type: 'added',
-          oldLineNum: null,
-          newLineNum: newLine,
-          content: line,
-        })
-        newLine += 1
-      } else if (part.removed) {
-        result.push({
-          type: 'removed',
-          oldLineNum: oldLine,
-          newLineNum: null,
-          content: line,
-        })
-        oldLine += 1
-      } else {
-        result.push({
-          type: 'unchanged',
-          oldLineNum: oldLine,
-          newLineNum: newLine,
-          content: line,
-        })
-        oldLine += 1
-        newLine += 1
-      }
-    }
-  }
-
-  return result
+/** One text node per diff part, computed only while the Diff tab is open */
+const diffChunks = $derived.by((): DiffChunk[] => {
+  if (activeMode !== 'diff') return []
+  return diffLines(previousScript || '', script || '').map((part) => ({
+    type: part.added ? 'added' : part.removed ? 'removed' : 'unchanged',
+    text: part.value,
+  }))
 })
 
 const diffTargets = $derived(
-  diffLines$
-    .map((line, index) => ({ line, index }))
-    .filter(({ line }) => line.type !== 'unchanged'),
+  diffChunks.map((chunk, index) => ({ chunk, index })).filter(({ chunk }) => chunk.type !== 'unchanged'),
 )
 
 const showNav = $derived(activeMode === 'diff' && diffTargets.length > 0)
@@ -177,9 +135,8 @@ function scrollToCurrentDiff() {
   const target = diffTargets[diffIndex]
   if (!target) return
 
-  const lineEls = diffPaneEl.querySelectorAll('.line')
-  const targetEl = lineEls[target.index]
-  targetEl?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+  const chunkEls = diffPaneEl.querySelectorAll('.chunk')
+  chunkEls[target.index]?.scrollIntoView({ block: 'center' })
 }
 
 async function handleCopy() {
@@ -242,7 +199,7 @@ $effect(() => {
           title="Previous change"
           onclick={() => navigateDiff("prev")}
         >
-          <svg
+          <svg aria-hidden="true"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -258,7 +215,7 @@ $effect(() => {
           title="Next change"
           onclick={() => navigateDiff("next")}
         >
-          <svg
+          <svg aria-hidden="true"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -274,40 +231,30 @@ $effect(() => {
   </header>
 
   <div class="body">
-    <pre class="pane" class:active={activeMode === "current"}>{script ||
-        "// No script generated"}</pre>
-
-    <div
-      class="pane diff"
-      class:active={activeMode === "diff"}
-      bind:this={diffPaneEl}
-    >
-      {#each diffLines$ as line, index (index)}
-        <div
-          class="line"
-          class:diff-added={line.type === "added"}
-          class:diff-removed={line.type === "removed"}
-          class:diff-unchanged={line.type === "unchanged"}
-          class:diff-focus={diffTargets[diffIndex]?.index === index}
-        >
-          <span class="ln">{line.oldLineNum ?? ""}</span>
-          <span class="ln">{line.newLineNum ?? ""}</span>
-          <span class="code">{line.content}</span>
-        </div>
-      {/each}
-    </div>
-
-    <textarea
-      class="pane edit"
-      class:active={activeMode === "edit"}
-      name="script-edit"
-      spellcheck="false"
-      autocomplete="off"
-      value={editContent}
-      onfocus={handleEditFocus}
-      onblur={handleEditBlur}
-      oninput={handleEditInput}
-    ></textarea>
+    {#if activeMode === "current"}
+      <pre class="pane active"><code>{script || "// No script generated"}</code></pre>
+    {:else if activeMode === "diff"}
+      <pre class="pane diff active" bind:this={diffPaneEl}><code
+          >{#each diffChunks as chunk, index (index)}<span
+              class="chunk"
+              class:diff-added={chunk.type === "added"}
+              class:diff-removed={chunk.type === "removed"}
+              class:diff-focus={diffTargets[diffIndex]?.index === index}
+              >{chunk.text}</span
+            >{/each}</code
+        ></pre>
+    {:else}
+      <textarea
+        class="pane edit active"
+        name="script-edit"
+        spellcheck="false"
+        autocomplete="off"
+        value={editContent}
+        onfocus={handleEditFocus}
+        onblur={handleEditBlur}
+        oninput={handleEditInput}
+      ></textarea>
+    {/if}
   </div>
 
   <footer class="footer">

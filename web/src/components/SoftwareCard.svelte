@@ -7,10 +7,9 @@ interface Props {
   pkg: SoftwarePackage
   selected: boolean
   onToggle: (key: PackageKey) => void
-  overlayPosition?: 'right' | 'left'
 }
 
-const { key, pkg, selected, onToggle, overlayPosition = 'right' }: Props = $props()
+const { key, pkg, selected, onToggle }: Props = $props()
 
 // Unique ID for checkbox-label association
 const inputId = $derived(`pkg-${key}`)
@@ -33,13 +32,11 @@ function getCategoryIcon(category: Category): string {
 let iconFailed = $state(false)
 </script>
 
-{#snippet renderIcon(isOverlay: boolean)}
+{#snippet renderIcon()}
   {#if logoType === "sprite"}
     <svg
       class="sprite-icon"
-      role="img"
-      aria-label={isOverlay ? undefined : `${pkg.name} icon`}
-      aria-hidden={isOverlay ? "true" : undefined}
+      aria-hidden="true"
     >
       <use href="/icons/sprite.svg#{spriteId}"></use>
     </svg>
@@ -48,28 +45,24 @@ let iconFailed = $state(false)
       <svg
         class="sprite-icon fallback-icon"
         viewBox="0 0 48 48"
-        role="img"
-        aria-label={isOverlay ? undefined : "Fallback icon"}
-        aria-hidden={isOverlay ? "true" : undefined}
+        aria-hidden="true"
       >
         <use href="/icons/sprite.svg#fallback"></use>
       </svg>
     {:else}
       <img
         src={cdnUrl}
-        alt={isOverlay ? "" : `${pkg.name} logo`}
+        alt=""
         width="44"
         height="44"
         loading="lazy"
-        onerror={isOverlay ? undefined : () => { iconFailed = true }}
+        onerror={() => { iconFailed = true }}
       />
     {/if}
   {:else if logoType === "emoji"}
     <span
       class="emoji-icon"
-      role="img"
-      aria-label={isOverlay ? undefined : `${pkg.name} icon`}
-      aria-hidden={isOverlay ? "true" : undefined}>{pkg.emoji}</span
+      aria-hidden="true">{pkg.emoji}</span
     >
   {:else}
     {@html getCategoryIcon(pkg.category)}
@@ -81,7 +74,7 @@ let iconFailed = $state(false)
   class:selected
   data-key={key}
   data-category={pkg.category}
-  data-overlay-position={overlayPosition === "left" ? "left" : undefined}
+  title="{pkg.desc ?? pkg.category} (winget: {pkg.id})"
 >
   <input
     type="checkbox"
@@ -94,76 +87,10 @@ let iconFailed = $state(false)
 
   <label for={inputId} class="card-label">
     <figure class="logo">
-      {@render renderIcon(false)}
+      {@render renderIcon()}
     </figure>
-
     <span class="name">{pkg.name}</span>
     <span id="{inputId}-desc" class="sr-only">{pkg.desc ?? pkg.category}</span>
-
-    <div class="card-overlay">
-      <div class="overlay-card">
-        <figure class="overlay-logo">
-          {@render renderIcon(true)}
-        </figure>
-        <span class="overlay-name">{pkg.name}</span>
-      </div>
-
-      <div class="overlay-info">
-        <div class="overlay-header">
-          <h3 class="overlay-title">{pkg.name}</h3>
-          <span class="overlay-category">{pkg.category}</span>
-        </div>
-        {#if pkg.desc}
-          <p class="overlay-desc">{pkg.desc}</p>
-        {/if}
-      </div>
-
-      <div class="overlay-footer">
-        <div
-          class="overlay-winget"
-          title="winget install --id &quot;{pkg.id}&quot;"
-        >
-          <span class="overlay-winget-label">winget:</span>
-          <span class="overlay-winget-id">{pkg.id}</span>
-        </div>
-
-        <button
-          class="overlay-action"
-          class:overlay-action--add={!selected}
-          class:overlay-action--remove={selected}
-          onclick={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            onToggle(key);
-          }}
-          type="button"
-        >
-          {#if selected}
-            <svg
-              class="overlay-action-icon"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.5"
-            >
-              <path d="M6 18L18 6M6 6l12 12" />
-            </svg>
-            Remove
-          {:else}
-            <svg
-              class="overlay-action-icon"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.5"
-            >
-              <path d="M12 5v14M5 12h14" />
-            </svg>
-            Add
-          {/if}
-        </button>
-      </div>
-    </div>
   </label>
 
   <span class="list-desc">{pkg.desc ?? ""}</span>

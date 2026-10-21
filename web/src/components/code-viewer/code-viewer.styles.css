@@ -3,22 +3,16 @@
     :scope {
       --cv-accent: var(--cyber-yellow);
       --cv-accent-dim: var(--cyber-yellow-dim);
-      --cv-transition: var(--duration-fast) ease;
       display: flex;
       flex-direction: column;
       gap: var(--space-sm);
       position: relative;
       overflow: hidden;
       padding: var(--space-sm);
-      background: linear-gradient(180deg,
-          oklch(0.12 0.02 285) 0%,
-          oklch(0.1 0.02 285) 100%);
+      background: var(--bg-secondary);
       border: 1px solid var(--border);
-      border-inline-start-width: 2px;
       border-radius: var(--radius-sm);
-      box-shadow: var(--shadow-lg);
     }
-
     .toolbar {
       display: flex;
       align-items: center;
@@ -26,7 +20,6 @@
       position: relative;
       z-index: 1;
     }
-
     .tab {
       padding-block: 0.35rem;
       padding-inline: 0.75rem;
@@ -35,24 +28,18 @@
       color: var(--text-secondary);
       font-family: var(--font-mono);
       font-size: var(--text-sm);
-      letter-spacing: 0.03em;
       border-radius: var(--radius-xs);
       cursor: pointer;
-      transition: var(--cv-transition);
-      transition-property: color, border-color, background;
-
       &:hover {
         border-color: var(--cv-accent);
         color: var(--cv-accent);
       }
-
       &.active {
         background: color-mix(in oklch, var(--cv-accent) 12%, transparent);
         border-color: var(--cv-accent);
         color: var(--cv-accent);
       }
     }
-
     .pill {
       margin-inline-start: auto;
       padding-block: 0.2rem;
@@ -63,22 +50,17 @@
       font-family: var(--font-mono);
       font-size: var(--text-xs);
       color: var(--text-hint);
-      letter-spacing: var(--tracking-wide);
-      text-transform: uppercase;
     }
-
     .nav {
       display: flex;
       align-items: center;
       gap: 0.35rem;
       margin-inline-start: auto;
       margin-inline-end: var(--space-xs);
-
       &[hidden] {
         display: none;
       }
     }
-
     .nav-btn {
       --size: 24px;
       display: grid;
@@ -91,25 +73,19 @@
       color: var(--text-secondary);
       border-radius: var(--radius-xs);
       cursor: pointer;
-      transition: var(--cv-transition);
-      transition-property: color, border-color, background;
-
       & svg {
         inline-size: var(--icon-xs);
         block-size: var(--icon-xs);
       }
-
       &:hover:not(:disabled) {
         border-color: var(--cv-accent);
         color: var(--cv-accent);
       }
-
       &:disabled {
         opacity: 0.3;
         cursor: not-allowed;
       }
     }
-
     .nav-count {
       min-inline-size: 32px;
       font-size: var(--text-xs);
@@ -117,7 +93,6 @@
       color: var(--text-secondary);
       text-align: center;
     }
-
     .body {
       position: relative;
       min-block-size: 260px;
@@ -126,7 +101,6 @@
       border-radius: var(--radius-sm);
       overflow: hidden;
     }
-
     .pane {
       display: none;
       margin: 0;
@@ -138,12 +112,10 @@
       line-height: var(--leading-relaxed);
       color: var(--text-secondary);
       white-space: pre;
-
       &.active {
         display: block;
       }
     }
-
     .edit {
       inline-size: 100%;
       block-size: 100%;
@@ -158,54 +130,22 @@
       font-size: var(--text-sm);
       line-height: var(--leading-relaxed);
     }
-
     .diff {
       white-space: pre-wrap;
-      background:
-        radial-gradient(ellipse 140% 120% at 20% 30%,
-          var(--accent-10),
-          transparent 45%),
-        var(--bg-primary);
     }
-
-    .line {
-      display: grid;
-      grid-template-columns: 44px 44px 1fr;
-      gap: var(--space-xs);
-      padding-block: 2px;
-      align-items: start;
-
-      &.diff-focus {
-        background: var(--accent-15);
-        box-shadow: inset 0 0 0 1px var(--accent-40);
-      }
+    .chunk {
+      display: block;
     }
-
-    .ln {
-      font-size: var(--text-xs);
-      color: var(--text-hint);
-      text-align: end;
-      user-select: none;
-    }
-
-    .code {
-      white-space: pre-wrap;
-    }
-
     .diff-added {
-      background: color-mix(in oklch, oklch(0.65 0.2 145) 8%, transparent);
-      border-inline-start: 2px solid color-mix(in oklch, oklch(0.65 0.2 145) 65%, transparent);
+      background: color-mix(in oklch, var(--safe) 12%, transparent);
     }
-
     .diff-removed {
       background: var(--risky-bg);
-      border-inline-start: 2px solid color-mix(in oklch, var(--risky) 65%, transparent);
+      text-decoration: line-through;
     }
-
-    .diff-unchanged {
-      border-inline-start: 2px solid transparent;
+    .diff-focus {
+      outline: 1px solid var(--accent);
     }
-
     .footer {
       display: flex;
       align-items: center;
@@ -216,19 +156,16 @@
       position: relative;
       z-index: 1;
     }
-
     .stats {
       display: flex;
       align-items: center;
       gap: var(--space-sm);
     }
-
     .actions {
       display: flex;
       align-items: center;
       gap: var(--space-xs);
     }
-
     .actions .btn-secondary {
       display: inline-flex;
       align-items: center;
@@ -241,12 +178,9 @@
       background: transparent;
       border: none;
       cursor: pointer;
-      transition: color var(--cv-transition);
-
       &:hover {
         color: var(--cv-accent);
       }
     }
-
   }
 }

@@ -1,7 +1,6 @@
 <script lang="ts">
 import type { TierBreakdown } from '$lib/presets'
 import type { PresetType } from '$lib/types'
-import { adjust, clamp, round, SPRING_PRESETS, Spring } from '../utils/spring'
 
 interface Props {
   preset: PresetType
@@ -18,6 +17,8 @@ interface Props {
   optimizationCount?: number
   tierBreakdown?: TierBreakdown
   active?: boolean
+  /** Whether this radio is the group's tab stop (roving tabindex). */
+  tabbable?: boolean
   onSelect: (preset: PresetType) => void
 }
 
@@ -36,6 +37,7 @@ const {
   optimizationCount = 0,
   tierBreakdown,
   active = false,
+  tabbable = true,
   onSelect,
 }: Props = $props()
 
@@ -54,186 +56,23 @@ const riskText = $derived(
     : riskLabels[riskLevel],
 )
 
-let rotator: HTMLElement | undefined = $state()
-const springRotate = new Spring({ x: 0, y: 0 }, SPRING_PRESETS.INTERACTIVE)
-const springGlare = new Spring({ x: 50, y: 50, o: 0 }, SPRING_PRESETS.INTERACTIVE)
-const springBackground = new Spring({ x: 50, y: 50 }, SPRING_PRESETS.INTERACTIVE)
-
-let interacting = $state(false)
-let animationId: number | null = null
-
-let pointerX = $state('50%')
-let pointerY = $state('50%')
-let pointerFromCenter = $state('0')
-let pointerFromTop = $state('0.5')
-let pointerFromLeft = $state('0.5')
-let cardOpacity = $state('0')
-let rotateX = $state('0deg')
-let rotateY = $state('0deg')
-let backgroundX = $state('50%')
-let backgroundY = $state('50%')
-let transform = $state('')
-
-function applyStyles() {
-  const glareX = springGlare.current.x
-  const glareY = springGlare.current.y
-  const glareO = springGlare.current.o ?? 0
-
-  const pfc = clamp(Math.sqrt((glareY - 50) ** 2 + (glareX - 50) ** 2) / 50, 0, 1)
-  const pft = glareY / 100
-  const pfl = glareX / 100
-
-  pointerX = `${round(glareX)}%`
-  pointerY = `${round(glareY)}%`
-  pointerFromCenter = round(pfc).toString()
-  pointerFromTop = round(pft).toString()
-  pointerFromLeft = round(pfl).toString()
-  cardOpacity = round(glareO).toString()
-  rotateX = `${round(springRotate.current.x)}deg`
-  rotateY = `${round(springRotate.current.y)}deg`
-  backgroundX = `${round(springBackground.current.x)}%`
-  backgroundY = `${round(springBackground.current.y)}%`
-
-  transform = `rotateY(${round(springRotate.current.x)}deg) rotateX(${round(
-    springRotate.current.y,
-  )}deg)`
-}
-
-function animate() {
-  springRotate.update()
-  springGlare.update()
-  springBackground.update()
-  applyStyles()
-
-  const settled =
-    springRotate.isSettled() && springGlare.isSettled() && springBackground.isSettled()
-
-  if (!settled || interacting) {
-    animationId = requestAnimationFrame(animate)
-  } else {
-    animationId = null
-  }
-}
-
-function startAnimation() {
-  if (animationId === null) {
-    animationId = requestAnimationFrame(animate)
-  }
-}
-
-function handlePointerMove(e: PointerEvent) {
-  if (!rotator) return
-  const rect = rotator.getBoundingClientRect()
-
-  const absolute = {
-    x: e.clientX - rect.left,
-    y: e.clientY - rect.top,
-  }
-
-  const percent = {
-    x: clamp(round((100 / rect.width) * absolute.x)),
-    y: clamp(round((100 / rect.height) * absolute.y)),
-  }
-
-  const center = {
-    x: percent.x - 50,
-    y: percent.y - 50,
-  }
-
-  springBackground.set({
-    x: adjust(percent.x, 0, 100, 37, 63),
-    y: adjust(percent.y, 0, 100, 33, 67),
-  })
-
-  springRotate.set({
-    x: round(center.x / 3.5),
-    y: round(-(center.y / 3.5)),
-  })
-
-  springGlare.set({
-    x: round(percent.x),
-    y: round(percent.y),
-    o: 1,
-  })
-
-  startAnimation()
-}
-
-function handlePointerEnter() {
-  interacting = true
-  const { stiffness, damping } = SPRING_PRESETS.INTERACTIVE
-  springRotate.stiffness = stiffness
-  springRotate.damping = damping
-  springGlare.stiffness = stiffness
-  springGlare.damping = damping
-  springBackground.stiffness = stiffness
-  springBackground.damping = damping
-  startAnimation()
-}
-
-function handlePointerLeave() {
-  interacting = false
-  const { stiffness, damping } = SPRING_PRESETS.GENTLE
-
-  springRotate.stiffness = stiffness
-  springRotate.damping = damping
-  springRotate.set({ x: 0, y: 0 })
-
-  springGlare.stiffness = stiffness
-  springGlare.damping = damping
-  springGlare.set({ x: 50, y: 50, o: 0 })
-
-  springBackground.stiffness = stiffness
-  springBackground.damping = damping
-  springBackground.set({ x: 50, y: 50 })
-
-  startAnimation()
-}
-
 function handleClick() {
   onSelect(preset)
 }
-
-$effect(() => {
-  return () => {
-    if (animationId !== null) {
-      cancelAnimationFrame(animationId)
-    }
-  }
-})
 </script>
 
 <button
   type="button"
   class="preset-card"
   class:active
-  class:interacting
   role="radio"
   aria-checked={active}
+  tabindex={tabbable ? 0 : -1}
   aria-label={label}
   data-preset={preset}
   data-rarity={rarity}
-  style:--pointer-x={pointerX}
-  style:--pointer-y={pointerY}
-  style:--pointer-from-center={pointerFromCenter}
-  style:--pointer-from-top={pointerFromTop}
-  style:--pointer-from-left={pointerFromLeft}
-  style:--card-opacity={cardOpacity}
-  style:--rotate-x={rotateX}
-  style:--rotate-y={rotateY}
-  style:--background-x={backgroundX}
-  style:--background-y={backgroundY}
   onclick={handleClick}
 >
-  <div
-    bind:this={rotator}
-    class="preset-card__rotator"
-    role="presentation"
-    style:transform
-    onpointermove={handlePointerMove}
-    onpointerenter={handlePointerEnter}
-    onpointerleave={handlePointerLeave}
-  >
     <div class="preset-card__front">
       <div class="preset-card__header">
         <h3 class="preset-card__title">{label}</h3>
@@ -298,8 +137,4 @@ $effect(() => {
         <dd class="stat-value stat-value--risk-{riskLevel}">{riskText}</dd>
       </dl>
     </div>
-
-    <div class="preset-card__shine"></div>
-    <div class="preset-card__glare"></div>
-  </div>
 </button>

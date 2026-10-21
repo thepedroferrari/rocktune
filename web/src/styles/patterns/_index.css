@@ -1,3 +1,2 @@
-/* Reusable component patterns. Import this file AFTER tokens in main.css */
 @import './buttons.css';
 @import './modals.css';

@@ -138,5 +138,26 @@ export const RIG_CHECK = {
       label: 'Gaming Services',
       why: 'Game Pass games do not install or start without Gaming Services.',
     },
+    {
+      id: 'space-used',
+      label: 'Space used by gaming',
+      why: 'Lists the size of each Steam game, the shader caches, unfinished downloads, the hibernation and page files and Windows Update downloads. Deletes nothing.',
+    },
   ],
 } as const satisfies RigCheckData
+
+export interface SnapshotData {
+  readonly command: string
+  readonly description: string
+}
+
+/**
+ * Play Snapshot: a read-only PowerShell script (root `play-snapshot.ps1`,
+ * served as `/snapshot.ps1`). Run it while a game is open; it samples for 30
+ * seconds and lists the background apps that use the most CPU and disk.
+ */
+export const SNAPSHOT = {
+  command: 'irm https://rocktune.pedroferrari.com/snapshot.ps1 | iex',
+  description:
+    'Start your game, then run this. It watches for 30 seconds and lists the background apps that take CPU and disk time, with the fix for each one.',
+} as const satisfies SnapshotData

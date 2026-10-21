@@ -8,44 +8,27 @@
       --summary-accent: var(--cyber-yellow);
       --summary-accent-glow: var(--cyber-yellow-glow);
       position: relative;
-      background:
-        linear-gradient(
-          90deg,
-          color-mix(in oklch, var(--summary-accent) 8%, transparent) 0%,
-          transparent 40%
-        ),
-        color-mix(in oklch, oklch(0.12 0.02 285) 85%, transparent);
-      backdrop-filter: blur(var(--glass-depth-2)) saturate(1.2);
+      background: color-mix(in oklch, oklch(0.12 0.02 285) 85%, transparent);
       border: 1px solid color-mix(in oklch, var(--summary-accent) 25%, var(--border));
       border-inline-start: 3px solid var(--summary-accent);
       border-radius: var(--radius-sm);
-      box-shadow:
-        var(--shadow-md),
-        0 0 20px color-mix(in oklch, var(--summary-accent) 8%, transparent);
       padding: var(--space-sm) var(--space-lg);
       margin-block-end: var(--space-md);
       display: flex;
       align-items: center;
       justify-content: center;
       gap: var(--space-xl);
-      transition: all var(--duration-fast) var(--ease-out-expo);
       overflow: hidden;
-
       &:hover {
         border-color: color-mix(in oklch, var(--summary-accent) 40%, var(--border));
-        box-shadow:
-          var(--shadow-lg),
-          0 0 30px color-mix(in oklch, var(--summary-accent) 12%, transparent);
       }
     }
-
     .item {
       display: flex;
       align-items: center;
       gap: var(--space-xs);
       position: relative;
       z-index: 1;
-
       &:not(:last-child)::after {
         content: "·";
         position: absolute;
@@ -55,7 +38,6 @@
         font-weight: 700;
       }
     }
-
     .item--preset {
       background: color-mix(in oklch, var(--cyber-yellow) 8%, transparent);
       padding: var(--space-2xs) var(--space-sm);
@@ -63,43 +45,31 @@
       border: 1px solid color-mix(in oklch, var(--cyber-yellow) 20%, transparent);
       gap: var(--space-sm);
     }
-
     .item-icon {
       inline-size: 14px;
       block-size: 14px;
       stroke: var(--cyber-yellow);
-      filter: drop-shadow(0 0 4px var(--cyber-yellow-glow));
       flex-shrink: 0;
     }
-
     .value {
       font-family: var(--font-display);
       font-size: var(--text-base);
       font-weight: 700;
-      letter-spacing: var(--tracking-wide);
       color: var(--cyber-yellow);
-      text-shadow:
-        0 0 12px var(--cyber-yellow-glow),
-        0 0 24px var(--cyber-yellow-40);
     }
-
     .value-separator {
       font-family: var(--font-display);
       font-size: var(--text-sm);
       color: color-mix(in oklch, var(--cyber-yellow) 60%, transparent);
       font-weight: 600;
     }
-
     .label {
       font-family: var(--font-ui);
       color: var(--text-secondary);
       font-size: var(--text-xs);
       font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: var(--tracking-wider);
     }
   }
-
   @container summary (width <= 900px) {
     .summary {
       flex-wrap: wrap;
@@ -107,18 +77,15 @@
       padding: var(--space-md) var(--space-lg);
       justify-content: flex-start;
     }
-
     .summary .item {
       &:not(:last-child)::after {
         display: none;
       }
     }
-
     .summary .item--preset,
     .summary .item--hardware {
       flex: 1 1 100%;
     }
-
     .summary .item--hardware {
       border-block-end: 1px solid color-mix(in oklch, var(--cyber-yellow) 15%, var(--border));
       padding-block-end: var(--space-sm);

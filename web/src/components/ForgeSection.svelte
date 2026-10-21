@@ -9,7 +9,6 @@
  */
 
 import './forge/forge.styles.css'
-import { soundSettings } from '$lib/audio/sound-settings.svelte'
 import { copyToClipboard, generateSHA256 } from '$lib/checksum'
 import { buildVerificationScript, type SelectionState } from '$lib/script-generator'
 import { generateCurrentScript } from '$lib/current-script'
@@ -55,7 +54,6 @@ function handleDownload() {
   if (!script.trim()) return
   downloadText(script, SCRIPT_FILENAME)
   setScriptDownloaded(true)
-  soundSettings.onDownload()
 }
 
 function handleDownloadVerify() {
@@ -104,7 +102,7 @@ async function handleCopyHash() {
     <div class="step-banner__actions">
       {#if app.script.downloaded}
         <output class="status-badge--downloaded">
-          <svg
+          <svg aria-hidden="true"
             class="status-icon--downloaded"
             viewBox="0 0 24 24"
             fill="none"
@@ -145,7 +143,7 @@ async function handleCopyHash() {
       onclick={handleDownload}
     >
       <span class="text">
-        <svg
+        <svg aria-hidden="true"
           class="icon"
           viewBox="0 0 24 24"
           fill="none"
@@ -168,7 +166,7 @@ async function handleCopyHash() {
       onclick={() => (troubleshootModalOpen = true)}
     >
       Having trouble running the script?
-      <svg
+      <svg aria-hidden="true"
         class="icon"
         viewBox="0 0 24 24"
         fill="none"
@@ -187,7 +185,7 @@ async function handleCopyHash() {
         title="Preview the generated PowerShell script"
         onclick={handlePreview}
       >
-        <svg
+        <svg aria-hidden="true"
           class="icon"
           viewBox="0 0 24 24"
           fill="none"
@@ -206,7 +204,7 @@ async function handleCopyHash() {
         title="Share your build configuration"
         onclick={openShareModal}
       >
-        <svg
+        <svg aria-hidden="true"
           class="icon"
           viewBox="0 0 24 24"
           fill="none"
@@ -225,7 +223,7 @@ async function handleCopyHash() {
 
     <div class="trust-strip">
       <span class="trust-item">
-        <svg
+        <svg aria-hidden="true"
           class="trust-icon"
           viewBox="0 0 24 24"
           fill="none"
@@ -238,7 +236,7 @@ async function handleCopyHash() {
       </span>
       <span class="trust-divider" aria-hidden="true">·</span>
       <span class="trust-item">
-        <svg
+        <svg aria-hidden="true"
           class="trust-icon"
           viewBox="0 0 24 24"
           fill="none"
@@ -252,7 +250,7 @@ async function handleCopyHash() {
       </span>
       <span class="trust-divider" aria-hidden="true">·</span>
       <span class="trust-item">
-        <svg
+        <svg aria-hidden="true"
           class="trust-icon"
           viewBox="0 0 24 24"
           fill="none"
@@ -266,7 +264,7 @@ async function handleCopyHash() {
       </span>
       <span class="trust-divider" aria-hidden="true">·</span>
       <span class="trust-item">
-        <svg
+        <svg aria-hidden="true"
           class="trust-icon"
           viewBox="0 0 24 24"
           fill="none"
@@ -285,7 +283,7 @@ async function handleCopyHash() {
         rel="noopener"
         class="trust-item trust-item--provenance"
       >
-        <svg
+        <svg aria-hidden="true"
           class="trust-icon"
           viewBox="0 0 24 24"
           fill="currentColor"
@@ -301,7 +299,7 @@ async function handleCopyHash() {
 
     <details class="benchmark-tips">
       <summary class="benchmark-tips__summary">
-        <svg
+        <svg aria-hidden="true"
           class="benchmark-tips__icon"
           viewBox="0 0 24 24"
           fill="none"
@@ -383,7 +381,7 @@ async function handleCopyHash() {
   {#if checksum}
     <section class="verification-hud" id="verification-hud">
       <header class="verification-hud__header">
-        <svg
+        <svg aria-hidden="true"
           class="verification-hud__icon"
           viewBox="0 0 24 24"
           fill="none"
@@ -408,7 +406,7 @@ async function handleCopyHash() {
               onclick={handleCopyHash}
             >
               {#if copied}
-                <svg
+                <svg aria-hidden="true"
                   class="icon"
                   viewBox="0 0 24 24"
                   fill="none"
@@ -419,7 +417,7 @@ async function handleCopyHash() {
                 </svg>
                 Copied
               {:else}
-                <svg
+                <svg aria-hidden="true"
                   class="icon"
                   viewBox="0 0 24 24"
                   fill="none"
@@ -440,7 +438,7 @@ async function handleCopyHash() {
               title="Download verification script to check if optimizations were applied"
               onclick={handleDownloadVerify}
             >
-              <svg
+              <svg aria-hidden="true"
                 class="icon"
                 viewBox="0 0 24 24"
                 fill="none"

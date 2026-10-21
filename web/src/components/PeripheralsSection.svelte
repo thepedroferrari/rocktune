@@ -46,7 +46,7 @@ function handleMonitorChange(event: Event & { currentTarget: HTMLInputElement })
     >
       <legend class="control-legend">
         <span class="legend-badge legend-badge--peripherals">Gear</span>
-        <svg
+        <svg aria-hidden="true"
           class="legend-icon"
           viewBox="0 0 24 24"
           fill="none"
@@ -109,7 +109,7 @@ function handleMonitorChange(event: Event & { currentTarget: HTMLInputElement })
     >
       <legend class="control-legend">
         <span class="legend-badge legend-badge--peripherals">Monitors</span>
-        <svg
+        <svg aria-hidden="true"
           class="legend-icon"
           viewBox="0 0 24 24"
           fill="none"

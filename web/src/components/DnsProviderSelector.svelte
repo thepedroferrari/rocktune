@@ -70,91 +70,85 @@ function handleChange(event: Event) {
 </fieldset>
 
 <style>
-  .dns-selector {
-    margin-block-start: var(--space-sm);
-    padding: var(--space-sm) var(--space-md);
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-  }
+.dns-selector {
+  margin-block-start: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
 
-  .dns-label {
-    display: block;
-    margin-block-end: var(--space-xs);
-    font-size: var(--text-xs);
-    font-weight: 600;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: var(--tracking-wide);
-  }
+.dns-label {
+  display: block;
+  margin-block-end: var(--space-xs);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
 
+.dns-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-xs);
+}
+
+@media (max-width: 768px) {
   .dns-options {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--space-xs);
+    grid-template-columns: repeat(2, 1fr);
   }
+}
 
-  @media (max-width: 768px) {
-    .dns-options {
-      grid-template-columns: repeat(2, 1fr);
-    }
+.dns-option {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-xs) var(--space-sm);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+}
+
+.dns-option:hover {
+  border-color: var(--accent-dim);
+  background: var(--bg-hover);
+}
+
+.dns-option.selected {
+  border-color: var(--accent);
+  background: color-mix(in oklch, var(--accent) 10%, var(--bg-secondary));
+}
+
+.dns-option input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.dns-option-label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.dns-option-hint {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.dns-option.selected .dns-option-label {
+  color: var(--accent);
+}
+
+@media (max-width: 480px) {
+  .dns-selector {
+    padding: 0;
+    background: none;
+    border: 0;
   }
-
-  .dns-option {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    padding: var(--space-xs) var(--space-sm);
-    background: var(--bg-secondary);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-xs);
-    cursor: pointer;
-    transition: var(--transition-fast);
-    transition-property: border-color, background;
+  .dns-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-
-  .dns-option:hover {
-    border-color: var(--accent-dim);
-    background: var(--bg-hover);
-  }
-
-  .dns-option.selected {
-    border-color: var(--accent);
-    background: color-mix(in oklch, var(--accent) 10%, var(--bg-secondary));
-  }
-
-  .dns-option input[type="radio"] {
-    position: absolute;
-    opacity: 0;
-    width: 0;
-    height: 0;
-  }
-
-  .dns-option-label {
-    font-size: var(--text-sm);
-    font-weight: 600;
-    color: var(--text-primary);
-  }
-
-  .dns-option-hint {
-    font-size: var(--text-xs);
-    color: var(--text-muted);
-  }
-
-  .dns-option.selected .dns-option-label {
-    color: var(--accent);
-  }
-
-  @media (max-width: 480px) {
-    /* One card level on phones: the parent fieldset already draws the frame */
-    .dns-selector {
-      padding: 0;
-      background: none;
-      border: 0;
-    }
-
-    .dns-options {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-  }
+}
 </style>

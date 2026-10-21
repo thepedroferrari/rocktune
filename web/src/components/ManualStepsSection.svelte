@@ -435,7 +435,8 @@ function scrollToGroup(groupId: string) {
   activeGroupId = groupId
   const element = document.getElementById(`guide-${groupId}`)
   if (element) {
-    element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    element.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' })
   }
 }
 
@@ -658,6 +659,22 @@ const displayGroups = $derived.by(() => {
   }
   return null
 })
+
+/**
+ * Only one group renders its cards at a time (the guide has hundreds of
+ * items). A search shows every match. Falls back to the first visible group
+ * when the active id is not in the current list (sort mode switches lists).
+ */
+const visibleGroupIds = $derived<string[]>(
+  displayGroups ? displayGroups.map((group) => group.id) : filteredGroups.map((group) => group.id),
+)
+const openGroupId = $derived(
+  activeGroupId && visibleGroupIds.includes(activeGroupId) ? activeGroupId : visibleGroupIds[0],
+)
+
+function isGroupOpen(groupId: string): boolean {
+  return searchQuery !== '' || groupId === openGroupId
+}
 
 // Create a reactive key that changes whenever filter/search changes
 // This will force re-evaluation of {@const} blocks in the template
@@ -905,10 +922,10 @@ $effect(() => {
             <button
               type="button"
               class="guide__toc-item guide__toc-item--{group.id}"
-              class:active={activeGroupId === group.id}
+              class:active={openGroupId === group.id}
               onclick={() => scrollToGroup(group.id)}
             >
-              <svg
+              <svg aria-hidden="true"
                 class="guide__toc-icon"
                 viewBox="0 0 24 24"
                 fill="none"
@@ -927,10 +944,10 @@ $effect(() => {
             <button
               type="button"
               class="guide__toc-item"
-              class:active={activeGroupId === group.id}
+              class:active={openGroupId === group.id}
               onclick={() => scrollToGroup(group.id)}
             >
-              <svg
+              <svg aria-hidden="true"
                 class="guide__toc-icon"
                 viewBox="0 0 24 24"
                 fill="none"
@@ -952,7 +969,7 @@ $effect(() => {
       </nav>
       <div class="guide__sidebar-actions">
         <button type="button" class="guide__sidebar-btn" onclick={handlePrint}>
-          <svg
+          <svg aria-hidden="true"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -972,7 +989,7 @@ $effect(() => {
     <div class="guide__main">
       <div class="guide__toolbar">
         <div class="guide__search">
-          <svg
+          <svg aria-hidden="true"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -1021,7 +1038,7 @@ $effect(() => {
                     ? "Impact"
                     : "Difficulty"}
               </span>
-              <svg
+              <svg aria-hidden="true"
                 class="guide__select-arrow"
                 viewBox="0 0 12 12"
                 fill="none"
@@ -1050,7 +1067,7 @@ $effect(() => {
                 >
                   Sort: Category
                   {#if sortBy === "category"}
-                    <svg
+                    <svg aria-hidden="true"
                       class="guide__select-check"
                       viewBox="0 0 12 12"
                       fill="none"
@@ -1074,7 +1091,7 @@ $effect(() => {
                 >
                   Sort: Impact
                   {#if sortBy === "impact"}
-                    <svg
+                    <svg aria-hidden="true"
                       class="guide__select-check"
                       viewBox="0 0 12 12"
                       fill="none"
@@ -1098,7 +1115,7 @@ $effect(() => {
                 >
                   Sort: Difficulty
                   {#if sortBy === "difficulty"}
-                    <svg
+                    <svg aria-hidden="true"
                       class="guide__select-check"
                       viewBox="0 0 12 12"
                       fill="none"
@@ -1147,7 +1164,7 @@ $effect(() => {
                       ? "Quick Wins"
                       : "High Impact"}
               </span>
-              <svg
+              <svg aria-hidden="true"
                 class="guide__select-arrow"
                 viewBox="0 0 12 12"
                 fill="none"
@@ -1176,7 +1193,7 @@ $effect(() => {
                 >
                   Show: All
                   {#if filterBy === "all"}
-                    <svg
+                    <svg aria-hidden="true"
                       class="guide__select-check"
                       viewBox="0 0 12 12"
                       fill="none"
@@ -1200,7 +1217,7 @@ $effect(() => {
                 >
                   Show: Incomplete
                   {#if filterBy === "incomplete"}
-                    <svg
+                    <svg aria-hidden="true"
                       class="guide__select-check"
                       viewBox="0 0 12 12"
                       fill="none"
@@ -1224,7 +1241,7 @@ $effect(() => {
                 >
                   Show: Quick Wins
                   {#if filterBy === "quick-wins"}
-                    <svg
+                    <svg aria-hidden="true"
                       class="guide__select-check"
                       viewBox="0 0 12 12"
                       fill="none"
@@ -1248,7 +1265,7 @@ $effect(() => {
                 >
                   Show: High Impact
                   {#if filterBy === "high-impact"}
-                    <svg
+                    <svg aria-hidden="true"
                       class="guide__select-check"
                       viewBox="0 0 12 12"
                       fill="none"
@@ -1273,7 +1290,7 @@ $effect(() => {
               ? `Showing only manual items. Click to show all ${totalItems} items.`
               : `Many settings can be automated by Rocktune. Click to show only manual steps.`}
           >
-            <svg
+            <svg aria-hidden="true"
               class="guide__toggle-icon"
               viewBox="0 0 24 24"
               fill="none"
@@ -1316,7 +1333,7 @@ $effect(() => {
               class="guide__group guide__group--{group.id}"
             >
               <div class="guide__group-header">
-                <svg
+                <svg aria-hidden="true"
                   class="guide__group-icon"
                   viewBox="0 0 24 24"
                   fill="none"
@@ -1329,8 +1346,12 @@ $effect(() => {
                 <span class="guide__group-count"
                   >{group.items.length} items</span
                 >
+                {#if !isGroupOpen(group.id)}
+                  <button type="button" class="guide__group-open" onclick={() => scrollToGroup(group.id)}>Show</button>
+                {/if}
               </div>
 
+              {#if isGroupOpen(group.id)}
               <div class="guide__cards">
                 {#each group.items as flatItem (getItemId(flatItem.item))}
                   {@const item = flatItem.item}
@@ -1487,6 +1508,7 @@ $effect(() => {
                   {/if}
                 {/each}
               </div>
+              {/if}
             </div>
           {/each}
         {:else}
@@ -1494,7 +1516,7 @@ $effect(() => {
             {@const groupProgress = getGroupProgress(group.sections)}
             <div id="guide-{group.id}" class="guide__group">
               <div class="guide__group-header">
-                <svg
+                <svg aria-hidden="true"
                   class="guide__group-icon"
                   viewBox="0 0 24 24"
                   fill="none"
@@ -1508,6 +1530,9 @@ $effect(() => {
                   <span class="guide__group-count"
                     >{groupProgress.completed}/{groupProgress.total}</span
                   >
+                  {#if !isGroupOpen(group.id)}
+                    <button type="button" class="guide__group-open" onclick={() => scrollToGroup(group.id)}>Show</button>
+                  {/if}
                   {#if groupProgress.completed > 0}
                     <button
                       type="button"
@@ -1517,7 +1542,7 @@ $effect(() => {
                         group.sections.forEach((s) => handleResetSection(s.id));
                       }}
                     >
-                      <svg
+                      <svg aria-hidden="true"
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
@@ -1533,6 +1558,7 @@ $effect(() => {
                 </div>
               </div>
 
+              {#if isGroupOpen(group.id)}
               {#each group.sections as section (section.id)}
                 {@const _ = filterKey}
                 {@const items = getFilteredItems(
@@ -1560,7 +1586,7 @@ $effect(() => {
                             onclick={() => handleDownloadConfig(section.id)}
                             disabled={isDownloading}
                           >
-                            <svg
+                            <svg aria-hidden="true"
                               viewBox="0 0 24 24"
                               fill="none"
                               stroke="currentColor"
@@ -1585,7 +1611,7 @@ $effect(() => {
 
                     {#if section.location}
                       <div class="guide__section-location">
-                        <svg
+                        <svg aria-hidden="true"
                           viewBox="0 0 24 24"
                           fill="none"
                           stroke="currentColor"
@@ -1753,7 +1779,7 @@ $effect(() => {
 
                     {#if section.note}
                       <div class="guide__note">
-                        <svg
+                        <svg aria-hidden="true"
                           viewBox="0 0 24 24"
                           fill="none"
                           stroke="currentColor"
@@ -1769,11 +1795,12 @@ $effect(() => {
                   </div>
                 {/if}
               {/each}
+              {/if}
 
               {#if group.videos && group.videos.length > 0}
                 <div class="guide__videos">
                   <h4 class="guide__videos-title">
-                    <svg
+                    <svg aria-hidden="true"
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
@@ -1875,7 +1902,7 @@ $effect(() => {
           onclick={() => (showInstructions = false)}
           aria-label="Close modal"
         >
-          <svg
+          <svg aria-hidden="true"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"

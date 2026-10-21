@@ -71,8 +71,18 @@ Run each test 3 times, discard the first run, and average the other two.
 
 `rig-check.ps1` finds setup mistakes that cost frames: RAM below its rated speed (XMP or EXPO off), one RAM stick, a monitor below its highest refresh rate, the display cable in the motherboard port, old GPU drivers, Resizable BAR off, games on a hard disk, a low-power plan, a missing AMD X3D V-Cache driver, disabled Xbox services and more. It prints a score out of 100 and the top 3 fixes, with the BIOS setting, the Windows Settings path or the RockTune option for each. It changes nothing and needs no administrator rights.
 
+It also lists the space that gaming takes on your drives: each Steam game, the DirectX, NVIDIA, AMD and Steam shader caches, unfinished Steam downloads, the hibernation and page files and Windows Update downloads. It deletes nothing. Keep the shader caches: games stutter while they rebuild them.
+
 ```powershell
 irm https://rocktune.pedroferrari.com/check.ps1 | iex
+```
+
+## Play Snapshot
+
+`play-snapshot.ps1` shows what runs in the background while you play. Start your game, run the line below, then switch back to the game. After 5 seconds it watches every process for 30 seconds and lists the top 10 by CPU and the top 10 by disk, without the game itself. For known background apps (OneDrive, Windows Search, Defender scans, browsers, Copilot, Teams, Windows Update, app updaters, Razer, Logitech, Corsair and ASUS software) it prints the RockTune option or the setting that stops them. It changes nothing.
+
+```powershell
+irm https://rocktune.pedroferrari.com/snapshot.ps1 | iex
 ```
 
 ## Timer tool

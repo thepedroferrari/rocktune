@@ -27,6 +27,7 @@
         Monitors  = $null
         GameDirs  = $null
         DriveInfo = @{}
+        Space     = $null
     }
 
     # ------------------------------------------------------------------
@@ -752,6 +753,184 @@ namespace RockTuneRigCheck {
     }
 
     # ------------------------------------------------------------------
+    # Space used by gaming (not scored, read-only, deletes nothing)
+    # ------------------------------------------------------------------
+
+    function Format-RcSize {
+        param([double]$Bytes)
+        if ($Bytes -ge 1GB) { return ('{0:N1} GB' -f ($Bytes / 1GB)) }
+        if ($Bytes -ge 1MB) { return ('{0:N0} MB' -f ($Bytes / 1MB)) }
+        return ('{0:N0} KB' -f ($Bytes / 1KB))
+    }
+
+    # Adds up file sizes under a folder. Skips junctions and symbolic links,
+    # skips folders it cannot read, and stops after $Seconds so one huge
+    # folder cannot stall the run. Partial = true means the real size is larger.
+    function Get-RcFolderSize {
+        param([string]$Path, [double]$Seconds = 5)
+        $res = [pscustomobject]@{ Bytes = [int64]0; Partial = $false; Exists = $false }
+        if (-not $Path) { return $res }
+        if (-not [System.IO.Directory]::Exists($Path)) { return $res }
+        $res.Exists = $true
+        $limitMs = [int64]($Seconds * 1000)
+        $sw = [System.Diagnostics.Stopwatch]::StartNew()
+        $reparse = [System.IO.FileAttributes]::ReparsePoint
+        $stack = New-Object System.Collections.Stack
+        $stack.Push((New-Object System.IO.DirectoryInfo -ArgumentList $Path))
+        $total = [int64]0
+        $count = 0
+        while ($stack.Count -gt 0) {
+            if ($sw.ElapsedMilliseconds -gt $limitMs) { $res.Partial = $true; break }
+            $dir = $stack.Pop()
+            try {
+                foreach ($item in $dir.EnumerateFileSystemInfos()) {
+                    $count++
+                    if (($count % 500) -eq 0 -and $sw.ElapsedMilliseconds -gt $limitMs) { $res.Partial = $true; break }
+                    if (($item.Attributes -band $reparse) -ne 0) { continue }
+                    if ($item -is [System.IO.DirectoryInfo]) {
+                        $stack.Push($item)
+                    } else {
+                        $total += $item.Length
+                    }
+                }
+            } catch {
+                $res.Partial = $true
+            }
+            if ($res.Partial -and $sw.ElapsedMilliseconds -gt $limitMs) { break }
+        }
+        $res.Bytes = $total
+        return $res
+    }
+
+    function Get-RcFileSize {
+        param([string]$Path)
+        try {
+            $f = Get-Item -LiteralPath $Path -Force -ErrorAction Stop
+            return [int64]$f.Length
+        } catch {
+            return $null
+        }
+    }
+
+    Write-RcSection 'SPACE USED BY GAMING'
+    Write-Host '  Measuring folders. Nothing is deleted. (up to a minute)' -ForegroundColor DarkGray
+
+    $rc.Space = New-Object System.Collections.ArrayList
+    $addSpace = {
+        param([string]$Label, [string]$Kind, $Bytes, [bool]$Partial)
+        if ($null -eq $Bytes) { return }
+        if ([int64]$Bytes -lt 1MB) { return }
+        [void]$rc.Space.Add([pscustomobject]@{ Label = $Label; Kind = $Kind; Bytes = [int64]$Bytes; Partial = $Partial })
+    }
+    $addFolder = {
+        param([string]$Label, [string]$Kind, [string]$Path)
+        $s = Get-RcFolderSize -Path $Path
+        if ($s.Exists) { & $addSpace $Label $Kind $s.Bytes $s.Partial }
+    }
+
+    try {
+        $local = $env:LOCALAPPDATA
+        $progData = $env:ProgramData
+        if ($local) {
+            & $addFolder 'DirectX shader cache' 'shader' (Join-Path $local 'D3DSCache')
+            & $addFolder 'NVIDIA DirectX shader cache' 'shader' (Join-Path $local 'NVIDIA\DXCache')
+            & $addFolder 'NVIDIA OpenGL shader cache' 'shader' (Join-Path $local 'NVIDIA\GLCache')
+            & $addFolder 'AMD DirectX shader cache' 'shader' (Join-Path $local 'AMD\DxCache')
+            & $addFolder 'AMD DirectX 12 shader cache' 'shader' (Join-Path $local 'AMD\DxcCache')
+            & $addFolder 'AMD Vulkan shader cache' 'shader' (Join-Path $local 'AMD\VkCache')
+        }
+        if ($progData) {
+            & $addFolder 'NVIDIA shader cache (all users)' 'shader' (Join-Path $progData 'NVIDIA Corporation\NV_Cache')
+        }
+    } catch {
+        Write-Verbose 'Shader cache sizes skipped.'
+    }
+
+    try {
+        $steamLibs = @(Get-RcGameDirs | Where-Object { $_.Store -eq 'Steam' } | ForEach-Object { $_.Path } | Sort-Object -Unique)
+        foreach ($lib in $steamLibs) {
+            # String join, not Join-Path: Join-Path throws when a library drive is not connected.
+            $apps = $lib.TrimEnd('\') + '\steamapps'
+            if (-not (Test-Path -LiteralPath $apps)) { continue }
+            $where = ''
+            if ($lib -match '^([A-Za-z]):') { $where = ' (' + $Matches[1].ToUpper() + ':)' }
+            & $addFolder ('Steam shader cache' + $where) 'shader' (Join-Path $apps 'shadercache')
+            & $addFolder ('Steam unfinished downloads' + $where) 'download' (Join-Path $apps 'downloading')
+            foreach ($acf in Get-ChildItem -LiteralPath $apps -Filter 'appmanifest_*.acf' -ErrorAction SilentlyContinue) {
+                try {
+                    $text = [string](Get-Content -LiteralPath $acf.FullName -Raw -ErrorAction Stop)
+                    $name = $acf.BaseName
+                    if ($text -match '"name"\s+"([^"]+)"') { $name = $Matches[1] }
+                    if ($text -match '"SizeOnDisk"\s+"(\d+)"') {
+                        & $addSpace ('Game: ' + $name + $where) 'game' ([int64]$Matches[1]) $false
+                    }
+                } catch {
+                    Write-Verbose ('Skipped Steam manifest ' + $acf.Name)
+                }
+            }
+        }
+    } catch {
+        Write-Verbose 'Steam library sizes skipped.'
+    }
+
+    try {
+        $sysDrive = $env:SystemDrive
+        if ($sysDrive) {
+            & $addSpace 'Hibernation file (hiberfil.sys)' 'hiberfil' (Get-RcFileSize -Path ($sysDrive + '\hiberfil.sys')) $false
+        }
+        $pageFiles = @()
+        try { $pageFiles = @(Get-CimInstance -ClassName Win32_PageFileUsage -ErrorAction Stop) } catch { $pageFiles = @() }
+        if ($pageFiles.Count -gt 0) {
+            foreach ($pf in $pageFiles) {
+                & $addSpace ('Page file (' + [string]$pf.Name + ')') 'pagefile' ([int64]$pf.AllocatedBaseSize * 1MB) $false
+            }
+        } elseif ($sysDrive) {
+            & $addSpace 'Page file (pagefile.sys)' 'pagefile' (Get-RcFileSize -Path ($sysDrive + '\pagefile.sys')) $false
+        }
+        if ($env:SystemRoot) {
+            & $addFolder 'Windows Update downloads' 'update' (Join-Path $env:SystemRoot 'SoftwareDistribution\Download')
+        }
+    } catch {
+        Write-Verbose 'System file sizes skipped.'
+    }
+
+    try {
+        if ($rc.Space.Count -eq 0) {
+            Write-Host '  Nothing found to measure.' -ForegroundColor DarkGray
+        } else {
+            foreach ($row in @($rc.Space | Sort-Object -Property Bytes -Descending)) {
+                $sizeText = Format-RcSize -Bytes $row.Bytes
+                if ($row.Partial) { $sizeText = '> ' + $sizeText + ' (partial)' }
+                $color = 'Gray'
+                if ($row.Kind -eq 'shader') { $color = 'DarkCyan' }
+                if ($row.Kind -eq 'game') { $color = 'White' }
+                Write-Host ('  ' + $sizeText.PadLeft(22) + '  ') -NoNewline -ForegroundColor Yellow
+                Write-Host $row.Label -ForegroundColor $color
+            }
+            $kinds = @($rc.Space | ForEach-Object { $_.Kind } | Sort-Object -Unique)
+            Write-Host ''
+            if ($kinds -contains 'shader') {
+                Write-Host '  Shader caches: do NOT delete them. Games stutter while they rebuild them.' -ForegroundColor DarkYellow
+            }
+            if ($kinds -contains 'download') {
+                Write-Host '  Steam unfinished downloads: finish or cancel the update in Steam > Downloads.' -ForegroundColor DarkGray
+            }
+            if ($kinds -contains 'update') {
+                Write-Host '  Windows Update downloads: Settings > System > Storage > Temporary files > Windows Update Cleanup.' -ForegroundColor DarkGray
+            }
+            if ($kinds -contains 'hiberfil') {
+                Write-Host '  Hibernation file: "powercfg /hibernate off" in an admin prompt removes it (also turns off Fast Startup).' -ForegroundColor DarkGray
+            }
+            if ($kinds -contains 'pagefile') {
+                Write-Host '  Page file: leave it on. Games crash with "out of memory" without it.' -ForegroundColor DarkGray
+            }
+        }
+        Write-Host '  To see everything on a drive, use WizTree (free, in the RockTune software list).' -ForegroundColor DarkGray
+    } catch {
+        Write-Host '  Could not show the space table.' -ForegroundColor DarkGray
+    }
+
+    # ------------------------------------------------------------------
     # Score card
     # ------------------------------------------------------------------
 
@@ -819,7 +998,8 @@ namespace RockTuneRigCheck {
 
     try {
         if (-not [Environment]::UserInteractive) { return }
-        $answer = Read-Host '  Copy a text report to the clipboard? [y/N]'
+        # [string] turns "no input" into '' so the -notmatch test below is a real yes/no.
+        $answer = [string](Read-Host '  Copy a text report to the clipboard? [y/N]')
         if ($answer -notmatch '^(y|yes)$') { return }
         $lines = New-Object System.Collections.ArrayList
         [void]$lines.Add("RockTune Rig Check: $score / 100 - $grade")
@@ -829,6 +1009,14 @@ namespace RockTuneRigCheck {
             [void]$lines.Add(('[' + $r.Status + '] ' + $r.Label + ': ' + $r.Detail))
             if (($r.Status -eq 'WARN' -or $r.Status -eq 'FAIL') -and $r.Fix) {
                 [void]$lines.Add(('       Fix: ' + $r.Fix))
+            }
+        }
+        if ($rc.Space -and $rc.Space.Count -gt 0) {
+            [void]$lines.Add('Space used by gaming (largest 10):')
+            foreach ($row in @($rc.Space | Sort-Object -Property Bytes -Descending | Select-Object -First 10)) {
+                $sizeText = Format-RcSize -Bytes $row.Bytes
+                if ($row.Partial) { $sizeText = '> ' + $sizeText }
+                [void]$lines.Add(('  ' + $sizeText + '  ' + $row.Label))
             }
         }
         [void]$lines.Add('Run it yourself: irm https://rocktune.pedroferrari.com/check.ps1 | iex')

@@ -24,29 +24,6 @@ const visibleCategories = $derived(CATEGORIES.filter((cat) => counts[cat] > 0))
 const FILTER_ANIMATION_DELAY_MS = 30
 const presetOffset = $derived(recommendedPreset ? 1 : 0)
 
-let badgeRef: HTMLSpanElement | null = $state(null)
-let prevCount = $state(0)
-
-$effect(() => {
-  const count = selectedCount
-  if (count !== prevCount && badgeRef && prevCount !== 0) {
-    badgeRef.animate(
-      [
-        { transform: 'scale(1.4)', textShadow: '0 0 12px var(--accent)' },
-        {
-          transform: 'scale(1)',
-          textShadow: 'var(--glow-sm) var(--accent-glow)',
-        },
-      ],
-      {
-        duration: 250,
-        easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
-      },
-    )
-  }
-  prevCount = count
-})
-
 $effect(() => {
   if (recommendedPreset?.software) {
     setRecommendedPackages(recommendedPreset.software)
@@ -112,7 +89,7 @@ $effect(() => {
         aria-pressed={activeFilter === FILTER_SELECTED}
         onclick={() => setFilter(FILTER_SELECTED)}
       >
-        <svg
+        <svg aria-hidden="true"
           class="badge-icon"
           viewBox="0 0 24 24"
           fill="none"
@@ -121,7 +98,7 @@ $effect(() => {
         >
           <polyline points="20 6 9 17 4 12" />
         </svg>
-        <span class="badge-count" bind:this={badgeRef}>{selectedCount}</span>
+        <span class="badge-count">{selectedCount}</span>
       </button>
 
       {#if selectedCount > 0}
@@ -132,7 +109,7 @@ $effect(() => {
           aria-label="Clear all selections"
           onclick={clearSelection}
         >
-          <svg
+          <svg aria-hidden="true"
             class="btn-icon"
             viewBox="0 0 24 24"
             fill="none"
@@ -147,7 +124,7 @@ $effect(() => {
       {/if}
 
       <search class="search-compact">
-        <svg
+        <svg aria-hidden="true"
           class="search-icon"
           viewBox="0 0 24 24"
           fill="none"

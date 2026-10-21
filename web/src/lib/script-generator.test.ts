@@ -816,6 +816,9 @@ Deno.test('Feature - Defender and active hours items back up and register undo',
   assertStringIncludes(script, 'Remove-MpPreference -ExclusionPath')
   assertStringIncludes(script, '"ActiveHoursStart" 10')
   assertStringIncludes(script, '"ActiveHoursEnd" 4')
+  assertStringIncludes(script, '"SetActiveHours" 1 -PassThru')
+  // Defender in passive mode (another antivirus active) is skipped, not reported as done
+  assertStringIncludes(script, 'Get-MpComputerStatus -EA Stop')
 })
 
 Deno.test('Feature - Verification script checks game-session items', () => {

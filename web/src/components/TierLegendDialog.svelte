@@ -38,32 +38,30 @@ const tiers = Object.values(EFFECTIVENESS_RANKS).map((rank) => ({
 </Modal>
 
 <style>
-  /* Only component-specific overrides - layout comes from modal pattern */
-  :global(.tier-dialog) {
-    --width: 320px;
-    --clip: var(--clip-cyber-sm);
-  }
+:global(.tier-dialog) {
+  --width: 320px;
+}
 
-  .tier-dialog__title {
-    font-family: var(--font-mono);
-    font-size: 0.85rem;
-  }
+.tier-dialog__title {
+  font-family: var(--font-mono);
+  font-size: var(--text-base);
+}
 
-  .tier-dialog__body {
-    font-family: var(--font-mono);
-    font-size: 0.8rem;
-    line-height: 1.8;
-    color: var(--text-secondary);
-    white-space: pre-line;
-  }
+.tier-dialog__body {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  line-height: 1.8;
+  color: var(--text-secondary);
+  white-space: pre-line;
+}
 
-  :global(.tier-dialog .modal-footer) {
-    justify-content: center;
-  }
+:global(.tier-dialog .modal-footer) {
+  justify-content: center;
+}
 
-  .tier-dialog__note {
-    margin: 0;
-    font-size: 0.7rem;
-    color: var(--text-hint);
-  }
+.tier-dialog__note {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--text-hint);
+}
 </style>

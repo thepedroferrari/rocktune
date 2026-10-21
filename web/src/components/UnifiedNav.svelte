@@ -4,21 +4,17 @@
  *
  * Fixed navigation with:
  * - RockTune branding (logo/wordmark)
- * - Section links with active state via scroll position detection
+ * - Section links with active state via IntersectionObserver
  * - Share button (global action)
  * - Hamburger menu for mobile
  */
 
-import { slide } from 'svelte/transition'
-import { soundSettings } from '../lib/audio/sound-settings.svelte'
 import { preloadSection, type SectionId } from '../lib/preload'
 import { scrollToSection, scrollToTop } from '../lib/scroll'
 import { openShareModal } from '../lib/state.svelte'
 
 let menuOpen = $state(false)
 let activeStep = $state(-1)
-let scrollY = $state(0)
-let isClickNavigating = $state(false)
 
 interface NavLink {
   href: string
@@ -38,8 +34,6 @@ const NAV_LINKS: NavLink[] = [
   { href: '#guide', label: 'Manual', step: 8 },
 ]
 
-const TRIGGER_LINE = 100
-
 function toggleMenu() {
   menuOpen = !menuOpen
 }
@@ -48,45 +42,40 @@ function closeMenu() {
   menuOpen = false
 }
 
+/**
+ * Scroll-spy: one IntersectionObserver over the step sections. A section is
+ * active while it crosses a thin band near the top of the viewport. Sections
+ * that mount later (lazy) are picked up on the next re-observe, which runs
+ * when the section list in the DOM changes length.
+ */
 $effect(() => {
-  let rafId: number | null = null
-
-  const handleScroll = () => {
-    if (rafId !== null) return
-    rafId = requestAnimationFrame(() => {
-      rafId = null
-      scrollY = window.scrollY
-    })
+  if (!('IntersectionObserver' in window)) return
+  const stepById = new Map(NAV_LINKS.map((link) => [link.href.slice(1), link.step]))
+  const observed = new Set<Element>()
+  const observer = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) activeStep = stepById.get(entry.target.id) ?? -1
+      }
+    },
+    { rootMargin: '-80px 0px -70% 0px' },
+  )
+  const observeAll = () => {
+    for (const id of stepById.keys()) {
+      const el = document.getElementById(id)
+      if (el && !observed.has(el)) {
+        observed.add(el)
+        observer.observe(el)
+      }
+    }
   }
-
-  scrollY = window.scrollY
-  window.addEventListener('scroll', handleScroll, { passive: true })
-
+  observeAll()
+  // Lazy sections mount after first paint; re-check a few times, then stop.
+  const timers = [1000, 4000, 9000].map((ms) => setTimeout(observeAll, ms))
   return () => {
-    window.removeEventListener('scroll', handleScroll)
-    if (rafId !== null) cancelAnimationFrame(rafId)
+    observer.disconnect()
+    for (const t of timers) clearTimeout(t)
   }
-})
-
-$effect(() => {
-  void scrollY // Establish reactive dependency
-  if (isClickNavigating) return
-
-  const sections = NAV_LINKS.map((link) => ({
-    step: link.step,
-    el: document.getElementById(link.href.replace('#', '')),
-  })).filter((entry): entry is { step: number; el: HTMLElement } => entry.el !== null)
-
-  if (sections.length === 0) return
-
-  // -1 while the hero is in view, so no step reads as active before step 0
-  let current = -1
-  for (const { step, el } of sections) {
-    if (el.getBoundingClientRect().top > TRIGGER_LINE) break
-    current = step
-  }
-
-  activeStep = current
 })
 
 function handlePreload(link: NavLink) {
@@ -100,15 +89,10 @@ async function handleClick(event: MouseEvent, link: NavLink) {
 
   preloadSection(sectionId)
 
-  isClickNavigating = true
   activeStep = link.step
   closeMenu()
 
   await scrollToSection({ sectionId })
-
-  setTimeout(() => {
-    isClickNavigating = false
-  }, 100)
 }
 
 function handleMobileShare() {
@@ -128,7 +112,7 @@ function handleMobileShare() {
     aria-label="RockTune - Back to top"
     onclick={() => scrollToTop()}
   >
-    <svg class="brand-icon" viewBox="0 0 24 24" fill="currentColor">
+    <svg aria-hidden="true" class="brand-icon" viewBox="0 0 24 24" fill="currentColor">
       <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
     </svg>
     <span class="brand-text">RockTune</span>
@@ -156,31 +140,11 @@ function handleMobileShare() {
   <div class="nav-actions">
     <button
       type="button"
-      class="btn-sound"
-      class:active={soundSettings.enabled}
-      title={soundSettings.enabled ? 'Sound effects on' : 'Sound effects off'}
-      aria-label="Toggle sound effects"
-      aria-pressed={soundSettings.enabled}
-      onclick={() => soundSettings.toggle()}
-    >
-      {#if soundSettings.enabled}
-        <svg class="icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-        </svg>
-      {:else}
-        <svg class="icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
-        </svg>
-      {/if}
-    </button>
-
-    <button
-      type="button"
       class="btn-share btn-share--desktop"
       title="Share your build configuration"
       onclick={openShareModal}
     >
-      <svg
+      <svg aria-hidden="true"
         class="icon"
         viewBox="0 0 24 24"
         fill="none"
@@ -211,11 +175,7 @@ function handleMobileShare() {
   </button>
 
   {#if menuOpen}
-    <div
-      class="mobile-menu"
-      id="mobile-menu"
-      transition:slide={{ duration: 200 }}
-    >
+    <div class="mobile-menu" id="mobile-menu">
       <ul class="mobile-links" role="list">
         {#each NAV_LINKS as link (link.step)}
           <li>
@@ -234,7 +194,7 @@ function handleMobileShare() {
       </ul>
       <hr class="mobile-divider" />
       <button type="button" class="mobile-share" onclick={handleMobileShare}>
-        <svg
+        <svg aria-hidden="true"
           class="icon"
           viewBox="0 0 24 24"
           fill="none"
@@ -256,7 +216,7 @@ function handleMobileShare() {
         rel="noopener"
         class="mobile-github"
       >
-        <svg class="icon" viewBox="0 0 24 24" fill="currentColor">
+        <svg aria-hidden="true" class="icon" viewBox="0 0 24 24" fill="currentColor">
           <path
             d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.385-1.335-1.755-1.335-1.755-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.605-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12"
           />

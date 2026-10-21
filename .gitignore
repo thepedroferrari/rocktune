@@ -58,3 +58,5 @@ web/purge-checklist.md
 
 # Local Netlify folder
 .netlify
+web/test-results/
+web/playwright-report/

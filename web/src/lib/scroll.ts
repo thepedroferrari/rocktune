@@ -23,22 +23,9 @@ const prefersReducedMotion =
 /** Fired when a scroll target is not in the DOM yet; RootApp loads deferred sections on it. */
 export const LOAD_DEFERRED_EVENT = 'rocktune:load-deferred'
 
-const ARRIVAL_CLASS = 'section-arrive'
-const ARRIVAL_DURATION_MS = 600
-
 function resolveBehavior(behavior: ScrollBehavior): ScrollBehavior {
   if (behavior !== 'smooth') return behavior
   return prefersReducedMotion ? 'auto' : 'smooth'
-}
-
-function triggerArrivalPulse(target: HTMLElement): void {
-  if (prefersReducedMotion) return
-  target.classList.remove(ARRIVAL_CLASS)
-  void target.offsetWidth
-  target.classList.add(ARRIVAL_CLASS)
-  window.setTimeout(() => {
-    target.classList.remove(ARRIVAL_CLASS)
-  }, ARRIVAL_DURATION_MS)
 }
 
 export function scrollToTop(behavior: ScrollBehavior = 'smooth'): void {
@@ -81,7 +68,6 @@ export async function scrollToSection({
   if (target && target.offsetHeight > 0) {
     const resolvedBehavior = resolveBehavior(behavior)
     target.scrollIntoView({ behavior: resolvedBehavior, block })
-    triggerArrivalPulse(target)
     return true
   }
 
@@ -96,7 +82,6 @@ export async function scrollToSection({
       if (el) {
         const resolvedBehavior = resolveBehavior(behavior)
         el.scrollIntoView({ behavior: resolvedBehavior, block })
-        triggerArrivalPulse(el)
       }
       resolve(false)
     }, timeout)
@@ -111,7 +96,6 @@ export async function scrollToSection({
         requestAnimationFrame(() => {
           const resolvedBehavior = resolveBehavior(behavior)
           el.scrollIntoView({ behavior: resolvedBehavior, block })
-          triggerArrivalPulse(el)
           resolve(true)
         })
       }

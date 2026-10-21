@@ -12,6 +12,8 @@
   },
   "homepage": "https://rocktune.pedroferrari.com",
   "devDependencies": {
-    "svelte": "^5.0.0"
+    "svelte": "^5.0.0",
+    "@playwright/test": "1.49.1",
+    "@axe-core/playwright": "4.10.1"
   }
 }

@@ -57,6 +57,7 @@ const activeScript = $derived(app.script.edited ?? generatedScript)
   {/snippet}
 
   <div class="preview-modal__body">
+    {#if app.ui.previewModalOpen}
     <CodeViewer
       script={activeScript}
       previousScript={app.script.previous}
@@ -66,6 +67,7 @@ const activeScript = $derived(app.script.edited ?? generatedScript)
       onModeChange={handleModeChange}
       onEdit={handleEdit}
     />
+    {/if}
   </div>
 
   <div class="preview-modal__options">
@@ -105,45 +107,43 @@ const activeScript = $derived(app.script.edited ?? generatedScript)
 </Modal>
 
 <style>
-  .preview-modal__options {
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
-    padding: var(--space-sm) var(--space-md);
-    background: var(--bg-tertiary);
-    border-block-start: 1px solid var(--border);
-    flex-shrink: 0;
-  }
+.preview-modal__options {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--bg-tertiary);
+  border-block-start: 1px solid var(--border);
+  flex-shrink: 0;
+}
 
-  .preview-modal__options-label {
-    font-size: var(--text-xs);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-hint);
-    font-weight: 500;
-  }
+.preview-modal__options-label {
+  font-size: var(--text-xs);
+  color: var(--text-hint);
+  font-weight: 500;
+}
 
-  .preview-modal__option {
-    display: flex;
-    align-items: center;
-    gap: var(--space-xs);
-    cursor: pointer;
-    font-size: var(--text-sm);
-  }
+.preview-modal__option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  cursor: pointer;
+  font-size: var(--text-sm);
+}
 
-  .preview-modal__option input[type="checkbox"] {
-    width: 1rem;
-    height: 1rem;
-    accent-color: var(--accent);
-    cursor: pointer;
-  }
+.preview-modal__option input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
 
-  .preview-modal__option-text {
-    color: var(--text-primary);
-  }
+.preview-modal__option-text {
+  color: var(--text-primary);
+}
 
-  .preview-modal__option-hint {
-    font-size: var(--text-xs);
-    color: var(--text-hint);
-  }
+.preview-modal__option-hint {
+  font-size: var(--text-xs);
+  color: var(--text-hint);
+}
 </style>

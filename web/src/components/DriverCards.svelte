@@ -12,7 +12,7 @@ const visibleCards = $derived(
 </script>
 
 <div class="driver-warning">
-  <svg
+  <svg aria-hidden="true"
     class="icon"
     viewBox="0 0 24 24"
     fill="none"

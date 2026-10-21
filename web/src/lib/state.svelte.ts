@@ -1,4 +1,3 @@
-import { soundSettings } from './audio/sound-settings.svelte'
 import type {
   AppEventName,
   CpuType,
@@ -186,7 +185,6 @@ export function toggleSoftware(key: PackageKey): boolean {
   emitAppEvent('software-selection-changed', {
     selected: Array.from(app.selected),
   })
-  soundSettings.onToggle(!wasSelected)
   return !wasSelected
 }
 
@@ -261,9 +259,7 @@ function toggledSet<T>(set: Set<T>, item: T): Set<T> {
 
 export function toggleOptimization(key: OptimizationKey): boolean {
   app.optimizations = toggledSet(app.optimizations, key)
-  const result = app.optimizations.has(key)
-  soundSettings.onToggle(result)
-  return result
+  return app.optimizations.has(key)
 }
 
 export function setOptimizations(keys: readonly OptimizationKey[]): void {

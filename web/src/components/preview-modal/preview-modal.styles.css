@@ -3,38 +3,31 @@
     --_width: 900px;
     --_clip: none;
     border-radius: var(--radius-md);
-
     &[open] {
       display: flex;
       flex-direction: column;
     }
   }
-
   .preview-modal__header {
     --_bg: var(--bg-header);
   }
-
   .preview-modal__title {
     font-size: var(--text-sm);
   }
-
   .preview-modal__icon {
     color: var(--cyber-yellow);
     margin-inline-end: var(--space-xs);
   }
-
   .preview-modal__body {
     flex: 1;
     padding: var(--space-sm);
     overflow: auto;
   }
-
   .preview-modal__footer {
     flex-shrink: 0;
     justify-content: center;
     font-size: var(--text-sm);
     color: var(--text-secondary);
-
     & kbd {
       display: inline-flex;
       align-items: center;
@@ -48,12 +41,10 @@
       color: var(--bg-primary);
     }
   }
-
   .preview-modal__label {
     color: var(--text-secondary);
     font-weight: 500;
   }
-
   .preview-modal__arrow {
     color: var(--text-hint);
   }

@@ -1,4 +1,4 @@
-import { test, expect } from "npm:@playwright/test@1.49";
+import { test, expect } from "@playwright/test";
 
 test.describe("Preset Selection", () => {
   test.beforeEach(async ({ page }) => {
@@ -42,7 +42,7 @@ test.describe("Preset Selection", () => {
 
   test("should update tuning section when preset changes", async ({ page }) => {
     // Get initial state of selected optimizations count
-    const tuningSection = page.locator('[data-testid="tuning-section"], .tuning-section, #tuning');
+    const tuningSection = page.locator('[data-testid="tuning-section"]');
     await tuningSection.scrollIntoViewIfNeeded();
 
     // Click Competitive preset (should select more optimizations)

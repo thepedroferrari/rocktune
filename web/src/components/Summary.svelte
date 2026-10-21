@@ -34,7 +34,7 @@ const presetLabel = $derived(app.activePreset ? (PRESET_META[app.activePreset]?.
   <div id="summary" class="summary">
     {#if presetLabel}
       <div class="item item--preset">
-        <svg
+        <svg aria-hidden="true"
           class="item-icon"
           viewBox="0 0 24 24"
           fill="none"
@@ -49,7 +49,7 @@ const presetLabel = $derived(app.activePreset ? (PRESET_META[app.activePreset]?.
       </div>
     {/if}
     <div class="item item--hardware">
-      <svg
+      <svg aria-hidden="true"
         class="item-icon"
         viewBox="0 0 24 24"
         fill="none"

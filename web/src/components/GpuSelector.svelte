@@ -18,7 +18,7 @@ function handleChange(event: Event & { currentTarget: HTMLInputElement }) {
 <fieldset class="control-fieldset">
   <legend class="control-legend">
     <span class="legend-badge legend-badge--hardware">GPU</span>
-    <svg
+    <svg aria-hidden="true"
       class="legend-icon"
       viewBox="0 0 24 24"
       fill="none"

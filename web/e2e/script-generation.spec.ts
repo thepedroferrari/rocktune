@@ -1,4 +1,4 @@
-import { test, expect } from "npm:@playwright/test@1.49";
+import { test, expect } from "@playwright/test";
 
 test.describe("Script Generation", () => {
   test.beforeEach(async ({ page }) => {
@@ -36,17 +36,17 @@ test.describe("Script Generation", () => {
   test("should update script when optimizations change", async ({ page }) => {
     // Scroll to tuning section
     const tuningSection = page.locator(
-      '[data-testid="tuning-section"], .tuning-section, #tuning, section:has-text("Tuning")'
+      '[data-testid="tuning-section"]'
     );
     await tuningSection.scrollIntoViewIfNeeded();
 
-    // Find a checkbox to toggle
-    const checkbox = page.locator('input[type="checkbox"]').first();
+    // Find an optimization checkbox to toggle (the input is visually hidden; its label is the click target)
+    const checkbox = tuningSection.locator('input[name="opt"]').first();
     if ((await checkbox.count()) > 0) {
       const wasChecked = await checkbox.isChecked();
 
       // Toggle the checkbox
-      await checkbox.click();
+      await tuningSection.locator('label:has(input[name="opt"])').first().click();
 
       // Verify the state changed
       if (wasChecked) {

@@ -1,5 +1,4 @@
 <script lang="ts">
-import { soundSettings } from '$lib/audio/sound-settings.svelte'
 import { copyToClipboard } from '$lib/checksum'
 import {
   type BuildToEncode,
@@ -74,7 +73,6 @@ async function handleCopy(field: CopyField, text: string, toast: string) {
   if (await copyToClipboard(text)) {
     copiedField = field
     showToast(toast, 'success')
-    soundSettings.onCopy()
   }
 }
 
@@ -106,7 +104,7 @@ async function handleWebShare() {
 <Modal {open} {onclose} size="lg" class="share-modal">
   {#snippet header()}
     <h2 class="modal-title share-modal__title">
-      <svg
+      <svg aria-hidden="true"
         class="share-modal__icon"
         viewBox="0 0 24 24"
         fill="none"
@@ -126,7 +124,7 @@ async function handleWebShare() {
   <div class="build-preview">
     <div class="build-preview__hardware">
       <div class="build-preview__chip">
-        <svg
+        <svg aria-hidden="true"
           class="build-preview__chip-icon"
           viewBox="0 0 24 24"
           fill="none"
@@ -140,7 +138,7 @@ async function handleWebShare() {
         {buildSummary.cpu}
       </div>
       <div class="build-preview__chip">
-        <svg
+        <svg aria-hidden="true"
           class="build-preview__chip-icon"
           viewBox="0 0 24 24"
           fill="none"
@@ -160,7 +158,7 @@ async function handleWebShare() {
     </div>
     <div class="build-preview__stats">
       <span class="build-preview__stat">
-        <svg
+        <svg aria-hidden="true"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -173,7 +171,7 @@ async function handleWebShare() {
         {buildSummary.optimizationCount} tweaks
       </span>
       <span class="build-preview__stat">
-        <svg
+        <svg aria-hidden="true"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -200,7 +198,7 @@ async function handleWebShare() {
         aria-controls="share-panel-url"
         onclick={() => (activeTab = "url")}
       >
-        <svg
+        <svg aria-hidden="true"
           class="share-tab__icon"
           viewBox="0 0 24 24"
           fill="none"
@@ -226,7 +224,7 @@ async function handleWebShare() {
         aria-controls="share-panel-oneliner"
         onclick={() => (activeTab = "oneliner")}
       >
-        <svg
+        <svg aria-hidden="true"
           class="share-tab__icon"
           viewBox="0 0 24 24"
           fill="none"
@@ -248,7 +246,7 @@ async function handleWebShare() {
         aria-controls="share-panel-social"
         onclick={() => (activeTab = "social")}
       >
-        <svg
+        <svg aria-hidden="true"
           class="share-tab__icon"
           viewBox="0 0 24 24"
           fill="none"
@@ -298,7 +296,7 @@ async function handleWebShare() {
                 onclick={handleCopyURL}
               >
                 {#if copiedField === 'url'}
-                  <svg
+                  <svg aria-hidden="true"
                     class="icon"
                     viewBox="0 0 24 24"
                     fill="none"
@@ -309,7 +307,7 @@ async function handleWebShare() {
                   </svg>
                   Copied!
                 {:else}
-                  <svg
+                  <svg aria-hidden="true"
                     class="icon"
                     viewBox="0 0 24 24"
                     fill="none"
@@ -328,7 +326,7 @@ async function handleWebShare() {
 
             {#if shareResult.blockedCount > 0}
               <div class="share-panel__security-notice">
-                <svg
+                <svg aria-hidden="true"
                   class="security-icon"
                   viewBox="0 0 24 24"
                   fill="none"
@@ -349,7 +347,7 @@ async function handleWebShare() {
             {/if}
             {#if shareResult.urlTooLong}
               <p class="share-panel__warning">
-                <svg
+                <svg aria-hidden="true"
                   class="warning-icon"
                   viewBox="0 0 24 24"
                   fill="none"
@@ -383,7 +381,7 @@ async function handleWebShare() {
                 class="social-btn social-btn--twitter"
                 aria-label="Share on Twitter"
               >
-                <svg viewBox="0 0 24 24" fill="currentColor">
+                <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor">
                   <path
                     d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"
                   />
@@ -397,7 +395,7 @@ async function handleWebShare() {
                 class="social-btn social-btn--reddit"
                 aria-label="Share on Reddit"
               >
-                <svg viewBox="0 0 24 24" fill="currentColor">
+                <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor">
                   <path
                     d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"
                   />
@@ -411,7 +409,7 @@ async function handleWebShare() {
                 class="social-btn social-btn--linkedin"
                 aria-label="Share on LinkedIn"
               >
-                <svg viewBox="0 0 24 24" fill="currentColor">
+                <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor">
                   <path
                     d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"
                   />
@@ -425,7 +423,7 @@ async function handleWebShare() {
                   onclick={handleWebShare}
                   aria-label="Share via system share"
                 >
-                  <svg
+                  <svg aria-hidden="true"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
@@ -465,7 +463,7 @@ async function handleWebShare() {
                 onclick={handleCopyBenchmark}
               >
                 {#if copiedField === 'benchmark'}
-                  <svg
+                  <svg aria-hidden="true"
                     class="icon"
                     viewBox="0 0 24 24"
                     fill="none"
@@ -476,7 +474,7 @@ async function handleWebShare() {
                   </svg>
                   Copied!
                 {:else}
-                  <svg
+                  <svg aria-hidden="true"
                     class="icon"
                     viewBox="0 0 24 24"
                     fill="none"
@@ -538,7 +536,7 @@ async function handleWebShare() {
                 onclick={handleCopyOneLiner}
               >
                 {#if copiedField === 'oneliner'}
-                  <svg
+                  <svg aria-hidden="true"
                     class="icon"
                     viewBox="0 0 24 24"
                     fill="none"
@@ -549,7 +547,7 @@ async function handleWebShare() {
                   </svg>
                   Copied!
                 {:else}
-                  <svg
+                  <svg aria-hidden="true"
                     class="icon"
                     viewBox="0 0 24 24"
                     fill="none"
@@ -567,7 +565,7 @@ async function handleWebShare() {
             </div>
             {#if oneLinerResult.blockedCount > 0}
               <div class="share-panel__security-notice">
-                <svg
+                <svg aria-hidden="true"
                   class="security-icon"
                   viewBox="0 0 24 24"
                   fill="none"
@@ -587,7 +585,7 @@ async function handleWebShare() {
             {/if}
             {#if oneLinerResult.urlTooLong}
               <p class="share-panel__warning">
-                <svg
+                <svg aria-hidden="true"
                   class="warning-icon"
                   viewBox="0 0 24 24"
                   fill="none"
@@ -632,7 +630,7 @@ async function handleWebShare() {
                 class:active={activePlatform === "discord"}
                 onclick={() => (activePlatform = "discord")}
               >
-                <svg viewBox="0 0 24 24" fill="currentColor">
+                <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor">
                   <path
                     d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"
                   />
@@ -645,7 +643,7 @@ async function handleWebShare() {
                 class:active={activePlatform === "reddit"}
                 onclick={() => (activePlatform = "reddit")}
               >
-                <svg viewBox="0 0 24 24" fill="currentColor">
+                <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor">
                   <path
                     d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"
                   />
@@ -658,7 +656,7 @@ async function handleWebShare() {
                 class:active={activePlatform === "twitter"}
                 onclick={() => (activePlatform = "twitter")}
               >
-                <svg viewBox="0 0 24 24" fill="currentColor">
+                <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor">
                   <path
                     d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"
                   />
@@ -682,7 +680,7 @@ async function handleWebShare() {
                 onclick={handleCopyPlatformText}
               >
                 {#if copiedField === 'platform'}
-                  <svg
+                  <svg aria-hidden="true"
                     class="icon"
                     viewBox="0 0 24 24"
                     fill="none"
@@ -693,7 +691,7 @@ async function handleWebShare() {
                   </svg>
                   Copied!
                 {:else}
-                  <svg
+                  <svg aria-hidden="true"
                     class="icon"
                     viewBox="0 0 24 24"
                     fill="none"
@@ -734,662 +732,627 @@ async function handleWebShare() {
 </Modal>
 
 <style>
-  :global(.share-modal) {
-    --share-surface: oklch(0.12 0.02 250);
-    --share-surface-raised: oklch(0.15 0.02 250);
-    --share-surface-subtle: oklch(0.08 0.02 250);
-    --share-border: oklch(0.22 0.02 250);
-    --share-border-soft: oklch(0.25 0.03 250);
-    --share-border-strong: oklch(0.3 0.05 250);
-    --share-accent: oklch(0.7 0.15 250);
-    --share-accent-soft: oklch(0.7 0.15 250 / 0.12);
-    --share-accent-border: oklch(0.7 0.15 250 / 0.35);
-    --share-ink: oklch(0.1 0.02 250);
+:global(.share-modal) {
+  --share-surface: oklch(0.12 0.02 250);
+  --share-surface-raised: oklch(0.15 0.02 250);
+  --share-surface-subtle: oklch(0.08 0.02 250);
+  --share-border: oklch(0.22 0.02 250);
+  --share-border-soft: oklch(0.25 0.03 250);
+  --share-border-strong: oklch(0.3 0.05 250);
+  --share-accent: oklch(0.7 0.15 250);
+  --share-accent-soft: oklch(0.7 0.15 250 / 0.12);
+  --share-accent-border: oklch(0.7 0.15 250 / 0.35);
+  --share-ink: oklch(0.1 0.02 250);
+  --width: 520px;
+  --bg: var(--share-surface);
+  --border: var(--share-border-strong);
+  --clip: none;
+  border-radius: var(--radius-lg);
+  color: var(--text-primary);
+}
 
-    --width: 520px;
-    --bg: var(--share-surface);
-    --border: var(--share-border-strong);
-    --clip: none;
-    border-radius: var(--radius-lg);
-    box-shadow: 0 20px 40px oklch(0 0 0 / 0.5);
-    color: var(--text-primary);
-  }
+.share-modal__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  text-transform: none;
+  font-weight: 600;
+}
 
-  .share-modal__title {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    text-transform: none;
-    letter-spacing: normal;
-    font-weight: 600;
-  }
+.share-modal__icon {
+  width: 24px;
+  height: 24px;
+  color: var(--share-accent);
+}
 
-  .share-modal__icon {
-    width: 24px;
-    height: 24px;
-    color: var(--share-accent);
-  }
+.share-modal__panel {
+  margin-block-start: var(--space-md);
+  border: 1px solid var(--share-border);
+  border-radius: var(--radius-md);
+  background: var(--share-surface);
+  overflow: hidden;
+}
 
-  .share-modal__panel {
-    margin-block-start: var(--space-md);
-    border: 1px solid var(--share-border);
-    border-radius: var(--radius-md);
-    background: var(--share-surface);
-    overflow: hidden;
-  }
+.share-modal__tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  background: var(--share-surface-raised);
+  border-block-end: 1px solid var(--share-border);
+}
 
-  .share-modal__tabs {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    background: var(--share-surface-raised);
-    border-block-end: 1px solid var(--share-border);
-  }
+.share-tab {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  background: transparent;
+  border: 0;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
 
-  .share-tab {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--space-xs);
-    padding: var(--space-sm) var(--space-md);
-    background: transparent;
-    border: 0;
-    font-size: var(--text-sm);
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    color: var(--text-secondary);
-    cursor: pointer;
-    transition:
-      color 0.15s,
-      background-color 0.15s;
-  }
+.share-tab + .share-tab {
+  border-inline-start: 1px solid var(--share-border);
+}
 
-  .share-tab + .share-tab {
-    border-inline-start: 1px solid var(--share-border);
-  }
+.share-tab::after {
+  content: "";
+  position: absolute;
+  inset-inline: 18%;
+  bottom: 0;
+  height: 2px;
+  background: transparent;
+  opacity: 0;
+}
 
-  .share-tab::after {
-    content: "";
-    position: absolute;
-    inset-inline: 18%;
-    bottom: 0;
-    height: 2px;
-    background: transparent;
-    opacity: 0;
-    transition:
-      background-color 0.15s,
-      opacity 0.15s;
-  }
+.share-tab:hover {
+  color: var(--text-primary);
+  background: color-mix(in oklch, var(--share-accent) 10%, transparent);
+}
 
-  .share-tab:hover {
-    color: var(--text-primary);
-    background: color-mix(in oklch, var(--share-accent) 10%, transparent);
-  }
+.share-tab.active {
+  color: var(--share-accent);
+  background: var(--share-accent-soft);
+}
 
-  .share-tab.active {
-    color: var(--share-accent);
-    background: var(--share-accent-soft);
-  }
+.share-tab.active::after {
+  background: var(--share-accent);
+  opacity: 1;
+}
 
-  .share-tab.active::after {
-    background: var(--share-accent);
-    opacity: 1;
-  }
+.share-tab__icon {
+  width: 16px;
+  height: 16px;
+  opacity: 0.75;
+}
 
-  .share-tab__icon {
-    width: 16px;
-    height: 16px;
-    opacity: 0.75;
-    transition: opacity 0.15s;
-  }
-
-  .share-tab:hover .share-tab__icon,
+.share-tab:hover .share-tab__icon,
   .share-tab.active .share-tab__icon {
-    opacity: 1;
-  }
+  opacity: 1;
+}
 
-  .share-modal__content {
-    padding: var(--space-lg);
-    background: var(--share-surface);
-  }
+.share-modal__content {
+  padding: var(--space-lg);
+  background: var(--share-surface);
+}
 
-  .share-panel {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-lg);
-  }
+.share-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
 
-  .share-panel__section {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-  }
+.share-panel__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
 
-  .share-panel__section--tight {
-    gap: var(--space-xs);
-  }
+.share-panel__section--tight {
+  gap: var(--space-xs);
+}
 
-  .share-panel__section-header {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2xs);
-  }
+.share-panel__section-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+}
 
-  .share-panel__section-title {
-    margin: 0;
-    font-size: var(--text-xs);
-    font-weight: 600;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
+.share-panel__section-title {
+  margin: 0;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--text-muted);
+}
 
-  .share-panel__desc {
-    margin: 0;
-    font-size: var(--text-sm);
-    color: var(--text-secondary);
-  }
+.share-panel__desc {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
 
-  .share-url-box,
+.share-url-box,
   .benchmark-box {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-  }
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
 
-  .share-url-input,
+.share-url-input,
   .benchmark-code,
   .share-oneliner-code,
   .platform-text-preview {
-    background: var(--share-surface-subtle);
-    border: 1px solid var(--share-border-soft);
-    border-radius: var(--radius-sm);
-    font-family: var(--font-mono);
-  }
+  background: var(--share-surface-subtle);
+  border: 1px solid var(--share-border-soft);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+}
 
-  .share-url-input {
-    flex: 1;
-    padding: var(--space-sm) var(--space-md);
-    font-size: var(--text-sm);
-    color: var(--text-primary);
-    cursor: text;
-  }
+.share-url-input {
+  flex: 1;
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  cursor: text;
+}
 
-  .share-url-input:focus {
-    outline: none;
-    border-color: var(--share-accent);
-  }
+.share-url-input:focus {
+  outline: none;
+  border-color: var(--share-accent);
+}
 
-  .share-url-copy,
+.share-url-copy,
   .benchmark-copy,
   .share-oneliner-copy,
   .platform-text-copy {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--space-xs);
-    padding: var(--space-sm) var(--space-md);
-    border-radius: var(--radius-sm);
-    font-size: var(--text-sm);
-    font-weight: 500;
-    cursor: pointer;
-    transition:
-      background-color 0.15s,
-      border-color 0.15s,
-      color 0.15s;
-    white-space: nowrap;
-  }
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+}
 
-  .share-url-copy {
-    background: var(--share-accent);
-    border: none;
-    color: var(--share-ink);
-  }
+.share-url-copy {
+  background: var(--share-accent);
+  border: none;
+  color: var(--share-ink);
+}
 
-  .share-url-copy:hover {
-    background: color-mix(in oklch, var(--share-accent) 85%, white 15%);
-  }
+.share-url-copy:hover {
+  background: color-mix(in oklch, var(--share-accent) 85%, white 15%);
+}
 
-  .share-url-copy.copied {
-    background: var(--safe);
-    color: var(--share-ink);
-  }
+.share-url-copy.copied {
+  background: var(--safe);
+  color: var(--share-ink);
+}
 
-  .share-url-copy .icon {
-    width: 16px;
-    height: 16px;
-  }
+.share-url-copy .icon {
+  width: 16px;
+  height: 16px;
+}
 
-  .share-panel__hint {
-    margin: 0;
-    font-size: var(--text-xs);
-    color: var(--text-muted);
-  }
+.share-panel__hint {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
 
-  .share-panel__warning {
-    display: flex;
-    align-items: center;
-    gap: var(--space-xs);
-    margin: 0;
-    padding: var(--space-xs) var(--space-sm);
-    background: var(--caution-bg);
-    border: 1px solid color-mix(in oklch, var(--caution) 40%, transparent);
-    border-radius: var(--radius-sm);
-    font-size: var(--text-xs);
-    color: var(--caution);
-  }
+.share-panel__warning {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin: 0;
+  padding: var(--space-xs) var(--space-sm);
+  background: var(--caution-bg);
+  border: 1px solid color-mix(in oklch, var(--caution) 40%, transparent);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  color: var(--caution);
+}
 
-  .share-panel__warning .warning-icon {
-    flex-shrink: 0;
-    width: 14px;
-    height: 14px;
-  }
+.share-panel__warning .warning-icon {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+}
 
-  .share-panel__security-notice {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--space-sm);
-    margin: 0;
-    padding: var(--space-sm) var(--space-md);
-    background: var(--safe-bg);
-    border: 1px solid var(--safe-30);
-    border-radius: var(--radius-sm);
-    font-size: var(--text-xs);
-    color: var(--safe);
-    line-height: 1.4;
-  }
+.share-panel__security-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  margin: 0;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--safe-bg);
+  border: 1px solid var(--safe-30);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  color: var(--safe);
+  line-height: 1.4;
+}
 
-  .share-panel__security-notice .security-icon {
-    flex-shrink: 0;
-    width: 16px;
-    height: 16px;
-    margin-block-start: 1px;
-  }
+.share-panel__security-notice .security-icon {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  margin-block-start: 1px;
+}
 
-  .benchmark-code {
-    flex: 1;
-    padding: var(--space-sm) var(--space-md);
-    font-size: var(--text-xs);
-    color: var(--text-secondary);
-    white-space: nowrap;
-    overflow-x: auto;
-  }
+.benchmark-code {
+  flex: 1;
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow-x: auto;
+}
 
-  .benchmark-copy {
-    background: var(--share-surface-raised);
-    border: 1px solid var(--share-border-soft);
-    color: var(--text-secondary);
-  }
+.benchmark-copy {
+  background: var(--share-surface-raised);
+  border: 1px solid var(--share-border-soft);
+  color: var(--text-secondary);
+}
 
-  .benchmark-copy:hover {
-    background: color-mix(
+.benchmark-copy:hover {
+  background: color-mix(
       in oklch,
       var(--share-surface-raised) 75%,
       var(--share-accent) 25%
     );
-    color: var(--text-primary);
-    border-color: var(--share-accent-border);
-  }
+  color: var(--text-primary);
+  border-color: var(--share-accent-border);
+}
 
-  .benchmark-copy.copied {
-    background: var(--safe);
-    border-color: var(--safe);
-    color: var(--share-ink);
-  }
+.benchmark-copy.copied {
+  background: var(--safe);
+  border-color: var(--safe);
+  color: var(--share-ink);
+}
 
-  .benchmark-copy .icon {
-    width: 16px;
-    height: 16px;
-  }
+.benchmark-copy .icon {
+  width: 16px;
+  height: 16px;
+}
 
-  .section-divider {
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
-    margin: 0;
-    color: var(--text-muted);
-    font-size: var(--text-xs);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
+.section-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
 
-  .section-divider::before,
+.section-divider::before,
   .section-divider::after {
-    content: "";
-    flex: 1;
-    height: 1px;
-    background: var(--share-border);
-  }
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--share-border);
+}
 
-  .share-oneliner-instructions {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-xs);
-    padding: var(--space-sm) var(--space-md);
-    background: var(--share-surface-raised);
-    border-radius: var(--radius-sm);
-  }
+.share-oneliner-instructions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--share-surface-raised);
+  border-radius: var(--radius-sm);
+}
 
-  .instruction-step {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    font-size: var(--text-sm);
-    color: var(--text-secondary);
-  }
+.instruction-step {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
 
-  .step-number {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    height: 20px;
-    background: var(--safe-10);
-    border-radius: 50%;
-    font-size: var(--text-xs);
-    font-weight: 600;
-    color: var(--safe);
-  }
+.step-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background: var(--safe-10);
+  border-radius: 50%;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--safe);
+}
 
-  .instruction-step kbd {
-    display: inline-block;
-    padding: 2px 6px;
-    background: var(--share-surface-raised);
-    border: 1px solid var(--share-border);
-    border-radius: 4px;
-    font-family: var(--font-mono);
-    font-size: var(--text-xs);
-    color: var(--text-primary);
-  }
+.instruction-step kbd {
+  display: inline-block;
+  padding: 2px 6px;
+  background: var(--share-surface-raised);
+  border: 1px solid var(--share-border);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-primary);
+}
 
-  .instruction-note {
-    margin-block-start: var(--space-xs);
-    padding-inline-start: calc(20px + var(--space-sm));
-    font-size: var(--text-xs);
-    color: var(--text-muted);
-    font-style: italic;
-  }
+.instruction-note {
+  margin-block-start: var(--space-xs);
+  padding-inline-start: calc(20px + var(--space-sm));
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  font-style: italic;
+}
 
-  .instruction-note--safe {
-    color: var(--safe);
-    font-style: normal;
-    font-weight: 500;
-  }
+.instruction-note--safe {
+  color: var(--safe);
+  font-style: normal;
+  font-weight: 500;
+}
 
-  .share-oneliner-box {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-  }
+.share-oneliner-box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
 
-  .share-oneliner-code {
-    padding: var(--space-md);
-    margin: 0;
-    font-size: var(--text-xs);
-    color: var(--safe);
-    white-space: pre-wrap;
-    word-break: break-all;
-    max-height: 120px;
-    overflow-y: auto;
-  }
+.share-oneliner-code {
+  padding: var(--space-md);
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--safe);
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 120px;
+  overflow-y: auto;
+}
 
-  .share-oneliner-copy {
-    border: none;
-    background: var(--safe);
-    color: var(--share-ink);
-  }
+.share-oneliner-copy {
+  border: none;
+  background: var(--safe);
+  color: var(--share-ink);
+}
 
-  .share-oneliner-copy:hover {
-    background: color-mix(in oklch, var(--safe) 85%, white 15%);
-  }
+.share-oneliner-copy:hover {
+  background: color-mix(in oklch, var(--safe) 85%, white 15%);
+}
 
-  .share-oneliner-copy.copied {
-    background: var(--safe);
-  }
+.share-oneliner-copy.copied {
+  background: var(--safe);
+}
 
-  .share-oneliner-copy .icon {
-    width: 16px;
-    height: 16px;
-  }
+.share-oneliner-copy .icon {
+  width: 16px;
+  height: 16px;
+}
 
-  :global(.share-modal .modal-footer) {
-    justify-content: center;
-  }
+:global(.share-modal .modal-footer) {
+  justify-content: center;
+}
 
-  .share-modal__stats {
-    margin: 0;
-    font-size: var(--text-xs);
-    color: var(--text-muted);
-  }
+.share-modal__stats {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
 
-  /* Build Preview Card */
-  .build-preview {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-    padding: var(--space-md) var(--space-lg);
-    background: var(--share-surface-subtle);
-    border-block-end: 1px solid var(--share-border);
-  }
+.build-preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-lg);
+  background: var(--share-surface-subtle);
+  border-block-end: 1px solid var(--share-border);
+}
 
-  .build-preview__hardware {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-xs);
-  }
+.build-preview__hardware {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
 
-  .build-preview__chip {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2xs);
-    padding: var(--space-2xs) var(--space-sm);
-    background: var(--share-surface-raised);
-    border: 1px solid var(--share-border-soft);
-    border-radius: var(--radius-sm);
-    font-size: var(--text-xs);
-    font-weight: 500;
-    color: var(--text-secondary);
-  }
+.build-preview__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  padding: var(--space-2xs) var(--space-sm);
+  background: var(--share-surface-raised);
+  border: 1px solid var(--share-border-soft);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--text-secondary);
+}
 
-  .build-preview__chip--preset {
-    background: var(--share-accent-soft);
-    border-color: var(--share-accent-border);
-    color: var(--share-accent);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
+.build-preview__chip--preset {
+  background: var(--share-accent-soft);
+  border-color: var(--share-accent-border);
+  color: var(--share-accent);
+}
 
-  .build-preview__chip-icon {
-    width: 14px;
-    height: 14px;
-    opacity: 0.7;
-  }
+.build-preview__chip-icon {
+  width: 14px;
+  height: 14px;
+  opacity: 0.7;
+}
 
-  .build-preview__stats {
-    display: flex;
-    gap: var(--space-md);
-  }
+.build-preview__stats {
+  display: flex;
+  gap: var(--space-md);
+}
 
-  .build-preview__stat {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2xs);
-    font-size: var(--text-xs);
-    color: var(--text-muted);
-  }
+.build-preview__stat {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
 
-  .build-preview__stat svg {
-    width: 14px;
-    height: 14px;
-    opacity: 0.6;
-  }
+.build-preview__stat svg {
+  width: 14px;
+  height: 14px;
+  opacity: 0.6;
+}
 
-  /* Social Share Buttons */
-  .social-buttons {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: var(--space-xs);
-  }
+.social-buttons {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--space-xs);
+}
 
-  .social-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--space-xs);
-    padding: var(--space-sm) var(--space-md);
-    background: var(--share-surface-raised);
-    border: 1px solid var(--share-border-soft);
-    border-radius: var(--radius-sm);
-    font-size: var(--text-sm);
-    font-weight: 500;
-    color: var(--text-secondary);
-    text-decoration: none;
-    cursor: pointer;
-    transition:
-      background-color 0.15s,
-      border-color 0.15s,
-      color 0.15s;
-  }
+.social-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--share-surface-raised);
+  border: 1px solid var(--share-border-soft);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-decoration: none;
+  cursor: pointer;
+}
 
-  .social-btn:hover {
-    background: color-mix(
+.social-btn:hover {
+  background: color-mix(
       in oklch,
       var(--share-surface-raised) 75%,
       var(--share-accent) 25%
     );
-    border-color: var(--share-border-strong);
-    color: var(--text-primary);
-  }
+  border-color: var(--share-border-strong);
+  color: var(--text-primary);
+}
 
-  .social-btn svg {
-    width: 18px;
-    height: 18px;
-  }
+.social-btn svg {
+  width: 18px;
+  height: 18px;
+}
 
-  .social-btn--twitter:hover {
-    background: oklch(0.2 0.02 0);
-    border-color: oklch(0.35 0.02 0);
-    color: oklch(0.95 0 0);
-  }
+.social-btn--twitter:hover {
+  background: oklch(0.2 0.02 0);
+  border-color: oklch(0.35 0.02 0);
+  color: oklch(0.95 0 0);
+}
 
-  .social-btn--reddit:hover {
-    background: oklch(0.35 0.15 30 / 0.2);
-    border-color: oklch(0.6 0.2 30);
-    color: oklch(0.7 0.18 30);
-  }
+.social-btn--reddit:hover {
+  background: oklch(0.35 0.15 30 / 0.2);
+  border-color: oklch(0.6 0.2 30);
+  color: oklch(0.7 0.18 30);
+}
 
-  .social-btn--linkedin:hover {
-    background: oklch(0.45 0.12 240 / 0.2);
-    border-color: oklch(0.55 0.15 240);
-    color: oklch(0.65 0.12 240);
-  }
+.social-btn--linkedin:hover {
+  background: oklch(0.45 0.12 240 / 0.2);
+  border-color: oklch(0.55 0.15 240);
+  color: oklch(0.65 0.12 240);
+}
 
-  .social-btn--share:hover {
-    background: var(--safe-10);
-    border-color: var(--safe);
-    color: var(--safe);
-  }
+.social-btn--share:hover {
+  background: var(--safe-10);
+  border-color: var(--safe);
+  color: var(--safe);
+}
 
-  /* Platform Selector */
-  .platform-selector {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 1px;
-    padding: 1px;
-    background: var(--share-border);
-    border-radius: var(--radius-sm);
-    overflow: hidden;
-  }
+.platform-selector {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  padding: 1px;
+  background: var(--share-border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
 
-  .platform-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--space-xs);
-    padding: var(--space-xs) var(--space-sm);
-    background: var(--share-surface-raised);
-    border: 0;
-    font-size: var(--text-sm);
-    color: var(--text-muted);
-    cursor: pointer;
-    transition:
-      background-color 0.15s,
-      color 0.15s;
-  }
+.platform-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  background: var(--share-surface-raised);
+  border: 0;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+}
 
-  .platform-btn:hover {
-    background: color-mix(in oklch, var(--share-accent) 8%, transparent);
-    color: var(--text-secondary);
-  }
+.platform-btn:hover {
+  background: color-mix(in oklch, var(--share-accent) 8%, transparent);
+  color: var(--text-secondary);
+}
 
-  .platform-btn.active {
-    background: var(--share-accent-soft);
-    color: var(--share-accent);
-  }
+.platform-btn.active {
+  background: var(--share-accent-soft);
+  color: var(--share-accent);
+}
 
-  .platform-btn svg {
-    width: 16px;
-    height: 16px;
-  }
+.platform-btn svg {
+  width: 16px;
+  height: 16px;
+}
 
-  /* Platform Text Box */
-  .platform-text-box {
-    display: flex;
+.platform-text-box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  position: relative;
+}
+
+.platform-text-preview {
+  padding: var(--space-md);
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  white-space: pre-wrap;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.platform-text-copy {
+  width: 100%;
+  border: none;
+  background: var(--share-accent);
+  color: var(--share-ink);
+}
+
+.platform-text-copy:hover {
+  background: color-mix(in oklch, var(--share-accent) 85%, white 15%);
+}
+
+.platform-text-copy.copied {
+  background: var(--safe);
+  color: var(--share-ink);
+}
+
+.platform-text-copy .icon {
+  width: 16px;
+  height: 16px;
+}
+
+@media (max-width: 640px) {
+  :global(.share-modal) {
+    --width: 100%;
+    inset-block-start: auto;
+    inset-block-end: 0;
+    transform: translateX(-50%);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  }
+  .share-url-box {
     flex-direction: column;
-    gap: var(--space-sm);
-    position: relative;
   }
-
-  .platform-text-preview {
-    padding: var(--space-md);
-    margin: 0;
-    font-size: var(--text-xs);
-    color: var(--text-secondary);
-    white-space: pre-wrap;
-    max-height: 200px;
-    overflow-y: auto;
+  .social-buttons {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-
-  .platform-text-copy {
-    width: 100%;
-    border: none;
-    background: var(--share-accent);
-    color: var(--share-ink);
+  .platform-selector {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-
-  .platform-text-copy:hover {
-    background: color-mix(in oklch, var(--share-accent) 85%, white 15%);
-  }
-
-  .platform-text-copy.copied {
-    background: var(--safe);
-    color: var(--share-ink);
-  }
-
-  .platform-text-copy .icon {
-    width: 16px;
-    height: 16px;
-  }
-
-  @media (max-width: 640px) {
-    :global(.share-modal) {
-      --width: 100%;
-      inset-block-start: auto;
-      inset-block-end: 0;
-      transform: translateX(-50%);
-      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-    }
-
-    .share-url-box {
-      flex-direction: column;
-    }
-
-    .social-buttons {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .platform-selector {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-  }
+}
 </style>

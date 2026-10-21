@@ -4,57 +4,43 @@
     inline-size: var(--_icon-size, 20px);
     block-size: var(--_icon-size, 20px);
     flex-shrink: 0;
-    transition: color var(--duration-fast, 150ms) ease;
-
     & use {
       color: inherit;
     }
   }
-
   .icon--xs {
     --_icon-size: 12px;
   }
-
   .icon--sm {
     --_icon-size: 16px;
   }
-
   .icon--md {
     --_icon-size: 20px;
   }
-
   .icon--lg {
     --_icon-size: 24px;
   }
-
   .icon--xl {
     --_icon-size: 32px;
   }
-
   .icon--default {
     color: var(--text-secondary);
   }
-
   .icon--accent {
     color: var(--accent);
   }
-
   .icon--success {
     color: var(--safe);
   }
-
   .icon--warning {
     color: var(--caution);
   }
-
   .icon--danger {
     color: var(--risky);
   }
-
   .icon--muted {
     color: var(--text-hint);
   }
-
   .icon--inherit {
     color: inherit;
   }

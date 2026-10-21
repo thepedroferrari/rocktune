@@ -1,5 +1,4 @@
 <script lang="ts">
-import { soundSettings } from '$lib/audio/sound-settings.svelte'
 import type { PresetConfig } from '$lib/presets'
 import {
   app,
@@ -35,7 +34,6 @@ function getDefaultSelection(): PackageKey[] {
 }
 
 function handlePresetSelect(preset: PresetType, config: PresetConfig) {
-  soundSettings.onPreset()
 
   if (app.activePreset === preset) {
     setActivePreset(null)
@@ -57,7 +55,7 @@ function handlePresetSelect(preset: PresetType, config: PresetConfig) {
 {#if activePreset}
   <div id="preset-actions" class="preset-actions">
     <a href="#generate" class="cyber-btn cyber-btn--primary">
-      <svg
+      <svg aria-hidden="true"
         class="btn-icon"
         viewBox="0 0 24 24"
         fill="none"
@@ -71,7 +69,7 @@ function handlePresetSelect(preset: PresetType, config: PresetConfig) {
       Forge Script
     </a>
     <a href="#hardware" class="cyber-btn cyber-btn--secondary">
-      <svg
+      <svg aria-hidden="true"
         class="btn-icon"
         viewBox="0 0 24 24"
         fill="none"

@@ -9,6 +9,7 @@ const publicDir = join(repoRoot, 'web', 'public')
 const HOSTED_SCRIPTS = [
   { source: 'benchmark-setup.ps1', target: 'benchmark.ps1' },
   { source: 'rig-check.ps1', target: 'check.ps1' },
+  { source: 'play-snapshot.ps1', target: 'snapshot.ps1' },
 ] as const
 
 await Deno.mkdir(publicDir, { recursive: true })

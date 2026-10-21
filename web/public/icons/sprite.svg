@@ -45,10 +45,23 @@
   
   <path d="M38 6 L40 10 L38 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.7"/>
   </symbol>
+  <symbol id="autoruns" viewBox="0 0 48 48">
+    <rect x="8" y="8" width="32" height="32" rx="3" stroke="currentColor" stroke-width="2.5"/>
+  <path d="M14 17 L17 20 L22 14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M26 17 L34 17" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+  <rect x="14" y="27" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2" opacity="0.6"/>
+  <path d="M26 31 L34 31" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" opacity="0.6"/>
+  </symbol>
   <symbol id="bcuninstaller" viewBox="0 0 24 24">
     <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM8 9h8v10H8V9z"/>
   <path d="M15.5 4l-1-1h-5l-1 1H5v2h14V4h-3.5z"/>
   <path d="M10 11v6M14 11v6" stroke="currentColor" stroke-width="1.5"/>
+  </symbol>
+  <symbol id="btop4win" viewBox="0 0 48 48">
+    <rect x="5" y="8" width="38" height="32" rx="3" stroke="currentColor" stroke-width="2.5"/>
+  <path d="M11 16 L16 20 L11 24" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M20 24 L27 24" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M12 34 L12 31 M17 34 L17 29 M22 34 L22 32 M27 34 L27 28 M32 34 L32 30 M37 34 L37 27" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
   </symbol>
   <symbol id="bulk-rename" viewBox="0 0 48 48">
     <rect x="8" y="12" width="20" height="28" rx="2" stroke="currentColor" stroke-width="2.5" fill="none"/>
@@ -427,6 +440,11 @@
 
   <path d="M19 14 L19 22 L25 18 Z" fill="white" opacity="1"/>
   </symbol>
+  <symbol id="portmaster" viewBox="0 0 48 48">
+    <path d="M24 5 L39 11 L39 23 C39 32 32 39 24 43 C16 39 9 32 9 23 L9 11 Z" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/>
+  <circle cx="24" cy="23" r="7" stroke="currentColor" stroke-width="2"/>
+  <path d="M24 16 L24 30 M17 23 L31 23" stroke="currentColor" stroke-width="2" opacity="0.6"/>
+  </symbol>
   <symbol id="powershell" viewBox="0 0 48 48">
     <path d="M10 8h32l-6 32H4z" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" fill="none"/>
   <path d="M15 17l9 7-12 8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
@@ -434,6 +452,11 @@
   </symbol>
   <symbol id="powertoys" viewBox="0 0 20 20">
     <path d="M10 19H20V10H10V19ZM0 19H9V10H0V19ZM10 9H20V0H10V9ZM0 9H9V0H0V9Z"/>
+  </symbol>
+  <symbol id="presentmon" viewBox="0 0 48 48">
+    <rect x="6" y="8" width="36" height="26" rx="3" stroke="currentColor" stroke-width="2.5"/>
+  <path d="M18 40 L30 40 M24 34 L24 40" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M12 28 L12 22 M17 28 L17 18 M22 28 L22 24 M27 28 L27 14 M32 28 L32 20 M37 28 L37 23" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
   </symbol>
   <symbol id="prism" viewBox="0 0 48 48">
     <path d="M8 34 L24 8 L40 34 Z" fill="currentColor" opacity="0.2" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/>
@@ -472,6 +495,11 @@
   <path d="M42 12 Q50 24 42 36" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round"/>
   <circle cx="24" cy="24" r="4" fill="currentColor"/>
   </symbol>
+  <symbol id="simplewall" viewBox="0 0 48 48">
+    <rect x="6" y="10" width="36" height="28" rx="2" stroke="currentColor" stroke-width="2.5"/>
+  <path d="M6 19.3 L42 19.3 M6 28.6 L42 28.6" stroke="currentColor" stroke-width="2"/>
+  <path d="M18 10 L18 19.3 M30 10 L30 19.3 M12 19.3 L12 28.6 M24 19.3 L24 28.6 M36 19.3 L36 28.6 M18 28.6 L18 38 M30 28.6 L30 38" stroke="currentColor" stroke-width="2" opacity="0.6"/>
+  </symbol>
   <symbol id="steamlink" viewBox="0 0 192 192">
     <path stroke="currentColor" stroke-linejoin="round" stroke-width="12" d="M132.467 42H59.155c-10.262 0-19.786 6.074-23.5 15.985-3.139 8.374-7.165 20.181-10.025 32.408-2.824 12.071-4.68 25.221-2.977 36.004 1.276 8.082 7.519 13.349 12.866 16.529 5.543 3.296 11.594 5.237 15.012 6.176 5.005 1.375 9.714-1.817 10.875-6.402l6.713-26.513a3 3 0 0 1 2.908-2.264h50.445a3 3 0 0 1 2.912 2.277l6.554 26.412c1.159 4.669 5.986 7.882 11.036 6.397 3.367-.99 9.227-2.991 14.582-6.302 5.175-3.199 11.168-8.429 12.412-16.31 1.703-10.783-.152-23.932-2.977-36.004-2.86-12.227-6.886-24.034-10.024-32.408C152.252 48.074 142.728 42 132.467 42Z"/>
   <path fill="currentColor" d="M66.5 95C77.822 95 87 85.822 87 74.5S77.822 54 66.5 54 46 63.178 46 74.5 55.178 95 66.5 95Zm59 0c11.322 0 20.5-9.178 20.5-20.5S136.822 54 125.5 54 105 63.178 105 74.5 114.178 95 125.5 95Z"/>
@@ -490,6 +518,13 @@
   <circle cx="17" cy="7" r="2"/>
   <circle cx="7" cy="17" r="2"/>
   <circle cx="17" cy="17" r="2"/>
+  </symbol>
+  <symbol id="systeminformer" viewBox="0 0 48 48">
+    <rect x="6" y="8" width="36" height="32" rx="3" stroke="currentColor" stroke-width="2.5"/>
+  <path d="M6 16 L42 16" stroke="currentColor" stroke-width="2"/>
+  <path d="M11 32 L17 24 L23 28 L29 20 L37 26" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="10.5" cy="12" r="1.5" fill="currentColor"/>
+  <circle cx="15.5" cy="12" r="1.5" fill="currentColor" opacity="0.5"/>
   </symbol>
   <symbol id="torbrowser" viewBox="0 0 24 24">
     <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>

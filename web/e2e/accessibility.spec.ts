@@ -1,5 +1,5 @@
-import { test, expect } from "npm:@playwright/test@1.49";
-import AxeBuilder from "npm:@axe-core/playwright@4.10";
+import { test, expect } from "@playwright/test";
+import AxeBuilder from "@axe-core/playwright";
 
 test.describe("Accessibility (WCAG 2.1 AA)", () => {
   test.beforeEach(async ({ page }) => {
@@ -78,7 +78,7 @@ test.describe("Accessibility (WCAG 2.1 AA)", () => {
   test("should have accessible form controls", async ({ page }) => {
     // Scroll to tuning section
     const tuningSection = page.locator(
-      '[data-testid="tuning-section"], .tuning-section, #tuning, section:has-text("Tuning")'
+      '[data-testid="tuning-section"]'
     );
 
     if ((await tuningSection.count()) > 0) {
@@ -86,7 +86,7 @@ test.describe("Accessibility (WCAG 2.1 AA)", () => {
 
       // Run axe on tuning section specifically
       const formResults = await new AxeBuilder({ page })
-        .include("#tuning, .tuning-section")
+        .include('[data-testid="tuning-section"]')
         .withTags(["wcag2a", "wcag2aa"])
         .analyze();
 

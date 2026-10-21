@@ -164,7 +164,7 @@ function handleBeforeToggle(key: OptimizationKey, isCurrentlyChecked: boolean): 
 }
 </script>
 
-<section id="optimizations" class="step">
+<section id="optimizations" class="step" data-testid="tuning-section">
   <header class="step-banner">
     <div class="step-banner__marker">5</div>
     <div class="step-banner__content">
@@ -215,7 +215,7 @@ function handleBeforeToggle(key: OptimizationKey, isCurrentlyChecked: boolean): 
             onchange={handleWizardToggle}
           />
           <label for="wizard-mode" class="cyber-toggle-label">
-            <svg
+            <svg aria-hidden="true"
               class="cyber-toggle-svg"
               height="28"
               width="64"
@@ -300,7 +300,7 @@ function handleBeforeToggle(key: OptimizationKey, isCurrentlyChecked: boolean): 
       <article class="ludicrous-placard-v2">
         <header class="placard-header-grid">
           <div class="placard-header-left">
-            <svg
+            <svg aria-hidden="true"
               class="placard-skull-icon"
               viewBox="0 0 64 64"
               fill="none"
@@ -421,7 +421,7 @@ function handleBeforeToggle(key: OptimizationKey, isCurrentlyChecked: boolean): 
             class="ludicrous-unlock-btn"
             onclick={openLudicrousModal}
           >
-            <svg
+            <svg aria-hidden="true"
               class="unlock-icon"
               viewBox="0 0 24 24"
               width="32"
@@ -446,7 +446,7 @@ function handleBeforeToggle(key: OptimizationKey, isCurrentlyChecked: boolean): 
     aria-labelledby="ludicrous-dialog-title"
   >
     <header class="modal-header">
-      <svg class="modal-icon" viewBox="0 0 24 24" fill="currentColor">
+      <svg aria-hidden="true" class="modal-icon" viewBox="0 0 24 24" fill="currentColor">
         <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" />
       </svg>
       <h3 id="ludicrous-dialog-title" class="modal-title">
@@ -555,7 +555,7 @@ function handleBeforeToggle(key: OptimizationKey, isCurrentlyChecked: boolean): 
     aria-labelledby="restore-point-dialog-title"
   >
     <header class="modal-header">
-      <svg class="modal-icon" viewBox="0 0 24 24" fill="currentColor">
+      <svg aria-hidden="true" class="modal-icon" viewBox="0 0 24 24" fill="currentColor">
         <path
           d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
         />
@@ -605,7 +605,7 @@ function handleBeforeToggle(key: OptimizationKey, isCurrentlyChecked: boolean): 
     aria-labelledby="breaking-changes-dialog-title"
   >
     <header class="modal-header">
-      <svg class="modal-icon" viewBox="0 0 24 24" fill="currentColor">
+      <svg aria-hidden="true" class="modal-icon" viewBox="0 0 24 24" fill="currentColor">
         <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" />
       </svg>
       <h3
@@ -659,32 +659,29 @@ function handleBeforeToggle(key: OptimizationKey, isCurrentlyChecked: boolean): 
 </section>
 
 <style>
-  .tier-guide-btn {
-    all: unset;
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-xs);
-    padding-block: var(--space-xs);
-    margin-inline-start: var(--space-md);
-    font-size: var(--text-xs);
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    color: oklch(0.2 0.01 85);
-    text-decoration: underline;
-    text-decoration-color: oklch(0.2 0.01 85 / 0.4);
-    text-underline-offset: 3px;
-    cursor: pointer;
-    transition: var(--transition-fast);
-    transition-property: color, text-decoration-color;
-    vertical-align: middle;
-  }
+.tier-guide-btn {
+  all: unset;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding-block: var(--space-xs);
+  margin-inline-start: var(--space-md);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in oklch, var(--text-secondary) 40%, transparent);
+  text-underline-offset: 3px;
+  cursor: pointer;
+  vertical-align: middle;
+}
 
-  .tier-guide-btn:hover {
-    color: oklch(0.1 0.01 85);
-    text-decoration-color: oklch(0.1 0.01 85 / 0.8);
-  }
+.tier-guide-btn:hover {
+  color: var(--text-primary);
+  text-decoration-color: color-mix(in oklch, var(--text-primary) 80%, transparent);
+}
 
-  .tier-guide-btn svg {
-    flex-shrink: 0;
-  }
+.tier-guide-btn svg {
+  flex-shrink: 0;
+}
 </style>

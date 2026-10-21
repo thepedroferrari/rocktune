@@ -9,9 +9,6 @@
   "project": ["src/**/*.{ts,svelte}", "scripts/**/*.ts"],
   "ignore": [
     "src/**/*.test.ts",
-    "src/**/*.spec.ts",
-    "src/components/konami/**",
-    "src/lib/konami/**",
     "src/lib/preflight.ts"
   ]
 }

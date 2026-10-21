@@ -6,7 +6,6 @@
  * All sections rendered from here - no HTML fallbacks.
  */
 
-import { soundSettings } from '$lib/audio/sound-settings.svelte'
 import { getDefaultOptimizations } from '$lib/optimizations'
 import { getRecommendedPreset } from '$lib/presets'
 import { LOAD_DEFERRED_EVENT, scrollToSection } from '$lib/scroll'
@@ -48,8 +47,6 @@ const LUDICROUS_KEYS = [
   OPTIMIZATION_KEYS.DEP_OFF,
 ] as const
 
-import { KonamiDetector } from '$lib/konami/konami-detector'
-import { activateKonami, deactivateKonami, getKonamiState } from '$lib/konami/konami-state.svelte'
 import { closeShareModal } from '$lib/state.svelte'
 import { showToast } from '$lib/toast.svelte'
 import CleanFirstSection from './components/CleanFirstSection.svelte'
@@ -383,32 +380,15 @@ function tryLoadFromShareURL(): void {
     } else {
       showToast(`Build loaded! ${summary} applied.`, 'success')
     }
-    soundSettings.onSuccess()
   } else {
     showToast(result.error, 'error', 6000)
     clearShareHash()
   }
 }
 
-const konamiState = getKonamiState()
-
 onMount(() => {
   tryLoadFromShareURL()
   void hydrateCatalog()
-
-  // Konami Code easter egg
-  const detector = new KonamiDetector()
-  detector.start()
-
-  const unsubscribe = detector.onActivate(() => {
-    activateKonami()
-    showToast('🎮 Konami Code activated! Prepare for blast-off...', 'success', 2000)
-  })
-
-  return () => {
-    detector.stop()
-    unsubscribe()
-  }
 })
 </script>
 
@@ -447,47 +427,16 @@ onMount(() => {
 
   <div class="step-container step-container--flexible">
     <section id="quick-start" class="step step--loadouts">
-      <div class="loadouts-header">
-        <div
-          class="loadouts-accent loadouts-accent--left"
-          aria-hidden="true"
-        ></div>
-        <div class="loadouts-title-wrap">
-          <p class="loadouts-step">Step 2</p>
-          <h2 class="loadouts-title">Pick your loadout</h2>
-          <p class="loadouts-subtitle">
-            One click sets every step below. Change anything after.
-          </p>
+      <header class="step-banner">
+        <div class="step-banner__marker">2</div>
+        <div class="step-banner__content">
+          <h2 class="step-banner__title">Pick your loadout</h2>
+          <p class="step-banner__subtitle">One click sets every step below. Change anything after.</p>
         </div>
-        <div
-          class="loadouts-accent loadouts-accent--right"
-          aria-hidden="true"
-        ></div>
-      </div>
+      </header>
       <PresetSection />
     </section>
 
-    <nav class="wizard-nav" aria-label="Continue to Rig">
-      <a
-        href="#hardware"
-        class="wizard-next-btn"
-        onclick={async (e) => {
-          e.preventDefault();
-          await scrollToSection({ sectionId: "hardware" });
-        }}
-      >
-        <span class="wizard-next-text">Next: Your Rig</span>
-        <svg
-          class="wizard-next-icon"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-        >
-          <polyline points="6 9 12 15 18 9" />
-        </svg>
-      </a>
-    </nav>
   </div>
 
   <div class="step-container step-container--flexible">
@@ -549,7 +498,7 @@ onMount(() => {
               onclick={() => handleViewToggle(VIEW_MODES.GRID)}
               aria-label="Grid view"
             >
-              <svg
+              <svg aria-hidden="true"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -568,7 +517,7 @@ onMount(() => {
               onclick={() => handleViewToggle(VIEW_MODES.LIST)}
               aria-label="List view"
             >
-              <svg
+              <svg aria-hidden="true"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -650,27 +599,22 @@ onMount(() => {
 
 <Toast />
 
-{#if konamiState.active}
-  {#await import("./components/konami/KonamiEffect.svelte") then { default: KonamiEffect }}
-    <KonamiEffect onexit={deactivateKonami} />
-  {/await}
-{/if}
+
 
 <style>
-  .skip-link {
-    position: absolute;
-    inset-block-start: -100%;
-    inset-inline-start: 0;
-    padding: var(--space-sm) var(--space-md);
-    background: var(--accent);
-    color: var(--bg);
-    font-weight: 600;
-    text-decoration: none;
-    z-index: 9999;
-    transition: inset-block-start 0.2s ease;
-  }
+.skip-link {
+  position: absolute;
+  inset-block-start: -100%;
+  inset-inline-start: 0;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--accent);
+  color: var(--bg);
+  font-weight: 600;
+  text-decoration: none;
+  z-index: 9999;
+}
 
-  .skip-link:focus {
-    inset-block-start: 0;
-  }
+.skip-link:focus {
+  inset-block-start: 0;
+}
 </style>

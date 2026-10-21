@@ -1,4 +1,4 @@
-import { test, expect } from "npm:@playwright/test@1.49";
+import { test, expect } from "@playwright/test";
 
 test.describe("Clean Windows first", () => {
   test.beforeEach(async ({ page }) => {

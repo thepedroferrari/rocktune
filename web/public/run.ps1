@@ -319,6 +319,15 @@ function Set-Reg {
     if ($PassThru) { return $success }
 }
 
+function Test-DefenderActive {
+    # Get-MpPreference still answers when another antivirus has put Defender in
+    # passive mode, so ask Get-MpComputerStatus whether Defender is the active antivirus.
+    try {
+        $st = Get-MpComputerStatus -EA Stop
+        return [bool]($st.AntivirusEnabled -and (-not $st.AMRunningMode -or $st.AMRunningMode -eq 'Normal'))
+    } catch { return $false }
+}
+
 function Set-DxGlobalSetting {
     # DirectXUserGlobalSettings holds several "Name=Value;" pairs: merge one in, keep the rest
     param([string]$Name, [string]$Value)
@@ -1066,22 +1075,23 @@ $OPT_FUNCTIONS = @{
         else { Write-Fail "VRR for older games could not be written" }
     }
     '123' = { # defender_scan_idle
+        if (-not (Test-DefenderActive)) { Write-Host "  [SKIP] Defender scan settings (Defender is not the active antivirus)" -ForegroundColor DarkGray; return }
         try {
-            $null = Get-MpPreference -EA Stop
             Set-MpPreference -ScanOnlyIfIdleEnabled $true -ScanAvgCPULoadFactor 20 -EnableLowCpuPriority $true -EA Stop
             Write-OK "Defender scans: idle only, low CPU priority, 20% CPU cap"
         } catch { Write-Warn "Defender scan settings unchanged: $($_.Exception.Message)" }
     }
     '124' = { # active_hours_gaming
         $wuPol = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate"
-        Set-Reg $wuPol "SetActiveHours" 1
-        Set-Reg $wuPol "ActiveHoursStart" 10
-        Set-Reg $wuPol "ActiveHoursEnd" 4
-        Write-OK "Update active hours set to 10:00-04:00"
+        $ahOk = (Set-Reg $wuPol "SetActiveHours" 1 -PassThru)
+        $ahOk = (Set-Reg $wuPol "ActiveHoursStart" 10 -PassThru) -and $ahOk
+        $ahOk = (Set-Reg $wuPol "ActiveHoursEnd" 4 -PassThru) -and $ahOk
+        if ($ahOk) { Write-OK "Update active hours set to 10:00-04:00" }
+        else { Write-Fail "Update active hours could not be written" }
     }
     '125' = { # defender_game_exclusions
         $mp = $null
-        try { $mp = Get-MpPreference -EA Stop } catch { $mp = $null }
+        if (Test-DefenderActive) { try { $mp = Get-MpPreference -EA Stop } catch { $mp = $null } }
         if (-not $mp) { Write-Host "  [SKIP] Defender exclusions (Defender is not the active antivirus)" -ForegroundColor DarkGray; return }
         $dirs = New-Object System.Collections.Generic.List[string]
         $steamPath = (Get-ItemProperty "HKCU:\Software\Valve\Steam" -Name "SteamPath" -EA SilentlyContinue).SteamPath
@@ -1099,10 +1109,11 @@ $OPT_FUNCTIONS = @{
         $added = 0
         foreach ($dir in ($dirs | Select-Object -Unique)) {
             if ((Test-Path -LiteralPath $dir) -and ($existing -notcontains $dir)) {
-                try { Add-MpPreference -ExclusionPath $dir -EA Stop; $added++ } catch { }
+                try { Add-MpPreference -ExclusionPath $dir -EA Stop; $added++ } catch { Write-Warn "Could not exclude $dir : $($_.Exception.Message)" }
             }
         }
-        Write-OK "Defender skips $added game library folder(s)"
+        if ($added -gt 0) { Write-OK "Defender skips $added game library folder(s)" }
+        else { Write-Host "  [SKIP] No new game library folders to exclude" -ForegroundColor DarkGray }
     }
 
     # NOTE: LUDICROUS tier (100-103) intentionally NOT included for security
