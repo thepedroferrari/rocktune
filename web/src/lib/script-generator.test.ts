@@ -14,12 +14,7 @@ globalThis.__BUILD_DATE__ = '2026-01-07'
 
 import { assertEquals, assertStringIncludes } from 'jsr:@std/assert'
 import { PERSONA_META, type PersonaId } from './persona-registry.ts'
-import {
-  buildScript,
-  buildVerificationScript,
-  generateAntiCheatWarning,
-  type SelectionState,
-} from './script-generator.ts'
+import { buildScript, buildVerificationScript, type SelectionState } from './script-generator.ts'
 import type { PackageKey, SoftwareCatalog } from './types.ts'
 import { ANTI_CHEAT_CONFLICTS, OPTIMIZATIONS } from './optimizations.ts'
 import { getPersonaOptimizations } from './persona-config.ts'
@@ -894,6 +889,9 @@ Deno.test('Anti-cheat - conflicts are exported and warned about before the confi
   assertEquals(scriptFor(['pagefile']).includes('ANTI-CHEAT WARNING'), false)
 })
 
-Deno.test('Anti-cheat - generateAntiCheatWarning is empty for safe loadouts', () => {
-  assertEquals(generateAntiCheatWarning(new Set(getPersonaOptimizations('pro_gamer'))), [])
+Deno.test('Anti-cheat - no warning for the pro_gamer loadout', () => {
+  assertEquals(
+    scriptFor([...getPersonaOptimizations('pro_gamer')]).includes('ANTI-CHEAT WARNING'),
+    false,
+  )
 })

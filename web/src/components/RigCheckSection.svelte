@@ -7,25 +7,26 @@
  * before tuning Windows.
  */
 
-import { RIG_CHECK } from '$lib/rig-check'
+import { RIG_CHECK, SNAPSHOT } from '$lib/rig-check'
 import { showToast } from '$lib/toast.svelte'
 import { copyToClipboard } from '../utils/clipboard'
 
-let copied = $state(false)
+let copied = $state<'rig' | 'snapshot' | null>(null)
 let copiedTimer: ReturnType<typeof setTimeout> | undefined
 
-async function copyCommand() {
-  const ok = await copyToClipboard(RIG_CHECK.command)
+async function copyCommand(which: 'rig' | 'snapshot') {
+  const name = which === 'rig' ? 'Rig Check' : 'Play Snapshot'
+  const ok = await copyToClipboard(which === 'rig' ? RIG_CHECK.command : SNAPSHOT.command)
   if (!ok) {
-    showToast('Copy failed. Select the Rig Check command and copy it by hand.', 'error')
+    showToast(`Copy failed. Select the ${name} command and copy it by hand.`, 'error')
     return
   }
-  copied = true
+  copied = which
   clearTimeout(copiedTimer)
   copiedTimer = setTimeout(() => {
-    copied = false
+    copied = null
   }, 2000)
-  showToast('Rig Check command copied. Paste it into PowerShell.', 'success', 3000)
+  showToast(`${name} command copied. Paste it into PowerShell.`, 'success', 3000)
 }
 </script>
 
@@ -52,16 +53,32 @@ async function copyCommand() {
         <button
           type="button"
           class="rig-check__copy"
-          class:is-copied={copied}
+          class:is-copied={copied === 'rig'}
           aria-label="Copy the Rig Check command"
-          onclick={copyCommand}
+          onclick={() => copyCommand('rig')}
         >
-          {copied ? 'Copied' : 'Copy'}
+          {copied === 'rig' ? 'Copied' : 'Copy'}
         </button>
       </div>
       <p class="rig-check__hint">
         Paste into PowerShell and press Enter. Fix what it flags, then pick a loadout below.
       </p>
+
+      <h3 class="rig-check__checks-title">Stutters in game? Run Play Snapshot</h3>
+      <p class="rig-check__lead">{SNAPSHOT.description}</p>
+      <div class="rig-check__cmd">
+        <span class="rig-check__prompt" aria-hidden="true">PS&gt;</span>
+        <code class="rig-check__code">{SNAPSHOT.command}</code>
+        <button
+          type="button"
+          class="rig-check__copy"
+          class:is-copied={copied === 'snapshot'}
+          aria-label="Copy the Play Snapshot command"
+          onclick={() => copyCommand('snapshot')}
+        >
+          {copied === 'snapshot' ? 'Copied' : 'Copy'}
+        </button>
+      </div>
     </div>
 
     <div class="rig-check__checks">

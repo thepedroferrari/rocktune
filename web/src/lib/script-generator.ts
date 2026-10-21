@@ -3852,7 +3852,7 @@ if ($mp) {
  * Warning shown before the confirmation prompt when the loadout contains options
  * that a kernel anti-cheat refuses to run with. The player can still cancel here.
  */
-export function generateAntiCheatWarning(selected: ReadonlySet<string>): string[] {
+function generateAntiCheatWarning(selected: ReadonlySet<string>): string[] {
   const hits = OPTIMIZATIONS.filter((opt) =>
     selected.has(opt.key) && ANTI_CHEAT_CONFLICTS[opt.key]
   );
