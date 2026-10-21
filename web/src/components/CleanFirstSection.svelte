@@ -105,16 +105,16 @@ async function copyCommand(tool: PartnerTool) {
   </div>
 </section>
 
-<nav class="wizard-nav" aria-label="Continue to Loadouts">
+<nav class="wizard-nav" aria-label="Continue to Rig Check">
   <a
-    href="#quick-start"
+    href="#rig-check"
     class="wizard-next-btn"
     onclick={async (e) => {
       e.preventDefault()
-      await scrollToSection({ sectionId: 'quick-start' })
+      await scrollToSection({ sectionId: 'rig-check' })
     }}
   >
-    <span class="wizard-next-text">Next: Loadouts</span>
+    <span class="wizard-next-text">Next: Rig Check</span>
     <svg class="wizard-next-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <polyline points="6 9 12 15 18 9" />
     </svg>

@@ -67,6 +67,14 @@ irm https://rocktune.pedroferrari.com/benchmark.ps1 | iex
 
 Run each test 3 times, discard the first run, and average the other two.
 
+## Rig Check
+
+`rig-check.ps1` finds setup mistakes that cost frames: RAM below its rated speed (XMP or EXPO off), one RAM stick, a monitor below its highest refresh rate, the display cable in the motherboard port, old GPU drivers, Resizable BAR off, games on a hard disk, a low-power plan, a missing AMD X3D V-Cache driver, disabled Xbox services and more. It prints a score out of 100 and the top 3 fixes, with the BIOS setting, the Windows Settings path or the RockTune option for each. It changes nothing and needs no administrator rights.
+
+```powershell
+irm https://rocktune.pedroferrari.com/check.ps1 | iex
+```
+
 ## Timer tool
 
 `timer-tool.ps1` sets the Windows timer resolution to 0.5 ms (the default is 15.6 ms) for smoother frame pacing. Start it before you play and keep it open:

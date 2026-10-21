@@ -99,6 +99,12 @@
       }
     }
 
+    .nav-step {
+      margin-inline-end: 5px;
+      font-size: 0.85em;
+      opacity: 0.45;
+    }
+
     .nav-link {
       display: flex;
       align-items: center;

@@ -9,6 +9,7 @@ import type { OptimizationDef } from '$lib/optimizations'
 import { app, toggleOptimization } from '$lib/state.svelte'
 import type { OptimizationKey } from '$lib/types'
 import { type StructuredTooltip, tooltip } from '../utils/tooltips'
+import AntiCheatBadge, { antiCheatLines, getAntiCheatConflicts } from './AntiCheatBadge.svelte'
 
 interface Props {
   opt: OptimizationDef
@@ -23,12 +24,17 @@ interface Props {
 const { opt, onBeforeToggle }: Props = $props()
 
 const isChecked = $derived(app.optimizations.has(opt.key))
+const antiCheatConflicts = $derived(getAntiCheatConflicts(opt.key))
 
 /** Build tooltip with rank in title */
 function buildTooltipWithRank(baseTooltip: StructuredTooltip): StructuredTooltip {
   return {
     ...baseTooltip,
     title: `[${opt.rank}] ${baseTooltip.title}`,
+    cons: [
+      ...antiCheatLines(antiCheatConflicts).map((line) => `Breaks ${line}`),
+      ...baseTooltip.cons,
+    ],
   }
 }
 
@@ -49,6 +55,7 @@ function handleClick(event: MouseEvent) {
 <label
   class:selected={isChecked}
   class:has-breaking-changes={opt.breakingChanges?.length}
+  class:has-anti-cheat-conflict={antiCheatConflicts.length > 0}
   data-opt={opt.key}
   use:tooltip={enhancedTooltip}
 >
@@ -69,6 +76,7 @@ function handleClick(event: MouseEvent) {
       <span class="breaking-warn" title="Has caveats - click for details" aria-label="Warning: has breaking changes">⚠</span>
     {/if}
     {opt.label}
+    <AntiCheatBadge conflicts={antiCheatConflicts} />
   </span>
   <span class="preset-badge" hidden></span>
   <span class="label-hint" id="opt-hint-{opt.key}">{opt.hint}</span>

@@ -5,6 +5,7 @@
  * Reads hardware and optimization state from centralized app state.
  * Uses Svelte 5 $derived for all computed values.
  */
+import { PRESET_META } from '$lib/presets'
 import { app, getSelectedCount } from '$lib/state.svelte'
 import type { CpuType, GpuType } from '$lib/types'
 
@@ -24,18 +25,9 @@ const gpuLabels: Record<GpuType, string> = {
   intel: 'Intel Arc',
 }
 
-const presetLabels = {
-  competitive: 'Competitive',
-  streaming: 'Streaming',
-  balanced: 'Balanced',
-  minimal: 'Minimal',
-} as const
-
 const cpuLabel = $derived(cpuLabels[app.hardware.cpu] || app.hardware.cpu)
 const gpuLabel = $derived(gpuLabels[app.hardware.gpu] || app.hardware.gpu)
-const presetLabel = $derived(
-  app.activePreset ? presetLabels[app.activePreset as keyof typeof presetLabels] : null,
-)
+const presetLabel = $derived(app.activePreset ? (PRESET_META[app.activePreset]?.label ?? null) : null)
 </script>
 
 <div class="summary-shell">

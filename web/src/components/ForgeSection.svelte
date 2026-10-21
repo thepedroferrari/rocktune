@@ -24,6 +24,7 @@ import {
 import { showToast } from '$lib/toast.svelte'
 import { SCRIPT_FILENAME } from '$lib/types'
 import { downloadText } from '../utils/download'
+import AntiCheatWarning from './AntiCheatWarning.svelte'
 import Summary from './Summary.svelte'
 import TroubleshootModal from './TroubleshootModal.svelte'
 
@@ -95,10 +96,10 @@ async function handleCopyHash() {
 
 <section id="generate" class="step step--forge">
   <header class="step-banner">
-    <div class="step-banner__marker">5</div>
+    <div class="step-banner__marker">7</div>
     <div class="step-banner__content">
       <h2 class="step-banner__title">Forge Script</h2>
-      <p class="step-banner__subtitle">Your personalized loadout is ready</p>
+      <p class="step-banner__subtitle">Your loadout, built into one script. Read it, then run it.</p>
     </div>
     <div class="step-banner__actions">
       {#if app.script.downloaded}
@@ -117,13 +118,15 @@ async function handleCopyHash() {
       {:else}
         <output class="status-badge--ready">
           <span class="status-indicator--ready"></span>
-          <span class="status-text--ready">SYSTEM READY</span>
+          <span class="status-text--ready">READY TO FORGE</span>
         </output>
       {/if}
     </div>
   </header>
 
   <Summary />
+
+  <AntiCheatWarning />
 
   <section class="transparency-zone" id="download">
     <span class="corner corner--tl"></span>

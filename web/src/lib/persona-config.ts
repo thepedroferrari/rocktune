@@ -34,6 +34,7 @@ const BASE_OPTIMIZATIONS: readonly OptimizationKey[] = [
   'audio_enhancements',
   'game_mode',
   'update_no_reboot',
+  'active_hours_gaming',
   'ai_off',
 ] as const
 
@@ -65,6 +66,9 @@ const PERSONA_ADDITIONS: Record<PersonaId, readonly OptimizationKey[]> = {
     'timer',
     'end_task',
     'delivery_opt',
+    'windowed_optimizations',
+    'vrr_optimizations',
+    'defender_scan_idle',
   ],
 
   /**
@@ -105,6 +109,9 @@ const PERSONA_ADDITIONS: Record<PersonaId, readonly OptimizationKey[]> = {
     'delivery_opt',
     'rss_enable',
     'widgets_off',
+    'windowed_optimizations',
+    'defender_scan_idle',
+    'scheduled_tasks_gaming',
   ],
 
   /**
@@ -123,6 +130,9 @@ const PERSONA_ADDITIONS: Record<PersonaId, readonly OptimizationKey[]> = {
     'audio_communications',
     'delivery_opt',
     'timer',
+    'windowed_optimizations',
+    'vrr_optimizations',
+    'defender_scan_idle',
     // NOTE: NO gamedvr - breaks OBS capture
     // NOTE: High Performance (not Ultimate) - balanced for streaming
   ],

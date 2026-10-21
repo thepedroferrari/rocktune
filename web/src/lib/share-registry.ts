@@ -470,6 +470,11 @@ export const OPT_ID_TO_VALUE: Record<number, OptimizationKey | null> = {
   118: 'gamebar_popup_fix',
   119: 'update_no_reboot',
   120: null, // was onedrive_remove
+  121: 'windowed_optimizations',
+  122: 'vrr_optimizations',
+  123: 'defender_scan_idle',
+  124: 'active_hours_gaming',
+  125: 'defender_game_exclusions',
 }
 
 export const OPT_VALUE_TO_ID: Record<OptimizationKey, number> = Object.fromEntries(

@@ -6,7 +6,9 @@
  * Sharp angles, neon glows, one bold message, instant understanding.
  */
 
+import { OPTIMIZATIONS } from '$lib/optimizations'
 import { PRESET_META, PRESET_ORDER, PRESETS } from '$lib/presets'
+import { RIG_CHECK } from '$lib/rig-check'
 import { scrollToSection } from '$lib/scroll'
 import {
   app,
@@ -28,6 +30,14 @@ const PROFILE_BADGES = PRESET_ORDER.map((id) => {
     isDefault: id === 'gamer',
   }
 })
+
+/** Stat tiles: every number comes from the catalog the site ships */
+const HERO_STATS = [
+  { value: String(OPTIMIZATIONS.length), label: 'Tweaks' },
+  { value: String(PRESET_ORDER.length), label: 'Loadouts' },
+  { value: String(RIG_CHECK.checks.length), label: 'Rig checks' },
+  { value: '$0', label: 'Forever' },
+] as const
 
 const activePreset = $derived(app.activePreset)
 
@@ -107,7 +117,9 @@ function handleBadgeMouseLeave(event: MouseEvent) {
 
       <div class="hero-tagline">
         <p class="tagline-primary">Download more FPS.</p>
-        <p class="tagline-secondary">Yes, really.</p>
+        <p class="tagline-secondary">
+          One PowerShell script built for your CPU, GPU and games. Read every line before you run it.
+        </p>
       </div>
 
       <a
@@ -123,6 +135,15 @@ function handleBadgeMouseLeave(event: MouseEvent) {
           <path d="M5 12h14M13 6l6 6-6 6" />
         </svg>
       </a>
+
+      <ul class="hero-stats" role="list" aria-label="RockTune in numbers">
+        {#each HERO_STATS as stat (stat.label)}
+          <li class="hero-stat">
+            <span class="hero-stat__value">{stat.value}</span>
+            <span class="hero-stat__label">{stat.label}</span>
+          </li>
+        {/each}
+      </ul>
 
       <div class="provenance-bar" role="group" aria-label="Project information">
         <a
@@ -190,20 +211,20 @@ function handleBadgeMouseLeave(event: MouseEvent) {
         <div class="panel-corner panel-corner--br"></div>
 
         <header class="panel-header">
-          <span class="panel-title">WHAT YOU GET</span>
+          <span class="panel-title">WHAT THE SCRIPT CHANGES</span>
         </header>
 
         <dl class="stats-list">
           <div class="stat-line">
-            <dt class="stat-label">Network lag</dt>
+            <dt class="stat-label">Network buffering</dt>
             <dd class="stat-value">
-              <span class="stat-dots" aria-hidden="true"></span>OPTIMIZED
+              <span class="stat-dots" aria-hidden="true"></span>OFF
             </dd>
           </div>
           <div class="stat-line">
-            <dt class="stat-label">Background noise</dt>
+            <dt class="stat-label">Background apps</dt>
             <dd class="stat-value">
-              <span class="stat-dots" aria-hidden="true"></span>GONE
+              <span class="stat-dots" aria-hidden="true"></span>STOPPED
             </dd>
           </div>
           <div class="stat-line">
@@ -237,13 +258,13 @@ function handleBadgeMouseLeave(event: MouseEvent) {
         </dl>
 
         <footer class="panel-footer">
-          <p class="trust-line">Free · Open source · Reversible · Secure</p>
+          <p class="trust-line">Free · Open source · Restore point first</p>
         </footer>
       </div>
     </aside>
 
     <div class="hero-cta">
-      <p class="profile-prompt">WHO ARE YOU?</p>
+      <p class="profile-prompt">PICK YOUR PLAYSTYLE</p>
       <div class="profile-badges">
         {#each PROFILE_BADGES as badge}
           <button
@@ -575,6 +596,8 @@ function handleBadgeMouseLeave(event: MouseEvent) {
     font-family: var(--font-mono);
     font-size: clamp(0.9rem, 1.5vw, 1.1rem);
     color: var(--fold-ink-muted);
+    max-inline-size: 34rem;
+    line-height: 1.5;
     margin: var(--space-2xs) 0 0;
     animation: fadeSlideUp 0.5s var(--ease-out-expo) 0.55s both;
   }
@@ -626,6 +649,71 @@ function handleBadgeMouseLeave(event: MouseEvent) {
     &:focus-visible {
       outline: 2px solid var(--fold-cyan);
       outline-offset: 4px;
+    }
+  }
+
+  .hero-stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-xs);
+    max-inline-size: 32rem;
+    margin: var(--space-lg) 0 0;
+    padding: 0;
+    list-style: none;
+    animation: fadeSlideUp 0.6s var(--ease-out-expo) 0.6s both;
+  }
+
+  .hero-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: var(--space-xs) var(--space-sm);
+    background: var(--fold-glass);
+    border: 1px solid var(--fold-border);
+    border-block-start: 2px solid var(--fold-cyan);
+    transition:
+      border-color 150ms ease,
+      transform 150ms ease;
+  }
+
+  .hero-stat:nth-child(2) {
+    border-block-start-color: var(--fold-magenta);
+  }
+
+  .hero-stat:nth-child(3) {
+    border-block-start-color: var(--fold-safe);
+  }
+
+  .hero-stat:nth-child(4) {
+    border-block-start-color: var(--fold-accent);
+  }
+
+  .hero-stat:hover {
+    transform: translateY(-2px);
+    border-color: var(--fold-cyan);
+  }
+
+  .hero-stat__value {
+    font-family: var(--font-mono);
+    font-size: 1.5rem;
+    font-weight: 900;
+    line-height: 1.1;
+    color: var(--fold-ink);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .hero-stat__label {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--fold-ink-muted);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-stat:hover {
+      transform: none;
     }
   }
 

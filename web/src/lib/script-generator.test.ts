@@ -14,9 +14,14 @@ globalThis.__BUILD_DATE__ = '2026-01-07'
 
 import { assertEquals, assertStringIncludes } from 'jsr:@std/assert'
 import { PERSONA_META, type PersonaId } from './persona-registry.ts'
-import { buildScript, buildVerificationScript, type SelectionState } from './script-generator.ts'
+import {
+  buildScript,
+  buildVerificationScript,
+  generateAntiCheatWarning,
+  type SelectionState,
+} from './script-generator.ts'
 import type { PackageKey, SoftwareCatalog } from './types.ts'
-import { OPTIMIZATIONS } from './optimizations.ts'
+import { ANTI_CHEAT_CONFLICTS, OPTIMIZATIONS } from './optimizations.ts'
 import { getPersonaOptimizations } from './persona-config.ts'
 import { OPT_VALUE_TO_ID } from './share-registry.ts'
 
@@ -791,4 +796,90 @@ Deno.test('Compat - X3D flags a missing Game Bar as critical', () => {
   })
   assertStringIncludes(verify, 'Write-Section "Gaming Compatibility"')
   assertStringIncludes(verify, 'Game Bar installed (X3D core parking)')
+})
+
+Deno.test('Feature - DirectX settings merge into the existing string', () => {
+  const script = scriptFor(['windowed_optimizations', 'vrr_optimizations'])
+  assertStringIncludes(script, '$dxPairs["SwapEffectUpgradeEnable"] = "1"')
+  assertStringIncludes(script, '$dxPairs["VRROptimizeEnable"] = "1"')
+  // Existing pairs are parsed and kept, never overwritten wholesale
+  assertStringIncludes(script, "foreach ($pair in ($dxOld -split ';'))")
+  assertStringIncludes(script, 'if ([int]$script:WinBuild -ge 22621)')
+  assertStringIncludes(script, 'if ([int]$script:WinBuild -ge 18362)')
+})
+
+Deno.test('Feature - Defender and active hours items back up and register undo', () => {
+  const script = scriptFor(['defender_scan_idle', 'defender_game_exclusions', 'active_hours_gaming'])
+  assertStringIncludes(script, 'Set-MpPreference -ScanOnlyIfIdleEnabled $true')
+  assertStringIncludes(script, 'Add-UndoCommand "Defender scan settings" $undoMp')
+  assertStringIncludes(script, 'libraryfolders.vdf')
+  assertStringIncludes(script, 'Remove-MpPreference -ExclusionPath')
+  assertStringIncludes(script, '"ActiveHoursStart" 10')
+  assertStringIncludes(script, '"ActiveHoursEnd" 4')
+})
+
+Deno.test('Feature - Verification script checks game-session items', () => {
+  const verify = buildVerificationScript({
+    ...createTestSelection('gamer'),
+    optimizations: [
+      'windowed_optimizations',
+      'vrr_optimizations',
+      'defender_scan_idle',
+      'defender_game_exclusions',
+      'active_hours_gaming',
+    ],
+  })
+  assertStringIncludes(verify, 'SwapEffectUpgradeEnable=1')
+  assertStringIncludes(verify, 'VRROptimizeEnable=1')
+  assertStringIncludes(verify, 'Defender scans idle-only at low priority')
+  assertStringIncludes(verify, 'Defender skips game library folders')
+  assertStringIncludes(verify, 'Update active hours 10:00-04:00')
+  assertStringIncludes(verify, '$script:WinBuild = ')
+})
+
+Deno.test('Catalog - game-session items and maintenance tasks are selectable with share IDs', () => {
+  for (const key of [
+    'scheduled_tasks_gaming',
+    'windowed_optimizations',
+    'vrr_optimizations',
+    'defender_scan_idle',
+    'active_hours_gaming',
+    'defender_game_exclusions',
+  ]) {
+    assertEquals(OPTIMIZATIONS.some((o) => o.key === key), true, `${key} has no catalog entry`)
+    assertEquals(typeof OPT_VALUE_TO_ID[key as keyof typeof OPT_VALUE_TO_ID], 'number', key)
+  }
+  assertEquals(OPT_VALUE_TO_ID.scheduled_tasks_gaming, 112)
+  assertEquals(OPT_VALUE_TO_ID.defender_game_exclusions, 125)
+  const exclusions = OPTIMIZATIONS.find((o) => o.key === 'defender_game_exclusions')
+  assertEquals(exclusions?.tier, 'caution')
+})
+
+Deno.test('Catalog - every optimization key has a catalog entry', () => {
+  const inCatalog = new Set(OPTIMIZATIONS.map((o) => o.key as string))
+  for (const key of Object.keys(OPT_VALUE_TO_ID)) {
+    assertEquals(inCatalog.has(key), true, `${key} has no OptimizationDef`)
+  }
+})
+
+Deno.test('Anti-cheat - conflicts are exported and warned about before the confirm prompt', () => {
+  assertEquals(Object.keys(ANTI_CHEAT_CONFLICTS).sort(), [
+    'core_isolation_off',
+    'dep_off',
+    'kernel_mitigations_off',
+  ])
+  for (const conflicts of Object.values(ANTI_CHEAT_CONFLICTS)) {
+    for (const c of conflicts ?? []) assertEquals(c.source.startsWith('https://'), true)
+  }
+  const script = scriptFor(['dep_off', 'pagefile'])
+  const warn = script.indexOf('ANTI-CHEAT WARNING')
+  const confirm = script.indexOf('Confirm-Continue "Apply these optimizations?"')
+  assertEquals(warn > 0 && warn < confirm, true)
+  assertStringIncludes(script, 'FACEIT AC (Counter-Strike 2 on FACEIT): FACEIT AC does not start until DEP is on')
+  assertStringIncludes(script, 'Riot Vanguard (Valorant, League of Legends)')
+  assertEquals(scriptFor(['pagefile']).includes('ANTI-CHEAT WARNING'), false)
+})
+
+Deno.test('Anti-cheat - generateAntiCheatWarning is empty for safe loadouts', () => {
+  assertEquals(generateAntiCheatWarning(new Set(getPersonaOptimizations('pro_gamer'))), [])
 })

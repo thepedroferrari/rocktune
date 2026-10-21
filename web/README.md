@@ -11,7 +11,9 @@ A modern, interactive web application that generates personalized PowerShell scr
 - **Performance tuning** — Applies registry tweaks, power plans, timer resolution, and other gaming-focused optimizations
 - **Gaming compatibility check** — Finds and restores Xbox services, Game Bar and Store parts that a cleanup tool turned off
 - **Clean Windows first** — General cleanup (preinstalled apps, telemetry, ads) is handed to [WinUtil](https://github.com/ChrisTitusTech/winutil) and [Win11Debloat](https://github.com/Raphire/Win11Debloat). The site shows both commands; run one, then RockTune
-- **User-friendly interface** — Visual card-based selection with presets (Pro Gamer, Streaming, Balanced, Minimal)
+- **Rig Check** — A read-only one-liner (`irm https://rocktune.pedroferrari.com/check.ps1 | iex`) scores the PC's setup: RAM below rated speed, monitor below max refresh, display cable in the motherboard, old GPU driver, games on a hard drive. The site shows it as step 1
+- **Anti-cheat badges** — Options that stop Vanguard, FACEIT and other kernel anti-cheats from starting carry a badge on their card, and the Forge step warns when the loadout contains any
+- **User-friendly interface** — Visual card-based selection with loadouts (Pro Gamer, Gamer, Streamer, Benchmarker)
 - **Transparency & review** — Preflight checks, audit panel, and diff/preview before export
 
 ## 🛠️ Tech Stack

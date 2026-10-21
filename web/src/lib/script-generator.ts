@@ -10,7 +10,7 @@ declare const __BUILD_COMMIT__: string;
 declare const __BUILD_DATE__: string;
 
 import { isDev } from "./env";
-import { OPTIMIZATIONS } from "./optimizations";
+import { ANTI_CHEAT_CONFLICTS, OPTIMIZATIONS } from "./optimizations";
 import { PARTNER_HANDOFF_LINE, PARTNER_TOOLS } from "./partner-tools";
 import { PERSONA_NEXT_STEPS } from "./persona-config";
 import { DEPRECATED_OPT_IDS } from "./share-registry";
@@ -25,6 +25,7 @@ import type {
   SoftwareCatalog,
 } from "./types";
 import {
+  ANTI_CHEAT_LABELS,
   isCpuType,
   isGpuType,
   isMonitorSoftwareType,
@@ -1822,6 +1823,8 @@ export function buildScript(
   const scanLines = generatePreflightScan(selected, hardware);
   addIndented(scanLines);
   lines.push("");
+
+  addIndented(generateAntiCheatWarning(selected));
 
   // Confirmation after pre-flight
   lines.push(`${indent}# Confirmation prompt`);
@@ -3701,6 +3704,169 @@ else { Add-ScanResult "[SAFE] Block OEM Auto-Installs" "Allowed" "Blocked" "CHAN
   return lines;
 }
 
+/** DirectXUserGlobalSettings pairs each option sets (Settings > Display > Graphics) */
+const DX_GLOBAL_SETTINGS: ReadonlyArray<{
+  key: OptimizationKey;
+  name: string;
+  value: string;
+  label: string;
+  /** First Windows build that reads the setting */
+  minBuild: number;
+  minName: string;
+}> = [
+  {
+    key: "windowed_optimizations",
+    name: "SwapEffectUpgradeEnable",
+    value: "1",
+    label: "Optimizations for windowed games on",
+    minBuild: 22621,
+    minName: "Windows 11 22H2",
+  },
+  {
+    key: "vrr_optimizations",
+    name: "VRROptimizeEnable",
+    value: "1",
+    label: "Variable refresh rate for older DirectX games on",
+    minBuild: 18362,
+    minName: "Windows 10 1903",
+  },
+];
+
+/**
+ * Game-session fixes: DirectX graphics toggles, shader cache, Defender scans,
+ * Windows Update active hours, Defender exclusions for game libraries.
+ */
+function generateGameSessionOpts(selected: Set<string>): string[] {
+  const lines: string[] = [];
+
+  const dx = DX_GLOBAL_SETTINGS.filter((d) => selected.has(d.key));
+  if (dx.length > 0) {
+    const sets = dx.map((d) =>
+      `if ([int]$script:WinBuild -ge ${d.minBuild}) { $dxPairs["${d.name}"] = "${d.value}"; $dxDone += "${d.label}" } else { Write-Skip "${d.label} (needs ${d.minName}+)" }`
+    ).join("\n");
+    lines.push(...psLines(String.raw`
+# [SAFE] DirectX graphics settings (Settings > System > Display > Graphics)
+# DirectXUserGlobalSettings holds several "Name=Value;" pairs: merge, never overwrite the others.
+$dxPath = "HKCU:\Software\Microsoft\DirectX\UserGpuPreferences"
+$dxOld = (Get-ItemProperty -Path $dxPath -Name "DirectXUserGlobalSettings" -EA SilentlyContinue).DirectXUserGlobalSettings
+$dxPairs = [ordered]@{}
+$dxDone = @()
+if ($dxOld) {
+    foreach ($pair in ($dxOld -split ';')) {
+        if ($pair -match '^\s*([^=]+?)\s*=\s*(.*?)\s*$') { $dxPairs[$Matches[1]] = $Matches[2] }
+    }
+}
+${sets}
+if ($dxDone.Count -gt 0) {
+    $dxNew = (($dxPairs.Keys | ForEach-Object { "$_=$($dxPairs[$_])" }) -join ';') + ';'
+    if (Set-Reg $dxPath "DirectXUserGlobalSettings" $dxNew "String" -PassThru) {
+        foreach ($d in $dxDone) { Write-OK $d }
+        Add-AppliedChange "Display" "DirectX graphics settings" "OK"
+    }
+}
+`));
+  }
+
+  if (selected.has("active_hours_gaming")) {
+    lines.push(...psLines(String.raw`
+# [SAFE] Windows Update active hours 10:00-04:00 (18 h, the maximum): no update restarts in that window
+$wuPol = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate"
+Set-Reg $wuPol "SetActiveHours" 1
+Set-Reg $wuPol "ActiveHoursStart" 10
+Set-Reg $wuPol "ActiveHoursEnd" 4
+Write-OK "Update active hours set to 10:00-04:00"
+Add-AppliedChange "System" "Update active hours" "OK"
+`));
+  }
+
+  if (selected.has("defender_scan_idle")) {
+    lines.push(...psLines(`
+# [SAFE] Defender scheduled scans run only when the PC is idle and at low CPU priority.
+# Real-time protection is unchanged.
+$mp = $null
+try { $mp = Get-MpPreference -EA Stop } catch { $mp = $null }
+if ($mp) {
+    $undoMp = 'Set-MpPreference -ScanOnlyIfIdleEnabled $' + [bool]$mp.ScanOnlyIfIdleEnabled + ' -ScanAvgCPULoadFactor ' + [int]$mp.ScanAvgCPULoadFactor + ' -EnableLowCpuPriority $' + [bool]$mp.EnableLowCpuPriority
+    try {
+        Set-MpPreference -ScanOnlyIfIdleEnabled $true -ScanAvgCPULoadFactor 20 -EnableLowCpuPriority $true -EA Stop
+        Add-UndoCommand "Defender scan settings" $undoMp
+        Write-OK "Defender scans: idle only, low CPU priority, 20% CPU cap"
+        Add-AppliedChange "Background" "Defender scans when idle" "OK"
+    } catch { Write-Warn "Defender scan settings unchanged: $($_.Exception.Message)" }
+} else { Write-Skip "Defender scan settings (Microsoft Defender is not the active antivirus)" }
+`));
+  }
+
+  if (selected.has("defender_game_exclusions")) {
+    lines.push(...psLines(String.raw`
+# [CAUTION] Defender real-time scan skips game library folders (faster game updates and shader builds).
+# Files in these folders are no longer scanned when written. Remove-MpPreference undoes it.
+$mp = $null
+try { $mp = Get-MpPreference -EA Stop } catch { $mp = $null }
+if ($mp) {
+    $gameDirs = New-Object System.Collections.Generic.List[string]
+    $steamPath = (Get-ItemProperty "HKCU:\Software\Valve\Steam" -Name "SteamPath" -EA SilentlyContinue).SteamPath
+    if ($steamPath) {
+        $vdf = Join-Path ($steamPath -replace '/', '\') "steamapps\libraryfolders.vdf"
+        if (Test-Path -LiteralPath $vdf) {
+            foreach ($m in [regex]::Matches([string](Get-Content -LiteralPath $vdf -Raw), '"path"\s+"([^"]+)"')) {
+                # String join, not Join-Path: Join-Path throws on a library drive that is not connected
+                $gameDirs.Add(($m.Groups[1].Value -replace '\\\\', '\').TrimEnd('\') + '\steamapps\common')
+            }
+        }
+    }
+    foreach ($dir in @("$env:ProgramFiles\Epic Games", "$env:ProgramFiles\EA Games", "$env:SystemDrive\XboxGames")) { $gameDirs.Add($dir) }
+    $existing = @($mp.ExclusionPath)
+    $added = 0
+    foreach ($dir in ($gameDirs | Select-Object -Unique)) {
+        if (-not (Test-Path -LiteralPath $dir)) { continue }
+        if ($existing -contains $dir) { continue }
+        try {
+            Add-MpPreference -ExclusionPath $dir -EA Stop
+            Add-UndoCommand "Defender exclusion: $dir" ("Remove-MpPreference -ExclusionPath '" + $dir.Replace("'", "''") + "'")
+            $added++
+        } catch { Write-Warn "Could not exclude $dir : $($_.Exception.Message)" }
+    }
+    if ($added -gt 0) { Write-OK "Defender skips $added game library folder(s)"; Add-AppliedChange "Background" "Defender game exclusions" "OK" }
+    else { Write-Skip "No new game library folders to exclude" }
+} else { Write-Skip "Defender exclusions (Microsoft Defender is not the active antivirus)" }
+`));
+  }
+
+  return lines;
+}
+
+/**
+ * Warning shown before the confirmation prompt when the loadout contains options
+ * that a kernel anti-cheat refuses to run with. The player can still cancel here.
+ */
+export function generateAntiCheatWarning(selected: ReadonlySet<string>): string[] {
+  const hits = OPTIMIZATIONS.filter((opt) =>
+    selected.has(opt.key) && ANTI_CHEAT_CONFLICTS[opt.key]
+  );
+  if (hits.length === 0) return [];
+  const lines: string[] = [
+    "# Anti-cheat check: these options stop some anti-cheat systems from starting",
+    'Write-Host ""',
+    'Write-Host "  ANTI-CHEAT WARNING" -ForegroundColor Red',
+  ];
+  for (const opt of hits) {
+    lines.push(
+      `Write-Host "  ${escapePsDoubleQuoted(opt.label)}:" -ForegroundColor Yellow`,
+    );
+    for (const conflict of ANTI_CHEAT_CONFLICTS[opt.key] ?? []) {
+      const ac = ANTI_CHEAT_LABELS[conflict.antiCheat];
+      lines.push(
+        `Write-Host "    - ${escapePsDoubleQuoted(`${ac.name} (${ac.games}): ${conflict.effect}`)}" -ForegroundColor Yellow`,
+      );
+    }
+  }
+  lines.push(
+    'Write-Host "  Answer N below to cancel, then untick these options if you play those games." -ForegroundColor Yellow',
+  );
+  return lines;
+}
+
 function generateSystemOpts(selected: Set<string>): string[] {
   const lines: string[] = [];
 
@@ -3712,6 +3878,8 @@ Set-Reg "HKLM:\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings" "IsContinuousInnova
 Write-OK "Windows Update will not auto-reboot while you are signed in"
 `));
   }
+
+  lines.push(...generateGameSessionOpts(selected));
 
 
   if (selected.has("pagefile")) {
@@ -5065,6 +5233,7 @@ const VERIFICATION_HELPERS = `
 $script:PassCount = 0
 $script:FailCount = 0
 $script:SkipCount = 0
+$script:WinBuild = [int](Get-CimInstance Win32_OperatingSystem).BuildNumber
 
 $script:Banner = ${VERIFICATION_BANNER.trim()}
 
@@ -5343,6 +5512,30 @@ else { Write-Skip "SMT still on ($logCores threads) - turn it off in BIOS/UEFI" 
   if (selected.has("update_no_reboot")) {
     lines.push(
       'if (Test-RegValue "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate\\AU" "NoAutoRebootWithLoggedOnUsers" 1) { Write-Pass "No auto-reboot while signed in" } else { Write-Fail "Auto-reboot NOT blocked" }',
+    );
+  }
+
+  for (const dx of DX_GLOBAL_SETTINGS.filter((d) => selected.has(d.key))) {
+    lines.push(
+      `$dxNow = (Get-ItemProperty "HKCU:\\Software\\Microsoft\\DirectX\\UserGpuPreferences" -Name "DirectXUserGlobalSettings" -EA SilentlyContinue).DirectXUserGlobalSettings; if ($script:WinBuild -lt ${dx.minBuild}) { Write-Skip "${dx.label} (needs ${dx.minName}+)" } elseif ($dxNow -match '(^|;)\s*${dx.name}=${dx.value}\s*(;|$)') { Write-Pass "${dx.label}" } else { Write-Fail "${dx.label}: NOT set" }`,
+    );
+  }
+
+  if (selected.has("active_hours_gaming")) {
+    lines.push(
+      'if ((Test-RegValue "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate" "ActiveHoursStart" 10) -and (Test-RegValue "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate" "ActiveHoursEnd" 4)) { Write-Pass "Update active hours 10:00-04:00" } else { Write-Fail "Update active hours NOT set" }',
+    );
+  }
+
+  if (selected.has("defender_scan_idle")) {
+    lines.push(
+      '$mpv = $null; try { $mpv = Get-MpPreference -EA Stop } catch { $mpv = $null }; if (-not $mpv) { Write-Skip "Defender not active" } elseif ($mpv.ScanOnlyIfIdleEnabled -and $mpv.EnableLowCpuPriority) { Write-Pass "Defender scans idle-only at low priority" } else { Write-Fail "Defender scan settings NOT applied" }',
+    );
+  }
+
+  if (selected.has("defender_game_exclusions")) {
+    lines.push(
+      '$mpx = $null; try { $mpx = Get-MpPreference -EA Stop } catch { $mpx = $null }; if (-not $mpx) { Write-Skip "Defender not active" } elseif (@($mpx.ExclusionPath | Where-Object { $_ -match "steamapps|Epic Games|EA Games|XboxGames" }).Count -gt 0) { Write-Pass "Defender skips game library folders" } else { Write-Fail "No game library exclusions found" }',
     );
   }
 

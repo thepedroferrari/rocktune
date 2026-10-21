@@ -16,7 +16,7 @@ import { scrollToSection, scrollToTop } from '../lib/scroll'
 import { openShareModal } from '../lib/state.svelte'
 
 let menuOpen = $state(false)
-let activeStep = $state(0)
+let activeStep = $state(-1)
 let scrollY = $state(0)
 let isClickNavigating = $state(false)
 
@@ -28,13 +28,14 @@ interface NavLink {
 
 const NAV_LINKS: NavLink[] = [
   { href: '#clean-first', label: 'Clean', step: 0 },
-  { href: '#quick-start', label: 'Loadouts', step: 1 },
-  { href: '#hardware', label: 'Rig', step: 2 },
-  { href: '#peripherals', label: 'Gear', step: 3 },
-  { href: '#optimizations', label: 'Tuning', step: 4 },
-  { href: '#software', label: 'Arsenal', step: 5 },
-  { href: '#generate', label: 'Forge', step: 6 },
-  { href: '#guide', label: 'Manual', step: 7 },
+  { href: '#rig-check', label: 'Check', step: 1 },
+  { href: '#quick-start', label: 'Loadouts', step: 2 },
+  { href: '#hardware', label: 'Rig', step: 3 },
+  { href: '#peripherals', label: 'Gear', step: 4 },
+  { href: '#optimizations', label: 'Tuning', step: 5 },
+  { href: '#software', label: 'Arsenal', step: 6 },
+  { href: '#generate', label: 'Forge', step: 7 },
+  { href: '#guide', label: 'Manual', step: 8 },
 ]
 
 const TRIGGER_LINE = 100
@@ -71,24 +72,21 @@ $effect(() => {
   void scrollY // Establish reactive dependency
   if (isClickNavigating) return
 
-  const sections = NAV_LINKS.map((link) => {
-    const id = link.href.replace('#', '')
-    return document.getElementById(id)
-  }).filter((section): section is HTMLElement => section !== null)
+  const sections = NAV_LINKS.map((link) => ({
+    step: link.step,
+    el: document.getElementById(link.href.replace('#', '')),
+  })).filter((entry): entry is { step: number; el: HTMLElement } => entry.el !== null)
 
   if (sections.length === 0) return
 
-  let activeIndex = 0
-  for (let i = 0; i < sections.length; i++) {
-    const rect = sections[i].getBoundingClientRect()
-    if (rect.top <= TRIGGER_LINE) {
-      activeIndex = i
-    } else {
-      break
-    }
+  // -1 while the hero is in view, so no step reads as active before step 0
+  let current = -1
+  for (const { step, el } of sections) {
+    if (el.getBoundingClientRect().top > TRIGGER_LINE) break
+    current = step
   }
 
-  activeStep = activeIndex
+  activeStep = current
 })
 
 function handlePreload(link: NavLink) {
@@ -148,6 +146,7 @@ function handleMobileShare() {
           onfocusin={() => handlePreload(link)}
           onclick={(e) => handleClick(e, link)}
         >
+          <span class="nav-step" aria-hidden="true">{link.step}</span>
           {link.label}
         </a>
       </li>

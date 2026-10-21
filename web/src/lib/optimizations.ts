@@ -8,6 +8,7 @@
 import type { StructuredTooltip } from '../utils/tooltips'
 import type { PersonaId } from './persona-registry'
 import type {
+  AntiCheatConflict,
   BreakingChange,
   EffectivenessRank,
   OptimizationEvidence,
@@ -15,6 +16,7 @@ import type {
   OptimizationTier,
 } from './types'
 import {
+  ANTI_CHEATS,
   EFFECTIVENESS_RANKS,
   EVIDENCE_LEVELS,
   OPTIMIZATION_KEYS,
@@ -46,7 +48,18 @@ export interface OptimizationDef {
   readonly evidence?: OptimizationEvidence
   /** Features/functionality that may break when enabled */
   readonly breakingChanges?: readonly BreakingChange[]
+  /** Anti-cheat systems that refuse to start with this option applied */
+  readonly antiCheatConflicts?: readonly AntiCheatConflict[]
 }
+
+const VANGUARD_EXPLOIT_PROTECTION =
+  'https://support.riotgames.com/riot/client/error-van-9002'
+const VANGUARD_MEMORY_INTEGRITY =
+  'https://support.riotgames.com/en-us/riot/penalties/error-van-restriction-5'
+const FACEIT_VBS =
+  'https://support.faceit.com/hc/en-us/articles/27611617036188-CS2-Anti-Cheat-Measures-ENC'
+const FACEIT_DEP =
+  'https://support.faceit.com/hc/en-us/articles/360017192040-You-need-to-enable-DEP-to-launch-FACEIT-AC'
 
 /** Safe System optimizations */
 const SAFE_SYSTEM: readonly OptimizationDef[] = [
@@ -233,6 +246,26 @@ const SAFE_SYSTEM: readonly OptimizationDef[] = [
     },
     defaultChecked: false,
     rank: EFFECTIVENESS_RANKS.D,
+  },
+  {
+    key: OPTIMIZATION_KEYS.ACTIVE_HOURS_GAMING,
+    tier: OPTIMIZATION_TIERS.SAFE,
+    category: 'system',
+    label: 'Gaming Active Hours',
+    hint: 'No update restarts 10:00-04:00',
+    tooltip: {
+      title: 'Gaming Active Hours',
+      desc: 'Sets Windows Update active hours to 10:00-04:00, the 18-hour maximum. Windows does not restart for updates inside active hours, so evening and late-night sessions are covered.',
+      pros: ['Covers late-night sessions', 'Pairs with No Surprise Reboots', 'Updates still install'],
+      cons: ['Update restarts happen 04:00-10:00', 'Settings shows "managed by your organization"'],
+    },
+    defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.B,
+    evidence: {
+      level: EVIDENCE_LEVELS.HIGH,
+      sources: [        'https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-update',
+      ],
+    },
   },
 ]
 
@@ -628,6 +661,51 @@ const SAFE_DISPLAY: readonly OptimizationDef[] = [
     defaultChecked: false,
     rank: EFFECTIVENESS_RANKS.A,
   },
+  {
+    key: OPTIMIZATION_KEYS.WINDOWED_OPTIMIZATIONS,
+    tier: OPTIMIZATION_TIERS.SAFE,
+    category: 'display',
+    label: 'Windowed Game Optimizations',
+    hint: 'Borderless games get fullscreen-level latency (Win11)',
+    tooltip: {
+      title: 'Optimizations for Windowed Games',
+      desc: 'Turns on the Windows 11 graphics setting that switches DirectX 10 and 11 games in windowed or borderless mode to the newer flip presentation model. Other DirectX graphics settings are kept.',
+      pros: [
+        'Lower input latency in borderless and windowed games',
+        'Lets VRR and Auto HDR work in windowed mode',
+        'Alt-tab stays instant',
+      ],
+      cons: ['Windows 11 only', 'Rare overlay glitches in very old games'],
+    },
+    defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.B,
+    evidence: {
+      level: EVIDENCE_LEVELS.HIGH,
+      sources: [        'https://support.microsoft.com/en-us/windows/optimizations-for-windowed-games-in-windows-11-3f006843-2c7e-4ed0-9a5e-f9389e535952',
+        'https://devblogs.microsoft.com/directx/updates-in-graphics-and-gaming/',
+      ],
+    },
+  },
+  {
+    key: OPTIMIZATION_KEYS.VRR_OPTIMIZATIONS,
+    tier: OPTIMIZATION_TIERS.SAFE,
+    category: 'display',
+    label: 'VRR for Older Games',
+    hint: 'G-SYNC/FreeSync for DX9-DX11 games that lack it (Win11)',
+    tooltip: {
+      title: 'Variable Refresh Rate for Older Games',
+      desc: 'Turns on the Windows 11 graphics setting that gives DirectX 9 to 11 games variable refresh rate support when the game does not have it. Needs a VRR monitor with G-SYNC or FreeSync on.',
+      pros: ['No tearing without V-Sync in older games', 'Smoother frame pacing below max refresh'],
+      cons: ['Windows 11 only', 'Does nothing without a VRR monitor'],
+    },
+    defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.C,
+    evidence: {
+      level: EVIDENCE_LEVELS.HIGH,
+      sources: [        'https://www.elevenforum.com/t/enable-or-disable-variable-refresh-rate-for-games-in-windows-11.12052/',
+      ],
+    },
+  },
 ]
 
 /** Safe optimizations that stop background CPU, disk and network load */
@@ -722,6 +800,27 @@ const SAFE_BACKGROUND: readonly OptimizationDef[] = [
     },
     defaultChecked: false,
     rank: EFFECTIVENESS_RANKS.A,
+  },
+  {
+    key: OPTIMIZATION_KEYS.DEFENDER_SCAN_IDLE,
+    tier: OPTIMIZATION_TIERS.SAFE,
+    category: 'background',
+    label: 'Defender Scans When Idle',
+    hint: 'Scheduled scans wait for idle, low CPU priority',
+    tooltip: {
+      title: 'Defender Scans When Idle',
+      desc: 'Microsoft Defender runs its scheduled scans only when the PC is idle, at low CPU priority, and capped at 20% CPU. Real-time protection is unchanged.',
+      pros: ['No full scan in the middle of a match', 'Real-time protection stays on'],
+      cons: ['Scheduled scans take longer', 'Skipped if a third-party antivirus is active'],
+    },
+    defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.B,
+    evidence: {
+      level: EVIDENCE_LEVELS.HIGH,
+      sources: [        'https://learn.microsoft.com/en-us/powershell/module/defender/set-mppreference',
+        'https://learn.microsoft.com/en-us/defender-endpoint/schedule-antivirus-scans-powershell',
+      ],
+    },
   },
   {
     key: OPTIMIZATION_KEYS.AI_OFF,
@@ -1220,6 +1319,54 @@ const CAUTION_OPTIMIZATIONS: readonly OptimizationDef[] = [
     rank: EFFECTIVENESS_RANKS.C,
   },
   {
+    key: OPTIMIZATION_KEYS.SCHEDULED_TASKS_GAMING,
+    tier: OPTIMIZATION_TIERS.CAUTION,
+    category: 'background',
+    label: 'Maintenance Tasks Off',
+    hint: 'No update scans, defrag or Defender full scans mid-game',
+    tooltip: {
+      title: 'Maintenance Tasks Off',
+      desc: 'Disables scheduled tasks that start disk and CPU work at random times: Windows Update scan triggers, Defender scheduled scans, automatic maintenance, WinSAT and defrag. Real-time protection stays on.',
+      pros: ['Fewer random disk and CPU spikes', 'Every task is re-enabled by the restore script'],
+      cons: [
+        'Check for updates by hand',
+        'Run a Defender full scan by hand now and then',
+        'SSD TRIM runs only when you start it',
+      ],
+    },
+    defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.C,
+    breakingChanges: [
+      { feature: 'Windows Update', impact: 'Update checks wait until you open Windows Update' },
+    ],
+  },
+  {
+    key: OPTIMIZATION_KEYS.DEFENDER_GAME_EXCLUSIONS,
+    tier: OPTIMIZATION_TIERS.CAUTION,
+    category: 'background',
+    label: 'Defender Skips Game Folders',
+    hint: 'Steam, Epic, EA and Xbox libraries not scanned',
+    tooltip: {
+      title: 'Defender Skips Game Folders',
+      desc: 'Adds your Steam library folders and the default Epic, EA app and Xbox game folders to Microsoft Defender exclusions. Game updates, shader builds and level loads no longer wait for real-time scanning.',
+      pros: ['Faster game updates and installs', 'Less disk stutter during loads', 'Undo removes each exclusion'],
+      cons: [
+        'Malware saved into those folders is not scanned',
+        'Mods and cracks dropped there are not scanned either',
+      ],
+    },
+    defaultChecked: false,
+    rank: EFFECTIVENESS_RANKS.C,
+    evidence: {
+      level: EVIDENCE_LEVELS.MEDIUM,
+      sources: [        'https://learn.microsoft.com/en-us/powershell/module/defender/add-mppreference',
+      ],
+    },
+    breakingChanges: [
+      { feature: 'Security', impact: 'Real-time scan skips game library folders' },
+    ],
+  },
+  {
     key: OPTIMIZATION_KEYS.SERVICES_SEARCH_OFF,
     tier: OPTIMIZATION_TIERS.CAUTION,
     category: 'system',
@@ -1454,6 +1601,18 @@ const LUDICROUS_OPTIMIZATIONS: readonly OptimizationDef[] = [
         impact: 'Malware can inject kernel code; rootkits trivial',
       },
     ],
+    antiCheatConflicts: [
+      {
+        antiCheat: ANTI_CHEATS.VANGUARD,
+        effect: 'VAN: RESTRICTION: 5 asks you to turn Memory Integrity back on',
+        source: VANGUARD_MEMORY_INTEGRITY,
+      },
+      {
+        antiCheat: ANTI_CHEATS.FACEIT,
+        effect: 'VBS is required above 3,000 Elo and on hardware that supports it',
+        source: FACEIT_VBS,
+      },
+    ],
   },
   {
     key: OPTIMIZATION_KEYS.SPECTRE_MELTDOWN_OFF,
@@ -1514,6 +1673,18 @@ const LUDICROUS_OPTIMIZATIONS: readonly OptimizationDef[] = [
     },
     defaultChecked: false,
     rank: EFFECTIVENESS_RANKS.C,
+    antiCheatConflicts: [
+      {
+        antiCheat: ANTI_CHEATS.VANGUARD,
+        effect: 'VAN 9002: SEHOP must stay at the Windows default',
+        source: VANGUARD_EXPLOIT_PROTECTION,
+      },
+      {
+        antiCheat: ANTI_CHEATS.FACEIT,
+        effect: 'VBS is required above 3,000 Elo and on hardware that supports it',
+        source: FACEIT_VBS,
+      },
+    ],
   },
   {
     key: OPTIMIZATION_KEYS.DEP_OFF,
@@ -1533,6 +1704,18 @@ const LUDICROUS_OPTIMIZATIONS: readonly OptimizationDef[] = [
     },
     defaultChecked: false,
     rank: EFFECTIVENESS_RANKS.E,
+    antiCheatConflicts: [
+      {
+        antiCheat: ANTI_CHEATS.VANGUARD,
+        effect: 'VAN 9002: DEP must stay at the Windows default',
+        source: VANGUARD_EXPLOIT_PROTECTION,
+      },
+      {
+        antiCheat: ANTI_CHEATS.FACEIT,
+        effect: 'FACEIT AC does not start until DEP is on',
+        source: FACEIT_DEP,
+      },
+    ],
   },
 ]
 
@@ -1549,6 +1732,19 @@ export const OPTIMIZATIONS: readonly OptimizationDef[] = [
   ...RISKY_OPTIMIZATIONS,
   ...LUDICROUS_OPTIMIZATIONS,
 ] as const
+
+/**
+ * Options that stop an anti-cheat from starting, keyed by option.
+ * The generated script warns before applying them; the UI can show a badge.
+ */
+export const ANTI_CHEAT_CONFLICTS: Readonly<
+  Partial<Record<OptimizationKey, readonly AntiCheatConflict[]>>
+> = Object.fromEntries(
+  OPTIMIZATIONS.filter((opt) => opt.antiCheatConflicts?.length).map((opt) => [
+    opt.key,
+    opt.antiCheatConflicts,
+  ]),
+)
 
 /** Get optimizations by tier and category */
 export function getOptimizationsByTierAndCategory(

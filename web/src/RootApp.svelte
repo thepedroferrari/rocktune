@@ -55,6 +55,7 @@ import { showToast } from '$lib/toast.svelte'
 import CleanFirstSection from './components/CleanFirstSection.svelte'
 import HeroSection from './components/HeroSection.svelte'
 import PresetSection from './components/PresetSection.svelte'
+import RigCheckSection from './components/RigCheckSection.svelte'
 import SRAnnounce from './components/SRAnnounce.svelte'
 import Toast from './components/Toast.svelte'
 import UnifiedNav from './components/UnifiedNav.svelte'
@@ -440,7 +441,11 @@ onMount(() => {
     <CleanFirstSection />
   </div>
 
-  <div class="step-container">
+  <div class="step-container step-container--flexible">
+    <RigCheckSection />
+  </div>
+
+  <div class="step-container step-container--flexible">
     <section id="quick-start" class="step step--loadouts">
       <div class="loadouts-header">
         <div
@@ -448,9 +453,10 @@ onMount(() => {
           aria-hidden="true"
         ></div>
         <div class="loadouts-title-wrap">
-          <h2 class="loadouts-title">Loadouts</h2>
+          <p class="loadouts-step">Step 2</p>
+          <h2 class="loadouts-title">Pick your loadout</h2>
           <p class="loadouts-subtitle">
-            Choose a preset or build your own loadout below
+            One click sets every step below. Change anything after.
           </p>
         </div>
         <div
@@ -526,7 +532,7 @@ onMount(() => {
   <div class="step-container step-container--flexible">
     <section id="software" class="step step--arsenal">
       <header class="step-banner">
-        <div class="step-banner__marker">4</div>
+        <div class="step-banner__marker">6</div>
         <div class="step-banner__content">
           <h2 class="step-banner__title">Arsenal</h2>
           <p class="step-banner__subtitle">

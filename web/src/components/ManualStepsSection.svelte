@@ -885,7 +885,7 @@ $effect(() => {
 
 <section id="guide" class="step step--guide guide">
   <header class="step-banner">
-    <div class="step-banner__marker">6</div>
+    <div class="step-banner__marker">8</div>
     <div class="step-banner__content">
       <h2 class="step-banner__title">Manual Steps Guide</h2>
       <p class="step-banner__subtitle">

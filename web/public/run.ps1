@@ -319,6 +319,22 @@ function Set-Reg {
     if ($PassThru) { return $success }
 }
 
+function Set-DxGlobalSetting {
+    # DirectXUserGlobalSettings holds several "Name=Value;" pairs: merge one in, keep the rest
+    param([string]$Name, [string]$Value)
+    $dxPath = "HKCU:\Software\Microsoft\DirectX\UserGpuPreferences"
+    $old = (Get-ItemProperty -Path $dxPath -Name "DirectXUserGlobalSettings" -EA SilentlyContinue).DirectXUserGlobalSettings
+    $pairs = [ordered]@{}
+    if ($old) {
+        foreach ($pair in ($old -split ';')) {
+            if ($pair -match '^\s*([^=]+?)\s*=\s*(.*?)\s*$') { $pairs[$Matches[1]] = $Matches[2] }
+        }
+    }
+    $pairs[$Name] = $Value
+    $new = (($pairs.Keys | ForEach-Object { "$_=$($pairs[$_])" }) -join ';') + ';'
+    return (Set-Reg $dxPath "DirectXUserGlobalSettings" $new "String" -PassThru)
+}
+
 function Add-ScanResult {
     param([string]$Name, [string]$Current, [string]$Target, [string]$Status = "CHANGE")
     $script:ScanResults += [PSCustomObject]@{
@@ -458,12 +474,22 @@ $OPT_DESCRIPTIONS = @{
     '105' = @{ name='AMD ULPS'; tier='CAUTION'; desc='Disable AMD Ultra Low Power State (prevents downclock stutters)' }
     '106' = @{ name='NVIDIA P0 State'; tier='RISKY'; desc='Force GPU to max clocks (increases heat/power!)' }
     '107' = @{ name='Network Binding Strip'; tier='RISKY'; desc='Remove IPv6/sharing bindings (breaks file sharing!)' }
+    '108' = @{ name='NIC Interrupt Moderation'; tier='SAFE'; desc='Disable interrupt coalescing (lower network latency)' }
+    '109' = @{ name='NIC Flow Control'; tier='SAFE'; desc='Disable 802.3x flow control (less packet buffering)' }
+    '110' = @{ name='NIC Energy Efficient Ethernet'; tier='SAFE'; desc='Disable EEE/Green Ethernet (no wake latency)' }
+    '111' = @{ name='Browser Background Apps'; tier='SAFE'; desc='Stop Chrome/Edge running in the background when closed' }
 
     # Windows 11 background load and game-session fixes (113+)
     '113' = @{ name='Windows AI Off'; tier='SAFE'; desc='Recall, Click to Do, AI Fabric service, Notepad/Paint AI off' }
     '114' = @{ name='Widgets Off'; tier='SAFE'; desc='Widgets board, taskbar button and its background web process off' }
     '118' = @{ name='Game Bar Popup Fix'; tier='SAFE'; desc='Stops the ms-gamebar popup when Game Bar is off (skipped on X3D)' }
     '119' = @{ name='No Surprise Reboots'; tier='SAFE'; desc='Windows Update never auto-restarts while you are signed in' }
+    '112' = @{ name='Maintenance Tasks Off'; tier='CAUTION'; desc='No update scans, defrag or Defender full scans mid-game' }
+    '121' = @{ name='Windowed Game Optimizations'; tier='SAFE'; desc='Borderless DX10/DX11 games use flip model (Win11 22H2+)' }
+    '122' = @{ name='VRR for Older Games'; tier='SAFE'; desc='Variable refresh rate for DX9-DX11 games without it' }
+    '123' = @{ name='Defender Scans When Idle'; tier='SAFE'; desc='Scheduled scans wait for idle, low CPU priority' }
+    '124' = @{ name='Gaming Active Hours'; tier='SAFE'; desc='No update restarts 10:00-04:00' }
+    '125' = @{ name='Defender Skips Game Folders'; tier='CAUTION'; desc='Steam, Epic, EA and Xbox libraries not scanned in real time' }
 }
 
 # ============================================================================
@@ -894,6 +920,65 @@ $OPT_FUNCTIONS = @{
         if ($count -gt 0) { Write-OK "Stripped $count network bindings (IPv4 only mode)" }
         else { Write-Warn "No bindings modified (may already be stripped)" }
     }
+    '108' = { # nic_interrupt_mod
+        $nicCount = 0
+        foreach ($adapter in @(Get-NetAdapter -Physical -EA SilentlyContinue | Where-Object { $_.Status -eq "Up" })) {
+            try {
+                $prop = Get-NetAdapterAdvancedProperty -Name $adapter.Name -RegistryKeyword "*InterruptModeration" -EA Stop
+                if ($prop.RegistryValue -ne "0") {
+                    Set-NetAdapterAdvancedProperty -Name $adapter.Name -RegistryKeyword "*InterruptModeration" -RegistryValue "0" -EA Stop
+                    $nicCount++
+                }
+            } catch { }
+        }
+        if ($nicCount -gt 0) { Write-OK "NIC interrupt moderation disabled on $nicCount adapter(s)" }
+        else { Write-Warn "NIC interrupt moderation: not supported or already disabled" }
+    }
+    '109' = { # nic_flow_control
+        $nicCount = 0
+        foreach ($adapter in @(Get-NetAdapter -Physical -EA SilentlyContinue | Where-Object { $_.Status -eq "Up" })) {
+            try {
+                $prop = Get-NetAdapterAdvancedProperty -Name $adapter.Name -RegistryKeyword "*FlowControl" -EA Stop
+                if ($prop.RegistryValue -ne "0") {
+                    Set-NetAdapterAdvancedProperty -Name $adapter.Name -RegistryKeyword "*FlowControl" -RegistryValue "0" -EA Stop
+                    $nicCount++
+                }
+            } catch { }
+        }
+        if ($nicCount -gt 0) { Write-OK "NIC flow control disabled on $nicCount adapter(s)" }
+        else { Write-Warn "NIC flow control: not supported or already disabled" }
+    }
+    '110' = { # nic_energy_efficient
+        $nicCount = 0
+        foreach ($adapter in @(Get-NetAdapter -Physical -EA SilentlyContinue | Where-Object { $_.Status -eq "Up" })) {
+            try {
+                $keyword = $null
+                foreach ($k in @("*EEE", "EEELinkAdvertisement")) {
+                    if (Get-NetAdapterAdvancedProperty -Name $adapter.Name -RegistryKeyword $k -EA SilentlyContinue) { $keyword = $k; break }
+                }
+                if ($keyword) {
+                    $prop = Get-NetAdapterAdvancedProperty -Name $adapter.Name -RegistryKeyword $keyword -EA Stop
+                    if ($prop.RegistryValue -ne "0") {
+                        Set-NetAdapterAdvancedProperty -Name $adapter.Name -RegistryKeyword $keyword -RegistryValue "0" -EA Stop
+                        $nicCount++
+                    }
+                }
+            } catch { }
+        }
+        if ($nicCount -gt 0) { Write-OK "NIC Energy Efficient Ethernet disabled on $nicCount adapter(s)" }
+        else { Write-Warn "NIC EEE: not supported or already disabled" }
+    }
+    '111' = { # browser_background
+        $browserCount = 0
+        $chromePath = "HKLM:\SOFTWARE\Policies\Google\Chrome"
+        if (Set-Reg $chromePath "BackgroundModeEnabled" 0 -PassThru) { $browserCount++ }
+        $edgePath = "HKLM:\SOFTWARE\Policies\Microsoft\Edge"
+        if (Set-Reg $edgePath "BackgroundModeEnabled" 0 -PassThru) { $browserCount++ }
+        if (Set-Reg $edgePath "StartupBoostEnabled" 0 -PassThru) { $browserCount++ }
+        if (Set-Reg $edgePath "BackgroundExtensionsEnabled" 0 -PassThru) { $browserCount++ }
+        if ($browserCount -gt 0) { Write-OK "Browser background apps disabled ($browserCount policies)" }
+        else { Write-Fail "Browser background policies could not be written" }
+    }
 
     # Windows 11 background load and game-session fixes (113+)
     '113' = { # ai_off
@@ -940,6 +1025,84 @@ $OPT_FUNCTIONS = @{
         Set-Reg "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" "NoAutoRebootWithLoggedOnUsers" 1
         Set-Reg "HKLM:\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings" "IsContinuousInnovationOptedIn" 0
         Write-OK "Windows Update will not auto-reboot while you are signed in"
+    }
+    '112' = { # scheduled_tasks_gaming
+        $tasks = @(
+            "Microsoft\Windows\WindowsUpdate\Scheduled Start",
+            "Microsoft\Windows\UpdateOrchestrator\Schedule Scan",
+            "Microsoft\Windows\UpdateOrchestrator\Schedule Wake To Work",
+            "Microsoft\Windows\UpdateOrchestrator\USO_UxBroker",
+            "Microsoft\Windows\Windows Defender\Windows Defender Scheduled Scan",
+            "Microsoft\Windows\Windows Defender\Windows Defender Cache Maintenance",
+            "Microsoft\Windows\Windows Defender\Windows Defender Cleanup",
+            "Microsoft\Windows\Windows Defender\Windows Defender Verification",
+            "Microsoft\Windows\TaskScheduler\Regular Maintenance",
+            "Microsoft\Windows\Diagnosis\Scheduled",
+            "Microsoft\Windows\Maintenance\WinSAT",
+            "Microsoft\Windows\Defrag\ScheduledDefrag",
+            "Microsoft\Windows\Application Experience\Microsoft Compatibility Appraiser",
+            "Microsoft\Windows\Application Experience\ProgramDataUpdater"
+        )
+        $count = 0
+        foreach ($t in $tasks) {
+            $full = '\' + $t
+            $name = Split-Path $full -Leaf
+            $folder = (Split-Path $full -Parent).TrimEnd('\') + '\'
+            $task = Get-ScheduledTask -TaskPath $folder -TaskName $name -EA SilentlyContinue
+            if ($task -and $task.State -ne 'Disabled') {
+                try { Disable-ScheduledTask -TaskPath $folder -TaskName $name -EA Stop | Out-Null; $count++ } catch { }
+            }
+        }
+        Write-OK "Disabled $count maintenance tasks"
+    }
+    '121' = { # windowed_optimizations
+        if ($script:WinBuild -lt 22621) { Write-Host "  [SKIP] Windowed game optimizations (needs Windows 11 22H2+)" -ForegroundColor DarkGray; return }
+        if (Set-DxGlobalSetting "SwapEffectUpgradeEnable" "1") { Write-OK "Optimizations for windowed games on" }
+        else { Write-Fail "Windowed game optimizations could not be written" }
+    }
+    '122' = { # vrr_optimizations
+        if ($script:WinBuild -lt 18362) { Write-Host "  [SKIP] VRR for older games (needs Windows 10 1903+)" -ForegroundColor DarkGray; return }
+        if (Set-DxGlobalSetting "VRROptimizeEnable" "1") { Write-OK "Variable refresh rate for older DirectX games on" }
+        else { Write-Fail "VRR for older games could not be written" }
+    }
+    '123' = { # defender_scan_idle
+        try {
+            $null = Get-MpPreference -EA Stop
+            Set-MpPreference -ScanOnlyIfIdleEnabled $true -ScanAvgCPULoadFactor 20 -EnableLowCpuPriority $true -EA Stop
+            Write-OK "Defender scans: idle only, low CPU priority, 20% CPU cap"
+        } catch { Write-Warn "Defender scan settings unchanged: $($_.Exception.Message)" }
+    }
+    '124' = { # active_hours_gaming
+        $wuPol = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate"
+        Set-Reg $wuPol "SetActiveHours" 1
+        Set-Reg $wuPol "ActiveHoursStart" 10
+        Set-Reg $wuPol "ActiveHoursEnd" 4
+        Write-OK "Update active hours set to 10:00-04:00"
+    }
+    '125' = { # defender_game_exclusions
+        $mp = $null
+        try { $mp = Get-MpPreference -EA Stop } catch { $mp = $null }
+        if (-not $mp) { Write-Host "  [SKIP] Defender exclusions (Defender is not the active antivirus)" -ForegroundColor DarkGray; return }
+        $dirs = New-Object System.Collections.Generic.List[string]
+        $steamPath = (Get-ItemProperty "HKCU:\Software\Valve\Steam" -Name "SteamPath" -EA SilentlyContinue).SteamPath
+        if ($steamPath) {
+            $vdf = Join-Path ($steamPath -replace '/', '\') "steamapps\libraryfolders.vdf"
+            if (Test-Path -LiteralPath $vdf) {
+                foreach ($m in [regex]::Matches([string](Get-Content -LiteralPath $vdf -Raw), '"path"\s+"([^"]+)"')) {
+                    # String join, not Join-Path: Join-Path throws on a library drive that is not connected
+                    $dirs.Add(($m.Groups[1].Value -replace '\\\\', '\').TrimEnd('\') + '\steamapps\common')
+                }
+            }
+        }
+        foreach ($dir in @("$env:ProgramFiles\Epic Games", "$env:ProgramFiles\EA Games", "$env:SystemDrive\XboxGames")) { $dirs.Add($dir) }
+        $existing = @($mp.ExclusionPath)
+        $added = 0
+        foreach ($dir in ($dirs | Select-Object -Unique)) {
+            if ((Test-Path -LiteralPath $dir) -and ($existing -notcontains $dir)) {
+                try { Add-MpPreference -ExclusionPath $dir -EA Stop; $added++ } catch { }
+            }
+        }
+        Write-OK "Defender skips $added game library folder(s)"
     }
 
     # NOTE: LUDICROUS tier (100-103) intentionally NOT included for security

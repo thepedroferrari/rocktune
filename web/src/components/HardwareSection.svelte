@@ -22,7 +22,7 @@ function closeHelp() {
 
 <section id="hardware" class="step">
   <header class="step-banner">
-    <div class="step-banner__marker">1</div>
+    <div class="step-banner__marker">3</div>
     <div class="step-banner__content">
       <h2 class="step-banner__title">Rig</h2>
       <p class="step-banner__subtitle">

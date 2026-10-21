@@ -216,6 +216,38 @@ export interface AutomatedBy {
   readonly scriptAction?: string
 }
 
+/** Kernel anti-cheat systems RockTune checks options against */
+export const ANTI_CHEATS = {
+  VANGUARD: 'vanguard',
+  FACEIT: 'faceit',
+  JAVELIN: 'javelin',
+  BATTLEYE: 'battleye',
+  EASY_ANTI_CHEAT: 'easy_anti_cheat',
+  RICOCHET: 'ricochet',
+} as const satisfies Record<string, string>
+
+export type AntiCheat = (typeof ANTI_CHEATS)[keyof typeof ANTI_CHEATS]
+
+/** Display names for anti-cheat systems and the games that use them */
+export const ANTI_CHEAT_LABELS: Record<AntiCheat, { readonly name: string; readonly games: string }> =
+  {
+    vanguard: { name: 'Riot Vanguard', games: 'Valorant, League of Legends' },
+    faceit: { name: 'FACEIT AC', games: 'Counter-Strike 2 on FACEIT' },
+    javelin: { name: 'EA Javelin', games: 'Battlefield 6, EA SPORTS FC' },
+    battleye: { name: 'BattlEye', games: 'PUBG, Rainbow Six Siege, Escape from Tarkov' },
+    easy_anti_cheat: { name: 'Easy Anti-Cheat', games: 'Fortnite, Apex Legends, Elden Ring' },
+    ricochet: { name: 'Ricochet', games: 'Call of Duty' },
+  } as const
+
+/** A known clash between an optimization and an anti-cheat */
+export interface AntiCheatConflict {
+  readonly antiCheat: AntiCheat
+  /** What the player sees, in plain words */
+  readonly effect: string
+  /** Vendor support page or other public source */
+  readonly source: string
+}
+
 /** Breaking changes that an optimization may cause */
 export interface BreakingChange {
   /** What feature/functionality breaks */
@@ -299,6 +331,12 @@ const SAFE_OPTIMIZATIONS = {
   WIDGETS_OFF: 'widgets_off',
   GAMEBAR_POPUP_FIX: 'gamebar_popup_fix',
   UPDATE_NO_REBOOT: 'update_no_reboot',
+
+  // Game-session fixes: DirectX graphics settings, Defender scans, update hours
+  WINDOWED_OPTIMIZATIONS: 'windowed_optimizations',
+  VRR_OPTIMIZATIONS: 'vrr_optimizations',
+  DEFENDER_SCAN_IDLE: 'defender_scan_idle',
+  ACTIVE_HOURS_GAMING: 'active_hours_gaming',
 } as const
 
 const CAUTION_OPTIMIZATIONS = {
@@ -330,6 +368,8 @@ const CAUTION_OPTIMIZATIONS = {
 
   // FR33THY: GPU-specific optimizations
   AMD_ULPS_DISABLE: 'amd_ulps_disable',
+
+  DEFENDER_GAME_EXCLUSIONS: 'defender_game_exclusions',
 } as const
 
 const RISKY_OPTIMIZATIONS = {

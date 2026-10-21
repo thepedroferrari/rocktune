@@ -181,11 +181,7 @@ export function getCategoryCounts(): Record<string, number> {
 export function toggleSoftware(key: PackageKey): boolean {
   const wasSelected = app.selected.has(key)
 
-  if (wasSelected) {
-    app.selected.delete(key)
-  } else {
-    app.selected.add(key)
-  }
+  app.selected = toggledSet(app.selected, key)
 
   emitAppEvent('software-selection-changed', {
     selected: Array.from(app.selected),
@@ -256,14 +252,16 @@ export function setDnsProvider(provider: DnsProviderType): void {
   app.dnsProvider = provider
 }
 
-function toggleInSet<T>(set: Set<T>, item: T): boolean {
-  const had = set.has(item)
-  had ? set.delete(item) : set.add(item)
-  return !had
+/** Returns a new Set so Svelte sees the change; a mutated plain Set inside $state is not tracked. */
+function toggledSet<T>(set: Set<T>, item: T): Set<T> {
+  const next = new Set(set)
+  if (!next.delete(item)) next.add(item)
+  return next
 }
 
 export function toggleOptimization(key: OptimizationKey): boolean {
-  const result = toggleInSet(app.optimizations, key)
+  app.optimizations = toggledSet(app.optimizations, key)
+  const result = app.optimizations.has(key)
   soundSettings.onToggle(result)
   return result
 }
@@ -273,8 +271,8 @@ export function setOptimizations(keys: readonly OptimizationKey[]): void {
 }
 
 export function togglePeripheral(type: PeripheralType): boolean {
-  const result = toggleInSet(app.peripherals, type)
-  return result
+  app.peripherals = toggledSet(app.peripherals, type)
+  return app.peripherals.has(type)
 }
 
 export function setPeripherals(types: readonly PeripheralType[]): void {
@@ -282,8 +280,8 @@ export function setPeripherals(types: readonly PeripheralType[]): void {
 }
 
 export function toggleMonitorSoftware(type: MonitorSoftwareType): boolean {
-  const result = toggleInSet(app.monitorSoftware, type)
-  return result
+  app.monitorSoftware = toggledSet(app.monitorSoftware, type)
+  return app.monitorSoftware.has(type)
 }
 
 export function setMonitorSoftware(types: readonly MonitorSoftwareType[]): void {
