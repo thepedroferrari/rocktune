@@ -31,9 +31,9 @@ jobs:
       - name: Validate catalog.json
         run: |
           echo "Validating catalog.json..."
-          cat web/catalog.json | jq empty
+          jq empty web/public/catalog.json
           # Check for duplicate winget IDs
-          duplicates=$(jq -r 'to_entries | .[].value.id' web/catalog.json | sort | uniq -d)
+          duplicates=$(jq -r 'to_entries | .[].value.id' web/public/catalog.json | sort | uniq -d)
           if [ -n "$duplicates" ]; then
             echo "❌ Duplicate package IDs: $duplicates"
             exit 1
