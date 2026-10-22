@@ -42,13 +42,12 @@ export default defineConfig({
     outDir: 'dist',
     emptyOutDir: true,
     target: 'esnext',
-    minify: 'esbuild',
     sourcemap: false,
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['svelte', 'zod'],
-          diff: ['diff'],
+        manualChunks(id) {
+          if (/node_modules\/(svelte|zod)\//.test(id)) return 'vendor'
+          if (/node_modules\/diff\//.test(id)) return 'diff'
         },
       },
     },

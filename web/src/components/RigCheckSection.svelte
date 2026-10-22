@@ -63,8 +63,11 @@ async function copyCommand(which: 'rig' | 'snapshot') {
       <p class="rig-check__hint">
         Paste into PowerShell and press Enter. Fix what it flags, then pick a loadout below.
       </p>
+    </div>
 
+    <div>
       <h3 class="rig-check__checks-title">Stutters in game? Run Play Snapshot</h3>
+      <div class="rig-check__run">
       <p class="rig-check__lead">{SNAPSHOT.description}</p>
       <div class="rig-check__cmd">
         <span class="rig-check__prompt" aria-hidden="true">PS&gt;</span>
@@ -78,6 +81,7 @@ async function copyCommand(which: 'rig' | 'snapshot') {
         >
           {copied === 'snapshot' ? 'Copied' : 'Copy'}
         </button>
+      </div>
       </div>
     </div>
 
@@ -167,8 +171,7 @@ async function copyCommand(which: 'rig' | 'snapshot') {
   font-family: var(--font-mono);
   font-size: var(--text-sm);
   color: var(--text-primary);
-  white-space: nowrap;
-  overflow-x: auto;
+  overflow-wrap: anywhere;
   user-select: all;
 }
 
@@ -255,10 +258,6 @@ async function copyCommand(which: 'rig' | 'snapshot') {
   .rig-check__run {
     grid-template-columns: 1fr;
     grid-template-areas: 'lead' 'cmd' 'hint';
-  }
-  .rig-check__code {
-    white-space: normal;
-    overflow-wrap: anywhere;
   }
 }
 </style>
