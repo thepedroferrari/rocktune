@@ -12,7 +12,8 @@ declare global {
 globalThis.__BUILD_COMMIT__ = 'test-commit'
 globalThis.__BUILD_DATE__ = '2026-01-07'
 
-import { assertEquals, assertStringIncludes } from 'jsr:@std/assert'
+import { test } from 'node:test'
+import { assertEquals, assertStringIncludes } from './test-assert.ts'
 import { PERSONA_META, type PersonaId } from './persona-registry.ts'
 import { buildScript, buildVerificationScript, type SelectionState } from './script-generator.ts'
 import type { PackageKey, SoftwareCatalog } from './types.ts'
@@ -56,7 +57,7 @@ function createTestSelection(persona: PersonaId): SelectionState {
   }
 }
 
-Deno.test('Script generation - All personas generate valid PowerShell', () => {
+test('Script generation - All personas generate valid PowerShell', () => {
   const personaIds = Object.keys(PERSONA_META) as PersonaId[]
 
   for (const persona of personaIds) {
@@ -72,7 +73,7 @@ Deno.test('Script generation - All personas generate valid PowerShell', () => {
   }
 })
 
-Deno.test('Script generation - Gamer persona includes expected optimizations', () => {
+test('Script generation - Gamer persona includes expected optimizations', () => {
   const selection = createTestSelection('gamer')
   const script = buildScript(selection, { catalog: TEST_CATALOG })
 
@@ -81,7 +82,7 @@ Deno.test('Script generation - Gamer persona includes expected optimizations', (
   assertEquals(hasOptimizations, true)
 })
 
-Deno.test('Script generation - Pro gamer has advanced optimizations', () => {
+test('Script generation - Pro gamer has advanced optimizations', () => {
   const selection: SelectionState = {
     hardware: { cpu: 'amd_x3d', gpu: 'nvidia', peripherals: [], monitorSoftware: [] },
     optimizations: ['pagefile', 'msi_mode', 'ultimate_perf'],
@@ -99,7 +100,7 @@ Deno.test('Script generation - Pro gamer has advanced optimizations', () => {
   assertStringIncludes(script, '#Requires')
 })
 
-Deno.test('Script generation - Empty optimizations still generates valid script', () => {
+test('Script generation - Empty optimizations still generates valid script', () => {
   const selection: SelectionState = {
     hardware: { cpu: 'amd_x3d', gpu: 'nvidia', peripherals: [], monitorSoftware: [] },
     optimizations: [],
@@ -118,7 +119,7 @@ Deno.test('Script generation - Empty optimizations still generates valid script'
   assertStringIncludes(script, 'RockTune')
 })
 
-Deno.test('Script generation - Timer tool can be disabled', () => {
+test('Script generation - Timer tool can be disabled', () => {
   const selectionWithTimer = createTestSelection('gamer')
   selectionWithTimer.includeTimer = true
   const scriptWithTimer = buildScript(selectionWithTimer, { catalog: TEST_CATALOG })
@@ -131,7 +132,7 @@ Deno.test('Script generation - Timer tool can be disabled', () => {
   assertEquals(scriptWithTimer.length > scriptWithoutTimer.length, true)
 })
 
-Deno.test('Script generation - Software packages are included', () => {
+test('Script generation - Software packages are included', () => {
   const selection: SelectionState = {
     hardware: { cpu: 'amd_x3d', gpu: 'nvidia', peripherals: [], monitorSoftware: [] },
     optimizations: [],
@@ -148,7 +149,7 @@ Deno.test('Script generation - Software packages are included', () => {
   assertStringIncludes(script, 'winget')
 })
 
-Deno.test('Verification script - Generates valid PowerShell', () => {
+test('Verification script - Generates valid PowerShell', () => {
   const selection = createTestSelection('gamer')
   const script = buildVerificationScript(selection)
 
@@ -157,7 +158,7 @@ Deno.test('Verification script - Generates valid PowerShell', () => {
   assertStringIncludes(script.toLowerCase(), 'function')
 })
 
-Deno.test('Verification script - All personas supported', () => {
+test('Verification script - All personas supported', () => {
   const personaIds = Object.keys(PERSONA_META) as PersonaId[]
 
   for (const persona of personaIds) {
@@ -168,7 +169,7 @@ Deno.test('Verification script - All personas supported', () => {
   }
 })
 
-Deno.test('Script generation - Script structure is consistent', () => {
+test('Script generation - Script structure is consistent', () => {
   const selection = createTestSelection('gamer')
   const script = buildScript(selection, { catalog: TEST_CATALOG })
 
@@ -181,7 +182,7 @@ Deno.test('Script generation - Script structure is consistent', () => {
 // HARDWARE PROFILE VARIATIONS
 // =============================================================================
 
-Deno.test('Script generation - Intel CPU generates valid script', () => {
+test('Script generation - Intel CPU generates valid script', () => {
   const selection: SelectionState = {
     hardware: { cpu: 'intel', gpu: 'nvidia', peripherals: [], monitorSoftware: [] },
     optimizations: ['pagefile'],
@@ -199,7 +200,7 @@ Deno.test('Script generation - Intel CPU generates valid script', () => {
   assertStringIncludes(script, 'RockTune')
 })
 
-Deno.test('Script generation - AMD GPU generates valid script', () => {
+test('Script generation - AMD GPU generates valid script', () => {
   const selection: SelectionState = {
     hardware: { cpu: 'amd', gpu: 'amd', peripherals: [], monitorSoftware: [] },
     optimizations: ['pagefile'],
@@ -217,7 +218,7 @@ Deno.test('Script generation - AMD GPU generates valid script', () => {
   assertStringIncludes(script, 'RockTune')
 })
 
-Deno.test('Script generation - AMD X3D CPU generates valid script', () => {
+test('Script generation - AMD X3D CPU generates valid script', () => {
   const selection: SelectionState = {
     hardware: { cpu: 'amd_x3d', gpu: 'nvidia', peripherals: [], monitorSoftware: [] },
     optimizations: ['pagefile'],
@@ -238,7 +239,7 @@ Deno.test('Script generation - AMD X3D CPU generates valid script', () => {
 // PERIPHERALS AND MONITOR SOFTWARE
 // =============================================================================
 
-Deno.test('Script generation - Logitech peripheral included', () => {
+test('Script generation - Logitech peripheral included', () => {
   const selection: SelectionState = {
     hardware: {
       cpu: 'amd_x3d',
@@ -260,7 +261,7 @@ Deno.test('Script generation - Logitech peripheral included', () => {
   assertStringIncludes(script, '#Requires -RunAsAdministrator')
 })
 
-Deno.test('Script generation - Multiple peripherals included', () => {
+test('Script generation - Multiple peripherals included', () => {
   const selection: SelectionState = {
     hardware: {
       cpu: 'amd_x3d',
@@ -282,7 +283,7 @@ Deno.test('Script generation - Multiple peripherals included', () => {
   assertStringIncludes(script, '#Requires -RunAsAdministrator')
 })
 
-Deno.test('Script generation - Dell monitor software included', () => {
+test('Script generation - Dell monitor software included', () => {
   const selection: SelectionState = {
     hardware: {
       cpu: 'amd_x3d',
@@ -308,7 +309,7 @@ Deno.test('Script generation - Dell monitor software included', () => {
 // DNS PROVIDERS
 // =============================================================================
 
-Deno.test('Script generation - Quad9 DNS provider', () => {
+test('Script generation - Quad9 DNS provider', () => {
   const selection = createTestSelection('gamer')
   selection.optimizations = ['dns']
 
@@ -320,7 +321,7 @@ Deno.test('Script generation - Quad9 DNS provider', () => {
   assertStringIncludes(script, '#Requires -RunAsAdministrator')
 })
 
-Deno.test('Script generation - Google DNS provider', () => {
+test('Script generation - Google DNS provider', () => {
   const selection = createTestSelection('gamer')
   selection.optimizations = ['dns']
 
@@ -332,7 +333,7 @@ Deno.test('Script generation - Google DNS provider', () => {
   assertStringIncludes(script, '#Requires -RunAsAdministrator')
 })
 
-Deno.test('Script generation - Default DNS provider when not specified', () => {
+test('Script generation - Default DNS provider when not specified', () => {
   const selection = createTestSelection('gamer')
   selection.optimizations = ['dns']
 
@@ -345,7 +346,7 @@ Deno.test('Script generation - Default DNS provider when not specified', () => {
 // BUILD OPTIONS
 // =============================================================================
 
-Deno.test('Script generation - Backup disabled', () => {
+test('Script generation - Backup disabled', () => {
   const selection: SelectionState = {
     hardware: { cpu: 'amd_x3d', gpu: 'nvidia', peripherals: [], monitorSoftware: [] },
     optimizations: ['pagefile'],
@@ -363,7 +364,7 @@ Deno.test('Script generation - Backup disabled', () => {
   assertStringIncludes(script, '#Requires -RunAsAdministrator')
 })
 
-Deno.test('Script generation - Manual steps enabled', () => {
+test('Script generation - Manual steps enabled', () => {
   const selection: SelectionState = {
     hardware: { cpu: 'amd_x3d', gpu: 'nvidia', peripherals: [], monitorSoftware: [] },
     optimizations: ['pagefile'],
@@ -381,7 +382,7 @@ Deno.test('Script generation - Manual steps enabled', () => {
   assertStringIncludes(script, '#Requires -RunAsAdministrator')
 })
 
-Deno.test('Script generation - All options disabled', () => {
+test('Script generation - All options disabled', () => {
   const selection: SelectionState = {
     hardware: { cpu: 'amd_x3d', gpu: 'nvidia', peripherals: [], monitorSoftware: [] },
     optimizations: [],
@@ -404,7 +405,7 @@ Deno.test('Script generation - All options disabled', () => {
 // EDGE CASES
 // =============================================================================
 
-Deno.test('Script generation - Null preset generates valid script', () => {
+test('Script generation - Null preset generates valid script', () => {
   const selection: SelectionState = {
     hardware: { cpu: 'amd_x3d', gpu: 'nvidia', peripherals: [], monitorSoftware: [] },
     optimizations: ['pagefile'],
@@ -421,7 +422,7 @@ Deno.test('Script generation - Null preset generates valid script', () => {
   assertStringIncludes(script, '#Requires -RunAsAdministrator')
 })
 
-Deno.test('Script generation - Missing packages are tracked', () => {
+test('Script generation - Missing packages are tracked', () => {
   const selection: SelectionState = {
     hardware: { cpu: 'amd_x3d', gpu: 'nvidia', peripherals: [], monitorSoftware: [] },
     optimizations: [],
@@ -439,7 +440,7 @@ Deno.test('Script generation - Missing packages are tracked', () => {
   assertStringIncludes(script, '#Requires -RunAsAdministrator')
 })
 
-Deno.test('Script generation - Empty catalog generates valid script', () => {
+test('Script generation - Empty catalog generates valid script', () => {
   const selection: SelectionState = {
     hardware: { cpu: 'amd_x3d', gpu: 'nvidia', peripherals: [], monitorSoftware: [] },
     optimizations: ['pagefile'],
@@ -458,7 +459,7 @@ Deno.test('Script generation - Empty catalog generates valid script', () => {
   assertStringIncludes(script, '#Requires -RunAsAdministrator')
 })
 
-Deno.test('Script generation - Streamer persona generates valid script', () => {
+test('Script generation - Streamer persona generates valid script', () => {
   const selection = createTestSelection('streamer')
   const script = buildScript(selection, { catalog: TEST_CATALOG })
 
@@ -466,7 +467,7 @@ Deno.test('Script generation - Streamer persona generates valid script', () => {
   assertStringIncludes(script, 'RockTune')
 })
 
-Deno.test('Script generation - Benchmarker persona generates valid script', () => {
+test('Script generation - Benchmarker persona generates valid script', () => {
   const selection = createTestSelection('benchmarker')
   const script = buildScript(selection, { catalog: TEST_CATALOG })
 
@@ -478,7 +479,7 @@ Deno.test('Script generation - Benchmarker persona generates valid script', () =
 // SECURITY: SAFE PATTERNS
 // =============================================================================
 
-Deno.test('Script generation - No Invoke-Expression on user input', () => {
+test('Script generation - No Invoke-Expression on user input', () => {
   const selection: SelectionState = {
     hardware: { cpu: 'amd_x3d', gpu: 'nvidia', peripherals: [], monitorSoftware: [] },
     optimizations: ['pagefile'],
@@ -500,7 +501,7 @@ Deno.test('Script generation - No Invoke-Expression on user input', () => {
   assertEquals(iexCount + iexShortCount < 10, true, 'Too many IEX calls')
 })
 
-Deno.test('Script generation - Uses proper escaping for package names', () => {
+test('Script generation - Uses proper escaping for package names', () => {
   const catalogWithSpecialChars: SoftwareCatalog = {
     'Test.Package': {
       id: 'Test.Package',
@@ -532,7 +533,7 @@ Deno.test('Script generation - Uses proper escaping for package names', () => {
 // PERIPHERAL/MONITOR PACKAGE MAPPING
 // =============================================================================
 
-Deno.test('PERIPHERAL_TO_PACKAGE - All peripheral types have mappings', async () => {
+test('PERIPHERAL_TO_PACKAGE - All peripheral types have mappings', async () => {
   const { PERIPHERAL_TO_PACKAGE } = await import('./script-generator.ts')
 
   // Known peripherals that should have mappings
@@ -547,7 +548,7 @@ Deno.test('PERIPHERAL_TO_PACKAGE - All peripheral types have mappings', async ()
   }
 })
 
-Deno.test('MONITOR_TO_PACKAGE - All monitor types have mappings', async () => {
+test('MONITOR_TO_PACKAGE - All monitor types have mappings', async () => {
   const { MONITOR_TO_PACKAGE } = await import('./script-generator.ts')
 
   // Known monitor software that should have mappings
@@ -576,7 +577,7 @@ function scriptFor(optimizations: string[], overrides: Partial<SelectionState> =
   return buildScript(selection, { catalog: TEST_CATALOG })
 }
 
-Deno.test('Fix - Disable-Task splits folder and leaf (TaskName alone matches nothing)', () => {
+test('Fix - Disable-Task splits folder and leaf (TaskName alone matches nothing)', () => {
   const script = scriptFor(['scheduled_tasks_gaming'])
   assertStringIncludes(script, 'Get-ScheduledTask -TaskPath $folder -TaskName $name')
   assertStringIncludes(script, 'Disable-ScheduledTask -TaskPath $folder -TaskName $name')
@@ -585,7 +586,7 @@ Deno.test('Fix - Disable-Task splits folder and leaf (TaskName alone matches not
   assertStringIncludes(script, 'Enable-ScheduledTask -TaskPath $tp -TaskName $tn')
 })
 
-Deno.test('Fix - Undo restores exact registry state (values.json, created keys removed)', () => {
+test('Fix - Undo restores exact registry state (values.json, created keys removed)', () => {
   const script = scriptFor(['spectre_meltdown_off'])
   assertStringIncludes(script, 'Save-RegPriorState $Path $Name')
   assertStringIncludes(script, 'values.json')
@@ -593,7 +594,7 @@ Deno.test('Fix - Undo restores exact registry state (values.json, created keys r
   assertStringIncludes(script, 'Removed key created by RockTune')
 })
 
-Deno.test('Fix - SMT never uses bcdedit numproc', () => {
+test('Fix - SMT never uses bcdedit numproc', () => {
   const script = scriptFor(['smt_disable'])
   assertEquals(script.includes('bcdedit /set numproc'), false)
   assertStringIncludes(script, 'bcdedit /deletevalue numproc')
@@ -605,32 +606,32 @@ Deno.test('Fix - SMT never uses bcdedit numproc', () => {
   assertEquals(verify.includes('numproc\\s+$cores'), false)
 })
 
-Deno.test('Fix - Page file creates the setting when missing and falls back to auto', () => {
+test('Fix - Page file creates the setting when missing and falls back to auto', () => {
   const script = scriptFor(['pagefile'])
   assertStringIncludes(script, 'New-CimInstance -ClassName Win32_PageFileSetting')
   assertStringIncludes(script, 'AutomaticManagedPagefile = $true')
   assertStringIncludes(script, '$env:SystemDrive\\pagefile.sys')
 })
 
-Deno.test('Fix - generated script never calls Get-WmiObject (absent in PowerShell 7)', () => {
+test('Fix - generated script never calls Get-WmiObject (absent in PowerShell 7)', () => {
   const all = OPTIMIZATIONS.map((o) => o.key)
   const script = scriptFor(all)
   assertEquals(script.includes('Get-WmiObject'), false)
 })
 
-Deno.test('Fix - GPU interrupt affinity is a binary mask off CPU 0', () => {
+test('Fix - GPU interrupt affinity is a binary mask off CPU 0', () => {
   const script = scriptFor(['interrupt_affinity'])
   assertStringIncludes(script, 'Set-Reg $affPath "AssignmentSetOverride" $mask "Binary"')
   assertEquals(script.includes('"AssignmentSetOverride" 1'), false)
 })
 
-Deno.test('Fix - Input queue is never shrunk below the Windows default', () => {
+test('Fix - Input queue is never shrunk below the Windows default', () => {
   const script = scriptFor(['input_buffer'])
   assertEquals(script.includes('"MouseDataQueueSize" 32'), false)
   assertStringIncludes(script, '"MouseDataQueueSize" 100')
 })
 
-Deno.test('Fix - Razer block uses device metadata policy, not service shutdown', () => {
+test('Fix - Razer block uses device metadata policy, not service shutdown', () => {
   const script = scriptFor(['razer_block'], {
     hardware: { cpu: 'intel', gpu: 'nvidia', peripherals: ['razer'], monitorSoftware: [] },
   })
@@ -638,13 +639,13 @@ Deno.test('Fix - Razer block uses device metadata policy, not service shutdown',
   assertEquals(script.includes('Name -like "Razer*"'), false)
 })
 
-Deno.test('Fix - DNS only on physical adapters with errors caught', () => {
+test('Fix - DNS only on physical adapters with errors caught', () => {
   const script = scriptFor(['dns'])
   assertStringIncludes(script, 'Get-NetAdapter -Physical')
   assertStringIncludes(script, 'Set-DnsClientServerAddress -InterfaceIndex $nic.ifIndex')
 })
 
-Deno.test('Fix - Mutex released in finally; partial runs still save restore files', () => {
+test('Fix - Mutex released in finally; partial runs still save restore files', () => {
   const script = scriptFor(['pagefile'])
   assertStringIncludes(script, '} finally {')
   assertStringIncludes(script, '$mutex.ReleaseMutex()')
@@ -652,14 +653,14 @@ Deno.test('Fix - Mutex released in finally; partial runs still save restore file
   assertEquals(script.indexOf('try {') < script.indexOf('if ($Undo) {'), true)
 })
 
-Deno.test('Fix - Services: startup type set before stop, delayed-auto restored', () => {
+test('Fix - Services: startup type set before stop, delayed-auto restored', () => {
   const script = scriptFor(['sysmain_disable'])
   assertStringIncludes(script, 'Get-CimInstance Win32_Service -Filter')
   assertStringIncludes(script, 'DelayedAutoStart')
   assertStringIncludes(script, 'start= delayed-auto')
 })
 
-Deno.test('Fix - Ultimate Performance uses a fixed GUID (no duplicate plans)', () => {
+test('Fix - Ultimate Performance uses a fixed GUID (no duplicate plans)', () => {
   const script = scriptFor(['ultimate_perf'])
   assertStringIncludes(
     script,
@@ -668,14 +669,14 @@ Deno.test('Fix - Ultimate Performance uses a fixed GUID (no duplicate plans)', (
   assertEquals(script.includes('Select-String "Ultimate Performance"'), false)
 })
 
-Deno.test('Fix - Restore point is always created (frequency limit lifted)', () => {
+test('Fix - Restore point is always created (frequency limit lifted)', () => {
   const script = scriptFor(['restore_point'])
   assertStringIncludes(script, 'SystemRestorePointCreationFrequency')
   assertStringIncludes(script, 'Enable-ComputerRestore')
   assertEquals(script.includes('already created within last 24 hours'), false)
 })
 
-Deno.test('Feature - Windows AI off: Recall, Click to Do, AI service, Win11 + 24H2 guards', () => {
+test('Feature - Windows AI off: Recall, Click to Do, AI service, Win11 + 24H2 guards', () => {
   const script = scriptFor(['ai_off'])
   for (const key of [
     'AllowRecallEnablement',
@@ -691,7 +692,7 @@ Deno.test('Feature - Windows AI off: Recall, Click to Do, AI service, Win11 + 24
   assertStringIncludes(script, 'if ($script:IsWin11_24H2)')
 })
 
-Deno.test('Feature - Widgets and reboot items emit their policies', () => {
+test('Feature - Widgets and reboot items emit their policies', () => {
   const script = scriptFor(['widgets_off', 'update_no_reboot'])
   for (const key of [
     'AllowNewsAndInterests',
@@ -702,13 +703,13 @@ Deno.test('Feature - Widgets and reboot items emit their policies', () => {
   }
 })
 
-Deno.test('Feature - Game Bar popup fix is skipped on X3D CPUs', () => {
+test('Feature - Game Bar popup fix is skipped on X3D CPUs', () => {
   const script = scriptFor(['gamebar_popup_fix'])
   assertStringIncludes(script, 'ms-gamebarservices')
   assertStringIncludes(script, 'if ($Config.hardware.cpu -eq "amd_x3d")')
 })
 
-Deno.test('Feature - Verification script checks new items', () => {
+test('Feature - Verification script checks new items', () => {
   const verify = buildVerificationScript({
     ...createTestSelection('gamer'),
     hardware: { cpu: 'intel', gpu: 'nvidia', peripherals: [], monitorSoftware: [] },
@@ -720,7 +721,7 @@ Deno.test('Feature - Verification script checks new items', () => {
   assertStringIncludes(verify, 'ms-gamebar popup fix')
 })
 
-Deno.test('Run output - per-section progress and end summary', () => {
+test('Run output - per-section progress and end summary', () => {
   const script = scriptFor(['pagefile', 'dns', 'ai_off'])
   assertStringIncludes(script, 'Start-Section "System"')
   assertStringIncludes(script, 'Write-SectionSummary')
@@ -728,7 +729,7 @@ Deno.test('Run output - per-section progress and end summary', () => {
   assertStringIncludes(script, 'Loadout: 3 upgrades')
 })
 
-Deno.test('Presets - non-benchmarker personas never include LUDICROUS items', () => {
+test('Presets - non-benchmarker personas never include LUDICROUS items', () => {
   const ludicrous = new Set(
     OPTIMIZATIONS.filter((o) => o.tier === 'ludicrous').map((o) => o.key as string),
   )
@@ -739,26 +740,26 @@ Deno.test('Presets - non-benchmarker personas never include LUDICROUS items', ()
   }
 })
 
-Deno.test('Catalog - every new key has a share ID', () => {
+test('Catalog - every new key has a share ID', () => {
   for (const key of ['ai_off', 'widgets_off', 'gamebar_popup_fix', 'update_no_reboot']) {
     assertEquals(typeof OPT_VALUE_TO_ID[key as keyof typeof OPT_VALUE_TO_ID], 'number', key)
   }
 })
 
-Deno.test('Handoff - banner points general cleanup to WinUtil and Win11Debloat', () => {
+test('Handoff - banner points general cleanup to WinUtil and Win11Debloat', () => {
   const script = scriptFor(['pagefile'])
   assertStringIncludes(script, 'https://github.com/ChrisTitusTech/winutil')
   assertStringIncludes(script, 'https://github.com/Raphire/Win11Debloat')
 })
 
-Deno.test('Handoff - stale retired keys print one skip line and generate nothing', () => {
+test('Handoff - stale retired keys print one skip line and generate nothing', () => {
   const script = scriptFor(['pagefile', 'bloatware', 'privacy_tier3'])
   assertStringIncludes(script, '[skip] Remove Bloatware: moved to WinUtil / Win11Debloat')
   assertStringIncludes(script, '[skip] Privacy Tier 3: moved to WinUtil / Win11Debloat')
   assertEquals(script.includes('$bloatApps'), false)
 })
 
-Deno.test('Compat - scan checks Xbox services, apps, GameInput and Store downloads', () => {
+test('Compat - scan checks Xbox services, apps, GameInput and Store downloads', () => {
   const script = scriptFor(['pagefile'])
   for (const needle of [
     "'XblAuthManager', 'XblGameSave', 'XboxNetApiSvc', 'XboxGipSvc'",
@@ -776,7 +777,7 @@ Deno.test('Compat - scan checks Xbox services, apps, GameInput and Store downloa
   assertEquals(script.indexOf('Initialize-Backup\n') < script.indexOf('Restore these gaming'), true)
 })
 
-Deno.test('Compat - X3D flags a missing Game Bar as critical', () => {
+test('Compat - X3D flags a missing Game Bar as critical', () => {
   const x3d = scriptFor(['pagefile'], {
     hardware: { cpu: 'amd_x3d', gpu: 'nvidia', peripherals: [], monitorSoftware: [] },
   })
@@ -793,7 +794,7 @@ Deno.test('Compat - X3D flags a missing Game Bar as critical', () => {
   assertStringIncludes(verify, 'Game Bar installed (X3D core parking)')
 })
 
-Deno.test('Feature - DirectX settings merge into the existing string', () => {
+test('Feature - DirectX settings merge into the existing string', () => {
   const script = scriptFor(['windowed_optimizations', 'vrr_optimizations'])
   assertStringIncludes(script, '$dxPairs["SwapEffectUpgradeEnable"] = "1"')
   assertStringIncludes(script, '$dxPairs["VRROptimizeEnable"] = "1"')
@@ -803,7 +804,7 @@ Deno.test('Feature - DirectX settings merge into the existing string', () => {
   assertStringIncludes(script, 'if ([int]$script:WinBuild -ge 18362)')
 })
 
-Deno.test('Feature - Defender and active hours items back up and register undo', () => {
+test('Feature - Defender and active hours items back up and register undo', () => {
   const script = scriptFor([
     'defender_scan_idle',
     'defender_game_exclusions',
@@ -820,7 +821,7 @@ Deno.test('Feature - Defender and active hours items back up and register undo',
   assertStringIncludes(script, 'Get-MpComputerStatus -EA Stop')
 })
 
-Deno.test('Feature - Verification script checks game-session items', () => {
+test('Feature - Verification script checks game-session items', () => {
   const verify = buildVerificationScript({
     ...createTestSelection('gamer'),
     optimizations: [
@@ -839,7 +840,7 @@ Deno.test('Feature - Verification script checks game-session items', () => {
   assertStringIncludes(verify, '$script:WinBuild = ')
 })
 
-Deno.test('Catalog - game-session items and maintenance tasks are selectable with share IDs', () => {
+test('Catalog - game-session items and maintenance tasks are selectable with share IDs', () => {
   for (const key of [
     'scheduled_tasks_gaming',
     'windowed_optimizations',
@@ -861,14 +862,14 @@ Deno.test('Catalog - game-session items and maintenance tasks are selectable wit
   assertEquals(exclusions?.tier, 'caution')
 })
 
-Deno.test('Catalog - every optimization key has a catalog entry', () => {
+test('Catalog - every optimization key has a catalog entry', () => {
   const inCatalog = new Set(OPTIMIZATIONS.map((o) => o.key as string))
   for (const key of Object.keys(OPT_VALUE_TO_ID)) {
     assertEquals(inCatalog.has(key), true, `${key} has no OptimizationDef`)
   }
 })
 
-Deno.test('Anti-cheat - conflicts are exported and warned about before the confirm prompt', () => {
+test('Anti-cheat - conflicts are exported and warned about before the confirm prompt', () => {
   assertEquals(Object.keys(ANTI_CHEAT_CONFLICTS).sort(), [
     'core_isolation_off',
     'dep_off',
@@ -889,7 +890,7 @@ Deno.test('Anti-cheat - conflicts are exported and warned about before the confi
   assertEquals(scriptFor(['pagefile']).includes('ANTI-CHEAT WARNING'), false)
 })
 
-Deno.test('Anti-cheat - no warning for the pro_gamer loadout', () => {
+test('Anti-cheat - no warning for the pro_gamer loadout', () => {
   assertEquals(
     scriptFor([...getPersonaOptimizations('pro_gamer')]).includes('ANTI-CHEAT WARNING'),
     false,

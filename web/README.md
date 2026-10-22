@@ -1,6 +1,6 @@
 # RockTune Web — Loadout Builder for Windows Gaming
 
-A modern, interactive web application that generates personalized PowerShell scripts to optimize Windows for gaming. Built with Deno, Vite, Svelte 5, and TypeScript.
+A modern, interactive web application that generates personalized PowerShell scripts to optimize Windows for gaming. Built with Node, Vite, Svelte 5, and TypeScript.
 
 ## 🎯 Project Goals
 
@@ -18,7 +18,7 @@ A modern, interactive web application that generates personalized PowerShell scr
 
 ## 🛠️ Tech Stack
 
-- **Runtime**: [Deno](https://deno.com/) — Modern JavaScript/TypeScript runtime
+- **Runtime**: [Node.js](https://nodejs.org/) 26 with [pnpm](https://pnpm.io/)
 - **Build Tool**: [Vite](https://vitejs.dev/) — Fast development and production builds
 - **UI**: [Svelte 5](https://svelte.dev/) — Component-based UI with runes
 - **Language**: TypeScript — Type-safe code with strict mode
@@ -52,7 +52,7 @@ web/
 ├── public/                  # catalog + icons
 ├── index.html               # Main HTML entry point
 ├── style.css                # Global styles + layer imports
-├── deno.json                # Deno configuration & tasks
+├── package.json             # Dependencies & scripts
 ├── vite.config.ts           # Vite build configuration
 ├── biome.json               # Biome linter/formatter config
 └── knip.json                # Dead-code detection config
@@ -62,17 +62,16 @@ web/
 
 ### Prerequisites
 
-- **Deno 2.6.3+** — Install from [deno.land](https://deno.land/) or run:
-  ```bash
-  curl -fsSL https://deno.land/install.sh | sh
-  ```
+- **Node.js 26+** (the version is in `.node-version`)
+- **pnpm 12+**
 
 ### Development
 
 1. **Start the dev server**:
    ```bash
    cd web
-   deno task dev
+   pnpm install
+   pnpm dev
    ```
 
 2. **Open in browser**: http://localhost:9010/
@@ -83,58 +82,56 @@ web/
 
 ```bash
 # Development server
-deno task dev
+pnpm dev
 
 # Typecheck + Svelte diagnostics
-deno task check
+pnpm check
 
 # Lint / format
-deno task lint
-deno task format
+pnpm lint
+pnpm format
 
 # Dead-code + unused exports
-deno task knip
+pnpm knip
 
 # CSS audit (unused selectors)
-deno task purge:report
+pnpm purge:report
 
-# Full validation (lint + check + knip + build)
-deno task validate
+# Full validation (lint + check + knip + test + build)
+pnpm validate
 
 # Production build / preview
-deno task build
-deno task preview
+pnpm build
+pnpm preview
 
 # Tests
-deno task test
+pnpm test
 ```
 
 ## 🧰 Tooling Notes
 
-- `web/package.json` exists only to support knip's Svelte parsing; runtime/build still use Deno with npm specifiers.
+- Tests use Node's built-in test runner. `tsx` runs the TypeScript test files and the audit scripts.
 
 ## 🏗️ Build & Deployment
 
 ### Local Build
 
 ```bash
-deno task build
+pnpm build
 ```
 
 Output goes to `web/dist/` — static files ready for deployment.
 
 ### Netlify Deployment
 
-The project is configured for Netlify with automatic Deno installation:
+The project is configured for Netlify in `netlify.toml` at the project root:
 
-- **Build command**: `curl -fsSL https://deno.land/install.sh | sh && ~/.deno/bin/deno task build`
+- **Base directory**: `web`
+- **Build command**: `pnpm check && pnpm build`
 - **Publish directory**: `web/dist`
-- **Configuration**: See `netlify.toml` in project root
+- **Node version**: 26 (`NODE_VERSION`), pnpm version from `PNPM_VERSION`
 
-Netlify will:
-1. Install Deno automatically
-2. Run the build task
-3. Deploy the `dist` folder
+Netlify installs the dependencies with pnpm, runs the build, and deploys the `dist` folder.
 
 ## 🎨 Features
 
@@ -172,13 +169,6 @@ Netlify will:
 
 ## 🔧 Architecture Decisions
 
-### Why Deno?
-
-- **No Node.js** — Modern runtime with built-in TypeScript support
-- **Security** — Explicit permissions model
-- **Fast** — Built on V8 with Rust tooling
-- **Native npm support** — Uses npm specifiers; `node_modules` may be created via `nodeModulesDir: auto`
-
 ### Why Vite?
 
 - **Fast HMR** — Instant hot module replacement
@@ -199,28 +189,14 @@ Netlify will:
 
 ## 🐛 Troubleshooting
 
-### Lockfile Version Mismatch
-
-If you see:
-```
-error: Failed reading lockfile ... Unsupported lockfile version '5'
-```
-
-**Solution**: Delete `deno.lock` and let it regenerate:
-```bash
-rm deno.lock
-deno task dev
-```
-
 ### Port Already in Use
 
 If port 9010 is taken, Vite will automatically use the next available port.
 
 ### Build Errors
 
-1. **Check Deno version**: `deno --version` (should be 2.6.3+)
-2. **Clear cache**: `rm -rf ~/.deno/cache` (if needed)
-3. **Reinstall dependencies**: Delete `deno.lock` and rebuild
+1. **Check Node version**: `node --version` (should be 26+)
+2. **Reinstall dependencies**: `rm -rf node_modules && pnpm install`
 
 ## 📝 Code Style
 
@@ -229,15 +205,15 @@ If port 9010 is taken, Vite will automatically use the next available port.
 - **TypeScript**: Strict mode enabled
 - **Naming**: PascalCase for types/interfaces, camelCase for functions/variables
 
-Run `deno task format` before committing.
+Run `pnpm format` before committing.
 
 ## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Run `deno task validate`
-5. Test locally with `deno task dev`
+4. Run `pnpm validate`
+5. Test locally with `pnpm dev`
 6. Submit a pull request
 
 ## 📄 License

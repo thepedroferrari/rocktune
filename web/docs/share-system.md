@@ -103,7 +103,7 @@ These ranges are **historical organization only**. New IDs use sequential assign
 
 ```bash
 cd web
-deno task share:audit
+pnpm share:audit
 ```
 
 Output:
@@ -182,7 +182,7 @@ In `public/run.ps1`, add to both:
 ### Step 7: Verify
 
 ```bash
-deno task share:audit
+pnpm share:audit
 ```
 
 ---
@@ -223,7 +223,7 @@ export const DEPRECATED_OPT_IDS: ReadonlyArray<{...}> = [
 ### Step 4: Verify
 
 ```bash
-deno task share:audit
+pnpm share:audit
 ```
 
 The audit will:
@@ -237,7 +237,7 @@ The audit will:
 
 ### DO
 
-- Use `deno task share:audit` to find the next ID
+- Use `pnpm share:audit` to find the next ID
 - Add deprecations to `DEPRECATED_OPT_IDS` (not just comments)
 - Keep `run.ps1` in sync with `share-registry.ts`
 - Test share URLs after changes

@@ -1,4 +1,5 @@
-import { assertEquals } from 'jsr:@std/assert@1'
+import { test } from 'node:test'
+import { assertEquals } from './test-assert.ts'
 import type { SectionId } from './section-ids.ts'
 import { buildPersonaSectionId, buildSectionId, SECTION_PREFIXES } from './section-ids.ts'
 
@@ -6,7 +7,7 @@ import { buildPersonaSectionId, buildSectionId, SECTION_PREFIXES } from './secti
 // SECTION ID BUILDERS
 // ====================================================================
 
-Deno.test('Section IDs - buildPersonaSectionId creates valid format', () => {
+test('Section IDs - buildPersonaSectionId creates valid format', () => {
   assertEquals(buildPersonaSectionId(SECTION_PREFIXES.NVIDIA, 'gamer'), 'nvidia-gamer')
   assertEquals(buildPersonaSectionId(SECTION_PREFIXES.AMD, 'pro_gamer'), 'amd-pro_gamer')
   assertEquals(
@@ -15,7 +16,7 @@ Deno.test('Section IDs - buildPersonaSectionId creates valid format', () => {
   )
 })
 
-Deno.test('Section IDs - buildSectionId creates generic section ID', () => {
+test('Section IDs - buildSectionId creates generic section ID', () => {
   assertEquals(buildSectionId('discord'), 'discord' as SectionId)
   assertEquals(buildSectionId('steam'), 'steam' as SectionId)
   assertEquals(buildSectionId('cooling-advanced'), 'cooling-advanced' as SectionId)
@@ -25,7 +26,7 @@ Deno.test('Section IDs - buildSectionId creates generic section ID', () => {
 // SECTION PREFIXES VALIDATION
 // ====================================================================
 
-Deno.test('Section IDs - SECTION_PREFIXES contains expected prefixes', () => {
+test('Section IDs - SECTION_PREFIXES contains expected prefixes', () => {
   assertEquals(SECTION_PREFIXES.NVIDIA, 'nvidia')
   assertEquals(SECTION_PREFIXES.AMD, 'amd')
   assertEquals(SECTION_PREFIXES.GPU_TUNING, 'gpu-tuning')

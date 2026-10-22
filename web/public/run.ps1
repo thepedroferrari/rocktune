@@ -125,13 +125,13 @@ $env:RT = $null
 # ============================================================================
 #
 # To find next available ID:
-#   cd web && deno task share:audit
+#   cd web && pnpm share:audit
 #
 # When adding a new optimization:
 # 1. Add to share-registry.ts with next sequential ID
 # 2. Add entry to $OPT_DESCRIPTIONS below
 # 3. Add entry to $OPT_FUNCTIONS below
-# 4. Run: cd web && deno task share:audit (verify passes)
+# 4. Run: cd web && pnpm share:audit (verify passes)
 #
 # ============================================================================
 

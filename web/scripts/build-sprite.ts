@@ -1,13 +1,15 @@
-#!/usr/bin/env -S deno run --allow-read --allow-write
+#!/usr/bin/env node
+
+import { readdir, readFile, writeFile } from 'node:fs/promises'
 
 // Source SVGs live outside public/ so only the built sprite ships to production
 const ICONS_DIR = new URL('../assets/icons-src', import.meta.url).pathname
 const OUTPUT_FILE = new URL('../public/icons/sprite.svg', import.meta.url).pathname
 
 const svgFiles: string[] = []
-for await (const entry of Deno.readDir(ICONS_DIR)) {
+for (const entry of await readdir(ICONS_DIR, { withFileTypes: true })) {
   if (
-    entry.isFile &&
+    entry.isFile() &&
     entry.name.endsWith('.svg') &&
     entry.name !== 'sprite.svg' &&
     entry.name !== 'ui-sprite.svg'
@@ -23,7 +25,7 @@ const symbols: string[] = []
 
 for (const file of svgFiles) {
   const id = file.replace('.svg', '')
-  const content = await Deno.readTextFile(`${ICONS_DIR}/${file}`)
+  const content = await readFile(`${ICONS_DIR}/${file}`, 'utf8')
 
   const viewBoxMatch = content.match(/viewBox="([^"]+)"/)
   const viewBox = viewBoxMatch ? viewBoxMatch[1] : '0 0 48 48'
@@ -44,5 +46,5 @@ ${symbols.join('\n')}
 </svg>
 `
 
-await Deno.writeTextFile(OUTPUT_FILE, sprite)
+await writeFile(OUTPUT_FILE, sprite)
 console.log(`\n✅ Created sprite.svg with ${svgFiles.length} icons`)

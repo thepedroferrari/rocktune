@@ -7,7 +7,7 @@
  * - Orphaned IDs (pointing to non-existent keys)
  * - Accidental ID reuse
  *
- * Run: deno task share:audit
+ * Run: pnpm share:audit
  *
  * This script also reports:
  * - Next available ID for new optimizations
@@ -207,7 +207,7 @@ function main(): void {
 
   if (errors.length > 0) {
     console.error(`❌ Audit FAILED with ${errors.length} error(s)`)
-    Deno.exit(1)
+    process.exit(1)
   } else if (warnings.length > 0) {
     console.warn(`⚠️  Audit passed with ${warnings.length} warning(s)`)
   } else {

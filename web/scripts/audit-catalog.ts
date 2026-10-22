@@ -1,4 +1,5 @@
-import { existsSync } from 'https://deno.land/std@0.220.0/fs/mod.ts'
+import { existsSync } from 'node:fs'
+import { readFile } from 'node:fs/promises'
 import { MONITOR_TO_PACKAGE, PERIPHERAL_TO_PACKAGE } from '../src/lib/script-generator.ts'
 import { formatZodErrors, isParseSuccess, safeParseCatalog } from '../src/schemas.ts'
 
@@ -23,7 +24,7 @@ const ICONS_DIR = new URL('../assets/icons-src/', import.meta.url)
 const decoder = new TextDecoder()
 
 async function readJson(url: URL): Promise<unknown> {
-  const data = await Deno.readFile(url)
+  const data = await readFile(url)
   return JSON.parse(decoder.decode(data))
 }
 
@@ -155,7 +156,7 @@ async function main(): Promise<void> {
   }
 
   if (issues.some((issue) => issue.level === 'error')) {
-    Deno.exit(1)
+    process.exit(1)
   }
 }
 

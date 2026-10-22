@@ -1,4 +1,5 @@
-import { assert, assertEquals, assertExists } from 'jsr:@std/assert@1'
+import { test } from 'node:test'
+import { assert, assertEquals, assertExists } from './test-assert.ts'
 import { OPTIMIZATIONS } from './optimizations.ts'
 import { getPersonaOptimizations, PERSONA_NEXT_STEPS, TOOL_PERSONA_MAP } from './persona-config.ts'
 import { PERSONA_META, type PersonaId } from './persona-registry.ts'
@@ -9,14 +10,14 @@ const PERSONA_IDS = Object.keys(PERSONA_META) as PersonaId[]
 // PERSONA OPTIMIZATION INHERITANCE TESTS
 // ====================================================================
 
-Deno.test('Persona config - getPersonaOptimizations returns non-empty for all personas', () => {
+test('Persona config - getPersonaOptimizations returns non-empty for all personas', () => {
   for (const persona of PERSONA_IDS) {
     const opts = getPersonaOptimizations(persona as PersonaId)
     assert(opts.length > 0, `${persona} should have at least one optimization`)
   }
 })
 
-Deno.test('Persona config - gamer has base + additions', () => {
+test('Persona config - gamer has base + additions', () => {
   const gamerOpts = getPersonaOptimizations('gamer')
 
   assert(gamerOpts.includes('pagefile'), 'Should include base: pagefile')
@@ -28,7 +29,7 @@ Deno.test('Persona config - gamer has base + additions', () => {
   assert(gamerOpts.includes('gamedvr'), 'Should include addition: gamedvr')
 })
 
-Deno.test('Persona config - pro_gamer has more optimizations than gamer', () => {
+test('Persona config - pro_gamer has more optimizations than gamer', () => {
   const gamerOpts = getPersonaOptimizations('gamer')
   const proGamerOpts = getPersonaOptimizations('pro_gamer')
 
@@ -38,7 +39,7 @@ Deno.test('Persona config - pro_gamer has more optimizations than gamer', () => 
   )
 })
 
-Deno.test('Persona config - pro_gamer includes CAUTION tier optimizations', () => {
+test('Persona config - pro_gamer includes CAUTION tier optimizations', () => {
   const proGamerOpts = getPersonaOptimizations('pro_gamer')
 
   // Pro gamer should include aggressive optimizations
@@ -52,7 +53,7 @@ Deno.test('Persona config - pro_gamer includes CAUTION tier optimizations', () =
 // EXCLUSION LOGIC TESTS
 // ====================================================================
 
-Deno.test('Persona config - streamer excludes gamedvr', () => {
+test('Persona config - streamer excludes gamedvr', () => {
   const streamerOpts = getPersonaOptimizations('streamer')
 
   assertEquals(
@@ -62,7 +63,7 @@ Deno.test('Persona config - streamer excludes gamedvr', () => {
   )
 })
 
-Deno.test('Persona config - streamer has base + additions - exclusions', () => {
+test('Persona config - streamer has base + additions - exclusions', () => {
   const streamerOpts = getPersonaOptimizations('streamer')
 
   assert(streamerOpts.includes('pagefile'), 'Should include base: pagefile')
@@ -78,7 +79,7 @@ Deno.test('Persona config - streamer has base + additions - exclusions', () => {
 // BENCHMARKER SPECIAL CASE TESTS
 // ====================================================================
 
-Deno.test('Persona config - benchmarker gets ALL optimizations (kitchen sink)', () => {
+test('Persona config - benchmarker gets ALL optimizations (kitchen sink)', () => {
   const benchmarkerOpts = getPersonaOptimizations('benchmarker')
   const allOptKeys = OPTIMIZATIONS.map((opt) => opt.key)
 
@@ -94,7 +95,7 @@ Deno.test('Persona config - benchmarker gets ALL optimizations (kitchen sink)', 
   }
 })
 
-Deno.test('Persona config - benchmarker has most optimizations', () => {
+test('Persona config - benchmarker has most optimizations', () => {
   const benchmarkerOpts = getPersonaOptimizations('benchmarker')
 
   for (const persona of PERSONA_IDS.filter((p) => p !== 'benchmarker')) {
@@ -110,7 +111,7 @@ Deno.test('Persona config - benchmarker has most optimizations', () => {
 // DUPLICATE PREVENTION TESTS
 // ====================================================================
 
-Deno.test('Persona config - No duplicate optimizations in any persona', () => {
+test('Persona config - No duplicate optimizations in any persona', () => {
   for (const persona of PERSONA_IDS) {
     const opts = getPersonaOptimizations(persona as PersonaId)
     const uniqueOpts = [...new Set(opts)]
@@ -127,7 +128,7 @@ Deno.test('Persona config - No duplicate optimizations in any persona', () => {
 // VALIDITY TESTS (All returned keys are valid)
 // ====================================================================
 
-Deno.test('Persona config - All returned optimization keys are valid', () => {
+test('Persona config - All returned optimization keys are valid', () => {
   const allValidKeys = OPTIMIZATIONS.map((opt) => opt.key)
 
   for (const persona of PERSONA_IDS) {
@@ -143,7 +144,7 @@ Deno.test('Persona config - All returned optimization keys are valid', () => {
 // TOOL PERSONA MAP TESTS
 // ====================================================================
 
-Deno.test('Persona config - TOOL_PERSONA_MAP has valid personas', () => {
+test('Persona config - TOOL_PERSONA_MAP has valid personas', () => {
   for (const [tool, personas] of Object.entries(TOOL_PERSONA_MAP)) {
     for (const persona of personas) {
       assert(PERSONA_IDS.includes(persona), `Tool ${tool} references invalid persona: ${persona}`)
@@ -151,14 +152,14 @@ Deno.test('Persona config - TOOL_PERSONA_MAP has valid personas', () => {
   }
 })
 
-Deno.test('Persona config - OBS tool only for streamer', () => {
+test('Persona config - OBS tool only for streamer', () => {
   const obsPersonas = TOOL_PERSONA_MAP.obs
 
   assertEquals(obsPersonas.length, 1, 'OBS should be for 1 persona only')
   assertEquals(obsPersonas[0], 'streamer', 'OBS should only be available for streamer')
 })
 
-Deno.test('Persona config - MSI Afterburner not for streamer', () => {
+test('Persona config - MSI Afterburner not for streamer', () => {
   const afterburnerPersonas = TOOL_PERSONA_MAP.msi_afterburner
 
   assertEquals(
@@ -168,14 +169,14 @@ Deno.test('Persona config - MSI Afterburner not for streamer', () => {
   )
 })
 
-Deno.test('Persona config - UniFi only for pro_gamer', () => {
+test('Persona config - UniFi only for pro_gamer', () => {
   const unifiPersonas = TOOL_PERSONA_MAP.unifi
 
   assertEquals(unifiPersonas.length, 1, 'UniFi should be for 1 persona only')
   assertEquals(unifiPersonas[0], 'pro_gamer', 'UniFi should only be available for pro_gamer')
 })
 
-Deno.test('Persona config - NVIDIA Inspector available for all except no-GPU personas', () => {
+test('Persona config - NVIDIA Inspector available for all except no-GPU personas', () => {
   const nvidiaPersonas = TOOL_PERSONA_MAP.nvidia_inspector
 
   assert(nvidiaPersonas.length >= 4, 'NVIDIA Inspector should be available for most personas')
@@ -185,7 +186,7 @@ Deno.test('Persona config - NVIDIA Inspector available for all except no-GPU per
 // NEXT STEPS TESTS
 // ====================================================================
 
-Deno.test('Persona config - PERSONA_NEXT_STEPS has entries for all personas', () => {
+test('Persona config - PERSONA_NEXT_STEPS has entries for all personas', () => {
   for (const persona of PERSONA_IDS) {
     const nextSteps = PERSONA_NEXT_STEPS[persona as PersonaId]
     assertExists(nextSteps, `Next steps should exist for ${persona}`)
@@ -193,7 +194,7 @@ Deno.test('Persona config - PERSONA_NEXT_STEPS has entries for all personas', ()
   }
 })
 
-Deno.test('Persona config - pro_gamer next steps include advanced guidance', () => {
+test('Persona config - pro_gamer next steps include advanced guidance', () => {
   const proGamerSteps = PERSONA_NEXT_STEPS.pro_gamer
 
   // Pro gamer should have specific advanced advice
@@ -206,7 +207,7 @@ Deno.test('Persona config - pro_gamer next steps include advanced guidance', () 
   assert(hasGpuHeadroom, 'Pro gamer should mention GPU headroom')
 })
 
-Deno.test('Persona config - streamer next steps mention OBS', () => {
+test('Persona config - streamer next steps mention OBS', () => {
   const streamerSteps = PERSONA_NEXT_STEPS.streamer
 
   const mentionsObs = streamerSteps.some((step) => step.toLowerCase().includes('obs'))
@@ -214,7 +215,7 @@ Deno.test('Persona config - streamer next steps mention OBS', () => {
   assert(mentionsObs, 'Streamer next steps should mention OBS')
 })
 
-Deno.test('Persona config - benchmarker next steps mention methodology', () => {
+test('Persona config - benchmarker next steps mention methodology', () => {
   const benchmarkerSteps = PERSONA_NEXT_STEPS.benchmarker
 
   const hasMethodology = benchmarkerSteps.some(
@@ -231,7 +232,7 @@ Deno.test('Persona config - benchmarker next steps mention methodology', () => {
 // PERFORMANCE VALIDATION (Set-based filtering)
 // ====================================================================
 
-Deno.test('Persona config - Merge logic uses efficient Set-based filtering', () => {
+test('Persona config - Merge logic uses efficient Set-based filtering', () => {
   // This test validates that the implementation uses Set for O(1) lookups
   // We can't directly test implementation, but we can verify behavior is correct
   // even with large datasets
@@ -256,7 +257,7 @@ Deno.test('Persona config - Merge logic uses efficient Set-based filtering', () 
 // CONSISTENCY TESTS
 // ====================================================================
 
-Deno.test('Persona config - All personas have unique optimization counts', () => {
+test('Persona config - All personas have unique optimization counts', () => {
   const counts = new Map<number, PersonaId[]>()
 
   for (const persona of PERSONA_IDS) {

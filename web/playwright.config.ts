@@ -3,7 +3,7 @@ import { defineConfig, devices } from "@playwright/test";
 /**
  * Playwright E2E Test Configuration
  *
- * Run with: deno task test:e2e
+ * Run with: pnpm test:e2e
  * See: https://playwright.dev/docs/test-configuration
  */
 export default defineConfig({
@@ -33,7 +33,7 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: "deno task dev",
+    command: "pnpm dev",
     url: "http://localhost:9010",
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,

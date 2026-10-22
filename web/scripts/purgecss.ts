@@ -1,14 +1,14 @@
-import { expandGlob } from 'https://deno.land/std@0.220.0/fs/expand_glob.ts'
-import { fromFileUrl } from 'https://deno.land/std@0.220.0/path/from_file_url.ts'
-import { relative } from 'https://deno.land/std@0.220.0/path/relative.ts'
-import { PurgeCSS } from 'npm:purgecss@6.0.0'
+import { glob as fsGlob, readFile, writeFile } from 'node:fs/promises'
+import { join, relative } from 'node:path'
+import { fileURLToPath as fromFileUrl } from 'node:url'
+import { PurgeCSS } from 'purgecss'
 
 const webRoot = fromFileUrl(new URL('..', import.meta.url))
 
 async function glob(pattern: string): Promise<string[]> {
   const matches: string[] = []
-  for await (const entry of expandGlob(pattern, { root: webRoot })) {
-    if (entry.isFile) matches.push(entry.path)
+  for await (const entry of fsGlob(pattern, { cwd: webRoot, withFileTypes: true })) {
+    if (entry.isFile()) matches.push(join(entry.parentPath, entry.name))
   }
   return matches
 }
@@ -65,7 +65,7 @@ async function collectUsedClasses(files: string[]): Promise<Set<string>> {
   const used = new Set<string>()
 
   for (const file of files) {
-    const text = await Deno.readTextFile(file)
+    const text = await readFile(file, 'utf8')
 
     for (const match of text.matchAll(CLASS_ATTR_RE)) {
       const tokens = extractStaticClasses(match[1])
@@ -141,12 +141,12 @@ const summary = {
   highConfidenceByFile,
 }
 
-await Deno.writeTextFile(
+await writeFile(
   fromFileUrl(new URL('../purge-report.json', import.meta.url)),
   JSON.stringify(results, null, 2),
 )
 
-await Deno.writeTextFile(
+await writeFile(
   fromFileUrl(new URL('../purge-report.summary.json', import.meta.url)),
   JSON.stringify(summary, null, 2),
 )

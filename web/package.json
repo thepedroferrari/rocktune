@@ -11,9 +11,55 @@
     "url": "https://github.com/thepedroferrari/rocktune"
   },
   "homepage": "https://rocktune.pedroferrari.com",
+  "engines": {
+    "node": ">=26"
+  },
+  "packageManager": "pnpm@12.11.2",
+  "scripts": {
+    "dev": "vite",
+    "sync:benchmark": "node scripts/sync-benchmark.ts",
+    "build:sprite": "node scripts/build-sprite.ts",
+    "build": "pnpm sync:benchmark && pnpm build:sprite && vite build",
+    "analyze": "ANALYZE=1 pnpm build",
+    "preview": "vite preview",
+    "lint": "biome lint ./src ./scripts",
+    "lint:fix": "biome lint --write ./src ./scripts",
+    "format": "biome format ./src ./scripts",
+    "format:fix": "biome format --write ./src ./scripts",
+    "fix": "pnpm lint:fix && pnpm format:fix",
+    "purge:report": "node scripts/purgecss.ts",
+    "check": "svelte-check --tsconfig ./tsconfig.json",
+    "check:watch": "svelte-check --tsconfig ./tsconfig.json --watch",
+    "knip": "knip --include exports,files",
+    "validate": "pnpm lint && pnpm format && pnpm check && pnpm knip && pnpm test && pnpm build",
+    "catalog:audit": "tsx scripts/audit-catalog.ts",
+    "share:audit": "tsx scripts/audit-share-registry.ts",
+    "test": "node --import tsx --test 'src/**/*.test.ts'",
+    "test:watch": "node --import tsx --test --watch 'src/**/*.test.ts'",
+    "test:e2e": "playwright test --workers=2",
+    "test:e2e:headed": "playwright test --workers=1 --headed",
+    "test:e2e:chromium": "playwright test --workers=2 --project=chromium"
+  },
+  "dependencies": {
+    "diff": "5.2.2",
+    "lz-string": "1.5.0",
+    "zod": "3.25.76"
+  },
   "devDependencies": {
-    "svelte": "^5.0.0",
+    "@axe-core/playwright": "4.10.1",
+    "@biomejs/biome": "2.5.15",
     "@playwright/test": "1.49.1",
-    "@axe-core/playwright": "4.10.1"
+    "@sveltejs/vite-plugin-svelte": "4.0.4",
+    "@types/node": "26.6.5",
+    "autoprefixer": "10.6.1",
+    "knip": "6.42.1",
+    "postcss": "8.5.31",
+    "purgecss": "6.0.0",
+    "rollup-plugin-visualizer": "5.14.0",
+    "svelte": "5.57.2",
+    "svelte-check": "4.7.7",
+    "tsx": "4.23.15",
+    "typescript": "6.0.3",
+    "vite": "5.4.21"
   }
 }

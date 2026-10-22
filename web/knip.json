@@ -9,6 +9,7 @@
   "project": ["src/**/*.{ts,svelte}", "scripts/**/*.ts"],
   "ignore": [
     "src/**/*.test.ts",
+    "src/lib/test-assert.ts",
     "src/lib/preflight.ts"
   ]
 }

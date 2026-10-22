@@ -1,4 +1,5 @@
-import { assert, assertEquals, assertExists } from 'jsr:@std/assert@1'
+import { test } from 'node:test'
+import { assert, assertEquals, assertExists } from './test-assert.ts'
 import {
   normalizeManualItem,
   type ManualStepItem,
@@ -15,7 +16,7 @@ function buildSection(items: readonly ManualStepItem[]): ManualStepSection {
   }
 }
 
-Deno.test('normalizeManualItem uses guide.steps when provided', () => {
+test('normalizeManualItem uses guide.steps when provided', () => {
   const item: ManualStepItem = {
     id: 'test-guide-steps',
     step: 'Settings > Display',
@@ -36,7 +37,7 @@ Deno.test('normalizeManualItem uses guide.steps when provided', () => {
   assertEquals(normalized.guide.steps[0], 'First open Settings.')
 })
 
-Deno.test('normalizeManualItem falls back to manualSteps and prefixes step words', () => {
+test('normalizeManualItem falls back to manualSteps and prefixes step words', () => {
   const item: ManualStepItem = {
     id: 'test-manual-steps',
     step: 'Registry',
@@ -51,7 +52,7 @@ Deno.test('normalizeManualItem falls back to manualSteps and prefixes step words
   assert(normalized.guide.steps[2].startsWith('Finish '))
 })
 
-Deno.test('normalizeManualItem does not force risk for registry-like items', () => {
+test('normalizeManualItem does not force risk for registry-like items', () => {
   const item: ManualStepItem = {
     id: 'test-registry-item',
     step: 'Registry: HKLM\\Software',
@@ -71,7 +72,7 @@ Deno.test('normalizeManualItem does not force risk for registry-like items', () 
   assertEquals(normalized.guide.failureModes.length, 0)
 })
 
-Deno.test('normalizeManualItem defaults assessment scores to unknown when missing', () => {
+test('normalizeManualItem defaults assessment scores to unknown when missing', () => {
   const item: ManualStepItem = {
     id: 'test-unknown-assessment',
     step: 'Settings > Display',
@@ -84,7 +85,7 @@ Deno.test('normalizeManualItem defaults assessment scores to unknown when missin
   assertEquals(normalized.guide.assessment.risk, null)
 })
 
-Deno.test('normalizeManualItem supports zero risk scores', () => {
+test('normalizeManualItem supports zero risk scores', () => {
   const item: ManualStepItem = {
     id: 'test-zero-risk',
     step: 'Settings > Display',
@@ -112,7 +113,7 @@ Deno.test('normalizeManualItem supports zero risk scores', () => {
   assertEquals(normalized.guide.assessment.risk, 0)
 })
 
-Deno.test('normalizeManualItem normalizes non-zero risk scores down by one', () => {
+test('normalizeManualItem normalizes non-zero risk scores down by one', () => {
   const item: ManualStepItem = {
     id: 'test-risk-offset',
     step: 'Settings > Display',
@@ -140,7 +141,7 @@ Deno.test('normalizeManualItem normalizes non-zero risk scores down by one', () 
   assertEquals(normalized.guide.assessment.risk, 1)
 })
 
-Deno.test('normalizeManualItem warns when guide assessment is missing lastReviewed', () => {
+test('normalizeManualItem warns when guide assessment is missing lastReviewed', () => {
   const warnings: string[] = []
   const item: ManualStepItem = {
     id: 'test-review-warning',

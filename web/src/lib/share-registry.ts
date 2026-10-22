@@ -12,7 +12,7 @@
  *    b) In DEPRECATED_OPT_IDS: add `{ id: 45, was: 'old_feature', label: 'Old Feature', removed: '2025-01-03' }`
  *    The audit script validates both are in sync.
  * 4. To rename: update the value string, keep the same ID
- * 5. NEW IDs: Always use next sequential ID (run: deno task share:audit)
+ * 5. NEW IDs: Always use next sequential ID (run: pnpm share:audit)
  *
  * ═══════════════════════════════════════════════════════════════════════════
  * ID ASSIGNMENT (since 2025):
@@ -22,7 +22,7 @@
  * New optimizations get the next available ID regardless of tier.
  *
  * To find next ID:
- *   cd web && deno task share:audit
+ *   cd web && pnpm share:audit
  *
  * This will output: "Next available ID: 104" (or current max + 1)
  *
@@ -360,7 +360,7 @@ export const PRESET_VALUE_TO_ID: Record<PresetType, number> = {
  *
  * IMPORTANT: IDs are organized below by LEGACY tier ranges for historical
  * context only. New IDs should use the next sequential number regardless
- * of tier. Run `deno task share:audit` to find the next available ID.
+ * of tier. Run `pnpm share:audit` to find the next available ID.
  */
 export const OPT_ID_TO_VALUE: Record<number, OptimizationKey | null> = {
   // ═══ LEGACY SAFE RANGE (1-49) ═══

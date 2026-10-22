@@ -1,16 +1,14 @@
+import { execFileSync } from 'node:child_process'
 import { defineConfig } from 'vite'
 import { svelte, vitePreprocess } from '@sveltejs/vite-plugin-svelte'
 import { visualizer } from 'rollup-plugin-visualizer'
 
 function getGitInfo() {
   try {
-    const commitCmd = new Deno.Command('git', { args: ['rev-parse', '--short', 'HEAD'] })
-    const commitResult = commitCmd.outputSync()
-    const commit = new TextDecoder().decode(commitResult.stdout).trim()
-
-    const dateCmd = new Deno.Command('git', { args: ['log', '-1', '--format=%cd', '--date=short'] })
-    const dateResult = dateCmd.outputSync()
-    const date = new TextDecoder().decode(dateResult.stdout).trim()
+    const commit = execFileSync('git', ['rev-parse', '--short', 'HEAD'], { encoding: 'utf8' }).trim()
+    const date = execFileSync('git', ['log', '-1', '--format=%cd', '--date=short'], {
+      encoding: 'utf8',
+    }).trim()
 
     return { commit, date }
   } catch {
@@ -28,8 +26,8 @@ export default defineConfig({
         runes: true,
       },
     }),
-    // Bundle report only on request (deno task analyze); never published with dist
-    ...(Deno.env.get('ANALYZE')
+    // Bundle report only on request (pnpm analyze); never published with dist
+    ...(process.env.ANALYZE
       ? [
           visualizer({
             filename: 'stats.html',

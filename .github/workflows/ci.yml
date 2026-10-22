@@ -14,19 +14,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Deno
-        uses: denoland/setup-deno@v2
+      - uses: pnpm/action-setup@v4
         with:
-          deno-version: v2.x
+          package_json_file: web/package.json
 
-      - name: Cache Deno dependencies
-        uses: actions/cache@v4
+      - uses: actions/setup-node@v5
         with:
-          path: |
-            ~/.cache/deno
-            web/node_modules
-          key: deno-${{ hashFiles('web/deno.lock') }}
-          restore-keys: deno-
+          node-version-file: web/.node-version
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+
+      - name: Install dependencies
+        working-directory: web
+        run: pnpm install --frozen-lockfile
 
       - name: Validate catalog.json
         run: |
@@ -40,15 +40,15 @@ jobs:
           fi
           echo "✓ catalog.json is valid"
 
-      - name: Validate web app (lint, typecheck, build)
+      - name: Validate web app (lint, typecheck, test, build)
         working-directory: web
-        run: deno task validate
+        run: pnpm validate
 
       - name: Audit catalogs
         working-directory: web
         run: |
-          deno task catalog:audit
-          deno task share:audit
+          pnpm catalog:audit
+          pnpm share:audit
 
   validate-powershell:
     name: Validate PowerShell Modules

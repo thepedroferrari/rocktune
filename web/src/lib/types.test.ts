@@ -3,7 +3,8 @@
  * Verifies type guards and validation functions
  */
 
-import { assertEquals, assertFalse } from 'jsr:@std/assert'
+import { test } from 'node:test'
+import { assertEquals, assertFalse } from './test-assert.ts'
 import {
   CATEGORIES,
   CPU_TYPES,
@@ -35,13 +36,13 @@ import {
 // CPU TYPE VALIDATION
 // =============================================================================
 
-Deno.test('isCpuType - Returns true for valid CPU types', () => {
+test('isCpuType - Returns true for valid CPU types', () => {
   assertEquals(isCpuType('amd_x3d'), true)
   assertEquals(isCpuType('amd'), true)
   assertEquals(isCpuType('intel'), true)
 })
 
-Deno.test('isCpuType - Returns false for invalid values', () => {
+test('isCpuType - Returns false for invalid values', () => {
   assertFalse(isCpuType('invalid'))
   assertFalse(isCpuType('AMD')) // case sensitive
   assertFalse(isCpuType(''))
@@ -52,7 +53,7 @@ Deno.test('isCpuType - Returns false for invalid values', () => {
   assertFalse(isCpuType([]))
 })
 
-Deno.test('CPU_TYPES - Contains expected values', () => {
+test('CPU_TYPES - Contains expected values', () => {
   assertEquals(CPU_TYPES.AMD_X3D, 'amd_x3d')
   assertEquals(CPU_TYPES.AMD, 'amd')
   assertEquals(CPU_TYPES.INTEL, 'intel')
@@ -62,13 +63,13 @@ Deno.test('CPU_TYPES - Contains expected values', () => {
 // GPU TYPE VALIDATION
 // =============================================================================
 
-Deno.test('isGpuType - Returns true for valid GPU types', () => {
+test('isGpuType - Returns true for valid GPU types', () => {
   assertEquals(isGpuType('nvidia'), true)
   assertEquals(isGpuType('amd'), true)
   assertEquals(isGpuType('intel'), true)
 })
 
-Deno.test('isGpuType - Returns false for invalid values', () => {
+test('isGpuType - Returns false for invalid values', () => {
   assertFalse(isGpuType('invalid'))
   assertFalse(isGpuType('NVIDIA')) // case sensitive
   assertFalse(isGpuType(''))
@@ -76,7 +77,7 @@ Deno.test('isGpuType - Returns false for invalid values', () => {
   assertFalse(isGpuType(undefined))
 })
 
-Deno.test('GPU_TYPES - Contains expected values', () => {
+test('GPU_TYPES - Contains expected values', () => {
   assertEquals(GPU_TYPES.NVIDIA, 'nvidia')
   assertEquals(GPU_TYPES.AMD, 'amd')
   assertEquals(GPU_TYPES.INTEL, 'intel')
@@ -86,7 +87,7 @@ Deno.test('GPU_TYPES - Contains expected values', () => {
 // PERIPHERAL TYPE VALIDATION
 // =============================================================================
 
-Deno.test('isPeripheralType - Returns true for valid peripheral types', () => {
+test('isPeripheralType - Returns true for valid peripheral types', () => {
   assertEquals(isPeripheralType('logitech'), true)
   assertEquals(isPeripheralType('razer'), true)
   assertEquals(isPeripheralType('corsair'), true)
@@ -95,14 +96,14 @@ Deno.test('isPeripheralType - Returns true for valid peripheral types', () => {
   assertEquals(isPeripheralType('wooting'), true)
 })
 
-Deno.test('isPeripheralType - Returns false for invalid values', () => {
+test('isPeripheralType - Returns false for invalid values', () => {
   assertFalse(isPeripheralType('invalid'))
   assertFalse(isPeripheralType('Logitech')) // case sensitive
   assertFalse(isPeripheralType(''))
   assertFalse(isPeripheralType(null))
 })
 
-Deno.test('PERIPHERAL_TYPES - Contains all expected brands', () => {
+test('PERIPHERAL_TYPES - Contains all expected brands', () => {
   assertEquals(Object.keys(PERIPHERAL_TYPES).length, 6)
   assertEquals(PERIPHERAL_TYPES.LOGITECH, 'logitech')
   assertEquals(PERIPHERAL_TYPES.RAZER, 'razer')
@@ -116,20 +117,20 @@ Deno.test('PERIPHERAL_TYPES - Contains all expected brands', () => {
 // MONITOR SOFTWARE TYPE VALIDATION
 // =============================================================================
 
-Deno.test('isMonitorSoftwareType - Returns true for valid monitor software types', () => {
+test('isMonitorSoftwareType - Returns true for valid monitor software types', () => {
   assertEquals(isMonitorSoftwareType('dell'), true)
   assertEquals(isMonitorSoftwareType('lg'), true)
   assertEquals(isMonitorSoftwareType('hp'), true)
 })
 
-Deno.test('isMonitorSoftwareType - Returns false for invalid values', () => {
+test('isMonitorSoftwareType - Returns false for invalid values', () => {
   assertFalse(isMonitorSoftwareType('invalid'))
   assertFalse(isMonitorSoftwareType('Dell')) // case sensitive
   assertFalse(isMonitorSoftwareType(''))
   assertFalse(isMonitorSoftwareType(null))
 })
 
-Deno.test('MONITOR_SOFTWARE_TYPES - Contains expected brands', () => {
+test('MONITOR_SOFTWARE_TYPES - Contains expected brands', () => {
   assertEquals(Object.keys(MONITOR_SOFTWARE_TYPES).length, 3)
   assertEquals(MONITOR_SOFTWARE_TYPES.DELL, 'dell')
   assertEquals(MONITOR_SOFTWARE_TYPES.LG, 'lg')
@@ -140,7 +141,7 @@ Deno.test('MONITOR_SOFTWARE_TYPES - Contains expected brands', () => {
 // FILTER TYPE VALIDATION
 // =============================================================================
 
-Deno.test('isFilterAll - Returns true only for FILTER_ALL', () => {
+test('isFilterAll - Returns true only for FILTER_ALL', () => {
   assertEquals(isFilterAll(FILTER_ALL), true)
   assertEquals(isFilterAll('all'), true)
   assertFalse(isFilterAll(FILTER_SELECTED))
@@ -148,7 +149,7 @@ Deno.test('isFilterAll - Returns true only for FILTER_ALL', () => {
   assertFalse(isFilterAll('launcher'))
 })
 
-Deno.test('isFilterSelected - Returns true only for FILTER_SELECTED', () => {
+test('isFilterSelected - Returns true only for FILTER_SELECTED', () => {
   assertEquals(isFilterSelected(FILTER_SELECTED), true)
   assertEquals(isFilterSelected('selected'), true)
   assertFalse(isFilterSelected(FILTER_ALL))
@@ -156,7 +157,7 @@ Deno.test('isFilterSelected - Returns true only for FILTER_SELECTED', () => {
   assertFalse(isFilterSelected('gaming'))
 })
 
-Deno.test('isFilterRecommended - Returns true only for FILTER_RECOMMENDED', () => {
+test('isFilterRecommended - Returns true only for FILTER_RECOMMENDED', () => {
   assertEquals(isFilterRecommended(FILTER_RECOMMENDED), true)
   assertEquals(isFilterRecommended('recommended'), true)
   assertFalse(isFilterRecommended(FILTER_ALL))
@@ -168,7 +169,7 @@ Deno.test('isFilterRecommended - Returns true only for FILTER_RECOMMENDED', () =
 // OPTIMIZATION KEY VALIDATION
 // =============================================================================
 
-Deno.test('isOptimizationKey - Returns true for valid optimization keys', () => {
+test('isOptimizationKey - Returns true for valid optimization keys', () => {
   // Safe tier
   assertEquals(isOptimizationKey('pagefile'), true)
   assertEquals(isOptimizationKey('fastboot'), true)
@@ -188,7 +189,7 @@ Deno.test('isOptimizationKey - Returns true for valid optimization keys', () => 
   assertEquals(isOptimizationKey('core_isolation_off'), true)
 })
 
-Deno.test('isOptimizationKey - Returns false for invalid values', () => {
+test('isOptimizationKey - Returns false for invalid values', () => {
   assertFalse(isOptimizationKey('invalid'))
   // Retired: general Windows debloat moved to WinUtil / Win11Debloat
   assertFalse(isOptimizationKey('privacy_tier1'))
@@ -200,7 +201,7 @@ Deno.test('isOptimizationKey - Returns false for invalid values', () => {
   assertFalse(isOptimizationKey(123))
 })
 
-Deno.test('OPTIMIZATION_KEYS - Contains all tiers', () => {
+test('OPTIMIZATION_KEYS - Contains all tiers', () => {
   // Check safe optimizations
   assertEquals(OPTIMIZATION_KEYS.PAGEFILE, 'pagefile')
   assertEquals(OPTIMIZATION_KEYS.FASTBOOT, 'fastboot')
@@ -222,7 +223,7 @@ Deno.test('OPTIMIZATION_KEYS - Contains all tiers', () => {
 // PACKAGE KEY VALIDATION
 // =============================================================================
 
-Deno.test('isPackageKey - Returns true for keys in catalog', () => {
+test('isPackageKey - Returns true for keys in catalog', () => {
   const catalog: SoftwareCatalog = {
     'Steam.Steam': {
       id: 'Steam.Steam',
@@ -240,7 +241,7 @@ Deno.test('isPackageKey - Returns true for keys in catalog', () => {
   assertEquals(isPackageKey(catalog, 'Discord.Discord'), true)
 })
 
-Deno.test('isPackageKey - Returns false for keys not in catalog', () => {
+test('isPackageKey - Returns false for keys not in catalog', () => {
   const catalog: SoftwareCatalog = {
     'Steam.Steam': {
       id: 'Steam.Steam',
@@ -254,7 +255,7 @@ Deno.test('isPackageKey - Returns false for keys not in catalog', () => {
   assertFalse(isPackageKey(catalog, 'steam.steam')) // case sensitive
 })
 
-Deno.test('isPackageKey - Handles empty catalog', () => {
+test('isPackageKey - Handles empty catalog', () => {
   const emptyCatalog: SoftwareCatalog = {}
 
   assertFalse(isPackageKey(emptyCatalog, 'Steam.Steam'))
@@ -265,14 +266,14 @@ Deno.test('isPackageKey - Handles empty catalog', () => {
 // PRESET TYPE VALIDATION
 // =============================================================================
 
-Deno.test('isPresetType - Returns true for valid preset types', () => {
+test('isPresetType - Returns true for valid preset types', () => {
   assertEquals(isPresetType('gamer'), true)
   assertEquals(isPresetType('pro_gamer'), true)
   assertEquals(isPresetType('streamer'), true)
   assertEquals(isPresetType('benchmarker'), true)
 })
 
-Deno.test('isPresetType - Returns false for invalid values', () => {
+test('isPresetType - Returns false for invalid values', () => {
   assertFalse(isPresetType('invalid'))
   assertFalse(isPresetType('GAMER')) // case sensitive
   assertFalse(isPresetType(''))
@@ -284,7 +285,7 @@ Deno.test('isPresetType - Returns false for invalid values', () => {
 // CONSTANT INTEGRITY TESTS
 // =============================================================================
 
-Deno.test('CATEGORIES - Contains all expected categories', () => {
+test('CATEGORIES - Contains all expected categories', () => {
   const expectedCategories = [
     'launcher',
     'gaming',
@@ -305,7 +306,7 @@ Deno.test('CATEGORIES - Contains all expected categories', () => {
   }
 })
 
-Deno.test('DNS_PROVIDERS - Contains expected providers', () => {
+test('DNS_PROVIDERS - Contains expected providers', () => {
   assertEquals(DNS_PROVIDERS.CLOUDFLARE, 'cloudflare')
   assertEquals(DNS_PROVIDERS.GOOGLE, 'google')
   assertEquals(DNS_PROVIDERS.QUAD9, 'quad9')
@@ -314,13 +315,13 @@ Deno.test('DNS_PROVIDERS - Contains expected providers', () => {
   assertEquals(Object.keys(DNS_PROVIDERS).length, 5)
 })
 
-Deno.test('VIEW_MODES - Contains expected modes', () => {
+test('VIEW_MODES - Contains expected modes', () => {
   assertEquals(VIEW_MODES.GRID, 'grid')
   assertEquals(VIEW_MODES.LIST, 'list')
   assertEquals(Object.keys(VIEW_MODES).length, 2)
 })
 
-Deno.test('OPTIMIZATION_TIERS - Contains expected tiers', () => {
+test('OPTIMIZATION_TIERS - Contains expected tiers', () => {
   assertEquals(OPTIMIZATION_TIERS.SAFE, 'safe')
   assertEquals(OPTIMIZATION_TIERS.CAUTION, 'caution')
   assertEquals(OPTIMIZATION_TIERS.RISKY, 'risky')
@@ -328,7 +329,7 @@ Deno.test('OPTIMIZATION_TIERS - Contains expected tiers', () => {
   assertEquals(Object.keys(OPTIMIZATION_TIERS).length, 4)
 })
 
-Deno.test('EVIDENCE_LEVELS - Contains expected levels', () => {
+test('EVIDENCE_LEVELS - Contains expected levels', () => {
   assertEquals(EVIDENCE_LEVELS.HIGH, 'high')
   assertEquals(EVIDENCE_LEVELS.MEDIUM, 'medium')
   assertEquals(EVIDENCE_LEVELS.LOW, 'low')
@@ -339,7 +340,7 @@ Deno.test('EVIDENCE_LEVELS - Contains expected levels', () => {
 // TYPE GUARD EDGE CASES
 // =============================================================================
 
-Deno.test('Type guards handle various falsy values', () => {
+test('Type guards handle various falsy values', () => {
   const falsyValues = [null, undefined, '', 0, false, Number.NaN, [], {}]
 
   for (const value of falsyValues) {
@@ -352,14 +353,14 @@ Deno.test('Type guards handle various falsy values', () => {
   }
 })
 
-Deno.test('Type guards handle whitespace strings', () => {
+test('Type guards handle whitespace strings', () => {
   assertFalse(isCpuType(' '))
   assertFalse(isCpuType('  intel  '))
   assertFalse(isGpuType(' nvidia '))
   assertFalse(isPeripheralType('logitech '))
 })
 
-Deno.test('Type guards handle similar but invalid strings', () => {
+test('Type guards handle similar but invalid strings', () => {
   // Misspellings
   assertFalse(isCpuType('intell'))
   assertFalse(isGpuType('nvidea'))
