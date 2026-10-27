@@ -41,7 +41,7 @@
     "test:e2e:chromium": "playwright test --workers=2 --project=chromium"
   },
   "dependencies": {
-    "diff": "5.2.2",
+    "diff": "9.0.0",
     "lz-string": "1.5.0",
     "zod": "3.25.76"
   },
