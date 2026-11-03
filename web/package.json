@@ -56,7 +56,7 @@
     "postcss": "8.5.31",
     "purgecss": "8.0.0",
     "rollup-plugin-visualizer": "5.14.0",
-    "svelte": "5.57.2",
+    "svelte": "5.57.3",
     "svelte-check": "4.7.7",
     "tsx": "4.23.15",
     "typescript": "6.0.3",
